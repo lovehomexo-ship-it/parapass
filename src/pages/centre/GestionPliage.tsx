@@ -570,7 +570,6 @@ export function GestionPliage({ centreId }: { centreId: string }) {
             onClick={() => setOnglet(tab.id)}
             className="px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap"
             style={{
-              borderBottom: `2px solid ${onglet === tab.id ? '#F97316' : 'transparent'}`,
               color: onglet === tab.id ? 'var(--c-text)' : 'var(--c-muted)',
               background: 'transparent',
               border: 'none',
