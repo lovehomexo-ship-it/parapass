@@ -1308,141 +1308,189 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
               </div>
             )}
 
-            {/* ── Auto-évaluation — mes impressions sur ce saut ── */}
+            {/* ── Auto-évaluation de mon saut ── */}
             <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.12)' }}>
               <button type="button" onClick={() => setShowObs((o) => !o)}
                 className="w-full flex items-center justify-between px-4 py-3 transition-colors"
                 style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.8)' }}>
                 <span className="text-left">
                   <span className="block text-sm font-semibold">Auto-évaluation de mon saut</span>
-                  <span className="block text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Visible uniquement par toi</span>
+                  <span className="block text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Visible uniquement par toi · alimente Ma Progression</span>
                 </span>
                 {showObs ? <ChevronUp className="w-4 h-4 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }} /> : <ChevronDown className="w-4 h-4 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }} />}
               </button>
 
               {showObs && (
-                <div className="p-4 space-y-5" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                <div className="divide-y" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.07)' }}>
 
-                  {/* 1 — Figures / exercices réalisés */}
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Figures / exercices réalisés <span className="normal-case font-normal opacity-60">(optionnel)</span></label>
-                    <ChipTextField
-                      value={form.exercice_chute}
-                      onChange={(v) => update('exercice_chute', v)}
-                      chips={['Vrille gauche','Vrille droite','Dos','Tonneau','Tracé de chute','Arche stable','360° gauche','360° droite','Avancée','Reculée','Loop','Tracking','Docking','Lâché de mains']}
-                      placeholder="Figures réalisées pendant le saut…"
-                      rows={2}
-                    />
-                  </div>
+                  {/* ── SECTION 1 : CHUTE LIBRE ── */}
+                  <div className="p-4 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#60A5FA' }}>🪂 Chute libre</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(96,165,250,0.12)', color: 'rgba(96,165,250,0.7)' }}>→ Profil Chute libre</span>
+                      <span className="text-[10px] ml-auto" style={{ color: 'rgba(255,255,255,0.25)' }}>optionnel</span>
+                    </div>
 
-                  {/* 2 — Mental / état d'esprit */}
-                  <div>
-                    <div className="flex items-baseline justify-between mb-2">
-                      <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.4)' }}>Mental / état d'esprit <span className="normal-case font-normal opacity-60">(optionnel)</span></label>
-                      <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>→ graphique Mental</span>
+                    {/* Éléments techniques */}
+                    <div>
+                      <p className="text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                        Éléments techniques — <span style={{ color: 'rgba(239,68,68,0.7)' }}>✗</span> À retravailler &nbsp;
+                        <span style={{ color: 'rgba(245,158,11,0.7)' }}>~</span> Correct &nbsp;
+                        <span style={{ color: 'rgba(16,185,129,0.7)' }}>✓</span> Bon
+                      </p>
+                      <div className="divide-y rounded-xl px-3 py-1" style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.08)' }}>
+                        <TernaireSelector label="Sortie avion" value={form.sortie_avion} onChange={(v) => update('sortie_avion', v)} />
+                        <TernaireSelector label="Retour face sol" value={form.retour_face_sol} onChange={(v) => update('retour_face_sol', v)} />
+                        <TernaireSelector label="Vigilance altitude" value={form.vigilance_altitude} onChange={(v) => update('vigilance_altitude', v)} />
+                        <TernaireSelector label="Ouverture" value={form.ouverture_notes} onChange={(v) => update('ouverture_notes', v)} />
+                        <ProgTernaireSelector label="Séparation" value={form.prog_separation} onChange={(v) => update('prog_separation', v)} />
+                        <ProgTernaireSelector label="Trajectoire" value={form.prog_trajectoire} onChange={(v) => update('prog_trajectoire', v)} />
+                        <ProgTernaireSelector label="Déclenchement" value={form.prog_declenchement} onChange={(v) => update('prog_declenchement', v)} />
+                        <ProgTernaireSelector label="Pilotage voile" value={form.prog_pilotage_voile} onChange={(v) => update('prog_pilotage_voile', v)} />
+                        <ProgTernaireSelector label="Circuit atterro" value={form.prog_circuit_atterro} onChange={(v) => update('prog_circuit_atterro', v)} />
+                        <ProgTernaireSelector label="Précision atterro" value={form.prog_precision_atterro} onChange={(v) => update('prog_precision_atterro', v)} />
+                        <ProgTernaireSelector label="Gestion urgences" value={form.prog_gestion_urgences} onChange={(v) => update('prog_gestion_urgences', v)} />
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {([
-                        { v: 5, label: 'Très confiant', color: '#34D399', bg: 'rgba(52,211,153,0.15)', border: 'rgba(52,211,153,0.4)' },
-                        { v: 4, label: 'Confiant',      color: '#60A5FA', bg: 'rgba(96,165,250,0.15)', border: 'rgba(96,165,250,0.4)' },
-                        { v: 3, label: 'Neutre',        color: '#A3A3A3', bg: 'rgba(163,163,163,0.12)', border: 'rgba(163,163,163,0.3)' },
-                        { v: 2, label: 'Stressé',       color: '#FBBF24', bg: 'rgba(251,191,36,0.15)', border: 'rgba(251,191,36,0.4)' },
-                        { v: 1, label: 'Très stressé',  color: '#F87171', bg: 'rgba(248,113,113,0.15)', border: 'rgba(248,113,113,0.4)' },
-                      ] as const).map(({ v, label, color, bg, border }) => {
-                        const sel = form.note_mental === v;
-                        return (
-                          <button key={v} type="button" onClick={() => update('note_mental', sel ? null : v)}
-                            className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
-                            style={{ background: sel ? bg : 'rgba(255,255,255,0.06)', color: sel ? color : 'rgba(255,255,255,0.45)', border: `1px solid ${sel ? border : 'rgba(255,255,255,0.1)'}`, transform: sel ? 'scale(1.05)' : 'scale(1)' }}>
-                            {label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
 
-                  {/* 3 — Qualité de l'ouverture */}
-                  <div>
-                    <div className="flex items-baseline justify-between mb-2">
-                      <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.4)' }}>Qualité de l'ouverture <span className="normal-case font-normal opacity-60">(optionnel)</span></label>
-                      <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>→ graphique Ouverture voile</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {([
-                        { v: 5, label: 'Excellente',      color: '#34D399', bg: 'rgba(52,211,153,0.15)', border: 'rgba(52,211,153,0.4)' },
-                        { v: 4, label: 'Bonne',           color: '#60A5FA', bg: 'rgba(96,165,250,0.15)', border: 'rgba(96,165,250,0.4)' },
-                        { v: 3, label: 'Correcte',        color: '#A3A3A3', bg: 'rgba(163,163,163,0.12)', border: 'rgba(163,163,163,0.3)' },
-                        { v: 2, label: 'Problème mineur', color: '#FBBF24', bg: 'rgba(251,191,36,0.15)', border: 'rgba(251,191,36,0.4)' },
-                        { v: 1, label: 'Incident',        color: '#F87171', bg: 'rgba(248,113,113,0.15)', border: 'rgba(248,113,113,0.4)' },
-                      ] as const).map(({ v, label, color, bg, border }) => {
-                        const sel = form.note_ouverture_voile === v;
-                        return (
-                          <button key={v} type="button" onClick={() => update('note_ouverture_voile', sel ? null : v)}
-                            className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
-                            style={{ background: sel ? bg : 'rgba(255,255,255,0.06)', color: sel ? color : 'rgba(255,255,255,0.45)', border: `1px solid ${sel ? border : 'rgba(255,255,255,0.1)'}`, transform: sel ? 'scale(1.05)' : 'scale(1)' }}>
-                            {label}
-                          </button>
-                        );
-                      })}
+                    {/* Exercices en chute */}
+                    <div>
+                      <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Exercices pratiqués en chute</label>
+                      <ChipTextField
+                        value={form.exercice_chute}
+                        onChange={(v) => update('exercice_chute', v)}
+                        chips={['360° gauche','360° droite','Arche stable','Lâché de mains','Loop','Tracking','Docking','Vrille','Dos','Tonneau']}
+                        placeholder="Exercices réalisés en chute libre…"
+                        rows={2}
+                      />
                     </div>
                   </div>
 
-                  {/* 4 — Qualité de l'atterrissage */}
-                  <div>
-                    <div className="flex items-baseline justify-between mb-2">
-                      <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.4)' }}>Qualité de l'atterrissage <span className="normal-case font-normal opacity-60">(optionnel)</span></label>
-                      <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>→ graphique Atterrissage</span>
+                  {/* ── SECTION 2 : VOILE & ATTERRISSAGE ── */}
+                  <div className="p-4 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#34D399' }}>🎯 Voile & Atterrissage</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(52,211,153,0.12)', color: 'rgba(52,211,153,0.7)' }}>→ Voile & Atterrissage</span>
+                      <span className="text-[10px] ml-auto" style={{ color: 'rgba(255,255,255,0.25)' }}>optionnel</span>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {([
-                        { v: 5, label: 'Debout parfait', color: '#34D399', bg: 'rgba(52,211,153,0.15)', border: 'rgba(52,211,153,0.4)' },
-                        { v: 4, label: 'Bon',            color: '#60A5FA', bg: 'rgba(96,165,250,0.15)', border: 'rgba(96,165,250,0.4)' },
-                        { v: 3, label: 'Correct',        color: '#A3A3A3', bg: 'rgba(163,163,163,0.12)', border: 'rgba(163,163,163,0.3)' },
-                        { v: 2, label: 'Chute',          color: '#FBBF24', bg: 'rgba(251,191,36,0.15)', border: 'rgba(251,191,36,0.4)' },
-                        { v: 1, label: 'Problème',       color: '#F87171', bg: 'rgba(248,113,113,0.15)', border: 'rgba(248,113,113,0.4)' },
-                      ] as const).map(({ v, label, color, bg, border }) => {
-                        const sel = form.note_atterrissage === v;
-                        return (
-                          <button key={v} type="button" onClick={() => update('note_atterrissage', sel ? null : v)}
-                            className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
-                            style={{ background: sel ? bg : 'rgba(255,255,255,0.06)', color: sel ? color : 'rgba(255,255,255,0.45)', border: `1px solid ${sel ? border : 'rgba(255,255,255,0.1)'}`, transform: sel ? 'scale(1.05)' : 'scale(1)' }}>
-                            {label}
-                          </button>
-                        );
-                      })}
+
+                    {/* Qualité ouverture voile */}
+                    <div>
+                      <label className="block text-xs font-medium mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>Qualité de l'ouverture voile</label>
+                      <div className="flex flex-wrap gap-2">
+                        {([
+                          { v: 5, label: 'Excellente',      color: '#34D399', bg: 'rgba(52,211,153,0.15)', border: 'rgba(52,211,153,0.4)' },
+                          { v: 4, label: 'Bonne',           color: '#60A5FA', bg: 'rgba(96,165,250,0.15)', border: 'rgba(96,165,250,0.4)' },
+                          { v: 3, label: 'Correcte',        color: '#A3A3A3', bg: 'rgba(163,163,163,0.12)', border: 'rgba(163,163,163,0.3)' },
+                          { v: 2, label: 'Problème mineur', color: '#FBBF24', bg: 'rgba(251,191,36,0.15)', border: 'rgba(251,191,36,0.4)' },
+                          { v: 1, label: 'Incident',        color: '#F87171', bg: 'rgba(248,113,113,0.15)', border: 'rgba(248,113,113,0.4)' },
+                        ] as const).map(({ v, label, color, bg, border }) => {
+                          const sel = form.note_ouverture_voile === v;
+                          return (
+                            <button key={v} type="button" onClick={() => update('note_ouverture_voile', sel ? null : v)}
+                              className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                              style={{ background: sel ? bg : 'rgba(255,255,255,0.06)', color: sel ? color : 'rgba(255,255,255,0.45)', border: `1px solid ${sel ? border : 'rgba(255,255,255,0.1)'}`, transform: sel ? 'scale(1.05)' : 'scale(1)' }}>
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Type atterrissage */}
+                    <div>
+                      <label className="block text-xs font-medium mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>Type d'atterrissage</label>
+                      <div className="flex flex-wrap gap-2">
+                        {([
+                          { v: 5, label: 'Debout propre',   color: '#34D399', bg: 'rgba(52,211,153,0.15)', border: 'rgba(52,211,153,0.4)' },
+                          { v: 4, label: 'Debout instable', color: '#60A5FA', bg: 'rgba(96,165,250,0.15)', border: 'rgba(96,165,250,0.4)' },
+                          { v: 3, label: 'Roulé',           color: '#A3A3A3', bg: 'rgba(163,163,163,0.12)', border: 'rgba(163,163,163,0.3)' },
+                          { v: 2, label: 'Fessé',           color: '#FBBF24', bg: 'rgba(251,191,36,0.15)', border: 'rgba(251,191,36,0.4)' },
+                          { v: 1, label: 'Chute',           color: '#F87171', bg: 'rgba(248,113,113,0.15)', border: 'rgba(248,113,113,0.4)' },
+                        ] as const).map(({ v, label, color, bg, border }) => {
+                          const sel = form.note_atterrissage === v;
+                          return (
+                            <button key={v} type="button" onClick={() => update('note_atterrissage', sel ? null : v)}
+                              className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                              style={{ background: sel ? bg : 'rgba(255,255,255,0.06)', color: sel ? color : 'rgba(255,255,255,0.45)', border: `1px solid ${sel ? border : 'rgba(255,255,255,0.1)'}`, transform: sel ? 'scale(1.05)' : 'scale(1)' }}>
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Exercices sous voile */}
+                    <div>
+                      <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Exercices sous voile</label>
+                      <ChipTextField
+                        value={form.exercice_voile}
+                        onChange={(v) => update('exercice_voile', v)}
+                        chips={['Posé précision','Virages 360°','Spiral','Virages 180°','Navigation vent fort']}
+                        placeholder="Exercices réalisés sous voile…"
+                        rows={2}
+                      />
+                    </div>
+
+                    {/* Précision atterrissage */}
+                    <div>
+                      <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Précision atterrissage (mètres du centre)</label>
+                      <input type="number" min={0} max={500} value={form.precision_metres ?? ''}
+                        onChange={(e) => update('precision_metres', e.target.value ? parseInt(e.target.value) : null)}
+                        placeholder="Ex : 15"
+                        style={{ ...darkInput, width: '50%' }} />
                     </div>
                   </div>
 
-                  {/* 5 — Points à améliorer */}
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Points à améliorer <span className="normal-case font-normal opacity-60">(optionnel)</span></label>
-                    <textarea value={form.observations_moniteur} onChange={(e) => update('observations_moniteur', e.target.value)}
-                      rows={2} style={{ ...darkInput, resize: 'none' }}
-                      placeholder="Ce que je veux travailler au prochain saut…" />
+                  {/* ── SECTION 3 : MENTAL & RÉGULARITÉ ── */}
+                  <div className="p-4 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#C084FC' }}>🧠 Mental & Régularité</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(192,132,252,0.12)', color: 'rgba(192,132,252,0.7)' }}>→ Mental & Régularité</span>
+                      <span className="text-[10px] ml-auto" style={{ color: 'rgba(255,255,255,0.25)' }}>optionnel</span>
+                    </div>
+
+                    {/* Mental */}
+                    <div>
+                      <label className="block text-xs font-medium mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>Mental / Gestion du stress</label>
+                      <div className="flex flex-wrap gap-2">
+                        {([
+                          { v: 5, label: 'Très confiant', color: '#34D399', bg: 'rgba(52,211,153,0.15)', border: 'rgba(52,211,153,0.4)' },
+                          { v: 4, label: 'Confiant',      color: '#60A5FA', bg: 'rgba(96,165,250,0.15)', border: 'rgba(96,165,250,0.4)' },
+                          { v: 3, label: 'Neutre',        color: '#A3A3A3', bg: 'rgba(163,163,163,0.12)', border: 'rgba(163,163,163,0.3)' },
+                          { v: 2, label: 'Stressé',       color: '#FBBF24', bg: 'rgba(251,191,36,0.15)', border: 'rgba(251,191,36,0.4)' },
+                          { v: 1, label: 'Très stressé',  color: '#F87171', bg: 'rgba(248,113,113,0.15)', border: 'rgba(248,113,113,0.4)' },
+                        ] as const).map(({ v, label, color, bg, border }) => {
+                          const sel = form.note_mental === v;
+                          return (
+                            <button key={v} type="button" onClick={() => update('note_mental', sel ? null : v)}
+                              className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                              style={{ background: sel ? bg : 'rgba(255,255,255,0.06)', color: sel ? color : 'rgba(255,255,255,0.45)', border: `1px solid ${sel ? border : 'rgba(255,255,255,0.1)'}`, transform: sel ? 'scale(1.05)' : 'scale(1)' }}>
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Impressions générales */}
+                    <div>
+                      <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Impressions générales</label>
+                      <textarea value={form.observations} onChange={(e) => update('observations', e.target.value)}
+                        rows={2} style={{ ...darkInput, resize: 'none' }}
+                        placeholder="Ressenti global, anecdotes, conditions météo…" />
+                    </div>
                   </div>
 
-                  {/* 6 — Impressions générales */}
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Impressions générales <span className="normal-case font-normal opacity-60">(optionnel)</span></label>
-                    <textarea value={form.observations} onChange={(e) => update('observations', e.target.value)}
-                      rows={2} style={{ ...darkInput, resize: 'none' }}
-                      placeholder="Ressenti global, anecdotes, conditions météo…" />
-                  </div>
-
-                  {/* 7 — Note globale (obligatoire) */}
-                  <div className="rounded-xl p-3" style={{ background: 'rgba(249,115,22,0.06)', border: '1px solid rgba(249,115,22,0.2)' }}>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                        Note globale <span style={{ color: '#F87171' }}>*</span>
-                      </label>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(249,115,22,0.15)', color: '#FB923C', border: '1px solid rgba(249,115,22,0.3)' }}>
-                        Obligatoire
+                  {/* ── SECTION 4 : NOTE GLOBALE (obligatoire) ── */}
+                  <div className="p-4" style={{ background: 'rgba(249,115,22,0.04)' }}>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#FB923C' }}>⭐ Note globale</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(249,115,22,0.2)', color: '#FB923C', border: '1px solid rgba(249,115,22,0.35)' }}>
+                        Obligatoire *
                       </span>
                     </div>
                     <GlobalRating value={form.note_globale} onChange={(v) => update('note_globale', v)} />
-                    <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                      Alimente la courbe "Note globale" dans Ma Progression
-                    </p>
                   </div>
 
                 </div>
