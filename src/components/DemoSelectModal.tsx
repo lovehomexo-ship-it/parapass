@@ -8,7 +8,7 @@ interface Props {
 }
 
 const DEMO_ACCOUNTS = {
-  para: { email: 'thomas.laurent@parapass.fr', password: 'DemoPass2026!', dest: '/dashboard' },
+  para: { email: 'demo@parapass.fr', password: 'Demo1234!', dest: '/dashboard' },
   centre: { email: 'admin@skydive-atlantique.fr', password: 'DemoPass2026!', dest: '/centre/dashboard' },
 } as const;
 
@@ -90,7 +90,7 @@ export function DemoSelectModal({ onClose }: Props) {
               </div>
               <div>
                 <p className="text-white font-bold text-sm">Parachutiste</p>
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>Thomas LAURENT · Brevet B · BigAir Rochefort</p>
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>Compte démo · Navigation libre · Lecture seule</p>
               </div>
             </div>
 
