@@ -14,10 +14,11 @@ import {
   AlertTriangle, CheckCircle, Clock, ChevronRight, Plus,
   Search, Filter, Eye, Trash2, UserCheck, UserX, Mail,
   Download, Upload, Hash, TrendingUp, MapPin, Send, Zap, Key, Check, Sun, Moon,
-  GraduationCap, MoreVertical, UserMinus,
+  GraduationCap, MoreVertical, UserMinus, Euro,
 } from 'lucide-react';
 import { PlanningCentre } from './PlanningCentre';
 import { GestionPliage } from './centre/GestionPliage';
+import { FinancesSection } from './centre/FinancesSection';
 
 void Calendar; void Upload; void Hash; void TrendingUp; void MapPin;
 void Download; void Filter; void Plus; void Trash2; void Zap;
@@ -2969,6 +2970,8 @@ export function CentreDashboardPage() {
       .then(({ count }) => setNotifCount(count ?? 0));
   }, [profile]);
 
+  const isProPlan = centre ? ['pro', 'enterprise'].includes(centre.plan) : false;
+
   const navItems = [
     { key: 'dashboard', label: 'Tableau de bord', icon: Home },
     { key: 'licencies', label: 'Mes licenciés', icon: Users },
@@ -2980,6 +2983,7 @@ export function CentreDashboardPage() {
     { key: 'equipe', label: 'Mon équipe', icon: Shield },
     { key: 'centre', label: 'Mon centre', icon: Settings },
     { key: 'messages', label: 'Messages', icon: MessageSquare, badge: msgUnread },
+    { key: 'finances', label: 'Finances', icon: Euro },
   ];
 
   if (authLoading || loading) {
@@ -3201,6 +3205,32 @@ export function CentreDashboardPage() {
           )}
           {activeSection === 'messages' && profile && (
             <MessagesSection currentUserId={profile.id} />
+          )}
+          {activeSection === 'finances' && centreId && (
+            isProPlan
+              ? <FinancesSection dzId={centreId} />
+              : (
+                <div className="flex items-center justify-center py-16 px-6">
+                  <div className="max-w-md w-full rounded-2xl p-8 text-center space-y-4" style={{ background: 'var(--c-surface)', border: '1px solid rgba(249,115,22,0.3)' }}>
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto" style={{ background: 'rgba(249,115,22,0.12)' }}>
+                      <Euro className="w-7 h-7" style={{ color: '#F97316' }} />
+                    </div>
+                    <h3 className="text-xl font-bold" style={{ color: 'var(--c-text)' }}>Module Finances</h3>
+                    <p className="text-sm leading-relaxed" style={{ color: 'var(--c-dim)' }}>
+                      Gérez les tarifs, suivez les soldes de vos licenciés et encaissez en ligne via Stripe. Disponible en plan Pro.
+                    </p>
+                    <div className="rounded-xl py-3 px-4" style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.2)' }}>
+                      <p className="text-lg font-bold" style={{ color: '#F97316' }}>199 € / mois</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--c-dim)' }}>Plan Pro — sans engagement</p>
+                    </div>
+                    <a href="mailto:contact@parapass.fr?subject=Passage en plan Pro"
+                      className="block w-full py-3 rounded-xl text-sm font-bold text-white transition"
+                      style={{ background: 'linear-gradient(135deg, #F97316, #EA580C)' }}>
+                      Contacter l'équipe ParaPass
+                    </a>
+                  </div>
+                </div>
+              )
           )}
         </div>
       </main>

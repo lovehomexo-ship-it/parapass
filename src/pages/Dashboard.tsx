@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { ParachuteIcon, ParachuteDropIcon } from '../components/ParachuteIcon';
 import { PlanningDZ } from './PlanningDZ';
 import { Layout } from '../components/Layout';
+import { MonComptePara } from '../components/MonComptePara';
 import { AddSautModal } from '../components/AddSautModal';
 import { ImportOCR } from '../components/ImportOCR';
 import { DeclarationHonneur } from '../components/DeclarationHonneur';
@@ -20,7 +21,7 @@ import { useDemo } from '../lib/useDemo';
 import {
   Plus, FileDown, QrCode, Calendar, TrendingUp,
   ChevronDown, ChevronUp, Trash2, X, ShieldCheck, Hash,
-  Pencil, Lock, Award, ChevronRight, Wind, Thermometer, Cloud, Sun, CloudRain, Camera,
+  Pencil, Lock, Award, ChevronRight, Wind, Thermometer, Cloud, Sun, CloudRain, Camera, Wallet,
 } from 'lucide-react';
 
 // ─── Weather helpers (reused from PlanningDZ) ────────────────────────────────
@@ -122,7 +123,7 @@ function KpiCard({ accent, label, value, sub, expiry }: KpiCardProps) {
   );
 }
 
-type DashTab = 'accueil' | 'carnet' | 'planning';
+type DashTab = 'accueil' | 'carnet' | 'planning' | 'compte';
 
 // ─── Notation helpers ─────────────────────────────────────────────────────────
 
@@ -181,6 +182,7 @@ export function DashboardPage() {
   const [activeTab, setActiveTab] = useState<DashTab>('accueil');
   const [selectedSaut, setSelectedSaut] = useState<Saut | null>(null);
   const [centreNom, setCentreNom] = useState<string | null>(null);
+  const [centrePlan, setCentrePlan] = useState<string | null>(null);
   const [dzMeteo, setDzMeteo] = useState<DayMeteo[]>([]);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -189,7 +191,7 @@ export function DashboardPage() {
   useEffect(() => {
     const action = searchParams.get('action');
     const tab = searchParams.get('tab') as DashTab | null;
-    if (tab && ['accueil', 'carnet', 'planning'].includes(tab)) {
+    if (tab && ['accueil', 'carnet', 'planning', 'compte'].includes(tab)) {
       setActiveTab(tab);
     }
     if (action === 'add-jump' && !blockIfDemo()) {
@@ -243,8 +245,9 @@ export function DashboardPage() {
   useEffect(() => {
     if (!centresLicencies.length) return;
     const first = centresLicencies[0];
-    const centre = (first as unknown as { centre?: { nom?: string; latitude?: number; longitude?: number } }).centre;
+    const centre = (first as unknown as { centre?: { nom?: string; latitude?: number; longitude?: number; plan?: string } }).centre;
     if (centre?.nom) setCentreNom(centre.nom);
+    if (centre?.plan) setCentrePlan(centre.plan);
     if (centre?.latitude && centre?.longitude) {
       fetchThreeDayMeteo(centre.latitude, centre.longitude).then(setDzMeteo);
     }
@@ -387,10 +390,13 @@ export function DashboardPage() {
 
   if (!profile) return null;
 
+  const hasFinances = centrePlan ? ['pro', 'enterprise'].includes(centrePlan) : false;
+
   const subTabs: { key: DashTab; label: string }[] = [
     { key: 'accueil', label: 'Vue d\'ensemble' },
     { key: 'carnet', label: 'Mon Carnet' },
     { key: 'planning', label: '📅 Ma DZ' },
+    ...(hasFinances ? [{ key: 'compte' as DashTab, label: '💳 Mon compte' }] : []),
   ];
 
   return (
@@ -905,6 +911,17 @@ export function DashboardPage() {
 
           {/* ─── PLANNING ────────────────────────────────────────────────────── */}
           {activeTab === 'planning' && <PlanningDZ />}
+
+          {/* ─── MON COMPTE ──────────────────────────────────────────────────── */}
+          {activeTab === 'compte' && user && (
+            <div className="max-w-2xl mx-auto pt-2">
+              <div className="flex items-center gap-2 mb-5">
+                <Wallet className="w-5 h-5" style={{ color: '#F97316' }} />
+                <h2 className="text-lg font-bold" style={{ color: 'var(--c-text)' }}>Mon compte</h2>
+              </div>
+              <MonComptePara userId={user.id} />
+            </div>
+          )}
 
         </div>
       </div>
