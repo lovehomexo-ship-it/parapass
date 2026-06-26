@@ -309,11 +309,9 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
               <span style={{ fontSize: 10, background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: 20 }}>Non validé</span>
             )}
           </div>
-          {qrToken && (
-            <div className="bg-white rounded-lg flex-shrink-0" style={{ padding: 4 }}>
-              <QRCodeSVG value={`${window.location.origin}/verify/${qrToken}`} size={66} level="M" />
-            </div>
-          )}
+          <div className="bg-white rounded-lg flex-shrink-0" style={{ padding: 4 }}>
+            <QRCodeSVG value={`https://parapass.fr/verify/${profile.id}`} size={66} level="M" />
+          </div>
         </div>
 
         {/* ── Footer ── */}

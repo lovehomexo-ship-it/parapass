@@ -88,15 +88,28 @@ export function VerifyPage() {
     if (!token) { setTokenInvalid(true); setLoading(false); return; }
 
     const fetchData = async () => {
+      // Try token lookup first, then fall back to direct profile_id
+      let pid: string | null = null;
+
       const { data: qrRow } = await supabase
         .from('qr_tokens')
         .select('parachutiste_id')
         .eq('token', token)
         .maybeSingle();
 
-      if (!qrRow) { setTokenInvalid(true); setLoading(false); return; }
+      if (qrRow) {
+        pid = qrRow.parachutiste_id;
+      } else {
+        // Check if token is a valid profile UUID
+        const { data: profileRow } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', token)
+          .maybeSingle();
+        if (profileRow) pid = profileRow.id;
+      }
 
-      const pid = qrRow.parachutiste_id;
+      if (!pid) { setTokenInvalid(true); setLoading(false); return; }
 
       const [
         { data: profile },
