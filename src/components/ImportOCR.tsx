@@ -202,46 +202,21 @@ Retourne UNIQUEMENT un tableau JSON valide, sans aucun texte avant ou après, sa
 Format : [{"numero":"1","date":"20/05/2024","lieu":"BigAir","aeronef":"Pilatus","hauteur":"4000","hauteur_ouverture":"1500","voilure":"PD-270","programme":"PAC 1","nature":"entrainement","nom_moniteur":"MARTIN Paul","observations":"","confiance":90}, ...]`;
 
 async function scanToutesPhotos(photos: PhotoItem[]): Promise<SautExtrait[]> {
-  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined;
-  if (!apiKey) throw new Error('Clé API Anthropic manquante (VITE_ANTHROPIC_API_KEY).');
-
   // Compress every image before encoding — prevents "Load failed" on large phone photos
   const base64List = await Promise.all(photos.map(p => compressToBase64(p.file)));
 
-  const imageContent = base64List.map((b64, i) => ({
-    type: 'image' as const,
-    source: {
-      type: 'base64' as const,
-      media_type: 'image/jpeg' as const, // always JPEG after canvas compression
-      data: b64,
-    },
-  }));
+  const images = base64List.map((data) => ({ data, media_type: 'image/jpeg' }));
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 60_000);
 
   let res: Response;
   try {
-    res = await fetch('https://api.anthropic.com/v1/messages', {
+    res = await fetch('/api/analyze-carnet', {
       method: 'POST',
       signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-opus-4-5',
-        max_tokens: 8192,
-        messages: [{
-          role: 'user',
-          content: [
-            ...imageContent,
-            { type: 'text', text: OCR_PROMPT },
-          ],
-        }],
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ images, prompt: OCR_PROMPT }),
     });
   } catch (err) {
     throw new Error(classifyFetchError(err));
@@ -250,8 +225,8 @@ async function scanToutesPhotos(photos: PhotoItem[]): Promise<SautExtrait[]> {
   }
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({})) as { error?: { message?: string } };
-    const msg = body.error?.message ?? `Erreur API Claude (${res.status})`;
+    const body = await res.json().catch(() => ({})) as { error?: string };
+    const msg = body.error ?? `Erreur serveur (${res.status})`;
     throw new Error(classifyFetchError(new Error(`${res.status} ${msg}`)));
   }
 
