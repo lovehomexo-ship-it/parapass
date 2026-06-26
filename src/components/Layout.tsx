@@ -15,7 +15,7 @@ import { useTheme } from '../lib/ThemeContext';
 import { DemoGate, getDemoAllowedRoutes } from './DemoGate';
 
 export function Layout({ children, noPadding = false }: { children: React.ReactNode; noPadding?: boolean }) {
-  const { user, profile, signOut, delegation, sautsEnAttente, isDemoAccount } = useAuth();
+  const { user, profile, signOut, delegation, sautsEnAttente, isDemoAccount, isDemoReadonly } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -82,6 +82,14 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
       {isDemoMode && <DemoBanner />}
       {isDemoAccount && !isDemoMode && (
         <DemoBanner isCentre={profile?.role === 'admin_centre'} />
+      )}
+      {isDemoReadonly && (
+        <div
+          className="w-full flex items-center justify-center px-4 py-2 text-sm font-semibold text-white"
+          style={{ background: 'linear-gradient(90deg, #F97316 0%, #EA580C 100%)', minHeight: '40px' }}
+        >
+          👁 Mode démo — Navigation libre, actions désactivées
+        </div>
       )}
 
       {/* ── Navbar ─────────────────────────────────────────────────────────── */}

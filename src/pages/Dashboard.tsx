@@ -167,7 +167,7 @@ const RARETE_STYLES: Record<string, { border: string; glow: string; label: strin
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function DashboardPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, isDemoReadonly } = useAuth();
   const [sauts, setSauts] = useState<Saut[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -583,9 +583,16 @@ export function DashboardPage() {
               {/* Action buttons */}
               <div className="mb-6">
                 <button
-                  onClick={() => setModalOpen(true)}
-                  className="flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 rounded-lg text-sm font-bold transition-colors shadow-lg shadow-orange-500/25 w-full md:w-auto"
-                  style={{ height: 48 }}
+                  onClick={() => { if (!isDemoReadonly) setModalOpen(true); }}
+                  disabled={isDemoReadonly}
+                  title={isDemoReadonly ? 'Non disponible en mode démo' : undefined}
+                  className="flex items-center justify-center gap-2 text-white px-5 rounded-lg text-sm font-bold transition-colors shadow-lg w-full md:w-auto"
+                  style={{
+                    height: 48,
+                    background: isDemoReadonly ? 'var(--c-muted)' : '#F97316',
+                    cursor: isDemoReadonly ? 'not-allowed' : 'pointer',
+                    opacity: isDemoReadonly ? 0.6 : 1,
+                  }}
                 >
                   <Plus className="w-5 h-5" /> Ajouter un saut
                 </button>
@@ -600,11 +607,15 @@ export function DashboardPage() {
                     <QrCode className="w-4 h-4" /> Mon QR Code
                   </button>
                   <button
-                    onClick={() => generatePDF(profile, sauts)}
-                    disabled={sauts.length === 0}
+                    onClick={() => { if (!isDemoReadonly) generatePDF(profile, sauts); }}
+                    disabled={sauts.length === 0 || isDemoReadonly}
+                    title={isDemoReadonly ? 'Non disponible en mode démo' : undefined}
                     className="flex items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 flex-1 md:flex-none md:px-4 md:py-2.5"
-                    style={{ height: 44, background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--c-hover)')}
+                    style={{
+                      height: 44, background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)',
+                      cursor: isDemoReadonly ? 'not-allowed' : 'pointer',
+                    }}
+                    onMouseEnter={(e) => { if (!isDemoReadonly) e.currentTarget.style.background = 'var(--c-hover)'; }}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--c-surface)')}
                   >
                     <FileDown className="w-4 h-4" /> Exporter PDF
@@ -613,7 +624,7 @@ export function DashboardPage() {
               </div>
 
               {/* Ma Progression card */}
-              {!aDejaImporte && (
+              {!aDejaImporte && !isDemoReadonly && (
                 <BanniereOCR onClic={() => setShowOCR(true)} />
               )}
 
@@ -756,22 +767,28 @@ export function DashboardPage() {
                   <p className="text-xs mt-0.5" style={{ color: 'var(--c-muted)' }}>{totalSauts} sauts enregistrés</p>
                 </div>
                 <div className="flex items-center gap-2">
+                  {!isDemoReadonly && (
+                    <button
+                      onClick={() => setShowOCR(true)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                      style={{ border: '1px solid var(--c-border-f)', color: 'var(--c-text2)', background: 'var(--c-surface)' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--c-hover)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--c-surface)')}
+                      title="Importer depuis un carnet papier via Claude Vision"
+                    >
+                      <Camera className="w-4 h-4" /> Carnet papier
+                    </button>
+                  )}
                   <button
-                    onClick={() => setShowOCR(true)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-                    style={{ border: '1px solid var(--c-border-f)', color: 'var(--c-text2)', background: 'var(--c-surface)' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--c-hover)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--c-surface)')}
-                    title="Importer depuis un carnet papier via Claude Vision"
-                  >
-                    <Camera className="w-4 h-4" /> Carnet papier
-                  </button>
-                  <button
-                    onClick={() => setModalOpen(true)}
+                    onClick={() => { if (!isDemoReadonly) setModalOpen(true); }}
+                    disabled={isDemoReadonly}
+                    title={isDemoReadonly ? 'Non disponible en mode démo' : undefined}
                     className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-                    style={{ background: '#F97316' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#EA580C')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = '#F97316')}
+                    style={{
+                      background: isDemoReadonly ? 'var(--c-muted)' : '#F97316',
+                      cursor: isDemoReadonly ? 'not-allowed' : 'pointer',
+                      opacity: isDemoReadonly ? 0.6 : 1,
+                    }}
                   >
                     <Plus className="w-4 h-4" /> Ajouter
                   </button>
