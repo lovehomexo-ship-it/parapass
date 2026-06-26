@@ -15,7 +15,7 @@ import { useTheme } from '../lib/ThemeContext';
 import { DemoGate, getDemoAllowedRoutes } from './DemoGate';
 
 export function Layout({ children, noPadding = false }: { children: React.ReactNode; noPadding?: boolean }) {
-  const { user, profile, signOut, delegation, sautsEnAttente, isDemo, isDemoAccount, isDemoReadonly } = useAuth();
+  const { user, profile, signOut, delegation, sautsEnAttente, isDemo, isDemoAccount } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
