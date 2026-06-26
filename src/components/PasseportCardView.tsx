@@ -126,6 +126,8 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
   const certifExp = certif?.date_expiration ? new Date(certif.date_expiration) : null;
   const brevetPrincipal = brevets[0];
   const centre = centresLicencies.find(c => c.statut === 'actif')?.centre;
+  const activeLicencie = centresLicencies.find(c => c.statut === 'actif');
+  const carnetValide = activeLicencie?.carnet_statut === 'valide' || licence?.tampon_statut === 'valide';
   const avatar = profile.avatar_url || profile.photo_profil_url;
 
   const getGlobalStatus = () => {
