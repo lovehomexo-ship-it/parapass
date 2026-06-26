@@ -1302,11 +1302,12 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
               </div>
             </div>
 
-            {/* Observations générales */}
+            {/* Notes personnelles */}
             <div>
-              <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>Observations</label>
+              <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>Notes personnelles</label>
               <textarea value={form.observations} onChange={(e) => update('observations', e.target.value)}
-                rows={2} style={{ ...darkInput, resize: 'none' }} />
+                rows={2} style={{ ...darkInput, resize: 'none' }}
+                placeholder="Conditions météo, sensations, points à améliorer..." />
             </div>
 
             {/* Moniteur validateur (non-moniteurs) */}
@@ -1319,124 +1320,23 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
               </div>
             )}
 
-            {/* ── Évaluation globale ── */}
-            <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)' }}>
-              <p className="text-sm font-bold text-white mb-1">Évaluation globale du saut</p>
-              <p className="text-xs mb-3" style={{color:'rgba(255,255,255,0.4)'}}>Donne une note globale pour suivre ta progression</p>
-              <GlobalRating value={form.note_globale} onChange={(v) => update('note_globale', v)} />
-            </div>
-
-            {/* ── Observations moniteur (accordéon) ── */}
+            {/* ── Auto-évaluation du saut ── */}
             <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.12)' }}>
               <button type="button" onClick={() => setShowObs((o) => !o)}
                 className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold transition-colors"
                 style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.8)' }}>
-                <span>Observations moniteur — Carnet FFP</span>
+                <span>Auto-évaluation du saut</span>
                 {showObs ? <ChevronUp className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.4)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.4)' }} />}
               </button>
 
               {showObs && (
-                <div className="p-4 space-y-5" style={{ background: 'rgba(255,255,255,0.03)' }}>
-
-                  {/* Notations ternaires */}
+                <div className="p-4 space-y-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                    Tes impressions personnelles sur ce saut (visible uniquement par toi)
+                  </p>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Éléments techniques</p>
-                    <div className="divide-y rounded-xl px-3 py-1" style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.08)' }}>
-                      <TernaireSelector label="Sortie avion" value={form.sortie_avion} onChange={(v) => update('sortie_avion', v)} />
-                      <TernaireSelector label="Retour face sol" value={form.retour_face_sol} onChange={(v) => update('retour_face_sol', v)} />
-                      <TernaireSelector label="Vigilance altitude" value={form.vigilance_altitude} onChange={(v) => update('vigilance_altitude', v)} />
-                      <TernaireSelector label="Ouverture" value={form.ouverture_notes} onChange={(v) => update('ouverture_notes', v)} />
-                      <ProgTernaireSelector label="Séparation (groupe)" value={form.prog_separation} onChange={(v) => update('prog_separation', v)} tooltip="Qualité de la séparation des parachutistes en groupe" />
-                      <ProgTernaireSelector label="Trajectoire de chute" value={form.prog_trajectoire} onChange={(v) => update('prog_trajectoire', v)} tooltip="Stabilité et maîtrise de la trajectoire en chute libre" />
-                      <ProgTernaireSelector label="Déclenchement manuel" value={form.prog_declenchement} onChange={(v) => update('prog_declenchement', v)} tooltip="Précision et timing du déclenchement OA→OM" />
-                      <ProgTernaireSelector label="Pilotage sous voile" value={form.prog_pilotage_voile} onChange={(v) => update('prog_pilotage_voile', v)} tooltip="Contrôle et précision du pilotage sous voilure" />
-                      <ProgTernaireSelector label="Circuit d'atterrissage" value={form.prog_circuit_atterro} onChange={(v) => update('prog_circuit_atterro', v)} tooltip="Respect du circuit de sécurité d'atterrissage" />
-                      <ProgTernaireSelector label="Précision atterro" value={form.prog_precision_atterro} onChange={(v) => update('prog_precision_atterro', v)} tooltip="Précision et maîtrise lors de l'approche finale" />
-                      <ProgTernaireSelector label="Gestion urgences" value={form.prog_gestion_urgences} onChange={(v) => update('prog_gestion_urgences', v)} tooltip="Réaction face aux situations d'urgence simulées" />
-                    </div>
-                  </div>
-
-                  {/* Notation position 1-5 — Brevet PAC/A ou moniteur uniquement */}
-                  {showPositionCorps && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.4)' }}>Position en chute</p>
-                      {isPACOuA && !isMoniteur && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(59,130,246,0.2)', color: 'rgba(96,165,250,0.9)', border: '1px solid rgba(59,130,246,0.3)' }}>
-                          Rempli par votre moniteur
-                        </span>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <StarSelector label="Tête" icon="🧠" value={form.position_tete} onChange={(v) => update('position_tete', v)} labels={['Relevée/baissée', 'Instable', 'Correcte', 'Bonne', 'Parfaite']} />
-                      <StarSelector label="Bassin" icon="🫁" value={form.position_bassin} onChange={(v) => update('position_bassin', v)} labels={['Plat/creux', 'Instable', 'Correct', 'Bon', 'Parfait']} />
-                      <StarSelector label="Jambes" icon="🦵" value={form.position_jambes} onChange={(v) => update('position_jambes', v)} labels={['Fermées/croisées', 'Instables', 'Correctes', 'Bonnes', 'Parfaites']} />
-                      <StarSelector label="Bras" icon="💪" value={form.position_bras} onChange={(v) => update('position_bras', v)} labels={['Non placés', 'Instables', 'Corrects', 'Bons', 'Parfaits']} />
-                    </div>
-                    {posGlobale && (
-                      <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>Position globale :</span>
-                        <div className="flex gap-0.5">
-                          {[1,2,3,4,5].map((n) => (
-                            <span key={n} style={{ color: n <= posGlobale ? STAR_COLORS[posGlobale] : 'rgba(255,255,255,0.15)', fontSize: '14px' }}>★</span>
-                          ))}
-                        </div>
-                        <span className="text-xs font-medium" style={{ color: STAR_COLORS[posGlobale] }}>{STAR_LABELS[posGlobale]}</span>
-                      </div>
-                    )}
-                  </div>
-                  )}
-
-                  {/* Ouverture, Atterrissage, Mental */}
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Performances sous voile</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <StarSelector label="Ouverture voile" icon="🪂" value={form.note_ouverture_voile} onChange={(v) => update('note_ouverture_voile', v)} labels={['Brutale/giration','Irrégulière','Correcte','Bonne','Douce et droite']} />
-                      <StarSelector label="Atterrissage" icon="🎯" value={form.note_atterrissage} onChange={(v) => update('note_atterrissage', v)} labels={['Chute','Fessé','Roulé','Debout instable','Debout propre']} />
-                    </div>
-                    <div className="mt-2">
-                      <StarSelector label="Mental / Gestion" icon="🧠" value={form.note_mental} onChange={(v) => update('note_mental', v)} labels={['Panique','Stressé','Correct','Calme','Très calme et efficace']} />
-                    </div>
-                    <div className="mt-3">
-                      <label className="block text-xs font-medium mb-1" style={{color:'rgba(255,255,255,0.5)'}}>
-                        Précision atterrissage (mètres du cible)
-                      </label>
-                      <input type="number" min={0} max={500} value={form.precision_metres ?? ''}
-                        onChange={(e) => update('precision_metres', e.target.value ? parseInt(e.target.value) : null)}
-                        placeholder="Ex: 15"
-                        style={{...darkInput, width: '50%'}} />
-                    </div>
-                  </div>
-
-                  {/* Exercices */}
-                  <div className="grid grid-cols-1 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Exercice en chute</label>
-                      <ChipTextField
-                        value={form.exercice_chute}
-                        onChange={(v) => update('exercice_chute', v)}
-                        chips={['Arche stable','360° gauche','360° droite','Avancée','Reculée','Tonneau','Loop','Tracking','Docking','Lâché de mains']}
-                        placeholder="Exercices en chute libre…"
-                        rows={2}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Exercice sous voile</label>
-                      <ChipTextField
-                        value={form.exercice_voile}
-                        onChange={(v) => update('exercice_voile', v)}
-                        chips={['Virages 90°','Virages 180°','Virages 360°','Posé précision','Spiral','Voile contact','Navigation vent fort','Simulation urgence']}
-                        placeholder="Exercices sous voile…"
-                        rows={2}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Observations libres */}
-                  <div>
-                    <label className="block text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Observations libres du moniteur</label>
-                    <textarea value={form.observations_moniteur} onChange={(e) => update('observations_moniteur', e.target.value)}
-                      rows={2} style={{ ...darkInput, resize: 'none' }} placeholder="Commentaires libres…" />
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Note globale</p>
+                    <GlobalRating value={form.note_globale} onChange={(v) => update('note_globale', v)} />
                   </div>
                 </div>
               )}
