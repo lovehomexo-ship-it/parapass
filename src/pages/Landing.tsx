@@ -499,16 +499,16 @@ export function LandingPage() {
 
         {/* ─── NAVBAR ─── */}
         <nav className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between" style={{ minHeight: '64px' }}>
-          <Link to="/" className="no-underline flex items-center">
-            <ParaPassLogo />
+          <Link to="/" className="no-underline flex items-center flex-shrink-0">
+            <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-8 sm:h-10 w-auto object-contain" />
           </Link>
-          <div className="flex items-center gap-3">
-            <Link to="/login" className="text-white/80 hover:text-white text-sm font-medium no-underline transition-colors">
+          <div className="flex items-center gap-2 sm:gap-3 ml-3">
+            <Link to="/login" className="text-white/80 hover:text-white text-sm font-medium no-underline transition-colors whitespace-nowrap">
               Se connecter
             </Link>
             <Link
               to="/register"
-              className="text-white text-sm font-semibold px-4 py-2 rounded-lg no-underline transition-all"
+              className="text-white text-xs sm:text-sm font-semibold px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg no-underline transition-all whitespace-nowrap"
               style={{ background: '#2563EB' }}
             >
               Créer un compte
