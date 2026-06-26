@@ -14,11 +14,12 @@ import {
   AlertTriangle, CheckCircle, Clock, ChevronRight, Plus,
   Search, Filter, Eye, Trash2, UserCheck, UserX, Mail,
   Download, Upload, Hash, TrendingUp, MapPin, Send, Zap, Key, Check, Sun, Moon,
-  GraduationCap, MoreVertical, UserMinus, Euro,
+  GraduationCap, MoreVertical, UserMinus, Euro, BookCheck,
 } from 'lucide-react';
 import { PlanningCentre } from './PlanningCentre';
 import { GestionPliage } from './centre/GestionPliage';
 import { FinancesSection } from './centre/FinancesSection';
+import { ValidationsCarnet } from './centre/ValidationsCarnet';
 
 void Calendar; void Upload; void Hash; void TrendingUp; void MapPin;
 void Download; void Filter; void Plus; void Trash2; void Zap;
@@ -2876,6 +2877,7 @@ export function CentreDashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notifCount, setNotifCount] = useState(0);
+  const [carnetsEnAttente, setCarnetsEnAttente] = useState(0);
   const [drawerLicencie, setDrawerLicencie] = useState<LicencieSummary | null>(null);
   const [drawerInitialTab, setDrawerInitialTab] = useState<'carte' | 'sauts' | 'messages' | 'actions'>('carte');
   const { totalUnread: msgUnread } = useConversations(profile?.id);
@@ -2951,6 +2953,15 @@ export function CentreDashboardPage() {
         sautsAujourdhui: sautsToday,
         alertes: 0,
       });
+
+      // Carnets en attente de validation
+      const { count: carnetCount } = await supabase
+        .from('licencies_centres')
+        .select('*', { count: 'exact', head: true })
+        .eq('centre_id', resolvedCentreId)
+        .eq('statut', 'actif')
+        .eq('carnet_statut', 'en_attente');
+      setCarnetsEnAttente(carnetCount ?? 0);
     }
     setLoading(false);
   }, [profile]);
@@ -2983,6 +2994,7 @@ export function CentreDashboardPage() {
     { key: 'equipe', label: 'Mon équipe', icon: Shield },
     { key: 'centre', label: 'Mon centre', icon: Settings },
     { key: 'messages', label: 'Messages', icon: MessageSquare, badge: msgUnread },
+    { key: 'validations', label: 'Validations carnet', icon: BookCheck, badge: carnetsEnAttente > 0 ? carnetsEnAttente : undefined },
     { key: 'finances', label: 'Finances', icon: Euro },
   ];
 
@@ -3205,6 +3217,9 @@ export function CentreDashboardPage() {
           )}
           {activeSection === 'messages' && profile && (
             <MessagesSection currentUserId={profile.id} />
+          )}
+          {activeSection === 'validations' && centreId && (
+            <ValidationsCarnet dzId={centreId} />
           )}
           {activeSection === 'finances' && centreId && (
             isProPlan

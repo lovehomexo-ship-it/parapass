@@ -6,7 +6,7 @@ import { Layout } from '../components/Layout';
 import { usePassport, uploadDocument, getSignedUrl } from '../lib/usePassport';
 import { TYPE_BREVET_LABELS, QUALIFICATION_LABELS } from '../lib/types';
 import type { Licence, Brevet, CertificatMedical, CentreLicencie, Qualification } from '../lib/types';
-import { User, FileText, Shield, Award, Building2, CreditCard as Edit3, Plus, Trash2, ChevronDown, ChevronUp, Check, X, Upload, ExternalLink, AlertTriangle, AlertOctagon, BookOpen, BookMarked } from 'lucide-react';
+import { User, FileText, Shield, Award, Building2, CreditCard as Edit3, Plus, Trash2, ChevronDown, ChevronUp, Check, X, Upload, ExternalLink, AlertTriangle, AlertOctagon, BookOpen, BookMarked, Bell } from 'lucide-react';
 import { ContactsUrgenceTab, InterdictionsTab } from './PasseportSecurite';
 import { IncidentsTab } from './PasseportIncidents';
 import { BrevetsModulesTab } from './PasseportBrevets';
@@ -105,7 +105,7 @@ export function PasseportPage() {
 
         {/* Licence */}
         {tab === 'licence' && (
-          <LicenceTab licences={licences} userId={user?.id} onRefresh={refresh} saving={saving} setSaving={setSaving} />
+          <LicenceTab licences={licences} userId={user?.id} centresLicencies={centresLicencies} onRefresh={refresh} saving={saving} setSaving={setSaving} />
         )}
 
         {/* Médical */}
@@ -473,17 +473,111 @@ function Accordion({ title, children, defaultOpen = false }: { title: string; ch
   );
 }
 
-function LicenceTab({ licences, userId, onRefresh, saving, setSaving }: {
+// ─── Statut validation DZ (lecture seule) ──────────────────────────────────────
+
+function ValidationDZStatus({ activeLicencie, userId }: { activeLicencie: CentreLicencie | undefined; userId?: string }) {
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const demanderValidation = async () => {
+    if (!userId || !activeLicencie) return;
+    setSending(true);
+    // Trouver l'admin du centre pour lui envoyer une notification
+    const { data: admins } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('centre_id', activeLicencie.centre_id)
+      .eq('role', 'admin_centre')
+      .limit(1);
+    if (admins && admins.length > 0) {
+      await supabase.from('notifications').insert({
+        user_id: admins[0].id,
+        titre: 'Demande de validation carnet',
+        message: 'Un parachutiste demande la validation de son carnet.',
+        type: 'info',
+        lu: false,
+      });
+    }
+    // Marquer la demande en attente (idempotent)
+    await supabase.from('licencies_centres')
+      .update({ carnet_statut: 'en_attente' })
+      .eq('id', activeLicencie.id);
+    setSending(false);
+    setSent(true);
+    setTimeout(() => setSent(false), 4000);
+  };
+
+  if (!activeLicencie) {
+    return (
+      <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <p className="text-sm font-semibold text-white mb-1">Validation DZ</p>
+        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Aucune DZ active associée.</p>
+      </div>
+    );
+  }
+
+  const { carnet_statut, carnet_valide_par, carnet_date_validation, carnet_motif_refus } = activeLicencie;
+
+  return (
+    <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <p className="text-sm font-semibold text-white mb-3">Validation officielle DZ</p>
+      <div className="flex items-center gap-2 mb-3">
+        {carnet_statut === 'valide' && (
+          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-green-400">
+            <Check className="w-4 h-4" />
+            {carnet_valide_par ? `Validé par ${carnet_valide_par}` : 'Validé par la DZ'}
+            {carnet_date_validation && (
+              <span className="text-xs font-normal text-green-300/70">
+                — le {new Date(carnet_date_validation).toLocaleDateString('fr-FR')}
+              </span>
+            )}
+          </span>
+        )}
+        {carnet_statut === 'refuse' && (
+          <div>
+            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-red-400">
+              <X className="w-4 h-4" /> Validation refusée par la DZ
+            </span>
+            {carnet_motif_refus && (
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Motif : {carnet_motif_refus}</p>
+            )}
+          </div>
+        )}
+        {carnet_statut === 'en_attente' && (
+          <span className="inline-flex items-center gap-1.5 text-sm text-amber-400">
+            <AlertTriangle className="w-4 h-4" /> En attente de validation DZ
+          </span>
+        )}
+      </div>
+      {carnet_statut !== 'valide' && (
+        <button
+          onClick={demanderValidation}
+          disabled={sending || sent}
+          className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition disabled:opacity-60"
+          style={{ background: 'rgba(59,130,246,0.15)', color: '#60A5FA', border: '1px solid rgba(59,130,246,0.3)' }}
+        >
+          <Bell className="w-3.5 h-3.5" />
+          {sent ? 'Demande envoyée ✓' : sending ? 'Envoi…' : 'Demander la validation à ma DZ'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── LicenceTab ─────────────────────────────────────────────────────────────────
+
+function LicenceTab({ licences, userId, centresLicencies, onRefresh, saving, setSaving }: {
   licences: Licence[];
   userId?: string;
+  centresLicencies: CentreLicencie[];
   onRefresh: () => void;
   saving: boolean;
   setSaving: (v: boolean) => void;
 }) {
+  const activeLicencie = centresLicencies.find(c => c.statut === 'actif');
   const [form, setForm] = useState<LicenceForm>(emptyLicenceForm);
   const [editing, setEditing] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const tampFileRef = useRef<HTMLInputElement>(null);
 
   const set = (patch: Partial<LicenceForm>) => setForm((f) => ({ ...f, ...patch }));
 
@@ -510,20 +604,6 @@ function LicenceTab({ licences, userId, onRefresh, saving, setSaving }: {
     });
     setEditing(l.id);
     setShowForm(true);
-  };
-
-  const handleTampFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!userId || !e.target.files?.[0]) return;
-    const path = await uploadDocument(userId, e.target.files[0], 'tampons');
-    if (path) set({ tampon_dz_url: path });
-  };
-
-  const handleSignature = async (dataUrl: string | null) => {
-    if (!userId || !dataUrl) { set({ tampon_signature_url: null }); return; }
-    const blob = await fetch(dataUrl).then((r) => r.blob());
-    const file = new File([blob], 'signature.png', { type: 'image/png' });
-    const path = await uploadDocument(userId, file, 'signatures');
-    set({ tampon_signature_url: path ?? null });
   };
 
   const save = async () => {
@@ -577,6 +657,12 @@ function LicenceTab({ licences, userId, onRefresh, saving, setSaving }: {
     if (statut === 'valide') return <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">✓ Tampon DZ validé</span>;
     if (statut === 'refuse') return <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">✗ Validation refusée</span>;
     return <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">En attente de validation</span>;
+  };
+
+  const carnetStatutBadge = (statut: string) => {
+    if (statut === 'valide') return <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">✓ Carnet validé DZ</span>;
+    if (statut === 'refuse') return <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">✗ Carnet refusé</span>;
+    return <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Carnet en attente DZ</span>;
   };
 
   return (
@@ -691,53 +777,8 @@ function LicenceTab({ licences, userId, onRefresh, saving, setSaving }: {
             </div>
           </Accordion>
 
-          {/* DZ validation accordion */}
-          <Accordion title="Tampon & Validation officielle DZ">
-            <div className="grid grid-cols-2 gap-3">
-              <FormRow label="Validé par (DT / responsable DZ)">
-                <input className={inputCls} value={form.tampon_valide_par} onChange={(e) => set({ tampon_valide_par: e.target.value })} />
-              </FormRow>
-              <FormRow label="Date de validation">
-                <input type="date" className={inputCls} value={form.tampon_date_validation} onChange={(e) => set({ tampon_date_validation: e.target.value })} />
-              </FormRow>
-              <div className="col-span-2">
-                <FormRow label="Statut de validation">
-                  <select className={selectCls} value={form.tampon_statut} onChange={(e) => set({ tampon_statut: e.target.value as LicenceForm['tampon_statut'] })}>
-                    <option value="en_attente">En attente</option>
-                    <option value="valide">Validé par DZ</option>
-                    <option value="refuse">Refusé</option>
-                  </select>
-                </FormRow>
-              </div>
-              <div className="col-span-2">
-                <FormRow label="Scan du tampon DZ (PDF/image)">
-                  <div className="flex items-center gap-2">
-                    <button type="button" onClick={() => tampFileRef.current?.click()}
-                      className="flex items-center gap-1 border border-gray-300 bg-white text-gray-700 px-3 py-1.5 rounded-lg text-sm">
-                      <Upload className="w-4 h-4" /> Téléverser
-                    </button>
-                    {form.tampon_dz_url && (
-                      <button type="button" onClick={() => viewDoc(form.tampon_dz_url!)}
-                        className="flex items-center gap-1 text-blue-500 text-xs">
-                        <ExternalLink className="w-3 h-3" /> Voir le fichier
-                      </button>
-                    )}
-                    <input type="file" ref={tampFileRef} className="hidden" accept=".pdf,image/*" onChange={handleTampFile} />
-                  </div>
-                </FormRow>
-              </div>
-            </div>
-
-            <div className="mt-2">
-              <FormRow label="Signature numérique (moniteur / DT)">
-                <p className="text-xs text-gray-400 mb-2">Signez avec le doigt (mobile) ou la souris (desktop)</p>
-                <SignatureCanvas
-                  value={form.tampon_signature_url}
-                  onChange={handleSignature}
-                />
-              </FormRow>
-            </div>
-          </Accordion>
+          {/* DZ validation — lecture seule, géré côté DZ */}
+          <ValidationDZStatus activeLicencie={activeLicencie} userId={userId} />
 
           <div className="flex gap-2 pt-1">
             <button onClick={save} disabled={saving} className="flex items-center gap-1 bg-[#001A4D] text-white px-4 py-2 rounded-lg text-sm font-medium">
@@ -773,7 +814,7 @@ function LicenceTab({ licences, userId, onRefresh, saving, setSaving }: {
                   l.statut === 'actif' ? 'bg-green-500/30 text-green-300' :
                   l.statut === 'expire' ? 'bg-red-500/30 text-red-300' : 'bg-amber-500/30 text-amber-300'
                 }`}>{l.statut}</span>
-                {tampStatutBadge(l.tampon_statut)}
+                {activeLicencie ? carnetStatutBadge(activeLicencie.carnet_statut) : tampStatutBadge(l.tampon_statut)}
                 {(l.assurance_individuelle && l.assurance_rc) ? (
                   <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-500/30 text-green-300">✓ Assuré</span>
                 ) : (

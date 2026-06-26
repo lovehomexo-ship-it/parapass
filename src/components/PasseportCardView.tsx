@@ -292,17 +292,16 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
                 <span style={{ fontSize: 10, background: 'rgba(239,68,68,0.18)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.3)', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>✗ Non assuré</span>
               )
             )}
-            {licence?.tampon_statut === 'valide' && (
+            {carnetValide ? (
               <div className="flex items-center gap-1">
                 {tamponConfig && (
-                  <TamponDZ config={{ ...tamponConfig, rotation: -1.5, opacity: 0.9, dateValidation: licence.tampon_date_validation ?? undefined }} className="w-6 h-6" stampEffect />
+                  <TamponDZ config={{ ...tamponConfig, rotation: -1.5, opacity: 0.9, dateValidation: validationDzDate ?? undefined }} className="w-6 h-6" stampEffect />
                 )}
                 <span style={{ fontSize: 10, background: 'rgba(16,185,129,0.18)', color: '#6EE7B7', border: '1px solid rgba(16,185,129,0.3)', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>
-                  ✓ Validé par {licence.tampon_valide_par || 'DZ'}
+                  ✓ Validé par {validateurNom || 'DZ'}
                 </span>
               </div>
-            )}
-            {licence && licence.tampon_statut !== 'valide' && (
+            ) : (
               <span style={{ fontSize: 10, background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: 20 }}>Non validé</span>
             )}
           </div>
@@ -326,31 +325,38 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
 // ─── Verso card ─────────────────────────────────────────────────────────────────
 
 function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isOwner: boolean }) {
-  const { profile, licences, qrToken, centre, tamponConfig, dernierSautValide } = data;
+  const { profile, licences, centresLicencies, qrToken, centre, tamponConfig, dernierSautValide } = data;
   const licence = licences[0];
+  const activeLicencie = centresLicencies.find(c => c.statut === 'actif');
 
   const numeroLicence = licence?.numero_licence || profile.numero_licence || null;
   const nomCentre = centre?.tampon_nom_officiel || centre?.nom || 'CENTRE';
-  const nomDT = licence?.tampon_valide_par || centre?.nom_dt || 'DIRECTEUR TECHNIQUE';
+  const nomDT = activeLicencie?.carnet_valide_par || licence?.tampon_valide_par || centre?.nom_dt || 'DIRECTEUR TECHNIQUE';
   const couleurCachet = centre?.tampon_couleur_primaire || '#1D4ED8';
 
-  const signatureDtUrl = centre?.signature_dt_url
-    ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/parapass-docs/${centre.signature_dt_url}`
-    : null;
+  const signatureDtUrl = activeLicencie?.carnet_signature_url
+    ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/parapass-docs/${activeLicencie.carnet_signature_url}`
+    : centre?.signature_dt_url
+      ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/parapass-docs/${centre.signature_dt_url}`
+      : null;
   const logoUrl = centre?.logo_url
     ? (centre.logo_url.startsWith('/') || centre.logo_url.startsWith('http') ? centre.logo_url : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/centre-logos/${centre.logo_url}`)
     : null;
 
-  // "Validé par" — prefer tampon data, fallback to last validated saut
-  const validateurNom = licence?.tampon_valide_par
+  // "Validé par" — prefer carnet DZ data, fallback to tampon then last saut
+  const validateurNom = activeLicencie?.carnet_valide_par
+    || licence?.tampon_valide_par
     || dernierSautValide?.valide_par
     || centre?.nom_dt
     || null;
 
-  // "Validation DZ" date — prefer tampon, fallback to last saut valide_le
-  const validationDzDate = licence?.tampon_date_validation
+  // "Validation DZ" date — prefer carnet DZ, fallback to tampon then last saut valide_le
+  const validationDzDate = activeLicencie?.carnet_date_validation
+    || licence?.tampon_date_validation
     || dernierSautValide?.valide_le
     || null;
+
+  const carnetValide = activeLicencie?.carnet_statut === 'valide' || licence?.tampon_statut === 'valide';
 
   return (
     <div
@@ -692,6 +698,8 @@ function ValiditySummary({ data }: { data: PasseportData }) {
   const medStatus = getStatus(certif?.date_expiration);
   const licDays = daysLeft(licence?.date_expiration);
   const medDays = daysLeft(certif?.date_expiration);
+  const activeLicencie = data.centresLicencies.find(c => c.statut === 'actif');
+  const carnetValide = activeLicencie?.carnet_statut === 'valide' || licence?.tampon_statut === 'valide';
 
   return (
     <div className="bg-gray-50 rounded-xl p-4 space-y-3 border border-gray-100">
@@ -721,7 +729,7 @@ function ValiditySummary({ data }: { data: PasseportData }) {
         </div>
         <div className="flex items-center justify-between gap-2">
           <span className="text-sm text-gray-700">Validation DZ</span>
-          <StatusPill status={licence?.tampon_statut === 'valide' ? 'valide' : 'manquant'} days={null} />
+          <StatusPill status={carnetValide ? 'valide' : 'manquant'} days={null} />
         </div>
       </div>
       <p className="text-[10px] text-gray-400 text-right">

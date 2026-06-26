@@ -163,6 +163,12 @@ export interface CentreLicencie {
   date_adhesion: string;
   statut: 'actif' | 'inactif';
   numero_adhesion: string | null;
+  carnet_statut: 'en_attente' | 'valide' | 'refuse';
+  carnet_valide_par: string | null;
+  carnet_date_validation: string | null;
+  carnet_signature_url: string | null;
+  carnet_tampon_url: string | null;
+  carnet_motif_refus: string | null;
   centre?: Centre;
 }
 
