@@ -190,7 +190,7 @@ export function DashboardPage() {
     if (tab && ['accueil', 'carnet', 'planning'].includes(tab)) {
       setActiveTab(tab);
     }
-    if (action === 'add-jump') {
+    if (action === 'add-jump' && !isDemoReadonly) {
       setModalOpen(true);
       // Clean up URL without triggering a re-render loop
       navigate('/dashboard', { replace: true });
@@ -281,6 +281,7 @@ export function DashboardPage() {
   };
 
   const openEdit = (saut: Saut) => {
+    if (isDemoReadonly) return;
     setSautAEditer(saut);
     setModalOpen(true);
   };
@@ -502,7 +503,7 @@ export function DashboardPage() {
                         </span>
                         {!item.done && (
                           <button
-                            onClick={() => item.to ? navigate(item.to) : setModalOpen(true)}
+                            onClick={() => item.to ? navigate(item.to) : (!isDemoReadonly && setModalOpen(true))}
                             className="text-xs font-medium transition-colors"
                             style={{ color: '#60A5FA' }}
                             onMouseEnter={(e) => (e.currentTarget.style.color = '#93C5FD')}
