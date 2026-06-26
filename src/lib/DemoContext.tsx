@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Zap, X } from 'lucide-react';
 import { supabase } from './supabase';
@@ -116,14 +116,19 @@ const ToastContext = createContext<ToastContextType | null>(null);
 
 export function DemoToastProvider({ children }: { children: ReactNode }) {
   const [visible, setVisible] = useState(false);
-  const [timer, setTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const showDemoToast = () => {
+  const showDemoToast = useCallback(() => {
     setVisible(true);
-    if (timer) clearTimeout(timer);
-    const t = setTimeout(() => setVisible(false), 3000);
-    setTimer(t);
-  };
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setVisible(false), 3000);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => showDemoToast();
+    window.addEventListener('demo:blocked', handler);
+    return () => window.removeEventListener('demo:blocked', handler);
+  }, [showDemoToast]);
 
   return (
     <ToastContext.Provider value={{ showDemoToast }}>
@@ -138,7 +143,7 @@ export function DemoToastProvider({ children }: { children: ReactNode }) {
           }}
         >
           <Zap className="w-4 h-4 flex-shrink-0" />
-          Action désactivée en mode démo — créez un compte pour sauvegarder
+          Mode démo — cette action n'est pas disponible
         </div>
       )}
       <style>{`

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import { useDemo } from '../lib/useDemo';
 import { Layout } from '../components/Layout';
 import { sendMessage, useConversationMessages, useConversations, getOrCreateConversation } from '../lib/useMessages';
 import type { Message, Conversation } from '../lib/useMessages';
@@ -44,6 +45,7 @@ function ChatArea({
   onBack: () => void;
 }) {
   const { messages, loading } = useConversationMessages(conversation.id, currentUserId);
+  const { blockIfDemo } = useDemo();
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
@@ -57,6 +59,7 @@ function ChatArea({
   }, [messages]);
 
   const handleSend = async () => {
+    if (blockIfDemo()) return;
     if (!input.trim()) return;
     setSending(true);
     try {

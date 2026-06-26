@@ -16,6 +16,7 @@ import { NATURE_SAUT_LABELS, CATEGORIE_LABELS, FONCTION_LABELS, STATUT_LABELS, B
 import { useAlertes } from '../lib/useAlertes';
 import { useBadges } from '../lib/useBadges';
 import { usePassport } from '../lib/usePassport';
+import { useDemo } from '../lib/useDemo';
 import {
   Plus, FileDown, QrCode, Calendar, TrendingUp,
   ChevronDown, ChevronUp, Trash2, X, ShieldCheck, Hash,
@@ -167,7 +168,8 @@ const RARETE_STYLES: Record<string, { border: string; glow: string; label: strin
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function DashboardPage() {
-  const { user, profile, isDemoReadonly } = useAuth();
+  const { user, profile } = useAuth();
+  const { isDemo, blockIfDemo } = useDemo();
   const [sauts, setSauts] = useState<Saut[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -190,7 +192,7 @@ export function DashboardPage() {
     if (tab && ['accueil', 'carnet', 'planning'].includes(tab)) {
       setActiveTab(tab);
     }
-    if (action === 'add-jump' && !isDemoReadonly) {
+    if (action === 'add-jump' && !blockIfDemo()) {
       setModalOpen(true);
       // Clean up URL without triggering a re-render loop
       navigate('/dashboard', { replace: true });
@@ -275,13 +277,14 @@ export function DashboardPage() {
   }, [user?.id, profile?.declaration_honneur_faite]);
 
   const handleDelete = async (id: string) => {
+    if (blockIfDemo()) return;
     if (!confirm('Supprimer ce saut ?')) return;
     await supabase.from('sauts').delete().eq('id', id);
     setSauts((s) => s.filter((sa) => sa.id !== id));
   };
 
   const openEdit = (saut: Saut) => {
-    if (isDemoReadonly) return;
+    if (blockIfDemo()) return;
     setSautAEditer(saut);
     setModalOpen(true);
   };
@@ -503,7 +506,7 @@ export function DashboardPage() {
                         </span>
                         {!item.done && (
                           <button
-                            onClick={() => item.to ? navigate(item.to) : (!isDemoReadonly && setModalOpen(true))}
+                            onClick={() => { if (item.to) navigate(item.to); else if (!blockIfDemo()) setModalOpen(true); }}
                             className="text-xs font-medium transition-colors"
                             style={{ color: '#60A5FA' }}
                             onMouseEnter={(e) => (e.currentTarget.style.color = '#93C5FD')}
@@ -584,15 +587,15 @@ export function DashboardPage() {
               {/* Action buttons */}
               <div className="mb-6">
                 <button
-                  onClick={() => { if (!isDemoReadonly) setModalOpen(true); }}
-                  disabled={isDemoReadonly}
-                  title={isDemoReadonly ? 'Non disponible en mode démo' : undefined}
+                  onClick={() => { if (!blockIfDemo()) setModalOpen(true); }}
+                  disabled={isDemo}
+                  title={isDemo ? 'Non disponible en mode démo' : undefined}
                   className="flex items-center justify-center gap-2 text-white px-5 rounded-lg text-sm font-bold transition-colors shadow-lg w-full md:w-auto"
                   style={{
                     height: 48,
-                    background: isDemoReadonly ? 'var(--c-muted)' : '#F97316',
-                    cursor: isDemoReadonly ? 'not-allowed' : 'pointer',
-                    opacity: isDemoReadonly ? 0.6 : 1,
+                    background: isDemo ? 'var(--c-muted)' : '#F97316',
+                    cursor: isDemo ? 'not-allowed' : 'pointer',
+                    opacity: isDemo ? 0.6 : 1,
                   }}
                 >
                   <Plus className="w-5 h-5" /> Ajouter un saut
@@ -608,15 +611,15 @@ export function DashboardPage() {
                     <QrCode className="w-4 h-4" /> Mon QR Code
                   </button>
                   <button
-                    onClick={() => { if (!isDemoReadonly) generatePDF(profile, sauts); }}
-                    disabled={sauts.length === 0 || isDemoReadonly}
-                    title={isDemoReadonly ? 'Non disponible en mode démo' : undefined}
+                    onClick={() => { if (!blockIfDemo()) generatePDF(profile, sauts); }}
+                    disabled={sauts.length === 0 || isDemo}
+                    title={isDemo ? 'Non disponible en mode démo' : undefined}
                     className="flex items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 flex-1 md:flex-none md:px-4 md:py-2.5"
                     style={{
                       height: 44, background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)',
-                      cursor: isDemoReadonly ? 'not-allowed' : 'pointer',
+                      cursor: isDemo ? 'not-allowed' : 'pointer',
                     }}
-                    onMouseEnter={(e) => { if (!isDemoReadonly) e.currentTarget.style.background = 'var(--c-hover)'; }}
+                    onMouseEnter={(e) => { if (!isDemo) e.currentTarget.style.background = 'var(--c-hover)'; }}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--c-surface)')}
                   >
                     <FileDown className="w-4 h-4" /> Exporter PDF
@@ -625,7 +628,7 @@ export function DashboardPage() {
               </div>
 
               {/* Ma Progression card */}
-              {!aDejaImporte && !isDemoReadonly && (
+              {!aDejaImporte && !isDemo && (
                 <BanniereOCR onClic={() => setShowOCR(true)} />
               )}
 
@@ -768,7 +771,7 @@ export function DashboardPage() {
                   <p className="text-xs mt-0.5" style={{ color: 'var(--c-muted)' }}>{totalSauts} sauts enregistrés</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  {!isDemoReadonly && (
+                  {!isDemo && (
                     <button
                       onClick={() => setShowOCR(true)}
                       className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
@@ -781,14 +784,14 @@ export function DashboardPage() {
                     </button>
                   )}
                   <button
-                    onClick={() => { if (!isDemoReadonly) setModalOpen(true); }}
-                    disabled={isDemoReadonly}
-                    title={isDemoReadonly ? 'Non disponible en mode démo' : undefined}
+                    onClick={() => { if (!blockIfDemo()) setModalOpen(true); }}
+                    disabled={isDemo}
+                    title={isDemo ? 'Non disponible en mode démo' : undefined}
                     className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
                     style={{
-                      background: isDemoReadonly ? 'var(--c-muted)' : '#F97316',
-                      cursor: isDemoReadonly ? 'not-allowed' : 'pointer',
-                      opacity: isDemoReadonly ? 0.6 : 1,
+                      background: isDemo ? 'var(--c-muted)' : '#F97316',
+                      cursor: isDemo ? 'not-allowed' : 'pointer',
+                      opacity: isDemo ? 0.6 : 1,
                     }}
                   >
                     <Plus className="w-4 h-4" /> Ajouter

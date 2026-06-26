@@ -15,7 +15,7 @@ import { useTheme } from '../lib/ThemeContext';
 import { DemoGate, getDemoAllowedRoutes } from './DemoGate';
 
 export function Layout({ children, noPadding = false }: { children: React.ReactNode; noPadding?: boolean }) {
-  const { user, profile, signOut, delegation, sautsEnAttente, isDemoAccount, isDemoReadonly } = useAuth();
+  const { user, profile, signOut, delegation, sautsEnAttente, isDemo, isDemoAccount, isDemoReadonly } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -83,12 +83,21 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
       {isDemoAccount && !isDemoMode && (
         <DemoBanner isCentre={profile?.role === 'admin_centre'} />
       )}
-      {isDemoReadonly && (
+      {isDemo && !isDemoAccount && (
         <div
-          className="w-full flex items-center justify-center px-4 py-2 text-sm font-semibold text-white"
-          style={{ background: 'linear-gradient(90deg, #F97316 0%, #EA580C 100%)', minHeight: '40px' }}
+          className="w-full flex items-center justify-between gap-3 px-4 py-2.5"
+          style={{ background: 'linear-gradient(90deg, #F97316 0%, #EA580C 100%)', minHeight: '44px' }}
         >
-          👁 Mode démo — Navigation libre, actions désactivées
+          <span className="text-white text-sm font-semibold truncate">
+            👁 Mode démo · Lecture seule · Créez votre compte pour accéder à toutes les fonctionnalités
+          </span>
+          <Link
+            to="/register"
+            className="flex-shrink-0 bg-white text-orange-600 text-xs font-bold px-3 py-1.5 rounded-lg no-underline whitespace-nowrap transition-colors"
+            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
+          >
+            Créer mon compte
+          </Link>
         </div>
       )}
 

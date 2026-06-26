@@ -48,6 +48,7 @@ interface AuthContextType {
   loading: boolean;
   delegation: Delegation | null;
   sautsEnAttente: number;
+  isDemo: boolean;
   isDemoAccount: boolean;
   isDemoReadonly: boolean;
   signIn: (email: string, password: string) => Promise<void>;
@@ -315,6 +316,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider value={{
       user, profile, session, loading,
       delegation, sautsEnAttente,
+      isDemo: profile?.is_demo === true,
       isDemoAccount: profile?.is_demo === true && !(profile?.preferences as Record<string, unknown> | null)?.demo_readonly,
       isDemoReadonly: profile?.is_demo === true && (profile?.preferences as Record<string, unknown> | null)?.demo_readonly === true,
       signIn, signUp, signOut, refreshDelegation, refreshProfile,

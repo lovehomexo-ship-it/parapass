@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../lib/auth';
+import { useDemo } from '../lib/useDemo';
 import { supabase } from '../lib/supabase';
 import { Layout } from '../components/Layout';
 import { uploadDocument, getSignedUrl } from '../lib/usePassport';
@@ -50,7 +51,8 @@ function ProgressStatus({ materiel, maintenances }: { materiel: Materiel; mainte
 }
 
 export function MaterielPage() {
-  const { user, isDemoReadonly } = useAuth();
+  const { user } = useAuth();
+  const { blockIfDemo } = useDemo();
   const [materiels, setMateriels] = useState<Materiel[]>([]);
   const [maintenancesMap, setMaintenancesMap] = useState<Record<string, Maintenance[]>>({});
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -96,7 +98,7 @@ export function MaterielPage() {
   useEffect(() => { load(); }, [user]);
 
   const saveMateriel = async () => {
-    if (!user || isDemoReadonly) return;
+    if (!user || blockIfDemo()) return;
     setSaving(true);
     const payload = {
       ...matForm,
@@ -118,13 +120,13 @@ export function MaterielPage() {
   };
 
   const deleteMateriel = async (id: string) => {
-    if (isDemoReadonly) return;
+    if (blockIfDemo()) return;
     await supabase.from('materiels').update({ statut: 'hors_service' }).eq('id', id);
     load();
   };
 
   const saveMaintenance = async (materielId: string) => {
-    if (!user || isDemoReadonly) return;
+    if (!user || blockIfDemo()) return;
     setSaving(true);
     await supabase.from('maintenances').insert({
       ...maintForm,
@@ -140,13 +142,13 @@ export function MaterielPage() {
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!user || !e.target.files?.[0] || isDemoReadonly) return;
+    if (!user || !e.target.files?.[0] || blockIfDemo()) return;
     const path = await uploadDocument(user.id, e.target.files[0], 'materiels');
     if (path) setMatForm((f) => ({ ...f, photo_url: path }));
   };
 
   const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!user || !e.target.files?.[0] || isDemoReadonly) return;
+    if (!user || !e.target.files?.[0] || blockIfDemo()) return;
     const path = await uploadDocument(user.id, e.target.files[0], 'maintenances');
     if (path) setMaintForm((f) => ({ ...f, document_url: path }));
   };

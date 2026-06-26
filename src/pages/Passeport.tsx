@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
+import { useDemo } from '../lib/useDemo';
 import { supabase } from '../lib/supabase';
 import { Layout } from '../components/Layout';
 import { usePassport, uploadDocument, getSignedUrl } from '../lib/usePassport';
@@ -30,12 +31,13 @@ const selectCls = inputCls;
 // ─── Main page ─────────────────────────────────────────────────────────────────
 
 export function PasseportPage() {
-  const { user, profile, isDemoReadonly } = useAuth();
+  const { user, profile } = useAuth();
+  const { isDemo } = useDemo();
   const { licences, brevets, certificats, centresLicencies, qualifications, modulesBrevets, contacts, incidents, interdictions, refresh } = usePassport(user?.id);
   const [tab, setTab] = useState<PassportTab>('carte');
   const [saving, setSaving] = useState(false);
 
-  const isMoniteurOrAdmin = (profile?.role === 'admin' || profile?.role === 'moniteur') && !isDemoReadonly;
+  const isMoniteurOrAdmin = (profile?.role === 'admin' || profile?.role === 'moniteur') && !isDemo;
 
   const tabs: { key: PassportTab; label: string; icon: React.ReactNode; badge?: number }[] = [
     { key: 'carte', label: 'Carte', icon: <User className="w-4 h-4" /> },

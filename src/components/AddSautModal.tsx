@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
+import { useDemo } from '../lib/useDemo';
 import { X, ChevronDown, ChevronUp, AlertTriangle, Check, Search, Info } from 'lucide-react';
 import { NATURE_SAUT_LABELS, CATEGORIE_LABELS, FONCTION_LABELS } from '../lib/types';
 import type { Saut, NotationTernaire } from '../lib/types';
@@ -590,7 +591,8 @@ function RechercheMoniteur({
 // ─── Main modal ───────────────────────────────────────────────────────────────
 
 export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, targetParachutisteId }: AddSautModalProps) {
-  const { user, profile, isDemoReadonly } = useAuth();
+  const { user, profile } = useAuth();
+  const { blockIfDemo } = useDemo();
   const isEditMode = !!sautAEditer;
   const isAdminMode = !!targetParachutisteId; // admin logging a jump for someone else
   const [loading, setLoading] = useState(false);
@@ -816,7 +818,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
   };
 
   const doInsert = async (validateDirectly: boolean) => {
-    if (isDemoReadonly) return;
+    if (blockIfDemo()) return;
     const errors = validate();
     if (Object.keys(errors).length > 0) { setFieldErrors(errors); return; }
     setLoading(true);

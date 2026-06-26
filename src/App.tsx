@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/auth';
 import { AlertesProvider } from './lib/AlertesContext';
-import { GlobalDemoProvider } from './lib/DemoContext';
+import { GlobalDemoProvider, DemoToastProvider } from './lib/DemoContext';
 import { ThemeProvider } from './lib/ThemeContext';
 import { CompleteProfileModal, isProfileIncomplete } from './components/CompleteProfileModal';
 import { LandingPage } from './pages/Landing';
@@ -69,6 +69,7 @@ function App() {
     <BrowserRouter>
       <GlobalDemoProvider>
       <AuthProvider>
+        <DemoToastProvider>
         <ThemeProvider>
         <AlertesProvider>
         <ProfileGate>
@@ -116,6 +117,7 @@ function App() {
         </ProfileGate>
         </AlertesProvider>
         </ThemeProvider>
+        </DemoToastProvider>
       </AuthProvider>
       </GlobalDemoProvider>
     </BrowserRouter>

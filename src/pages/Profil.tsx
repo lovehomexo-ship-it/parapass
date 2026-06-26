@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth, isDelegationActive } from '../lib/auth';
+import { useDemo } from '../lib/useDemo';
 import { supabase } from '../lib/supabase';
 import { Layout } from '../components/Layout';
 import { Check, Upload, Globe, Users, Lock, Eye, Building2, Key, CheckCircle, AlertTriangle, Camera, PenLine, Trash2 } from 'lucide-react';
@@ -76,7 +77,8 @@ function DelegationSection() {
 }
 
 export function ProfilPage() {
-  const { user, profile, isDemoReadonly } = useAuth();
+  const { user, profile } = useAuth();
+  const { blockIfDemo } = useDemo();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [signatureSaving, setSignatureSaving] = useState(false);
@@ -192,7 +194,7 @@ export function ProfilPage() {
   };
 
   const savePrivacy = async () => {
-    if (!user || isDemoReadonly) return;
+    if (!user || blockIfDemo()) return;
     setUsernameError('');
     // Validate username if changed
     if (privacy.username) {
@@ -242,7 +244,7 @@ export function ProfilPage() {
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!user || !e.target.files?.[0] || isDemoReadonly) return;
+    if (!user || !e.target.files?.[0] || blockIfDemo()) return;
     const file = e.target.files[0];
     setPhotoUploading(true);
     try {
@@ -278,7 +280,7 @@ export function ProfilPage() {
   }
 
   const saveSignature = useCallback(async () => {
-    if (!user || !canvasRef.current || isDemoReadonly) return;
+    if (!user || !canvasRef.current || blockIfDemo()) return;
     setSignatureSaving(true);
     try {
       const blob = await new Promise<Blob>((resolve) => canvasRef.current!.toBlob((b) => resolve(b!), 'image/png'));
@@ -344,7 +346,7 @@ export function ProfilPage() {
   }, []);
 
   const save = async () => {
-    if (!user || isDemoReadonly) return;
+    if (!user || blockIfDemo()) return;
     setSaving(true);
     await supabase.from('profiles').update({
       nom: form.nom,

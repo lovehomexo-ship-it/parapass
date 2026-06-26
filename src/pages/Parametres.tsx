@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import { useDemo } from '../lib/useDemo';
 import { useTheme } from '../lib/ThemeContext';
 import { supabase } from '../lib/supabase';
 import { Layout } from '../components/Layout';
@@ -50,7 +51,8 @@ function ToggleRow({ label, checked, onChange }: { label: string; checked: boole
 }
 
 export function ParametresPage() {
-  const { user, profile, isDemoReadonly } = useAuth();
+  const { user, profile } = useAuth();
+  const { blockIfDemo } = useDemo();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
@@ -86,14 +88,14 @@ export function ParametresPage() {
   }, [user]);
 
   const regenerateToken = async () => {
-    if (!user || isDemoReadonly) return;
+    if (!user || blockIfDemo()) return;
     await supabase.from('qr_tokens').delete().eq('parachutiste_id', user.id);
     const { data } = await supabase.from('qr_tokens').insert({ parachutiste_id: user.id }).select('token').single();
     if (data) setToken(data.token);
   };
 
   const saveNotifPref = async (key: string, val: boolean) => {
-    if (!user || isDemoReadonly) return;
+    if (!user || blockIfDemo()) return;
     setSavingNotif(true);
     await supabase.from('profiles').update({
       preferences: { ...(prefs ?? {}), [key]: val },
