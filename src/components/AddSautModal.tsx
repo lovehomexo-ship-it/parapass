@@ -1320,20 +1320,21 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
               </div>
             )}
 
-            {/* ── Auto-évaluation du saut ── */}
+            {/* ── Auto-évaluation — mes impressions sur ce saut ── */}
             <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.12)' }}>
               <button type="button" onClick={() => setShowObs((o) => !o)}
-                className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold transition-colors"
+                className="w-full flex items-center justify-between px-4 py-3 transition-colors"
                 style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.8)' }}>
-                <span>Auto-évaluation du saut</span>
-                {showObs ? <ChevronUp className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.4)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.4)' }} />}
+                <span className="text-left">
+                  <span className="block text-sm font-semibold">Auto-évaluation — mes impressions sur ce saut</span>
+                  <span className="block text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Visible uniquement par toi</span>
+                </span>
+                {showObs ? <ChevronUp className="w-4 h-4 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }} /> : <ChevronDown className="w-4 h-4 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }} />}
               </button>
 
               {showObs && (
                 <div className="p-4 space-y-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    Tes impressions personnelles sur ce saut (visible uniquement par toi)
-                  </p>
+
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Note globale</p>
                     <GlobalRating value={form.note_globale} onChange={(v) => update('note_globale', v)} />
