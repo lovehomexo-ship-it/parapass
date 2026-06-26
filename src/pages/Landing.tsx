@@ -498,9 +498,9 @@ export function LandingPage() {
         <Particles />
 
         {/* ─── NAVBAR ─── */}
-        <nav className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between" style={{ minHeight: '64px' }}>
+        <nav className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between py-3 sm:py-4">
           <Link to="/" className="no-underline flex items-center flex-shrink-0">
-            <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-10 w-auto object-contain" />
+            <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-16 sm:h-20 w-auto object-contain" />
           </Link>
           <div className="flex items-center gap-2 sm:gap-3 ml-3">
             <Link to="/login" className="text-white/80 hover:text-white text-sm font-medium no-underline transition-colors whitespace-nowrap">
