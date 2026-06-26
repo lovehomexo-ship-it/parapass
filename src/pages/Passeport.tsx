@@ -30,12 +30,12 @@ const selectCls = inputCls;
 // ─── Main page ─────────────────────────────────────────────────────────────────
 
 export function PasseportPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, isDemoReadonly } = useAuth();
   const { licences, brevets, certificats, centresLicencies, qualifications, modulesBrevets, contacts, incidents, interdictions, refresh } = usePassport(user?.id);
   const [tab, setTab] = useState<PassportTab>('carte');
   const [saving, setSaving] = useState(false);
 
-  const isMoniteurOrAdmin = profile?.role === 'admin' || profile?.role === 'moniteur';
+  const isMoniteurOrAdmin = (profile?.role === 'admin' || profile?.role === 'moniteur') && !isDemoReadonly;
 
   const tabs: { key: PassportTab; label: string; icon: React.ReactNode; badge?: number }[] = [
     { key: 'carte', label: 'Carte', icon: <User className="w-4 h-4" /> },

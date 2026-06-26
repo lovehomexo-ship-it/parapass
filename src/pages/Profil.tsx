@@ -76,7 +76,7 @@ function DelegationSection() {
 }
 
 export function ProfilPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, isDemoReadonly } = useAuth();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [signatureSaving, setSignatureSaving] = useState(false);
@@ -192,7 +192,7 @@ export function ProfilPage() {
   };
 
   const savePrivacy = async () => {
-    if (!user) return;
+    if (!user || isDemoReadonly) return;
     setUsernameError('');
     // Validate username if changed
     if (privacy.username) {
@@ -242,7 +242,7 @@ export function ProfilPage() {
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!user || !e.target.files?.[0]) return;
+    if (!user || !e.target.files?.[0] || isDemoReadonly) return;
     const file = e.target.files[0];
     setPhotoUploading(true);
     try {
@@ -278,7 +278,7 @@ export function ProfilPage() {
   }
 
   const saveSignature = useCallback(async () => {
-    if (!user || !canvasRef.current) return;
+    if (!user || !canvasRef.current || isDemoReadonly) return;
     setSignatureSaving(true);
     try {
       const blob = await new Promise<Blob>((resolve) => canvasRef.current!.toBlob((b) => resolve(b!), 'image/png'));
@@ -344,7 +344,7 @@ export function ProfilPage() {
   }, []);
 
   const save = async () => {
-    if (!user) return;
+    if (!user || isDemoReadonly) return;
     setSaving(true);
     await supabase.from('profiles').update({
       nom: form.nom,

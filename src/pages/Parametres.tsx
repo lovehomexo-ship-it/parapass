@@ -50,7 +50,7 @@ function ToggleRow({ label, checked, onChange }: { label: string; checked: boole
 }
 
 export function ParametresPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, isDemoReadonly } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
@@ -86,14 +86,14 @@ export function ParametresPage() {
   }, [user]);
 
   const regenerateToken = async () => {
-    if (!user) return;
+    if (!user || isDemoReadonly) return;
     await supabase.from('qr_tokens').delete().eq('parachutiste_id', user.id);
     const { data } = await supabase.from('qr_tokens').insert({ parachutiste_id: user.id }).select('token').single();
     if (data) setToken(data.token);
   };
 
   const saveNotifPref = async (key: string, val: boolean) => {
-    if (!user) return;
+    if (!user || isDemoReadonly) return;
     setSavingNotif(true);
     await supabase.from('profiles').update({
       preferences: { ...(prefs ?? {}), [key]: val },
