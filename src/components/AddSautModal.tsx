@@ -824,10 +824,6 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
     setLoading(true);
 
     try {
-      if (!form.note_globale) {
-        setShowNoteToast(true);
-      }
-
       const envoiATous = moniteurSelectionne?.id === ENVOI_TOUS_ID;
       let moniteur_id: string | null = null;
       if (!validateDirectly && moniteurSelectionne && !envoiATous) {
@@ -1329,7 +1325,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
 
                   {/* 1 — Figures / exercices réalisés */}
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Figures / exercices réalisés</label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Figures / exercices réalisés <span className="normal-case font-normal opacity-60">(optionnel)</span></label>
                     <ChipTextField
                       value={form.exercice_chute}
                       onChange={(v) => update('exercice_chute', v)}
@@ -1341,7 +1337,10 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
 
                   {/* 2 — Mental / état d'esprit */}
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Mental / état d'esprit</label>
+                    <div className="flex items-baseline justify-between mb-2">
+                      <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.4)' }}>Mental / état d'esprit <span className="normal-case font-normal opacity-60">(optionnel)</span></label>
+                      <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>→ graphique Mental</span>
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       {([
                         { v: 5, label: 'Très confiant', color: '#34D399', bg: 'rgba(52,211,153,0.15)', border: 'rgba(52,211,153,0.4)' },
@@ -1364,7 +1363,10 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
 
                   {/* 3 — Qualité de l'ouverture */}
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Qualité de l'ouverture</label>
+                    <div className="flex items-baseline justify-between mb-2">
+                      <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.4)' }}>Qualité de l'ouverture <span className="normal-case font-normal opacity-60">(optionnel)</span></label>
+                      <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>→ graphique Ouverture voile</span>
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       {([
                         { v: 5, label: 'Excellente',      color: '#34D399', bg: 'rgba(52,211,153,0.15)', border: 'rgba(52,211,153,0.4)' },
@@ -1387,7 +1389,10 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
 
                   {/* 4 — Qualité de l'atterrissage */}
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Qualité de l'atterrissage</label>
+                    <div className="flex items-baseline justify-between mb-2">
+                      <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.4)' }}>Qualité de l'atterrissage <span className="normal-case font-normal opacity-60">(optionnel)</span></label>
+                      <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>→ graphique Atterrissage</span>
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       {([
                         { v: 5, label: 'Debout parfait', color: '#34D399', bg: 'rgba(52,211,153,0.15)', border: 'rgba(52,211,153,0.4)' },
@@ -1410,7 +1415,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
 
                   {/* 5 — Points à améliorer */}
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Points à améliorer</label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Points à améliorer <span className="normal-case font-normal opacity-60">(optionnel)</span></label>
                     <textarea value={form.observations_moniteur} onChange={(e) => update('observations_moniteur', e.target.value)}
                       rows={2} style={{ ...darkInput, resize: 'none' }}
                       placeholder="Ce que je veux travailler au prochain saut…" />
@@ -1418,16 +1423,26 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
 
                   {/* 6 — Impressions générales */}
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Impressions générales</label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Impressions générales <span className="normal-case font-normal opacity-60">(optionnel)</span></label>
                     <textarea value={form.observations} onChange={(e) => update('observations', e.target.value)}
                       rows={2} style={{ ...darkInput, resize: 'none' }}
                       placeholder="Ressenti global, anecdotes, conditions météo…" />
                   </div>
 
-                  {/* 7 — Note globale */}
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Note globale</label>
+                  {/* 7 — Note globale (obligatoire) */}
+                  <div className="rounded-xl p-3" style={{ background: 'rgba(249,115,22,0.06)', border: '1px solid rgba(249,115,22,0.2)' }}>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                        Note globale <span style={{ color: '#F87171' }}>*</span>
+                      </label>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(249,115,22,0.15)', color: '#FB923C', border: '1px solid rgba(249,115,22,0.3)' }}>
+                        Obligatoire
+                      </span>
+                    </div>
                     <GlobalRating value={form.note_globale} onChange={(v) => update('note_globale', v)} />
+                    <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                      Alimente la courbe "Note globale" dans Ma Progression
+                    </p>
                   </div>
 
                 </div>
@@ -1501,12 +1516,15 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                   style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.12)', height: 52 }}>
                   Annuler
                 </button>
-                <button type="submit" disabled={loading || (!isMoniteur && !moniteurSelectionne)}
+                <button type="submit"
+                  disabled={loading || (!isMoniteur && !moniteurSelectionne) || !form.note_globale}
                   className="flex-1 rounded-xl text-sm font-semibold transition-colors"
                   style={{
                     height: 52,
                     ...(loading
                       ? { background: 'rgba(245,158,11,0.4)', color: 'rgba(255,255,255,0.5)', cursor: 'not-allowed' }
+                      : !form.note_globale
+                      ? { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.3)', cursor: 'not-allowed', border: '1px solid rgba(255,255,255,0.1)' }
                       : (!isMoniteur && !moniteurSelectionne)
                       ? { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.3)', cursor: 'not-allowed' }
                       : moniteurSelectionne?.id === ENVOI_TOUS_ID
@@ -1515,6 +1533,8 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                   }}>
                   {loading
                     ? (isEditMode ? 'Modification...' : 'Ajout...')
+                    : !form.note_globale
+                    ? '★ Note globale obligatoire'
                     : isMoniteur
                     ? (isEditMode ? 'Modifier (sans signer)' : 'Ajouter (sans signer)')
                     : moniteurSelectionne?.id === ENVOI_TOUS_ID
