@@ -205,8 +205,6 @@ async function scanToutesPhotos(photos: PhotoItem[]): Promise<SautExtrait[]> {
   // Compress every image before encoding — prevents "Load failed" on large phone photos
   const base64List = await Promise.all(photos.map(p => compressToBase64(p.file)));
 
-  const images = base64List.map((data) => ({ data, media_type: 'image/jpeg' }));
-
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 60_000);
 
@@ -216,7 +214,7 @@ async function scanToutesPhotos(photos: PhotoItem[]): Promise<SautExtrait[]> {
       method: 'POST',
       signal: controller.signal,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ images, prompt: OCR_PROMPT }),
+      body: JSON.stringify({ images: base64List }),
     });
   } catch (err) {
     throw new Error(classifyFetchError(err));
@@ -230,8 +228,8 @@ async function scanToutesPhotos(photos: PhotoItem[]): Promise<SautExtrait[]> {
     throw new Error(classifyFetchError(new Error(`${res.status} ${msg}`)));
   }
 
-  const data = await res.json() as { content: Array<{ type: string; text?: string }> };
-  const texte = data.content.find(c => c.type === 'text')?.text ?? '[]';
+  const data = await res.json() as { result: string };
+  const texte = data.result ?? '[]';
 
   // Strip any accidental markdown fences
   const clean = texte.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
