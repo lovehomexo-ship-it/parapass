@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ParaPassLogo } from '../components/ParaPassLogo';
 
@@ -15,6 +15,7 @@ interface SacInfo {
 
 export function ScanPliagePage() {
   const { token } = useParams<{ token: string }>();
+  const navigate = useNavigate();
   const [sac, setSac] = useState<SacInfo | null>(null);
   const [statut, setStatut] = useState<'plieur_paye' | 'auto'>('plieur_paye');
   const [nomPlieur, setNomPlieur] = useState('');
@@ -88,6 +89,14 @@ export function ScanPliagePage() {
               Validé · {new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')}
+            className="mt-6 w-full py-3 rounded-xl text-sm font-semibold transition-all"
+            style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,0.12)' }}
+          >
+            ← Retour
+          </button>
         </div>
       </div>
     );
