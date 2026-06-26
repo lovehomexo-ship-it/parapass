@@ -129,6 +129,7 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
   const activeLicencie = centresLicencies.find(c => c.statut === 'actif');
   const carnetValide = activeLicencie?.carnet_statut === 'valide' || licence?.tampon_statut === 'valide';
   const validationDzDate = activeLicencie?.carnet_date_validation ?? null;
+  const validateurNom = activeLicencie?.carnet_valide_par || licence?.tampon_valide_par || null;
   const avatar = profile.avatar_url || profile.photo_profil_url;
 
   const getGlobalStatus = () => {
