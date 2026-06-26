@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { MaintenancePage } from './pages/MaintenancePage';
 import { AuthProvider, useAuth } from './lib/auth';
 import { AlertesProvider } from './lib/AlertesContext';
 import { GlobalDemoProvider, DemoToastProvider } from './lib/DemoContext';
@@ -65,6 +66,10 @@ function ProfileGate({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  if (import.meta.env.VITE_MAINTENANCE_MODE === 'true') {
+    return <MaintenancePage />;
+  }
+
   return (
     <BrowserRouter>
       <GlobalDemoProvider>
