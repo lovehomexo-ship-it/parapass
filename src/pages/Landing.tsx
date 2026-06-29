@@ -598,10 +598,10 @@ export function LandingPage() {
 
         {/* ─── HERO ─── */}
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-28 sm:pt-20 sm:pb-36">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-14">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
 
             {/* Left — text */}
-            <div className="lg:w-[55%] max-w-2xl">
+            <div className="max-w-2xl">
               {/* Trust badges */}
               <div className="flex flex-wrap gap-2.5 mb-8">
                 {[
@@ -657,11 +657,6 @@ export function LandingPage() {
                 Le premier carnet de sauts numérique certifié DGAC. Validé par vos moniteurs en temps réel, accessible partout, même sans connexion.
               </p>
 
-              {/* Mobile card — visible only on small screens */}
-              <div className="flex md:hidden justify-center mb-8">
-                <DemoPassportCard compact />
-              </div>
-
               {/* CTA buttons */}
               <div className="flex flex-col sm:flex-row gap-3 mb-8">
                 <Link
@@ -716,8 +711,8 @@ export function LandingPage() {
               </div>
             </div>
 
-            {/* Right — card */}
-            <div className="hidden md:flex lg:w-[45%] justify-center lg:justify-end">
+            {/* Right — card (always visible, grid handles layout) */}
+            <div className="flex justify-center">
               <div className="relative" style={{ padding: '48px 56px 48px 36px' }}>
 
                 {/* Badge — top left: Certifié DGAC */}
