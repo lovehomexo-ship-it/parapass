@@ -252,16 +252,16 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter }: BandeauProp
   const [detailOuvert, setDetailOuvert] = useState(false);
   const navigate = useNavigate();
 
-  const alertesVisibles = alertes
-    .filter((a) => !acquittees.includes(a.id))
-    .map(enrichirAlerte);
+  const toutesEnrichies = alertes.map(enrichirAlerte);
+  // Critiques jamais masquables par acquittement — elles bloquent le saut
+  const critiquesPermanentes = toutesEnrichies.filter((a) => a.urgence === 'critique');
+  const alertesVisibles = toutesEnrichies.filter((a) => !acquittees.includes(a.id));
 
-  const nbCritiques = alertesVisibles.filter((a) => a.urgence === 'critique').length;
+  const nbCritiques = critiquesPermanentes.length;
   const nbAttention = alertesVisibles.filter((a) => a.urgence === 'attention').length;
-  const statutGlobal = nbCritiques === 0 ? 'autorise' : 'non_autorise';
 
-  // All acquitted + no alertes at all → show green "tout OK"
-  if (alertesVisibles.length === 0) {
+  // Bandeau vert uniquement si AUCUNE alerte critique (même acquittée)
+  if (nbCritiques === 0 && alertesVisibles.length === 0) {
     if (alertes.length === 0) return null;
     return (
       <div
@@ -274,6 +274,11 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter }: BandeauProp
       </div>
     );
   }
+
+  // Si critiques acquittées mais toujours présentes → forcer affichage rouge
+  const alertesPourAffichage = nbCritiques > 0 && alertesVisibles.length === 0
+    ? critiquesPermanentes
+    : alertesVisibles;
 
   const couleur = nbCritiques > 0 ? '#DC2626' : '#D97706';
 
@@ -301,7 +306,7 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter }: BandeauProp
 
           {/* Résumé tags — masqués sur mobile */}
           <div className="hidden sm:flex gap-1.5 flex-wrap min-w-0 overflow-hidden">
-            {alertesVisibles.slice(0, 3).map((a) => (
+            {alertesPourAffichage.slice(0, 3).map((a) => (
               <span
                 key={a.id}
                 className="text-white text-[11px] px-2 py-0.5 rounded-full whitespace-nowrap"
@@ -325,7 +330,8 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter }: BandeauProp
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onAcquitter(alertesVisibles.map((a) => a.id));
+              // Acquitter uniquement les non-critiques
+              onAcquitter(alertesVisibles.filter((a) => a.urgence !== 'critique').map((a) => a.id));
             }}
             className="flex items-center gap-1 text-white text-xs px-3 rounded-full transition-colors"
             style={{
@@ -347,7 +353,7 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter }: BandeauProp
         <div style={{ background: '#001540', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div className="max-w-5xl mx-auto px-4 py-4 space-y-3">
 
-            {alertesVisibles.map((alerte) => {
+            {alertesPourAffichage.map((alerte) => {
               const isCritique = alerte.urgence === 'critique';
               return (
                 <div
