@@ -598,7 +598,7 @@ export function LandingPage() {
 
         {/* ─── HERO ─── */}
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-28 sm:pt-20 sm:pb-36">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '48px', alignItems: 'center' }}>
 
             {/* Left — text */}
             <div className="max-w-2xl">
@@ -712,8 +712,8 @@ export function LandingPage() {
             </div>
 
             {/* Right — card (always visible, grid handles layout) */}
-            <div className="flex justify-center">
-              <div className="relative" style={{ padding: '40px 40px 40px 24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+              <div className="relative" style={{ padding: '40px' }}>
 
                 {/* Badge — top left: Certifié DGAC */}
                 <FloatingBadge
