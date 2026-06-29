@@ -82,37 +82,32 @@ function Particles() {
 // ─── Demo Passport Card (flippable) ──────────────────────────────────────────
 
 function DemoPassportCard({ compact = false }: { compact?: boolean }) {
-  const [flipped, setFlipped] = useState(false);
+  const [flipped, setFlipped] = React.useState(false);
   const size = compact ? 'max-w-[340px]' : 'max-w-[420px]';
 
-  const h = compact ? 260 : 320;
-  const rot = compact ? 'rotate(1deg)' : 'rotate(2deg)';
-
   return (
-    // Outer wrapper carries the decorative tilt + float animation
     <div
       className={`demo-card-wrapper relative w-full ${size} select-none cursor-pointer`}
-      style={{ perspective: 1200, height: h, transform: rot }}
+      style={{ perspective: 1200, minHeight: compact ? 260 : 320 }}
       onClick={() => setFlipped(f => !f)}
     >
-      {/* Inner div carries only the flip — no extra rotation */}
       <div
+        className="demo-card-inner w-full h-full"
         style={{
-          width: '100%',
-          height: '100%',
-          position: 'relative',
           transformStyle: 'preserve-3d',
           transition: 'transform 0.65s cubic-bezier(0.4,0,0.2,1)',
           transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+          minHeight: compact ? 260 : 320,
+          position: 'relative',
         }}
       >
         {/* ── FACE AVANT ── */}
         <div
+          className="demo-card absolute inset-0 rounded-xl overflow-hidden"
           style={{
-            position: 'absolute', inset: 0,
-            borderRadius: 12, overflow: 'hidden',
             background: 'linear-gradient(135deg, #001A4D 0%, #0f1a30 60%, #1E3A5F 100%)',
-            boxShadow: '0 30px 60px rgba(0,0,0,0.5)',
+            filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.5))',
+            transform: compact ? 'rotate(1deg)' : 'rotate(2deg)',
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
           }}
@@ -181,12 +176,11 @@ function DemoPassportCard({ compact = false }: { compact?: boolean }) {
 
         {/* ── FACE ARRIÈRE — mini dashboard ── */}
         <div
+          className="absolute inset-0 rounded-xl overflow-hidden"
           style={{
-            position: 'absolute', inset: 0,
-            borderRadius: 12, overflow: 'hidden',
             background: 'linear-gradient(135deg, #0f1a30 0%, #001A4D 100%)',
-            boxShadow: '0 30px 60px rgba(0,0,0,0.5)',
-            transform: 'rotateY(180deg)',
+            filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.5))',
+            transform: compact ? 'rotateY(180deg) rotate(-1deg)' : 'rotateY(180deg) rotate(-2deg)',
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
             padding: compact ? '12px' : '16px',
@@ -221,15 +215,13 @@ function DemoPassportCard({ compact = false }: { compact?: boolean }) {
               <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Derniers sauts</div>
               <div className="space-y-1.5">
                 {[
-                  { num: 51, date: '26/06/2026', lieu: 'BigAir Rochefort', h: '4 200 m' },
-                  { num: 50, date: '15/06/2026', lieu: 'Royan Ocean Parachutisme', h: '3 500 m' },
-                  { num: 49, date: '14/06/2026', lieu: 'BigAir Rochefort', h: '4 000 m' },
-                ].map((s) => (
-                  <div key={s.num} className="flex items-center justify-between rounded-lg px-2.5 py-1.5" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                  { date: '22/06/2026', lieu: 'BigAir Rochefort', h: '4 000 m' },
+                  { date: '15/06/2026', lieu: 'Saintes Parachutisme', h: '3 500 m' },
+                  { date: '08/06/2026', lieu: 'BigAir Rochefort', h: '4 000 m' },
+                ].map((s, i) => (
+                  <div key={i} className="flex items-center justify-between rounded-lg px-2.5 py-1.5" style={{ background: 'rgba(255,255,255,0.05)' }}>
                     <div>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: '#fff' }}>
-                        <span style={{ color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>#{s.num} </span>{s.lieu}
-                      </div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: '#fff' }}>{s.lieu}</div>
                       <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>{s.date}</div>
                     </div>
                     <div style={{ fontSize: 10, color: 'rgba(96,165,250,0.8)', fontFamily: 'monospace' }}>{s.h}</div>
@@ -598,10 +590,10 @@ export function LandingPage() {
 
         {/* ─── HERO ─── */}
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-28 sm:pt-20 sm:pb-36">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '48px', alignItems: 'center' }}>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-14">
 
             {/* Left — text */}
-            <div className="max-w-2xl">
+            <div className="lg:w-[55%] max-w-2xl">
               {/* Trust badges */}
               <div className="flex flex-wrap gap-2.5 mb-8">
                 {[
@@ -657,6 +649,11 @@ export function LandingPage() {
                 Le premier carnet de sauts numérique certifié DGAC. Validé par vos moniteurs en temps réel, accessible partout, même sans connexion.
               </p>
 
+              {/* Mobile card — visible only on small screens */}
+              <div className="flex md:hidden justify-center mb-8">
+                <DemoPassportCard compact />
+              </div>
+
               {/* CTA buttons */}
               <div className="flex flex-col sm:flex-row gap-3 mb-8">
                 <Link
@@ -711,9 +708,9 @@ export function LandingPage() {
               </div>
             </div>
 
-            {/* Right — card (always visible, grid handles layout) */}
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-              <div className="relative" style={{ padding: '40px' }}>
+            {/* Right — card */}
+            <div className="hidden md:flex lg:w-[45%] justify-center lg:justify-end">
+              <div className="relative" style={{ padding: '48px 56px 48px 36px' }}>
 
                 {/* Badge — top left: Certifié DGAC */}
                 <FloatingBadge
