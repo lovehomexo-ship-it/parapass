@@ -709,7 +709,7 @@ export function LandingPage() {
             </div>
 
             {/* Right — card */}
-            <div className="hidden md:flex lg:w-[45%] justify-center lg:justify-end">
+            <div className="flex lg:w-[45%] justify-center lg:justify-end">
               <div className="relative" style={{ padding: '48px 56px 48px 36px' }}>
 
                 {/* Badge — top left: Certifié DGAC */}
