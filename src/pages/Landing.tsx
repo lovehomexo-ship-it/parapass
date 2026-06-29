@@ -82,7 +82,7 @@ function Particles() {
 // ─── Demo Passport Card (flippable) ──────────────────────────────────────────
 
 function DemoPassportCard({ compact = false }: { compact?: boolean }) {
-  const [flipped, setFlipped] = React.useState(false);
+  const [flipped, setFlipped] = useState(false);
   const size = compact ? 'max-w-[340px]' : 'max-w-[420px]';
 
   return (
