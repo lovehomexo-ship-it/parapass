@@ -85,19 +85,21 @@ function DemoPassportCard({ compact = false }: { compact?: boolean }) {
   const [flipped, setFlipped] = useState(false);
   const size = compact ? 'max-w-[340px]' : 'max-w-[420px]';
 
+  const h = compact ? 260 : 320;
+
   return (
     <div
       className={`demo-card-wrapper relative w-full ${size} select-none cursor-pointer`}
-      style={{ perspective: 1200, minHeight: compact ? 260 : 320 }}
+      style={{ perspective: 1200, height: h }}
       onClick={() => setFlipped(f => !f)}
     >
       <div
-        className="demo-card-inner w-full h-full"
+        className="demo-card-inner w-full"
         style={{
           transformStyle: 'preserve-3d',
           transition: 'transform 0.65s cubic-bezier(0.4,0,0.2,1)',
           transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
-          minHeight: compact ? 260 : 320,
+          height: h,
           position: 'relative',
         }}
       >
@@ -215,13 +217,15 @@ function DemoPassportCard({ compact = false }: { compact?: boolean }) {
               <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Derniers sauts</div>
               <div className="space-y-1.5">
                 {[
-                  { date: '22/06/2026', lieu: 'BigAir Rochefort', h: '4 000 m' },
-                  { date: '15/06/2026', lieu: 'Saintes Parachutisme', h: '3 500 m' },
-                  { date: '08/06/2026', lieu: 'BigAir Rochefort', h: '4 000 m' },
-                ].map((s, i) => (
-                  <div key={i} className="flex items-center justify-between rounded-lg px-2.5 py-1.5" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                  { num: 51, date: '26/06/2026', lieu: 'BigAir Rochefort', h: '4 200 m' },
+                  { num: 50, date: '15/06/2026', lieu: 'Royan Ocean Parachutisme', h: '3 500 m' },
+                  { num: 49, date: '14/06/2026', lieu: 'BigAir Rochefort', h: '4 000 m' },
+                ].map((s) => (
+                  <div key={s.num} className="flex items-center justify-between rounded-lg px-2.5 py-1.5" style={{ background: 'rgba(255,255,255,0.05)' }}>
                     <div>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: '#fff' }}>{s.lieu}</div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: '#fff' }}>
+                        <span style={{ color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>#{s.num} </span>{s.lieu}
+                      </div>
                       <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>{s.date}</div>
                     </div>
                     <div style={{ fontSize: 10, color: 'rgba(96,165,250,0.8)', fontFamily: 'monospace' }}>{s.h}</div>
