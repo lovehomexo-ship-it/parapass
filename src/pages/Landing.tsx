@@ -86,30 +86,33 @@ function DemoPassportCard({ compact = false }: { compact?: boolean }) {
   const size = compact ? 'max-w-[340px]' : 'max-w-[420px]';
 
   const h = compact ? 260 : 320;
+  const rot = compact ? 'rotate(1deg)' : 'rotate(2deg)';
 
   return (
+    // Outer wrapper carries the decorative tilt + float animation
     <div
       className={`demo-card-wrapper relative w-full ${size} select-none cursor-pointer`}
-      style={{ perspective: 1200, height: h }}
+      style={{ perspective: 1200, height: h, transform: rot }}
       onClick={() => setFlipped(f => !f)}
     >
+      {/* Inner div carries only the flip — no extra rotation */}
       <div
-        className="demo-card-inner w-full"
         style={{
+          width: '100%',
+          height: '100%',
+          position: 'relative',
           transformStyle: 'preserve-3d',
           transition: 'transform 0.65s cubic-bezier(0.4,0,0.2,1)',
           transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
-          height: h,
-          position: 'relative',
         }}
       >
         {/* ── FACE AVANT ── */}
         <div
-          className="demo-card absolute inset-0 rounded-xl overflow-hidden"
           style={{
+            position: 'absolute', inset: 0,
+            borderRadius: 12, overflow: 'hidden',
             background: 'linear-gradient(135deg, #001A4D 0%, #0f1a30 60%, #1E3A5F 100%)',
-            filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.5))',
-            transform: compact ? 'rotate(1deg)' : 'rotate(2deg)',
+            boxShadow: '0 30px 60px rgba(0,0,0,0.5)',
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
           }}
@@ -178,11 +181,12 @@ function DemoPassportCard({ compact = false }: { compact?: boolean }) {
 
         {/* ── FACE ARRIÈRE — mini dashboard ── */}
         <div
-          className="absolute inset-0 rounded-xl overflow-hidden"
           style={{
+            position: 'absolute', inset: 0,
+            borderRadius: 12, overflow: 'hidden',
             background: 'linear-gradient(135deg, #0f1a30 0%, #001A4D 100%)',
-            filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.5))',
-            transform: compact ? 'rotateY(180deg) rotate(-1deg)' : 'rotateY(180deg) rotate(-2deg)',
+            boxShadow: '0 30px 60px rgba(0,0,0,0.5)',
+            transform: 'rotateY(180deg)',
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
             padding: compact ? '12px' : '16px',
