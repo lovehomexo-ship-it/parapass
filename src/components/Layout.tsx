@@ -25,7 +25,7 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
   const notifRef = useRef<HTMLDivElement>(null);
   const { notifications, unreadCount, markRead, dismiss, markAllRead } = useNotifications(user?.id);
   const { totalUnread: msgUnread } = useConversations(user?.id);
-  const { alertes: alertesCtx, acquittees, acquitterAlertes } = useAlertesContext();
+  const { alertes: alertesCtx, acquittees, acquitterAlertes, statutDocs } = useAlertesContext();
   const { isDemoMode } = useGlobalDemo();
   const { isDark, toggleTheme } = useTheme();
 
@@ -52,6 +52,14 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
     : '?';
 
   const isActive = (path: string) => location.pathname === path;
+
+  const statutBadge = statutDocs === 'expire'
+    ? { label: '🔴 Non autorisé à sauter', bg: 'rgba(239,68,68,0.15)', color: '#F87171', border: 'rgba(239,68,68,0.3)' }
+    : statutDocs === 'expire_bientot'
+    ? { label: '🟠 Attention', bg: 'rgba(245,158,11,0.15)', color: '#FCD34D', border: 'rgba(245,158,11,0.3)' }
+    : statutDocs === 'valide'
+    ? { label: '🟢 Autorisé à sauter', bg: 'rgba(16,185,129,0.15)', color: '#6EE7B7', border: 'rgba(16,185,129,0.3)' }
+    : null;
 
   const parachutisteItems = [
     { to: '/dashboard', label: 'Tableau de bord' },
@@ -231,6 +239,11 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
                       <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--c-border)', background: 'var(--c-surface)' }}>
                         <p className="text-sm font-semibold" style={{ color: 'var(--c-text)' }}>{profile?.prenom} {profile?.nom}</p>
                         <p className="text-xs mt-0.5 capitalize" style={{ color: 'var(--c-muted)' }}>{profile?.role?.replace('_', ' ')}</p>
+                        {statutBadge && (
+                          <span className="inline-block mt-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: statutBadge.bg, color: statutBadge.color, border: `1px solid ${statutBadge.border}` }}>
+                            {statutBadge.label}
+                          </span>
+                        )}
                       </div>
                       <div className="py-1">
                         <NavDropdownLink to="/profil" icon={<User className="w-4 h-4" />} onClick={() => setDropdownOpen(false)}>Mon Profil</NavDropdownLink>
@@ -355,6 +368,11 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
                   <p className="text-xs capitalize" style={{ color: 'var(--c-muted)' }}>
                     {profile?.role?.replace('_', ' ')}
                   </p>
+                  {statutBadge && (
+                    <span className="inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: statutBadge.bg, color: statutBadge.color, border: `1px solid ${statutBadge.border}` }}>
+                      {statutBadge.label}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

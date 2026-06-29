@@ -208,7 +208,7 @@ export function DashboardPage() {
   });
   const { badges, newBadge, dismissBadgeNotif } = useBadges(user?.id, sauts);
 
-  const { acquittees, acquitterAlertes, setAlertes: setAlertesCtx } = useAlertesContext();
+  const { acquittees, acquitterAlertes, setAlertes: setAlertesCtx, setStatutDocs: setStatutDocsCtx, setLicenceExpiration: setLicExpCtx, setCertifExpiration: setCertExpCtx } = useAlertesContext();
 
   useEffect(() => { setAlertesCtx(alertes); }, [alertes, setAlertesCtx]);
 
@@ -382,6 +382,37 @@ export function DashboardPage() {
   const licenceMonths = monthsUntil(licenceFFP?.date_expiration ?? null);
   const certifMonths = monthsUntil(certifMedical?.date_expiration ?? null);
 
+  // ─── Statut autorisation calculé depuis les dates (pas depuis Supabase alertes) ─
+  const _docNow = new Date();
+  const _isExpired = (d: string) => new Date(d) < _docNow;
+  const _expiresSoon = (d: string) => {
+    const dt = new Date(d);
+    const in30 = new Date(_docNow);
+    in30.setDate(_docNow.getDate() + 30);
+    return dt > _docNow && dt < in30;
+  };
+  const _licExpired = licenceFFP?.date_expiration ? _isExpired(licenceFFP.date_expiration) : false;
+  const _certExpired = certifMedical?.date_expiration ? _isExpired(certifMedical.date_expiration) : false;
+  const _assuranceOk = !!(licenceFFP?.assurance_individuelle && licenceFFP?.assurance_rc);
+  const _licValide = !!licenceFFP?.date_expiration && !_licExpired;
+  const _certValide = !!certifMedical?.date_expiration && !_certExpired;
+  const statutDocs: 'valide' | 'expire_bientot' | 'expire' | null = (() => {
+    if (!licenceFFP && !certifMedical) return null;
+    if (_licExpired || _certExpired) return 'expire';
+    if (
+      (licenceFFP?.date_expiration && _expiresSoon(licenceFFP.date_expiration)) ||
+      (certifMedical?.date_expiration && _expiresSoon(certifMedical.date_expiration))
+    ) return 'expire_bientot';
+    if (_licValide && _certValide && _assuranceOk) return 'valide';
+    return null;
+  })();
+
+  useEffect(() => {
+    setStatutDocsCtx(statutDocs);
+    setLicExpCtx(licenceFFP?.date_expiration ?? null);
+    setCertExpCtx(certifMedical?.date_expiration ?? null);
+  }, [statutDocs, licenceFFP?.date_expiration, certifMedical?.date_expiration]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ─── Brevet displayed in sub-title ───────────────────────────────────────
   const topBrevet = brevets[0]?.type_brevet ?? null;
 
@@ -401,7 +432,7 @@ export function DashboardPage() {
 
   return (
     <Layout noPadding>
-      <BandeauAlertes alertes={alertes} acquittees={acquittees} onAcquitter={acquitterAlertes} />
+      <BandeauAlertes alertes={alertes} acquittees={acquittees} onAcquitter={acquitterAlertes} statutDocs={statutDocs} licenceExpiration={licenceFFP?.date_expiration ?? null} certifExpiration={certifMedical?.date_expiration ?? null} userId={user?.id} />
 
       {/* Sub-nav */}
       <div style={{ background: 'var(--c-nav)', borderBottom: '1px solid var(--c-border-s)' }} className="sticky top-14 z-30">
@@ -457,6 +488,23 @@ export function DashboardPage() {
                       </span>
                     )}
                   </div>
+
+                  {/* ── Badge statut autorisation ── */}
+                  {statutDocs && (() => {
+                    const cfg = statutDocs === 'expire'
+                      ? { bg: 'rgba(239,68,68,0.18)', color: '#F87171', border: 'rgba(239,68,68,0.35)', label: '🔴 Non autorisé à sauter — Documents expirés' }
+                      : statutDocs === 'expire_bientot'
+                      ? { bg: 'rgba(245,158,11,0.18)', color: '#FCD34D', border: 'rgba(245,158,11,0.35)', label: '⚠️ Attention — Document(s) expirent bientôt' }
+                      : { bg: 'rgba(16,185,129,0.18)', color: '#6EE7B7', border: 'rgba(16,185,129,0.35)', label: '✅ Autorisé à sauter' };
+                    return (
+                      <div
+                        className="mt-3 w-full text-center rounded-xl"
+                        style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, color: cfg.color, fontSize: 14, fontWeight: 600, padding: '8px 16px' }}
+                      >
+                        {cfg.label}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <div className="flex flex-col items-center flex-shrink-0" style={{ minWidth: 80 }}>
                   <ParachuteDropIcon className="w-8 h-8 mb-1" style={{ color: '#F97316' }} />

@@ -246,23 +246,49 @@ interface BandeauProps {
   alertes: Alerte[];
   acquittees: string[];
   onAcquitter: (ids: string[]) => void;
+  statutDocs?: 'valide' | 'expire_bientot' | 'expire' | null;
+  licenceExpiration?: string | null;
+  certifExpiration?: string | null;
+  userId?: string;
 }
 
-export function BandeauAlertes({ alertes, acquittees, onAcquitter }: BandeauProps) {
+function frDate(d: string) {
+  return new Date(d).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+}
+function isPast(d: string) { return new Date(d) < new Date(); }
+function isSoon(d: string) {
+  const dt = new Date(d); const n = new Date();
+  const in30 = new Date(n); in30.setDate(n.getDate() + 30);
+  return dt > n && dt < in30;
+}
+
+function lsKey(userId: string) { return `bandeau_acquitte_${userId}`; }
+function todayIso() { return new Date().toISOString().split('T')[0]; }
+
+export function BandeauAlertes({ alertes, acquittees, onAcquitter, statutDocs, licenceExpiration, certifExpiration, userId }: BandeauProps) {
   const [detailOuvert, setDetailOuvert] = useState(false);
+  const [sessionDismissed, setSessionDismissed] = useState(() => {
+    if (!userId) return false;
+    return localStorage.getItem(lsKey(userId)) === todayIso();
+  });
   const navigate = useNavigate();
 
   const toutesEnrichies = alertes.map(enrichirAlerte);
-  // Critiques jamais masquables par acquittement — elles bloquent le saut
   const critiquesPermanentes = toutesEnrichies.filter((a) => a.urgence === 'critique');
   const alertesVisibles = toutesEnrichies.filter((a) => !acquittees.includes(a.id));
 
   const nbCritiques = critiquesPermanentes.length;
   const nbAttention = alertesVisibles.filter((a) => a.urgence === 'attention').length;
 
-  // Bandeau vert uniquement si AUCUNE alerte critique (même acquittée)
-  if (nbCritiques === 0 && alertesVisibles.length === 0) {
-    if (alertes.length === 0) return null;
+  // Le statut réel est calculé depuis les dates de documents (statutDocs),
+  // pas depuis les alertes Supabase qui peuvent être en retard de sync.
+  const isRouge = statutDocs === 'expire' || nbCritiques > 0;
+  const isOrange = !isRouge && (statutDocs === 'expire_bientot' || nbAttention > 0);
+  const isVert = !isRouge && !isOrange && statutDocs === 'valide';
+
+  if (sessionDismissed || (!isRouge && !isOrange && !isVert)) return null;
+
+  if (isVert) {
     return (
       <div
         className="flex items-center gap-2 px-4 py-2.5"
@@ -280,7 +306,23 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter }: BandeauProp
     ? critiquesPermanentes
     : alertesVisibles;
 
-  const couleur = nbCritiques > 0 ? '#DC2626' : '#D97706';
+  // Lignes synthétiques quand les alertes Supabase n'ont pas encore synchro
+  type LigneDoc = { id: string; titre: string; detail: string; urgence: 'critique' | 'attention'; lien: string; action: string };
+  const lignesSynthetiques: LigneDoc[] = [];
+  if (alertesPourAffichage.length === 0) {
+    if (licenceExpiration && isPast(licenceExpiration)) {
+      lignesSynthetiques.push({ id: 'syn-lic', titre: 'Licence FFP expirée', detail: `Expirée depuis ${frDate(licenceExpiration)}. Renouvelez votre licence immédiatement pour sauter légalement.`, urgence: 'critique', lien: '/passeport?onglet=licence', action: 'Renouveler' });
+    } else if (licenceExpiration && isSoon(licenceExpiration)) {
+      lignesSynthetiques.push({ id: 'syn-lic', titre: 'Licence FFP expire bientôt', detail: `Expire le ${new Date(licenceExpiration).toLocaleDateString('fr-FR')}. Anticipez le renouvellement.`, urgence: 'attention', lien: '/passeport?onglet=licence', action: 'Renouveler' });
+    }
+    if (certifExpiration && isPast(certifExpiration)) {
+      lignesSynthetiques.push({ id: 'syn-cert', titre: 'Certificat médical expiré', detail: `Expiré depuis ${frDate(certifExpiration)}. Vous ne pouvez pas sauter légalement sans certificat valide.`, urgence: 'critique', lien: '/passeport?onglet=medical', action: 'Mettre à jour' });
+    } else if (certifExpiration && isSoon(certifExpiration)) {
+      lignesSynthetiques.push({ id: 'syn-cert', titre: 'Certificat médical expire bientôt', detail: `Expire le ${new Date(certifExpiration).toLocaleDateString('fr-FR')}. Prenez rendez-vous rapidement.`, urgence: 'attention', lien: '/passeport?onglet=medical', action: 'Planifier' });
+    }
+  }
+
+  const couleur = isRouge ? '#DC2626' : '#D97706';
 
   return (
     <>
@@ -294,13 +336,19 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter }: BandeauProp
           <AlertTriangle className="w-4 h-4 text-white flex-shrink-0" />
 
           <span className="text-white font-medium text-sm whitespace-nowrap">
-            {nbCritiques > 0 ? (
-              <>
-                {nbCritiques} alerte{nbCritiques > 1 ? 's' : ''} critique{nbCritiques > 1 ? 's' : ''}
-                {nbAttention > 0 && ` · ${nbAttention} attention`}
-              </>
-            ) : (
+            {isRouge ? (
+              nbCritiques > 0 ? (
+                <>
+                  {nbCritiques} alerte{nbCritiques > 1 ? 's' : ''} critique{nbCritiques > 1 ? 's' : ''}
+                  {nbAttention > 0 && ` · ${nbAttention} attention`}
+                </>
+              ) : (
+                <>Non autorisé à sauter — Document(s) expiré(s)</>
+              )
+            ) : nbAttention > 0 ? (
               <>{nbAttention} point{nbAttention > 1 ? 's' : ''} à vérifier</>
+            ) : (
+              <>Attention — Un document expire bientôt</>
             )}
           </span>
 
@@ -330,8 +378,9 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter }: BandeauProp
           <button
             onClick={(e) => {
               e.stopPropagation();
-              // Acquitter uniquement les non-critiques
               onAcquitter(alertesVisibles.filter((a) => a.urgence !== 'critique').map((a) => a.id));
+              if (userId) localStorage.setItem(lsKey(userId), todayIso());
+              setSessionDismissed(true);
             }}
             className="flex items-center gap-1 text-white text-xs px-3 rounded-full transition-colors"
             style={{
@@ -340,7 +389,7 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter }: BandeauProp
               paddingTop: 4,
               paddingBottom: 4,
             }}
-            title="Acquitter toutes les alertes"
+            title="Fermer pour cette session"
           >
             <X className="w-3 h-3" />
             <span className="hidden sm:inline">Acquitter</span>
@@ -353,7 +402,7 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter }: BandeauProp
         <div style={{ background: '#001540', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div className="max-w-5xl mx-auto px-4 py-4 space-y-3">
 
-            {alertesPourAffichage.map((alerte) => {
+            {(alertesPourAffichage.length > 0 ? alertesPourAffichage : lignesSynthetiques).map((alerte) => {
               const isCritique = alerte.urgence === 'critique';
               return (
                 <div
@@ -390,38 +439,20 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter }: BandeauProp
                       {alerte.action} →
                     </button>
 
-                    <button
-                      onClick={() => onAcquitter([alerte.id])}
-                      className="transition-colors flex items-center justify-center rounded-lg"
-                      style={{
-                        color: 'rgba(255,255,255,0.3)',
-                        width: 28,
-                        height: 28,
-                        minHeight: 44,
-                      }}
-                      title="Acquitter cette alerte"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                    {'urgence' in alerte && alertesPourAffichage.length > 0 && (
+                      <button
+                        onClick={() => onAcquitter([alerte.id])}
+                        className="transition-colors flex items-center justify-center rounded-lg"
+                        style={{ color: 'rgba(255,255,255,0.3)', width: 28, height: 28, minHeight: 44 }}
+                        title="Acquitter cette alerte"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
               );
             })}
-
-            {statutGlobal === 'autorise' && (
-              <div
-                className="flex items-center gap-3 p-4 rounded-xl"
-                style={{ background: 'rgba(22,163,74,0.1)', border: '1px solid rgba(22,163,74,0.3)' }}
-              >
-                <ShieldCheck className="w-6 h-6 text-green-400 flex-shrink-0" />
-                <div>
-                  <p className="text-green-400 font-semibold text-sm">Autorisé à sauter</p>
-                  <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    Licence valide · Certificat médical valide · Assurances OK
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}
