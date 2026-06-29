@@ -590,10 +590,10 @@ export function LandingPage() {
 
         {/* ─── HERO ─── */}
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-28 sm:pt-20 sm:pb-36">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-14">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-10">
 
             {/* Left — text */}
-            <div className="lg:w-[55%] max-w-2xl">
+            <div className="md:w-[55%] max-w-2xl">
               {/* Trust badges */}
               <div className="flex flex-wrap gap-2.5 mb-8">
                 {[
@@ -709,7 +709,7 @@ export function LandingPage() {
             </div>
 
             {/* Right — card */}
-            <div className="flex lg:w-[45%] justify-center lg:justify-end">
+            <div className="flex md:w-[45%] justify-center md:justify-end">
               <div className="relative" style={{ padding: '48px 56px 48px 36px' }}>
 
                 {/* Badge — top left: Certifié DGAC */}
