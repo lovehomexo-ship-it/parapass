@@ -713,7 +713,7 @@ export function LandingPage() {
 
             {/* Right — card (always visible, grid handles layout) */}
             <div className="flex justify-center">
-              <div className="relative" style={{ padding: '48px 56px 48px 36px' }}>
+              <div className="relative" style={{ padding: '40px 40px 40px 24px' }}>
 
                 {/* Badge — top left: Certifié DGAC */}
                 <FloatingBadge
