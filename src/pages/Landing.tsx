@@ -79,104 +79,174 @@ function Particles() {
   );
 }
 
-// ─── Demo Passport Card ───────────────────────────────────────────────────────
+// ─── Demo Passport Card (flippable) ──────────────────────────────────────────
 
-function DemoPassportCard() {
+function DemoPassportCard({ compact = false }: { compact?: boolean }) {
+  const [flipped, setFlipped] = React.useState(false);
+  const size = compact ? 'max-w-[340px]' : 'max-w-[420px]';
+
   return (
     <div
-      className="demo-card relative w-full max-w-[420px] rounded-xl overflow-hidden select-none"
-      style={{
-        background: 'linear-gradient(135deg, #001A4D 0%, #0f1a30 60%, #1E3A5F 100%)',
-        filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.5))',
-        transform: 'rotate(2deg)',
-        minHeight: 320,
-      }}
+      className={`demo-card-wrapper relative w-full ${size} select-none cursor-pointer`}
+      style={{ perspective: 1200, minHeight: compact ? 260 : 320 }}
+      onClick={() => setFlipped(f => !f)}
     >
-      {/* Watermark */}
-      <div className="absolute inset-0 flex items-center justify-end opacity-[0.06] pointer-events-none pr-3">
-        <ParachuteIcon className="w-48 h-48 text-white" />
-      </div>
-      {/* Orange top stripe */}
-      <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: '#F97316' }} />
+      <div
+        className="demo-card-inner w-full h-full"
+        style={{
+          transformStyle: 'preserve-3d',
+          transition: 'transform 0.65s cubic-bezier(0.4,0,0.2,1)',
+          transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+          minHeight: compact ? 260 : 320,
+          position: 'relative',
+        }}
+      >
+        {/* ── FACE AVANT ── */}
+        <div
+          className="demo-card absolute inset-0 rounded-xl overflow-hidden"
+          style={{
+            background: 'linear-gradient(135deg, #001A4D 0%, #0f1a30 60%, #1E3A5F 100%)',
+            filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.5))',
+            transform: compact ? 'rotate(1deg)' : 'rotate(2deg)',
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+          }}
+        >
+          {/* Watermark */}
+          <div className="absolute inset-0 flex items-center justify-end opacity-[0.06] pointer-events-none pr-3">
+            <ParachuteIcon className="w-48 h-48 text-white" />
+          </div>
+          <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: '#F97316' }} />
 
-      <div className="relative flex flex-col gap-2" style={{ padding: '14px 14px 12px', minHeight: 'calc(320px - 6px)', justifyContent: 'space-between' }}>
+          <div className="relative flex flex-col gap-2" style={{ padding: compact ? '12px 12px 10px' : '14px 14px 12px', minHeight: compact ? 'calc(260px - 6px)' : 'calc(320px - 6px)', justifyContent: 'space-between' }}>
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-6 w-auto flex-shrink-0" />
+                <div>
+                  <div style={{ fontSize: 9, color: 'rgba(147,197,253,0.9)', letterSpacing: '0.04em' }}>Carnet de sauts numérique</div>
+                  <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.08em', color: '#F97316' }}>CARNET OFFICIEL FFP</div>
+                </div>
+              </div>
+              <div style={{ background: '#10B981', color: '#fff', fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', padding: '2px 8px', borderRadius: 20 }}>ACTIF</div>
+            </div>
 
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-7 w-auto flex-shrink-0" />
+            {/* Identity */}
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 flex items-center justify-center overflow-hidden" style={{ width: compact ? 58 : 76, height: compact ? 58 : 76, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.08)' }}>
+                <User style={{ width: 24, height: 24, color: 'rgba(255,255,255,0.5)' }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div style={{ fontSize: compact ? 18 : 22, fontWeight: 800, letterSpacing: '0.04em', color: '#fff', lineHeight: 1.1, textTransform: 'uppercase' }}>MARTIN</div>
+                <div style={{ fontSize: compact ? 14 : 16, fontWeight: 400, color: '#fff', lineHeight: 1.2 }}>Sophie</div>
+                <div style={{ fontSize: 11, color: '#F97316', marginTop: 1 }}>Fédération Française de Parachutisme</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 1 }}>Né(e) le 14/03/1992 à Bordeaux</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.75)', marginTop: 3, lineHeight: 1.4 }}>FFP-2024-8801 · Code Club 0916 · Brevet B</div>
+              </div>
+            </div>
+
+            {/* Data grid */}
+            <div className="grid gap-x-3" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
+              {[['Validité licence','31/12/2026'],['Cert. méd.','15/03/2027'],['Sauts totaux','51']].map(([label, val]) => (
+                <div key={label}>
+                  <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', fontFamily: 'monospace', lineHeight: 1.3 }}>{val}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Badges + QR */}
+            <div className="flex items-end justify-between gap-3">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span style={{ fontSize: 9, background: 'rgba(16,185,129,0.18)', color: '#6EE7B7', border: '1px solid rgba(16,185,129,0.3)', padding: '2px 7px', borderRadius: 20, fontWeight: 600 }}>✓ Assuré</span>
+                <span style={{ fontSize: 9, background: 'rgba(16,185,129,0.18)', color: '#6EE7B7', border: '1px solid rgba(16,185,129,0.3)', padding: '2px 7px', borderRadius: 20, fontWeight: 600 }}>✓ Validé DZ</span>
+              </div>
+              <div className="bg-white rounded-lg flex-shrink-0" style={{ padding: 3 }}>
+                <QRCodeSVG value="https://parapass.fr/verify/demo" size={54} level="M" fgColor="#001A4D" bgColor="#FFFFFF" />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 5, marginTop: 1 }}>
+              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Conforme DGAC</div>
+              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)' }}>↺ retourner</div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── FACE ARRIÈRE — mini dashboard ── */}
+        <div
+          className="absolute inset-0 rounded-xl overflow-hidden"
+          style={{
+            background: 'linear-gradient(135deg, #0f1a30 0%, #001A4D 100%)',
+            filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.5))',
+            transform: compact ? 'rotateY(180deg) rotate(-1deg)' : 'rotateY(180deg) rotate(-2deg)',
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            padding: compact ? '12px' : '16px',
+          }}
+        >
+          <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: '#F97316' }} />
+          <div className="relative flex flex-col gap-3 h-full" style={{ minHeight: compact ? 236 : 296 }}>
+            {/* Header mini dashboard */}
+            <div className="flex items-center justify-between">
+              <div>
+                <div style={{ fontSize: 10, color: 'rgba(147,197,253,0.8)' }}>Sophie MARTIN</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>Mon carnet</div>
+              </div>
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)' }}>
+                <span style={{ fontSize: 12 }}>⭐</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#FB923C' }}>4.7</span>
+                <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>/5 moy.</span>
+              </div>
+            </div>
+
+            {/* KPI total sauts */}
+            <div className="rounded-lg px-3 py-2" style={{ background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.25)' }}>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Total sauts validés</div>
+              <div className="flex items-end gap-2">
+                <span style={{ fontSize: 28, fontWeight: 800, color: '#fff', lineHeight: 1.1 }}>51</span>
+                <span style={{ fontSize: 11, color: '#34D399', marginBottom: 2 }}>+3 ce mois</span>
+              </div>
+            </div>
+
+            {/* Derniers sauts */}
             <div>
-              <div style={{ fontSize: 10, color: 'rgba(147,197,253,0.9)', letterSpacing: '0.04em' }}>Carnet de sauts numérique</div>
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: '#F97316' }}>CARNET OFFICIEL FFP</div>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Derniers sauts</div>
+              <div className="space-y-1.5">
+                {[
+                  { date: '22/06/2026', lieu: 'BigAir Rochefort', h: '4 000 m' },
+                  { date: '15/06/2026', lieu: 'Saintes Parachutisme', h: '3 500 m' },
+                  { date: '08/06/2026', lieu: 'BigAir Rochefort', h: '4 000 m' },
+                ].map((s, i) => (
+                  <div key={i} className="flex items-center justify-between rounded-lg px-2.5 py-1.5" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: '#fff' }}>{s.lieu}</div>
+                      <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>{s.date}</div>
+                    </div>
+                    <div style={{ fontSize: 10, color: 'rgba(96,165,250,0.8)', fontFamily: 'monospace' }}>{s.h}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Barre progression licence */}
+            <div>
+              <div className="flex justify-between mb-1">
+                <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Licence FFP</span>
+                <span style={{ fontSize: 9, color: '#34D399', fontWeight: 600 }}>Valide jusqu'au 31/12/2026</span>
+              </div>
+              <div className="rounded-full overflow-hidden" style={{ height: 5, background: 'rgba(255,255,255,0.1)' }}>
+                <div style={{ width: '72%', height: '100%', background: 'linear-gradient(90deg, #10B981, #34D399)', borderRadius: 999 }} />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between mt-auto" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 5 }}>
+              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Données démo</div>
+              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)' }}>↺ retourner</div>
             </div>
           </div>
-          <div style={{ background: '#10B981', color: '#fff', fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', padding: '3px 10px', borderRadius: 20 }}>
-            ACTIF
-          </div>
-        </div>
-
-        {/* Identity row */}
-        <div className="flex items-start gap-3">
-          <div
-            className="flex-shrink-0 flex items-center justify-center overflow-hidden"
-            style={{ width: 76, height: 76, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.08)' }}
-          >
-            <User style={{ width: 32, height: 32, color: 'rgba(255,255,255,0.5)' }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '0.04em', color: '#fff', lineHeight: 1.1, textTransform: 'uppercase' }}>MARTIN</div>
-            <div style={{ fontSize: 16, fontWeight: 400, color: '#fff', lineHeight: 1.2 }}>Sophie</div>
-            <div style={{ fontSize: 12, color: '#F97316', marginTop: 1 }}>Fédération Française de Parachutisme</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 1 }}>Né(e) le 14/03/1992 à Bordeaux</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', marginTop: 3, lineHeight: 1.4 }}>
-              FFP-FFP-2024-8801 · Code Club 0916 · Brevet B · BigAir Rochefort
-            </div>
-          </div>
-        </div>
-
-        {/* Data grid */}
-        <div className="grid gap-x-3" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
-          <div>
-            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Validité licence</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', fontFamily: 'monospace', lineHeight: 1.3 }}>31/12/2026</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Cert. méd.</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', fontFamily: 'monospace', lineHeight: 1.3 }}>15/03/2027</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Sauts totaux</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', lineHeight: 1.3 }}>30</div>
-          </div>
-        </div>
-
-        {/* Assurance line */}
-        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
-          <span>Assurance indiv.&nbsp;</span>
-          <span style={{ color: '#34D399', fontWeight: 600 }}>✓ OUI</span>
-          <span style={{ color: 'rgba(255,255,255,0.3)' }}>&nbsp;·&nbsp;</span>
-          <span>Resp. civile&nbsp;</span>
-          <span style={{ color: '#34D399', fontWeight: 600 }}>✓ OUI</span>
-          <span style={{ color: 'rgba(255,255,255,0.3)' }}>&nbsp;·&nbsp;</span>
-          <span style={{ color: 'rgba(255,255,255,0.55)' }}>Bénéficiaire&nbsp;</span>
-          <span style={{ color: '#fff' }}>Martin Pierre (Parent)</span>
-        </div>
-
-        {/* Badges + QR */}
-        <div className="flex items-end justify-between gap-3">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span style={{ fontSize: 10, background: 'rgba(16,185,129,0.18)', color: '#6EE7B7', border: '1px solid rgba(16,185,129,0.3)', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>✓ Assuré</span>
-            <span style={{ fontSize: 10, background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: 20 }}>Non validé</span>
-          </div>
-          <div className="bg-white rounded-lg flex-shrink-0" style={{ padding: 4 }}>
-            <QRCodeSVG value="https://parapass.fr/verify/demo" size={66} level="M" fgColor="#001A4D" bgColor="#FFFFFF" />
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 6, marginTop: 2 }}>
-          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Conforme DGAC</div>
-          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', fontFamily: 'monospace' }}>parapass.fr</div>
         </div>
       </div>
     </div>
@@ -431,12 +501,14 @@ export function LandingPage() {
           from { transform: translateY(0); }
           to { transform: translateY(-4px); }
         }
-        .demo-card {
-          animation: float 5s ease-in-out infinite;
+        .demo-card-wrapper {
+          animation: float-card 5s ease-in-out infinite;
         }
-        .demo-card:hover {
-          transform: rotate(0deg) translateY(-8px) scale(1.02) !important;
-          filter: drop-shadow(0 40px 80px rgba(0,0,0,0.6)) !important;
+        @keyframes float-card {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-14px); }
+        }
+        .demo-card-wrapper:hover {
           animation-play-state: paused;
         }
         .floating-badge {
@@ -468,7 +540,7 @@ export function LandingPage() {
           border-color: rgba(255,255,255,0.5) !important;
         }
         @media (prefers-reduced-motion: reduce) {
-          .demo-card { animation: none !important; transform: rotate(1deg) !important; }
+          .demo-card-wrapper { animation: none !important; }
           .floating-badge { animation: none !important; opacity: 1 !important; }
           .particle { animation: none !important; }
         }
@@ -576,6 +648,11 @@ export function LandingPage() {
               <p className="mb-8 leading-relaxed max-w-[480px]" style={{ fontSize: '18px', color: 'rgba(255,255,255,0.72)', lineHeight: 1.65 }}>
                 Le premier carnet de sauts numérique certifié DGAC. Validé par vos moniteurs en temps réel, accessible partout, même sans connexion.
               </p>
+
+              {/* Mobile card — visible only on small screens */}
+              <div className="flex md:hidden justify-center mb-8">
+                <DemoPassportCard compact />
+              </div>
 
               {/* CTA buttons */}
               <div className="flex flex-col sm:flex-row gap-3 mb-8">
