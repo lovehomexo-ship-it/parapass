@@ -593,7 +593,7 @@ export function LandingPage() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-10">
 
             {/* Left — text */}
-            <div className="md:w-[55%] max-w-2xl">
+            <div className="md:w-[55%] min-w-0 max-w-2xl">
               {/* Trust badges */}
               <div className="flex flex-wrap gap-2.5 mb-8">
                 {[
@@ -709,8 +709,8 @@ export function LandingPage() {
             </div>
 
             {/* Right — card */}
-            <div className="flex md:w-[45%] justify-center md:justify-end">
-              <div className="relative" style={{ padding: '48px 56px 48px 36px' }}>
+            <div className="flex md:w-[45%] min-w-0 justify-center md:justify-end">
+              <div className="relative" style={{ width: '420px', maxWidth: '100%', padding: '48px 56px 48px 36px' }}>
 
                 {/* Badge — top left: Certifié DGAC */}
                 <FloatingBadge
