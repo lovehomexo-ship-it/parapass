@@ -80,13 +80,6 @@ export const MODULES: Module[] = [
     icon: '🛡️',
   },
   {
-    id: 'soufflerie',
-    nom: 'ParaPass Soufflerie',
-    desc: 'Réservation et suivi des sessions soufflerie.',
-    status: 'soon',
-    icon: '💨',
-  },
-  {
     id: 'evenements',
     nom: 'ParaPass Événements',
     desc: 'Gestion des boogies et compétitions, inscriptions.',

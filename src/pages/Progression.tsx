@@ -922,6 +922,7 @@ export function ProgressionPage() {
 
                 </div>
               )}
+
             </>
           )}
         </div>

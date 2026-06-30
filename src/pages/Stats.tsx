@@ -9,7 +9,7 @@ import { useAuth } from '../lib/auth';
 import { Layout } from '../components/Layout';
 import { ParachuteDropIcon, AltitudeIcon } from '../components/ParachuteIcon';
 import type { Saut } from '../lib/types';
-import { Calendar, Trophy, MapPin, Target, TrendingUp } from 'lucide-react';
+import { Calendar, Trophy, MapPin, Target, TrendingUp, Wind } from 'lucide-react';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Tooltip, Legend, Filler);
 
@@ -230,7 +230,14 @@ export function StatsPage({ sauts }: StatsPageProps) {
             { label: 'Altitude moyenne', value: `${stats.altMoyenne.toLocaleString('fr-FR')} m`, icon: <AltitudeIcon className="w-10 h-10 text-sky-600" />, bg: 'bg-sky-50' },
             { label: 'Altitude record', value: `${stats.altMax.toLocaleString('fr-FR')} m`, icon: <Trophy className="w-5 h-5 text-amber-600" />, bg: 'bg-amber-50' },
             { label: 'Dropzone préférée', value: stats.dropzoneFav, icon: <MapPin className="w-5 h-5 text-red-500" />, bg: 'bg-red-50' },
-            ...(stats.chuteLibreMoyenne > 0 ? [{ label: 'Chute libre moy.', value: `${stats.chuteLibreMoyenne} s`, icon: <TrendingUp className="w-5 h-5 text-purple-500" />, bg: 'bg-purple-50' }] : []),
+            ...(stats.chuteLibreMoyenne > 0 ? [{ label: 'Chute libre moy.', value: `${stats.chuteLibreMoyenne} s`, icon: <TrendingUp className="w-5 h-5 text-purple-500" />, bg: 'bg-purple-50', subtitle: undefined as string | undefined }] : []),
+            ...(() => {
+              const souffs = sauts.filter((s) => s.nature_saut === 'soufflerie');
+              const nbSess = souffs.length;
+              const totalMin = souffs.reduce((acc, s) => acc + ((s as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes ?? 0), 0);
+              const valStr = totalMin === 0 ? '—' : totalMin < 60 ? `${totalMin} min` : `${Math.floor(totalMin / 60)} h${totalMin % 60 > 0 ? ` ${totalMin % 60}` : ''}`;
+              return nbSess > 0 ? [{ label: 'Soufflerie', value: valStr, icon: <Wind className="w-5 h-5 text-blue-400" />, bg: 'bg-blue-50', subtitle: `${nbSess} session${nbSess > 1 ? 's' : ''}` as string | undefined }] : [];
+            })(),
           ].map((item) => (
             <div key={item.label} className="rounded-xl p-4 shadow-sm" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
               <div className="flex items-center justify-between mb-2">
@@ -238,6 +245,9 @@ export function StatsPage({ sauts }: StatsPageProps) {
                 <div className={`w-8 h-8 ${item.bg} rounded-lg flex items-center justify-center`}>{item.icon}</div>
               </div>
               <p className="text-xl font-bold leading-tight truncate" style={{ color: '#FFFFFF' }}>{item.value}</p>
+              {'subtitle' in item && item.subtitle && (
+                <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>{item.subtitle}</p>
+              )}
             </div>
           ))}
         </div>

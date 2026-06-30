@@ -705,6 +705,11 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
     voilure_principale: '',
     observations: '',
     observations_moniteur: '',
+    // Soufflerie fields
+    tunnel_flight_minutes: '' as string | number,
+    tunnel_flight_count: '' as string | number,
+    tunnel_coach: '',
+    tunnel_discipline: '',
     sortie_avion: null as NotationTernaire,
     retour_face_sol: null as NotationTernaire,
     vigilance_altitude: null as NotationTernaire,
@@ -771,6 +776,10 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
         note_mental: null,
         precision_metres: null,
         type_pliage: (sautAEditer as { type_pliage?: string }).type_pliage ?? 'non_renseigne',
+        tunnel_flight_minutes: (sautAEditer as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes ?? '',
+        tunnel_flight_count: (sautAEditer as { tunnel_flight_count?: number | null }).tunnel_flight_count ?? '',
+        tunnel_coach: (sautAEditer as { tunnel_coach?: string | null }).tunnel_coach ?? '',
+        tunnel_discipline: (sautAEditer as { tunnel_discipline?: string | null }).tunnel_discipline ?? '',
       });
       // Resolve DZ selection from saved lieu string
       const lieuVal = sautAEditer.lieu ?? '';
@@ -799,15 +808,25 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
     if (fieldErrors[field]) setFieldErrors((e) => { const n = { ...e }; delete n[field]; return n; });
   };
 
+  const isSoufflerie = form.nature_saut === 'soufflerie';
+
   const validate = () => {
     const errors: Record<string, string> = {};
     if (!form.date_saut) errors.date_saut = 'Obligatoire';
     if (!form.lieu.trim()) errors.lieu = 'Obligatoire';
     if (!form.nature_saut) errors.nature_saut = 'Obligatoire';
-    if (!form.categorie) errors.categorie = 'Obligatoire';
-    if (!isMoniteur && !moniteurSelectionne) errors.moniteur = 'Obligatoire';
-    if (form.hauteur_ouverture !== null && form.hauteur_ouverture >= form.hauteur_m) {
-      errors.hauteur_ouverture = "La hauteur d'ouverture doit être inférieure à la hauteur de largage";
+    if (!isSoufflerie) {
+      if (!form.categorie) errors.categorie = 'Obligatoire';
+      if (!isMoniteur && !moniteurSelectionne) errors.moniteur = 'Obligatoire';
+      if (form.hauteur_ouverture !== null && form.hauteur_ouverture >= form.hauteur_m) {
+        errors.hauteur_ouverture = "La hauteur d'ouverture doit être inférieure à la hauteur de largage";
+      }
+    }
+    if (isSoufflerie) {
+      const mins = Number(form.tunnel_flight_minutes);
+      if (!form.tunnel_flight_minutes || isNaN(mins) || mins <= 0) {
+        errors.tunnel_flight_minutes = 'Durée obligatoire';
+      }
     }
     return errors;
   };
@@ -878,17 +897,22 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
       const payload = {
         date_saut: form.date_saut,
         lieu: form.lieu,
-        aeronef_immat: form.aeronef_immat,
+        aeronef_immat: isSoufflerie ? null : form.aeronef_immat,
         nature_saut: form.nature_saut,
-        categorie: form.categorie,
-        hauteur_m: form.hauteur_m,
-        hauteur_ouverture: form.hauteur_ouverture ?? null,
-        fonction: form.fonction,
-        parachute: form.parachute || null,
-        programme: form.programme || null,
-        voilure_principale: form.voilure_principale || null,
+        categorie: isSoufflerie ? null : form.categorie,
+        hauteur_m: isSoufflerie ? 0 : form.hauteur_m,
+        hauteur_ouverture: isSoufflerie ? null : (form.hauteur_ouverture ?? null),
+        fonction: isSoufflerie ? null : form.fonction,
+        parachute: isSoufflerie ? null : (form.parachute || null),
+        programme: isSoufflerie ? null : (form.programme || null),
+        voilure_principale: isSoufflerie ? null : (form.voilure_principale || null),
         observations: form.observations || null,
-        moniteur_id,
+        moniteur_id: isSoufflerie ? null : moniteur_id,
+        // Soufflerie fields
+        tunnel_flight_minutes: isSoufflerie ? (Number(form.tunnel_flight_minutes) || null) : null,
+        tunnel_flight_count: isSoufflerie ? (Number(form.tunnel_flight_count) || null) : null,
+        tunnel_coach: isSoufflerie ? (form.tunnel_coach.trim() || null) : null,
+        tunnel_discipline: isSoufflerie ? (form.tunnel_discipline.trim() || null) : null,
         ...(validateDirectly ? {
           statut: 'valide',
           valide_par: validateur,
@@ -929,9 +953,10 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
           .from('sauts')
           .insert({
             parachutiste_id: targetParachutisteId ?? user!.id,
-            // Admin-created jumps are directly validated; normal jumps go through moniteur flow
-            statut: isAdminMode ? 'valide' : (validateDirectly ? 'valide' : 'en_attente'),
+            // Soufflerie = declarative, always validated directly. Normal: admin or moniteur flow.
+            statut: (isSoufflerie || isAdminMode) ? 'valide' : (validateDirectly ? 'valide' : 'en_attente'),
             ...(isAdminMode ? { valide_par: profile ? `${profile.prenom} ${profile.nom}` : 'Admin Centre', valide_le: new Date().toISOString(), source: 'odc' } : {}),
+            ...(isSoufflerie ? { valide_par: profile ? `${profile.prenom} ${profile.nom}` : 'Auto', valide_le: new Date().toISOString(), source: 'soufflerie' } : {}),
             ...payload,
           })
           .select()
@@ -940,8 +965,8 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
         data = inserted as Saut;
       }
 
-      // Save progression data to jump_progression
-      if (data) {
+      // Save progression data to jump_progression (not for soufflerie)
+      if (data && !isSoufflerie) {
         const mapTernaire = (v: ProgressionTernaire) => v;
         await supabase.from('jump_progression').upsert({
           jump_id: data.id,
@@ -1108,7 +1133,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between p-5 flex-shrink-0" style={{ background: '#002266', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-            <h2 className="text-lg font-bold text-white">{isEditMode ? 'Modifier le saut' : 'Ajouter un saut'}</h2>
+            <h2 className="text-lg font-bold text-white">{isEditMode ? (isSoufflerie ? 'Modifier la session' : 'Modifier le saut') : (isSoufflerie ? 'Session soufflerie' : 'Ajouter un saut')}</h2>
             <button onClick={onClose} className="text-white/50 hover:text-white transition-colors" style={{ minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <X className="w-5 h-5" />
             </button>
@@ -1134,45 +1159,58 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                 <FieldError field="date_saut" />
               </div>
               <div>
-                <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>Lieu / DZ <span style={{ color: '#F87171' }}>*</span></label>
-                <select
-                  value={dzSelection}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setDzSelection(val);
-                    if (val === '__autre__') {
-                      update('lieu', dzAutreText);
-                    } else if (val) {
-                      const found = dzCentres.find((c) => c.id === val);
-                      update('lieu', found?.nom ?? '');
-                    } else {
-                      update('lieu', '');
-                    }
-                  }}
-                  style={fieldErrors.lieu ? { ...darkInputErr, colorScheme: 'dark' } : { ...darkInput, colorScheme: 'dark' }}
-                >
-                  <option value="">-- Sélectionner une DZ --</option>
-                  {dzCentres.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nom}{c.ville ? ` — ${c.ville}` : ''}
-                    </option>
-                  ))}
-                  <option value="__autre__">Autre / DZ étrangère (saisie libre)</option>
-                </select>
-                {dzSelection === '__autre__' && (
+                <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>{isSoufflerie ? 'Soufflerie / centre' : 'Lieu / DZ'} <span style={{ color: '#F87171' }}>*</span></label>
+                {isSoufflerie ? (
                   <input
                     type="text"
-                    value={dzAutreText}
-                    onChange={(e) => { setDzAutreText(e.target.value); update('lieu', e.target.value); }}
-                    placeholder="Saisir le nom de la DZ..."
-                    style={{ ...darkInput, marginTop: 6, borderColor: fieldErrors.lieu ? 'rgba(239,68,68,0.6)' : 'rgba(255,255,255,0.15)' }}
+                    value={form.lieu}
+                    onChange={(e) => update('lieu', e.target.value)}
+                    placeholder="Weembi, iFLY, Flyspot…"
+                    style={fieldErrors.lieu ? darkInputErr : darkInput}
                   />
+                ) : (
+                  <>
+                    <select
+                      value={dzSelection}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setDzSelection(val);
+                        if (val === '__autre__') {
+                          update('lieu', dzAutreText);
+                        } else if (val) {
+                          const found = dzCentres.find((c) => c.id === val);
+                          update('lieu', found?.nom ?? '');
+                        } else {
+                          update('lieu', '');
+                        }
+                      }}
+                      style={fieldErrors.lieu ? { ...darkInputErr, colorScheme: 'dark' } : { ...darkInput, colorScheme: 'dark' }}
+                    >
+                      <option value="">-- Sélectionner une DZ --</option>
+                      {dzCentres.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.nom}{c.ville ? ` — ${c.ville}` : ''}
+                        </option>
+                      ))}
+                      <option value="__autre__">Autre / DZ étrangère (saisie libre)</option>
+                    </select>
+                    {dzSelection === '__autre__' && (
+                      <input
+                        type="text"
+                        value={dzAutreText}
+                        onChange={(e) => { setDzAutreText(e.target.value); update('lieu', e.target.value); }}
+                        placeholder="Saisir le nom de la DZ..."
+                        style={{ ...darkInput, marginTop: 6, borderColor: fieldErrors.lieu ? 'rgba(239,68,68,0.6)' : 'rgba(255,255,255,0.15)' }}
+                      />
+                    )}
+                  </>
                 )}
                 <FieldError field="lieu" />
               </div>
             </div>
 
-            {/* Aéronef + Programme */}
+            {/* Aéronef + Programme — masqués pour soufflerie */}
+            {!isSoufflerie && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>Aéronef immat.</label>
@@ -1185,6 +1223,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                   style={darkInput} placeholder="PAC 1, Solo…" />
               </div>
             </div>
+            )}
 
             {/* Nature + Catégorie */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1196,6 +1235,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                 </select>
                 <FieldError field="nature_saut" />
               </div>
+              {!isSoufflerie && (
               <div>
                 <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>Catégorie <span style={{ color: '#F87171' }}>*</span></label>
                 <select value={form.categorie} onChange={(e) => update('categorie', e.target.value)}
@@ -1204,10 +1244,61 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                 </select>
                 <FieldError field="categorie" />
               </div>
+              )}
             </div>
 
-            {/* Pliage */}
-            <div>
+            {/* ── CHAMPS SOUFFLERIE ── */}
+            {isSoufflerie && (
+              <div className="space-y-3 rounded-xl p-4" style={{ background: 'rgba(96,165,250,0.06)', border: '1px solid rgba(96,165,250,0.2)' }}>
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#60A5FA' }}>🌬️ Session soufflerie</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>Temps de vol (min) <span style={{ color: '#F87171' }}>*</span></label>
+                    <input type="number" min={1} placeholder="15"
+                      value={form.tunnel_flight_minutes}
+                      onChange={(e) => update('tunnel_flight_minutes', e.target.value)}
+                      style={fieldErrors.tunnel_flight_minutes ? darkInputErr : darkInput} />
+                    <FieldError field="tunnel_flight_minutes" />
+                  </div>
+                  <div>
+                    <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>Nb de vols</label>
+                    <input type="number" min={1} placeholder="Optionnel"
+                      value={form.tunnel_flight_count}
+                      onChange={(e) => update('tunnel_flight_count', e.target.value)}
+                      style={darkInput} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>Discipline</label>
+                    <select value={form.tunnel_discipline} onChange={(e) => update('tunnel_discipline', e.target.value)}
+                      style={{ ...darkInput, colorScheme: 'dark' }}>
+                      <option value="">—</option>
+                      {['VR', 'Freefly', 'Dynamique', 'FS', 'VRW', 'Freestyle', 'Vitesse', 'Multi-discipline'].map((d) => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>Coach / encadrant</label>
+                    <input type="text" placeholder="Optionnel"
+                      value={form.tunnel_coach}
+                      onChange={(e) => update('tunnel_coach', e.target.value)}
+                      style={darkInput} />
+                  </div>
+                </div>
+                <div>
+                  <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>Objectifs / notes</label>
+                  <textarea rows={2} placeholder="Ce que tu as travaillé, ressenti, points à améliorer…"
+                    value={form.observations}
+                    onChange={(e) => update('observations', e.target.value)}
+                    style={{ ...darkInput, resize: 'none' }} />
+                </div>
+              </div>
+            )}
+
+            {/* Pliage — masqué pour soufflerie */}
+            {!isSoufflerie && <div>
               <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>Pliage du parachute</label>
               <div className="grid grid-cols-3 gap-2">
                 {([
@@ -1230,9 +1321,10 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                   </button>
                 ))}
               </div>
-            </div>
+            </div>}
 
-            {/* Hauteur + Fonction */}
+            {/* Hauteur + Fonction — masqués pour soufflerie */}
+            {!isSoufflerie && <>
             <div className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -1317,8 +1409,10 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                 <RechercheMoniteur selected={moniteurSelectionne} onSelect={setMoniteurSelectionne} userId={user?.id} allMoniteurs={allMoniteurs} />
               </div>
             )}
+            </>}
 
-            {/* ── Auto-évaluation de mon saut ── */}
+            {/* ── Auto-évaluation de mon saut — masqué pour soufflerie ── */}
+            {!isSoufflerie &&
             <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.12)' }}>
               <button type="button" onClick={() => setShowObs((o) => !o)}
                 className="w-full flex items-center justify-between px-4 py-3 transition-colors"
@@ -1505,10 +1599,10 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
 
                 </div>
               )}
-            </div>
+            </div>}
 
-            {/* ── Validation officielle moniteur ── */}
-            {isMoniteur && (
+            {/* ── Validation officielle moniteur — masqué pour soufflerie ── */}
+            {!isSoufflerie && isMoniteur && (
               <div className="rounded-xl overflow-hidden" style={{ border: '2px solid rgba(245,158,11,0.4)' }}>
                 <div className="flex items-center gap-2 px-4 py-3" style={{ background: 'rgba(245,158,11,0.12)', borderBottom: '1px solid rgba(245,158,11,0.2)' }}>
                   <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">

@@ -45,6 +45,11 @@ export interface Saut {
   validation_hash: string | null;
   validation_timestamp: string | null;
   certificat_url: string | null;
+  // Soufflerie (nature_saut === 'soufflerie')
+  tunnel_flight_minutes: number | null;
+  tunnel_flight_count: number | null;
+  tunnel_coach: string | null;
+  tunnel_discipline: string | null;
 }
 
 export interface Centre {
@@ -240,6 +245,7 @@ export const NATURE_SAUT_LABELS: Record<string, string> = {
   nuit: 'Saut de nuit',
   largage: 'Largage',
   tandem: 'Tandem',
+  soufflerie: 'Soufflerie',
 };
 
 export const CATEGORIE_LABELS: Record<string, string> = {

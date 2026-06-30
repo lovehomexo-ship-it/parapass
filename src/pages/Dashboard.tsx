@@ -297,11 +297,12 @@ export function DashboardPage() {
     setSautAEditer(null);
   };
 
-  const totalSauts = sauts.length;
-  const sautsCetteAnnee = sauts.filter((s) => new Date(s.date_saut).getFullYear() === new Date().getFullYear()).length;
+  const vraisSauts = sauts.filter((s) => s.nature_saut !== 'soufflerie');
+  const totalSauts = vraisSauts.length;
+  const sautsCetteAnnee = vraisSauts.filter((s) => new Date(s.date_saut).getFullYear() === new Date().getFullYear()).length;
   const sortedByDate = [...sauts].sort((a, b) => b.date_saut.localeCompare(a.date_saut));
-  const dernierSaut = sortedByDate[0]
-    ? new Date(sortedByDate[0].date_saut).toLocaleDateString('fr-FR')
+  const dernierSaut = sortedByDate.find((s) => s.nature_saut !== 'soufflerie')
+    ? new Date(sortedByDate.find((s) => s.nature_saut !== 'soufflerie')!.date_saut).toLocaleDateString('fr-FR')
     : null;
 
   const sortedSauts = [...sauts].sort((a, b) => {
@@ -309,6 +310,17 @@ export function DashboardPage() {
     if (sortField === 'hauteur_m') return (a.hauteur_m - b.hauteur_m) * dir;
     return (a[sortField] ?? '').localeCompare(b[sortField] ?? '') * dir;
   });
+
+  // Numérotation séquentielle uniquement sur les vrais sauts (pas soufflerie)
+  // Calculé sur tous les sauts triés par date asc → attribue un numéro croissant aux non-soufflerie
+  const sautNumeroMap = (() => {
+    const byDateAsc = [...sauts]
+      .filter((s) => s.nature_saut !== 'soufflerie' && s.statut !== 'declaration_honneur')
+      .sort((a, b) => a.date_saut.localeCompare(b.date_saut));
+    const map: Record<string, number> = {};
+    byDateAsc.forEach((s, i) => { map[s.id] = i + 1; });
+    return map;
+  })();
 
   const toggleSort = (field: typeof sortField) => {
     if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -720,14 +732,19 @@ export function DashboardPage() {
                         >
                           <div
                             className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm"
-                            style={{ background: 'rgba(249,115,22,0.15)', color: '#F97316' }}
+                            style={saut.nature_saut === 'soufflerie'
+                              ? { background: 'rgba(96,165,250,0.15)', color: '#60A5FA', fontSize: 16 }
+                              : { background: 'rgba(249,115,22,0.15)', color: '#F97316' }}
                           >
-                            {totalSauts - idx}
+                            {saut.nature_saut === 'soufflerie' ? '🌬️' : (sautNumeroMap[saut.id] ?? '—')}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold truncate" style={{ color: 'var(--c-text)' }}>{saut.lieu}</p>
                             <p className="text-xs mt-0.5" style={{ color: 'var(--c-muted)' }}>
-                              {new Date(saut.date_saut).toLocaleDateString('fr-FR')} · ↑{saut.hauteur_m}m{saut.hauteur_ouverture ? ` · ✂${saut.hauteur_ouverture}m` : ''} · {NATURE_SAUT_LABELS[saut.nature_saut] || saut.nature_saut}
+                              {new Date(saut.date_saut).toLocaleDateString('fr-FR')}
+                              {saut.nature_saut === 'soufflerie'
+                                ? ` · Soufflerie${(saut as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes ? ` · ${(saut as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes} min` : ''}`
+                                : ` · ↑${saut.hauteur_m}m${saut.hauteur_ouverture ? ` · ✂${saut.hauteur_ouverture}m` : ''} · ${NATURE_SAUT_LABELS[saut.nature_saut] || saut.nature_saut}`}
                             </p>
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
@@ -923,11 +940,11 @@ export function DashboardPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y" style={{ borderColor: 'var(--c-border-s)' }}>
-                        {sortedSauts.map((saut, idx) => (
+                        {sortedSauts.map((saut) => (
                           <SautRowCarnet
                             key={saut.id}
                             saut={saut}
-                            numero={sortDir === 'desc' ? totalSauts - idx : idx + 1}
+                            numero={sautNumeroMap[saut.id] ?? null}
                             statutBadge={statutBadge}
                             onEdit={openEdit}
                             onDetail={setSelectedSaut}
@@ -940,11 +957,11 @@ export function DashboardPage() {
 
                   {/* Mobile card list */}
                   <div className="md:hidden p-3 space-y-2">
-                    {sortedSauts.map((saut, idx) => (
+                    {sortedSauts.map((saut) => (
                       <SautCardMobile
                         key={saut.id}
                         saut={saut}
-                        numero={sortDir === 'desc' ? totalSauts - idx : idx + 1}
+                        numero={sautNumeroMap[saut.id] ?? null}
                         statutBadge={statutBadge}
                         onEdit={openEdit}
                         onDetail={setSelectedSaut}
@@ -1034,13 +1051,14 @@ function SautCardMobile({
   saut, numero, statutBadge, onEdit, onDetail, onDelete,
 }: {
   saut: Saut;
-  numero: number;
+  numero: number | null;
   statutBadge: (s: Saut) => React.ReactNode;
   onEdit: (s: Saut) => void;
   onDetail: (s: Saut) => void;
   onDelete: (id: string) => void;
 }) {
   const canEdit = saut.statut !== 'valide' && saut.statut !== 'refuse';
+  const isSoufflerie = saut.nature_saut === 'soufflerie';
 
   if (saut.statut === 'declaration_honneur') {
     return (
@@ -1069,20 +1087,32 @@ function SautCardMobile({
     >
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
-          <span style={{ color: '#F97316', fontSize: 12, fontFamily: 'monospace', fontWeight: 700 }}>#{numero}</span>
+          {isSoufflerie
+            ? <span style={{ fontSize: 14 }}>🌬️</span>
+            : <span style={{ color: '#F97316', fontSize: 12, fontFamily: 'monospace', fontWeight: 700 }}>{numero !== null ? `#${numero}` : '—'}</span>}
           <span style={{ color: 'var(--c-text)', fontSize: 13, fontWeight: 500 }}>{new Date(saut.date_saut).toLocaleDateString('fr-FR')}</span>
         </div>
-        {statutBadge(saut)}
+        {!isSoufflerie && statutBadge(saut)}
       </div>
       <p style={{ color: 'var(--c-text)', fontSize: 14, fontWeight: 600, marginBottom: 2 }}>{saut.lieu}</p>
       <div className="flex items-center gap-1" style={{ color: 'var(--c-muted)', fontSize: 12 }}>
-        <span>{NATURE_SAUT_LABELS[saut.nature_saut] || saut.nature_saut}</span>
-        <span>·</span>
-        <span title={saut.hauteur_ouverture ? `Largage : ${saut.hauteur_m}m · Ouverture : ${saut.hauteur_ouverture}m` : undefined}>
-          ↑{saut.hauteur_m}m{saut.hauteur_ouverture ? ` · ✂${saut.hauteur_ouverture}m` : ''}
-        </span>
-        <span>·</span>
-        <span>{FONCTION_LABELS[saut.fonction] || saut.fonction}</span>
+        {isSoufflerie ? (
+          <>
+            <span className="px-1.5 py-0.5 rounded text-[11px] font-semibold" style={{ background: 'rgba(96,165,250,0.15)', color: '#60A5FA' }}>Soufflerie</span>
+            {(saut as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes && <><span>·</span><span style={{ color: '#93C5FD' }}>{(saut as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes} min</span></>}
+            {(saut as { tunnel_discipline?: string | null }).tunnel_discipline && <><span>·</span><span>{(saut as { tunnel_discipline?: string | null }).tunnel_discipline}</span></>}
+          </>
+        ) : (
+          <>
+            <span>{NATURE_SAUT_LABELS[saut.nature_saut] || saut.nature_saut}</span>
+            <span>·</span>
+            <span title={saut.hauteur_ouverture ? `Largage : ${saut.hauteur_m}m · Ouverture : ${saut.hauteur_ouverture}m` : undefined}>
+              ↑{saut.hauteur_m}m{saut.hauteur_ouverture ? ` · ✂${saut.hauteur_ouverture}m` : ''}
+            </span>
+            <span>·</span>
+            <span>{FONCTION_LABELS[saut.fonction] || saut.fonction}</span>
+          </>
+        )}
         {(canEdit) && (
           <>
             <span className="ml-auto" />
@@ -1138,7 +1168,7 @@ function SautRowCarnet({
   onDelete,
 }: {
   saut: Saut;
-  numero: number;
+  numero: number | null;
   statutBadge: (s: Saut) => React.ReactNode;
   onEdit: (s: Saut) => void;
   onDetail: (s: Saut) => void;
@@ -1146,6 +1176,7 @@ function SautRowCarnet({
 }) {
   const [hovered, setHovered] = useState(false);
   const canEdit = saut.statut !== 'valide' && saut.statut !== 'refuse';
+  const isSoufflerie = saut.nature_saut === 'soufflerie';
 
   if (saut.statut === 'declaration_honneur') {
     return (
@@ -1176,12 +1207,22 @@ function SautRowCarnet({
       onClick={() => onDetail(saut)}
     >
       <td className="px-4 py-3">
-        <span className="font-mono text-xs font-semibold" style={{ color: 'var(--c-dim)' }}>#{numero}</span>
+        {isSoufflerie
+          ? <span style={{ fontSize: 16 }}>🌬️</span>
+          : <span className="font-mono text-xs font-semibold" style={{ color: 'var(--c-dim)' }}>{numero !== null ? `#${numero}` : '—'}</span>}
       </td>
       <td className="px-4 py-3 whitespace-nowrap" style={{ color: 'var(--c-text)' }}>{new Date(saut.date_saut).toLocaleDateString('fr-FR')}</td>
       <td style={{ color: 'var(--c-text2)' }} className="px-4 py-3 truncate">{saut.lieu}</td>
-      <td style={{ color: 'var(--c-text2)' }} className="px-4 py-3 truncate">{NATURE_SAUT_LABELS[saut.nature_saut] || saut.nature_saut}</td>
-      <td style={{ color: 'var(--c-text2)' }} className="px-4 py-3" title={saut.hauteur_ouverture ? `Largage : ${saut.hauteur_m}m · Ouverture : ${saut.hauteur_ouverture}m` : undefined}>↑{saut.hauteur_m}m{saut.hauteur_ouverture ? ` · ✂${saut.hauteur_ouverture}m` : ''}</td>
+      <td style={{ color: 'var(--c-text2)' }} className="px-4 py-3 truncate">
+        {isSoufflerie
+          ? <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold" style={{ background: 'rgba(96,165,250,0.15)', color: '#60A5FA' }}>🌬️ Soufflerie</span>
+          : (NATURE_SAUT_LABELS[saut.nature_saut] || saut.nature_saut)}
+      </td>
+      <td style={{ color: 'var(--c-text2)' }} className="px-4 py-3">
+        {isSoufflerie
+          ? <span style={{ color: '#93C5FD', fontSize: 12 }}>{(saut as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes ? `${(saut as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes} min` : '—'}{(saut as { tunnel_discipline?: string | null }).tunnel_discipline ? ` · ${(saut as { tunnel_discipline?: string | null }).tunnel_discipline}` : ''}</span>
+          : <span title={saut.hauteur_ouverture ? `Largage : ${saut.hauteur_m}m · Ouverture : ${saut.hauteur_ouverture}m` : undefined}>↑{saut.hauteur_m}m{saut.hauteur_ouverture ? ` · ✂${saut.hauteur_ouverture}m` : ''}</span>}
+      </td>
       <td style={{ color: 'var(--c-text2)' }} className="px-4 py-3 truncate">{FONCTION_LABELS[saut.fonction] || saut.fonction}</td>
       <td className="px-4 py-3"><MiniStars value={saut.position_globale} /></td>
       <td className="px-4 py-3">{statutBadge(saut)}</td>
