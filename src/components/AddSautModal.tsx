@@ -622,6 +622,14 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
   const showPositionCorps = isMoniteur || isPACOuA || (!isBPlus && !isPACOuA);
   const moniteurProfile = profile as (typeof profile & { numero_brevet_moniteur?: string; type_brevet_moniteur?: string; moniteur_valide_par_dt?: boolean }) | null;
 
+  // Fermeture par Escape
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [open, onClose]);
+
   // Toast auto-hide
   useEffect(() => {
     if (showNoteToast) {

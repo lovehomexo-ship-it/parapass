@@ -8,6 +8,7 @@ export function RegisterPage() {
   const [form, setForm] = useState({ email: '', password: '', nom: '', prenom: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
@@ -15,10 +16,12 @@ export function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (form.password.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caractères.');
-      return;
-    }
+    const errs: { email?: string; password?: string } = {};
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRe.test(form.email.trim())) errs.email = 'Adresse email invalide.';
+    if (form.password.length < 6) errs.password = 'Minimum 6 caractères.';
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) return;
     setLoading(true);
     try {
       await signUp(form.email.trim().toLowerCase(), form.password, {
@@ -50,7 +53,10 @@ export function RegisterPage() {
     }
   };
 
-  const update = (field: string, value: string) => setForm((f) => ({ ...f, [field]: value }));
+  const update = (field: string, value: string) => {
+    setForm((f) => ({ ...f, [field]: value }));
+    if (field in fieldErrors) setFieldErrors((e) => { const n = { ...e }; delete n[field as keyof typeof n]; return n; });
+  };
 
   const inputCls = 'w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm text-[#0F172A] focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all';
 
@@ -117,9 +123,10 @@ export function RegisterPage() {
                 onChange={(e) => update('email', e.target.value)}
                 required
                 autoComplete="email"
-                className={inputCls}
+                className={`${inputCls} ${fieldErrors.email ? 'border-red-400 focus:border-red-500' : ''}`}
                 placeholder="kevin.lorin@gmail.com"
               />
+              {fieldErrors.email && <p className="mt-1 text-xs text-red-500">{fieldErrors.email}</p>}
             </div>
 
             <div>
@@ -133,7 +140,7 @@ export function RegisterPage() {
                   onChange={(e) => update('password', e.target.value)}
                   required
                   autoComplete="new-password"
-                  className={`${inputCls} pr-10`}
+                  className={`${inputCls} pr-10 ${fieldErrors.password ? 'border-red-400 focus:border-red-500' : ''}`}
                   placeholder="Minimum 6 caractères"
                 />
                 <button
@@ -144,6 +151,7 @@ export function RegisterPage() {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              {fieldErrors.password && <p className="mt-1 text-xs text-red-500">{fieldErrors.password}</p>}
             </div>
 
             <button

@@ -36,6 +36,7 @@ import { DemoDashboardPage } from './pages/demo/DemoDashboard';
 import { DemoCentrePage } from './pages/demo/DemoCentre';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ScanPliagePage } from './pages/ScanPliage';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { supabase } from './lib/supabase';
 
 // ─── AuthRedirect ─────────────────────────────────────────────────────────────
@@ -135,7 +136,7 @@ function App() {
                 <Route path="/tampon" element={<ProtectedRoute roles={['admin']}><TamponAdminPage /></ProtectedRoute>} />
                 <Route path="/profil" element={<ProtectedRoute roles={['parachutiste', 'moniteur', 'moniteur_delegue', 'admin']}><ProfilPage /></ProtectedRoute>} />
                 <Route path="/parametres" element={<ProtectedRoute roles={['parachutiste', 'moniteur', 'moniteur_delegue']}><ParametresPage /></ProtectedRoute>} />
-                <Route path="/centre/dashboard" element={<ProtectedRoute roles={['admin_centre']}><CentreDashboardPage /></ProtectedRoute>} />
+                <Route path="/centre/dashboard" element={<ProtectedRoute roles={['admin_centre']}><ErrorBoundary><CentreDashboardPage /></ErrorBoundary></ProtectedRoute>} />
                 <Route path="/parapass/:username" element={<ProfilPublicPage />} />
                 <Route path="/parapass/id/:id" element={<ProfilPublicPage />} />
                 <Route path="/inscription-centre" element={<InscriptionCentrePage />} />

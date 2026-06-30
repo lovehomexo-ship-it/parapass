@@ -146,7 +146,7 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
   const infoParts: string[] = [];
   if (profile.numero_licence) infoParts.push(`FFP–${profile.numero_licence}`);
   if (licence?.code_club) infoParts.push(`Code Club ${licence.code_club}`);
-  if (brevetPrincipal) infoParts.push(`Brevet ${TYPE_BREVET_LABELS[brevetPrincipal.type_brevet] || brevetPrincipal.type_brevet}`);
+  if (brevetPrincipal) infoParts.push(TYPE_BREVET_LABELS[brevetPrincipal.type_brevet] || `Brevet ${brevetPrincipal.type_brevet}`);
   if (licence?.nom_club) infoParts.push(licence.nom_club);
   if (centre) infoParts.push(centre.nom);
 

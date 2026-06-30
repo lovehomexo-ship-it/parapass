@@ -477,6 +477,12 @@ function ModalPromotion({ licencie, onConfirm, onClose }: {
   const [dateFin, setDateFin] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
       <div className="rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.1)' }}>
@@ -2552,6 +2558,13 @@ function LicencieDrawer({
   useEffect(() => {
     setTab(initialTab ?? 'carte');
   }, [initialTab, licencie?.id]);
+
+  useEffect(() => {
+    if (!licencie) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [licencie, onClose]);
 
   useEffect(() => {
     if (!licencie || tab !== 'sauts') return;
