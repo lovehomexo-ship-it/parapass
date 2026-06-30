@@ -651,9 +651,23 @@ export function LandingPage() {
                 Le premier carnet de sauts numérique certifié DGAC. Validé par vos moniteurs en temps réel, accessible partout, même sans connexion.
               </p>
 
-              {/* Mobile card — visible only on small screens */}
-              <div className="flex md:hidden justify-center mb-8">
-                <DemoPassportCard compact />
+              {/* Mobile card — visible only on small screens, with DGAC badge */}
+              <div className="flex md:hidden flex-col items-center gap-3 mb-8">
+                <div className="relative" style={{ width: '100%', maxWidth: 360, padding: '32px 40px 32px 24px' }}>
+                  <FloatingBadge
+                    icon={<span className="text-green-500 font-bold text-sm">✓</span>}
+                    label="Certifié DGAC"
+                    delay="0.8s"
+                    className="top-2 -left-2 z-10"
+                  />
+                  <FloatingBadge
+                    icon={<Lock className="w-3.5 h-3.5 text-blue-600" />}
+                    label="Chiffré AES-256"
+                    delay="1.4s"
+                    className="-bottom-2 -left-4 z-10"
+                  />
+                  <DemoPassportCard />
+                </div>
               </div>
 
               {/* CTA buttons */}
