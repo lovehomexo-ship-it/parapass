@@ -132,13 +132,24 @@ export function AlertsPanel({ alertes, unreadCount, onMarkRead, onMarkAllRead, a
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const sorted = [...alertes].sort((a, b) => {
+  // Déduplication par type dans le panel Bell
+  const urgenceRankPanel = (u: string) => u === 'critique' ? 2 : u === 'attention' ? 1 : 0;
+  const dedupPanel = new Map<string, Alerte>();
+  for (const a of alertes) {
+    const existing = dedupPanel.get(a.type);
+    if (!existing || urgenceRankPanel(a.urgence) > urgenceRankPanel(existing.urgence)) {
+      dedupPanel.set(a.type, a);
+    }
+  }
+  const dedupedAlertes = Array.from(dedupPanel.values());
+
+  const sorted = [...dedupedAlertes].sort((a, b) => {
     const order = { critique: 0, attention: 1, info: 2 };
     if (order[a.urgence] !== order[b.urgence]) return order[a.urgence] - order[b.urgence];
     return a.lue === b.lue ? 0 : a.lue ? 1 : -1;
   });
 
-  const critiquesNonAcquittees = alertes.filter(
+  const critiquesNonAcquittees = dedupedAlertes.filter(
     (a) => a.urgence === 'critique' && !a.lue && !acquittees.includes(a.id)
   );
 
@@ -273,7 +284,16 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter, statutDocs, l
   });
   const navigate = useNavigate();
 
-  const toutesEnrichies = alertes.map(enrichirAlerte);
+  // Déduplication par type — garde l'alerte la plus sévère de chaque type
+  const urgenceRank = (u: string) => u === 'critique' ? 2 : u === 'attention' ? 1 : 0;
+  const deduplicatedMap = new Map<string, ReturnType<typeof enrichirAlerte>>();
+  for (const a of alertes.map(enrichirAlerte)) {
+    const existing = deduplicatedMap.get(a.type);
+    if (!existing || urgenceRank(a.urgence) > urgenceRank(existing.urgence)) {
+      deduplicatedMap.set(a.type, a);
+    }
+  }
+  const toutesEnrichies = Array.from(deduplicatedMap.values());
   const critiquesPermanentes = toutesEnrichies.filter((a) => a.urgence === 'critique');
   const alertesVisibles = toutesEnrichies.filter((a) => !acquittees.includes(a.id));
 

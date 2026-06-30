@@ -193,13 +193,15 @@ function GlobalRating({ value, onChange }: { value: number | null; onChange: (v:
             <button
               key={n}
               type="button"
-              onClick={() => onChange(selected ? null : n)}
+              onPointerDown={(e) => { e.preventDefault(); onChange(selected ? null : n); }}
               className="transition-transform"
               style={{
                 fontSize: '32px',
-                color: selected ? '#F97316' : 'rgba(255,255,255,0.15)',
+                lineHeight: 1,
+                color: (value ?? 0) >= n ? '#F97316' : 'rgba(255,255,255,0.15)',
                 cursor: 'pointer',
-                transform: selected ? 'scale(1.1)' : 'scale(1)',
+                transform: selected ? 'scale(1.15)' : 'scale(1)',
+                WebkitTapHighlightColor: 'transparent',
               }}
             >
               ★
