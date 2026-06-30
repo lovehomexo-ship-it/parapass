@@ -297,12 +297,12 @@ export function DashboardPage() {
     setSautAEditer(null);
   };
 
-  const vraisSauts = sauts.filter((s) => !s.is_tunnel);
+  const vraisSauts = sauts.filter((s) => s.source !== 'soufflerie');
   const totalSauts = vraisSauts.length;
   const sautsCetteAnnee = vraisSauts.filter((s) => new Date(s.date_saut).getFullYear() === new Date().getFullYear()).length;
   const sortedByDate = [...sauts].sort((a, b) => b.date_saut.localeCompare(a.date_saut));
-  const dernierSaut = sortedByDate.find((s) => !s.is_tunnel)
-    ? new Date(sortedByDate.find((s) => !s.is_tunnel)!.date_saut).toLocaleDateString('fr-FR')
+  const dernierSaut = sortedByDate.find((s) => s.source !== 'soufflerie')
+    ? new Date(sortedByDate.find((s) => s.source !== 'soufflerie')!.date_saut).toLocaleDateString('fr-FR')
     : null;
 
   const sortedSauts = [...sauts].sort((a, b) => {
@@ -315,7 +315,7 @@ export function DashboardPage() {
   // Calculé sur tous les sauts triés par date asc → attribue un numéro croissant aux non-soufflerie
   const sautNumeroMap = (() => {
     const byDateAsc = [...sauts]
-      .filter((s) => !s.is_tunnel && s.statut !== 'declaration_honneur')
+      .filter((s) => s.source !== 'soufflerie' && s.statut !== 'declaration_honneur')
       .sort((a, b) => a.date_saut.localeCompare(b.date_saut));
     const map: Record<string, number> = {};
     byDateAsc.forEach((s, i) => { map[s.id] = i + 1; });
@@ -732,17 +732,17 @@ export function DashboardPage() {
                         >
                           <div
                             className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm"
-                            style={saut.is_tunnel
+                            style={saut.source === 'soufflerie'
                               ? { background: 'rgba(96,165,250,0.15)', color: '#60A5FA', fontSize: 16 }
                               : { background: 'rgba(249,115,22,0.15)', color: '#F97316' }}
                           >
-                            {saut.is_tunnel ? '🌬️' : (sautNumeroMap[saut.id] ?? '—')}
+                            {saut.source === 'soufflerie' ? '🌬️' : (sautNumeroMap[saut.id] ?? '—')}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold truncate" style={{ color: 'var(--c-text)' }}>{saut.lieu}</p>
                             <p className="text-xs mt-0.5" style={{ color: 'var(--c-muted)' }}>
                               {new Date(saut.date_saut).toLocaleDateString('fr-FR')}
-                              {saut.is_tunnel
+                              {saut.source === 'soufflerie'
                                 ? ` · Soufflerie${(saut as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes ? ` · ${(saut as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes} min` : ''}`
                                 : ` · ↑${saut.hauteur_m}m${saut.hauteur_ouverture ? ` · ✂${saut.hauteur_ouverture}m` : ''} · ${NATURE_SAUT_LABELS[saut.nature_saut] || saut.nature_saut}`}
                             </p>
@@ -1058,7 +1058,7 @@ function SautCardMobile({
   onDelete: (id: string) => void;
 }) {
   const canEdit = saut.statut !== 'valide' && saut.statut !== 'refuse';
-  const isSoufflerie = !!saut.is_tunnel;
+  const isSoufflerie = !!saut.source === 'soufflerie';
 
   if (saut.statut === 'declaration_honneur') {
     return (
@@ -1176,7 +1176,7 @@ function SautRowCarnet({
 }) {
   const [hovered, setHovered] = useState(false);
   const canEdit = saut.statut !== 'valide' && saut.statut !== 'refuse';
-  const isSoufflerie = !!saut.is_tunnel;
+  const isSoufflerie = !!saut.source === 'soufflerie';
 
   if (saut.statut === 'declaration_honneur') {
     return (

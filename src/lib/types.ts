@@ -45,9 +45,7 @@ export interface Saut {
   validation_hash: string | null;
   validation_timestamp: string | null;
   certificat_url: string | null;
-  // Soufflerie (is_tunnel = true)
-  is_tunnel: boolean | null;
-  tunnel_name: string | null;
+  // Soufflerie — identifié via source === 'soufflerie'
   tunnel_flight_minutes: number | null;
   tunnel_flight_count: number | null;
   tunnel_coach: string | null;
