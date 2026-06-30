@@ -903,7 +903,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
       const payload = {
         date_saut: form.date_saut,
         lieu: isTunnel ? (form.tunnel_name.trim() || form.lieu) : form.lieu,
-        aeronef_immat: isTunnel ? null : form.aeronef_immat,
+        aeronef_immat: isTunnel ? '' : form.aeronef_immat,
         nature_saut: form.nature_saut,
         categorie: isTunnel ? 'OA' : form.categorie,
         hauteur_m: isTunnel ? 0 : form.hauteur_m,
