@@ -45,7 +45,9 @@ export interface Saut {
   validation_hash: string | null;
   validation_timestamp: string | null;
   certificat_url: string | null;
-  // Soufflerie (nature_saut === 'soufflerie')
+  // Soufflerie (is_tunnel = true)
+  is_tunnel: boolean | null;
+  tunnel_name: string | null;
   tunnel_flight_minutes: number | null;
   tunnel_flight_count: number | null;
   tunnel_coach: string | null;
@@ -245,15 +247,12 @@ export const NATURE_SAUT_LABELS: Record<string, string> = {
   nuit: 'Saut de nuit',
   largage: 'Largage',
   tandem: 'Tandem',
-  soufflerie: 'Soufflerie',
 };
 
 export const CATEGORIE_LABELS: Record<string, string> = {
   OA: 'OA - Ouverture Automatique',
   OC: 'OC - Ouverture Commandée',
-  OR30: 'OR < 30"',
-  OR60: 'OR < 60"',
-  OR60plus: 'OR > 60"',
+  soufflerie: 'Soufflerie',
 };
 
 export const FONCTION_LABELS: Record<string, string> = {

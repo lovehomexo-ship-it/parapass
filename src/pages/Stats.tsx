@@ -232,7 +232,7 @@ export function StatsPage({ sauts }: StatsPageProps) {
             { label: 'Dropzone préférée', value: stats.dropzoneFav, icon: <MapPin className="w-5 h-5 text-red-500" />, bg: 'bg-red-50' },
             ...(stats.chuteLibreMoyenne > 0 ? [{ label: 'Chute libre moy.', value: `${stats.chuteLibreMoyenne} s`, icon: <TrendingUp className="w-5 h-5 text-purple-500" />, bg: 'bg-purple-50', subtitle: undefined as string | undefined }] : []),
             ...(() => {
-              const souffs = sauts.filter((s) => s.nature_saut === 'soufflerie');
+              const souffs = sauts.filter((s) => s.is_tunnel);
               const nbSess = souffs.length;
               const totalMin = souffs.reduce((acc, s) => acc + ((s as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes ?? 0), 0);
               const valStr = totalMin === 0 ? '—' : totalMin < 60 ? `${totalMin} min` : `${Math.floor(totalMin / 60)} h${totalMin % 60 > 0 ? ` ${totalMin % 60}` : ''}`;

@@ -705,7 +705,8 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
     voilure_principale: '',
     observations: '',
     observations_moniteur: '',
-    // Soufflerie fields
+    // Soufflerie / tunnel fields (categorie = 'soufflerie')
+    tunnel_name: '',
     tunnel_flight_minutes: '' as string | number,
     tunnel_flight_count: '' as string | number,
     tunnel_coach: '',
@@ -776,6 +777,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
         note_mental: null,
         precision_metres: null,
         type_pliage: (sautAEditer as { type_pliage?: string }).type_pliage ?? 'non_renseigne',
+        tunnel_name: (sautAEditer as { tunnel_name?: string | null }).tunnel_name ?? '',
         tunnel_flight_minutes: (sautAEditer as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes ?? '',
         tunnel_flight_count: (sautAEditer as { tunnel_flight_count?: number | null }).tunnel_flight_count ?? '',
         tunnel_coach: (sautAEditer as { tunnel_coach?: string | null }).tunnel_coach ?? '',
@@ -808,21 +810,25 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
     if (fieldErrors[field]) setFieldErrors((e) => { const n = { ...e }; delete n[field]; return n; });
   };
 
-  const isSoufflerie = form.nature_saut === 'soufflerie';
+  const isTunnel = form.categorie === 'soufflerie';
 
   const validate = () => {
     const errors: Record<string, string> = {};
     if (!form.date_saut) errors.date_saut = 'Obligatoire';
-    if (!form.lieu.trim()) errors.lieu = 'Obligatoire';
+    if (isTunnel) {
+      if (!form.tunnel_name.trim()) errors.tunnel_name = 'Obligatoire';
+    } else {
+      if (!form.lieu.trim()) errors.lieu = 'Obligatoire';
+    }
     if (!form.nature_saut) errors.nature_saut = 'Obligatoire';
-    if (!isSoufflerie) {
+    if (!isTunnel) {
       if (!form.categorie) errors.categorie = 'Obligatoire';
       if (!isMoniteur && !moniteurSelectionne) errors.moniteur = 'Obligatoire';
       if (form.hauteur_ouverture !== null && form.hauteur_ouverture >= form.hauteur_m) {
         errors.hauteur_ouverture = "La hauteur d'ouverture doit être inférieure à la hauteur de largage";
       }
     }
-    if (isSoufflerie) {
+    if (isTunnel) {
       const mins = Number(form.tunnel_flight_minutes);
       if (!form.tunnel_flight_minutes || isNaN(mins) || mins <= 0) {
         errors.tunnel_flight_minutes = 'Durée obligatoire';
@@ -896,23 +902,25 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
 
       const payload = {
         date_saut: form.date_saut,
-        lieu: form.lieu,
-        aeronef_immat: isSoufflerie ? null : form.aeronef_immat,
+        lieu: isTunnel ? (form.tunnel_name.trim() || form.lieu) : form.lieu,
+        aeronef_immat: isTunnel ? null : form.aeronef_immat,
         nature_saut: form.nature_saut,
-        categorie: isSoufflerie ? null : form.categorie,
-        hauteur_m: isSoufflerie ? 0 : form.hauteur_m,
-        hauteur_ouverture: isSoufflerie ? null : (form.hauteur_ouverture ?? null),
-        fonction: isSoufflerie ? null : form.fonction,
-        parachute: isSoufflerie ? null : (form.parachute || null),
-        programme: isSoufflerie ? null : (form.programme || null),
-        voilure_principale: isSoufflerie ? null : (form.voilure_principale || null),
+        categorie: form.categorie,
+        hauteur_m: isTunnel ? 0 : form.hauteur_m,
+        hauteur_ouverture: isTunnel ? null : (form.hauteur_ouverture ?? null),
+        fonction: isTunnel ? null : form.fonction,
+        parachute: isTunnel ? null : (form.parachute || null),
+        programme: isTunnel ? null : (form.programme || null),
+        voilure_principale: isTunnel ? null : (form.voilure_principale || null),
         observations: form.observations || null,
-        moniteur_id: isSoufflerie ? null : moniteur_id,
-        // Soufflerie fields
-        tunnel_flight_minutes: isSoufflerie ? (Number(form.tunnel_flight_minutes) || null) : null,
-        tunnel_flight_count: isSoufflerie ? (Number(form.tunnel_flight_count) || null) : null,
-        tunnel_coach: isSoufflerie ? (form.tunnel_coach.trim() || null) : null,
-        tunnel_discipline: isSoufflerie ? (form.tunnel_discipline.trim() || null) : null,
+        moniteur_id: isTunnel ? null : moniteur_id,
+        // Soufflerie / tunnel fields
+        is_tunnel: isTunnel,
+        tunnel_name: isTunnel ? (form.tunnel_name.trim() || null) : null,
+        tunnel_flight_minutes: isTunnel ? (Number(form.tunnel_flight_minutes) || null) : null,
+        tunnel_flight_count: isTunnel ? (Number(form.tunnel_flight_count) || null) : null,
+        tunnel_coach: isTunnel ? (form.tunnel_coach.trim() || null) : null,
+        tunnel_discipline: isTunnel ? (form.tunnel_discipline.trim() || null) : null,
         ...(validateDirectly ? {
           statut: 'valide',
           valide_par: validateur,
@@ -954,9 +962,9 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
           .insert({
             parachutiste_id: targetParachutisteId ?? user!.id,
             // Soufflerie = declarative, always validated directly. Normal: admin or moniteur flow.
-            statut: (isSoufflerie || isAdminMode) ? 'valide' : (validateDirectly ? 'valide' : 'en_attente'),
+            statut: (isTunnel || isAdminMode) ? 'valide' : (validateDirectly ? 'valide' : 'en_attente'),
             ...(isAdminMode ? { valide_par: profile ? `${profile.prenom} ${profile.nom}` : 'Admin Centre', valide_le: new Date().toISOString(), source: 'odc' } : {}),
-            ...(isSoufflerie ? { valide_par: profile ? `${profile.prenom} ${profile.nom}` : 'Auto', valide_le: new Date().toISOString(), source: 'soufflerie' } : {}),
+            ...(isTunnel ? { valide_par: profile ? `${profile.prenom} ${profile.nom}` : 'Auto', valide_le: new Date().toISOString(), source: 'soufflerie' } : {}),
             ...payload,
           })
           .select()
@@ -966,7 +974,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
       }
 
       // Save progression data to jump_progression (not for soufflerie)
-      if (data && !isSoufflerie) {
+      if (data && !isTunnel) {
         const mapTernaire = (v: ProgressionTernaire) => v;
         await supabase.from('jump_progression').upsert({
           jump_id: data.id,
@@ -1133,7 +1141,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between p-5 flex-shrink-0" style={{ background: '#002266', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-            <h2 className="text-lg font-bold text-white">{isEditMode ? (isSoufflerie ? 'Modifier la session' : 'Modifier le saut') : (isSoufflerie ? 'Session soufflerie' : 'Ajouter un saut')}</h2>
+            <h2 className="text-lg font-bold text-white">{isEditMode ? (isTunnel ? 'Modifier la session' : 'Modifier le saut') : (isTunnel ? 'Session soufflerie' : 'Ajouter un saut')}</h2>
             <button onClick={onClose} className="text-white/50 hover:text-white transition-colors" style={{ minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <X className="w-5 h-5" />
             </button>
@@ -1159,14 +1167,14 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                 <FieldError field="date_saut" />
               </div>
               <div>
-                <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>{isSoufflerie ? 'Soufflerie / centre' : 'Lieu / DZ'} <span style={{ color: '#F87171' }}>*</span></label>
-                {isSoufflerie ? (
+                <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>{isTunnel ? 'Soufflerie / centre' : 'Lieu / DZ'} <span style={{ color: '#F87171' }}>*</span></label>
+                {isTunnel ? (
                   <input
                     type="text"
-                    value={form.lieu}
-                    onChange={(e) => update('lieu', e.target.value)}
+                    value={form.tunnel_name}
+                    onChange={(e) => update('tunnel_name', e.target.value)}
                     placeholder="Weembi, iFLY, Flyspot…"
-                    style={fieldErrors.lieu ? darkInputErr : darkInput}
+                    style={fieldErrors.tunnel_name ? darkInputErr : darkInput}
                   />
                 ) : (
                   <>
@@ -1205,12 +1213,12 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                     )}
                   </>
                 )}
-                <FieldError field="lieu" />
+                <FieldError field={isTunnel ? 'tunnel_name' : 'lieu'} />
               </div>
             </div>
 
             {/* Aéronef + Programme — masqués pour soufflerie */}
-            {!isSoufflerie && (
+            {!isTunnel && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>Aéronef immat.</label>
@@ -1235,7 +1243,6 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                 </select>
                 <FieldError field="nature_saut" />
               </div>
-              {!isSoufflerie && (
               <div>
                 <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>Catégorie <span style={{ color: '#F87171' }}>*</span></label>
                 <select value={form.categorie} onChange={(e) => update('categorie', e.target.value)}
@@ -1244,11 +1251,10 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                 </select>
                 <FieldError field="categorie" />
               </div>
-              )}
             </div>
 
             {/* ── CHAMPS SOUFFLERIE ── */}
-            {isSoufflerie && (
+            {isTunnel && (
               <div className="space-y-3 rounded-xl p-4" style={{ background: 'rgba(96,165,250,0.06)', border: '1px solid rgba(96,165,250,0.2)' }}>
                 <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#60A5FA' }}>🌬️ Session soufflerie</p>
                 <div className="grid grid-cols-2 gap-3">
@@ -1298,7 +1304,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
             )}
 
             {/* Pliage — masqué pour soufflerie */}
-            {!isSoufflerie && <div>
+            {!isTunnel && <div>
               <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>Pliage du parachute</label>
               <div className="grid grid-cols-3 gap-2">
                 {([
@@ -1324,7 +1330,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
             </div>}
 
             {/* Hauteur + Fonction — masqués pour soufflerie */}
-            {!isSoufflerie && <>
+            {!isTunnel && <>
             <div className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -1412,7 +1418,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
             </>}
 
             {/* ── Auto-évaluation de mon saut — masqué pour soufflerie ── */}
-            {!isSoufflerie &&
+            {!isTunnel &&
             <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.12)' }}>
               <button type="button" onClick={() => setShowObs((o) => !o)}
                 className="w-full flex items-center justify-between px-4 py-3 transition-colors"
@@ -1602,7 +1608,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
             </div>}
 
             {/* ── Validation officielle moniteur — masqué pour soufflerie ── */}
-            {!isSoufflerie && isMoniteur && (
+            {!isTunnel && isMoniteur && (
               <div className="rounded-xl overflow-hidden" style={{ border: '2px solid rgba(245,158,11,0.4)' }}>
                 <div className="flex items-center gap-2 px-4 py-3" style={{ background: 'rgba(245,158,11,0.12)', borderBottom: '1px solid rgba(245,158,11,0.2)' }}>
                   <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
