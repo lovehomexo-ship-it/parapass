@@ -708,8 +708,8 @@ export function LandingPage() {
               </div>
             </div>
 
-            {/* Right — card */}
-            <div className="flex md:w-[45%] min-w-0 justify-center md:justify-end">
+            {/* Right — card (desktop only — mobile card is above the CTA buttons) */}
+            <div className="hidden md:flex md:w-[45%] min-w-0 justify-center md:justify-end">
               <div className="relative" style={{ width: '420px', maxWidth: '100%', padding: '48px 56px 48px 36px' }}>
 
                 {/* Badge — top left: Certifié DGAC */}
