@@ -67,6 +67,7 @@ export function MaterielPage() {
     statut: 'actif' as Materiel['statut'], notes: '', photo_url: null as string | null,
   };
   const [matForm, setMatForm] = useState(emptyMat);
+  const [matErrors, setMatErrors] = useState<{ marque?: string; modele?: string }>({});
 
   const emptyMaint = {
     type_maintenance: 'pliage_secours' as Maintenance['type_maintenance'],
@@ -99,6 +100,11 @@ export function MaterielPage() {
 
   const saveMateriel = async () => {
     if (!user || blockIfDemo()) return;
+    const errs: { marque?: string; modele?: string } = {};
+    if (!matForm.marque.trim()) errs.marque = 'La marque est obligatoire';
+    if (!matForm.modele.trim()) errs.modele = 'Le modèle est obligatoire';
+    setMatErrors(errs);
+    if (Object.keys(errs).length > 0) return;
     setSaving(true);
     const payload = {
       ...matForm,
@@ -186,12 +192,14 @@ export function MaterielPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Marque</label>
-                <input style={darkInputStyle} value={matForm.marque} onChange={(e) => setMatForm({ ...matForm, marque: e.target.value })} />
+                <label className="block text-xs font-medium mb-1" style={{ color: matErrors.marque ? '#FCA5A5' : 'rgba(255,255,255,0.5)' }}>Marque *</label>
+                <input style={{ ...darkInputStyle, ...(matErrors.marque ? { borderColor: '#EF4444' } : {}) }} value={matForm.marque} onChange={(e) => { setMatForm({ ...matForm, marque: e.target.value }); if (matErrors.marque) setMatErrors((er) => ({ ...er, marque: undefined })); }} />
+                {matErrors.marque && <p className="text-red-400 text-xs mt-1">{matErrors.marque}</p>}
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Modèle</label>
-                <input style={darkInputStyle} value={matForm.modele} onChange={(e) => setMatForm({ ...matForm, modele: e.target.value })} />
+                <label className="block text-xs font-medium mb-1" style={{ color: matErrors.modele ? '#FCA5A5' : 'rgba(255,255,255,0.5)' }}>Modèle *</label>
+                <input style={{ ...darkInputStyle, ...(matErrors.modele ? { borderColor: '#EF4444' } : {}) }} value={matForm.modele} onChange={(e) => { setMatForm({ ...matForm, modele: e.target.value }); if (matErrors.modele) setMatErrors((er) => ({ ...er, modele: undefined })); }} />
+                {matErrors.modele && <p className="text-red-400 text-xs mt-1">{matErrors.modele}</p>}
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>N° de série</label>

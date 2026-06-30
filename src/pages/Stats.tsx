@@ -230,7 +230,7 @@ export function StatsPage({ sauts }: StatsPageProps) {
             { label: 'Altitude moyenne', value: `${stats.altMoyenne.toLocaleString('fr-FR')} m`, icon: <AltitudeIcon className="w-10 h-10 text-sky-600" />, bg: 'bg-sky-50' },
             { label: 'Altitude record', value: `${stats.altMax.toLocaleString('fr-FR')} m`, icon: <Trophy className="w-5 h-5 text-amber-600" />, bg: 'bg-amber-50' },
             { label: 'Dropzone préférée', value: stats.dropzoneFav, icon: <MapPin className="w-5 h-5 text-red-500" />, bg: 'bg-red-50' },
-            ...(stats.chuteLibreMoyenne > 0 ? [{ label: 'Chute libre moy.', value: `${stats.chuteLibreMoyenne}s`, icon: <TrendingUp className="w-5 h-5 text-purple-500" />, bg: 'bg-purple-50' }] : []),
+            ...(stats.chuteLibreMoyenne > 0 ? [{ label: 'Chute libre moy.', value: `${stats.chuteLibreMoyenne} s`, icon: <TrendingUp className="w-5 h-5 text-purple-500" />, bg: 'bg-purple-50' }] : []),
           ].map((item) => (
             <div key={item.label} className="rounded-xl p-4 shadow-sm" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
               <div className="flex items-center justify-between mb-2">
