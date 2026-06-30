@@ -1675,12 +1675,14 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                   Annuler
                 </button>
                 <button type="submit"
-                  disabled={loading || (!isMoniteur && !moniteurSelectionne) || !form.note_globale}
+                  disabled={loading || (!isTunnel && ((!isMoniteur && !moniteurSelectionne) || !form.note_globale))}
                   className="flex-1 rounded-xl text-sm font-semibold transition-colors"
                   style={{
                     height: 52,
                     ...(loading
                       ? { background: 'rgba(245,158,11,0.4)', color: 'rgba(255,255,255,0.5)', cursor: 'not-allowed' }
+                      : isTunnel
+                      ? { background: '#60A5FA', color: '#fff' }
                       : !form.note_globale
                       ? { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.3)', cursor: 'not-allowed', border: '1px solid rgba(255,255,255,0.1)' }
                       : (!isMoniteur && !moniteurSelectionne)
@@ -1691,6 +1693,8 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                   }}>
                   {loading
                     ? (isEditMode ? 'Modification...' : 'Ajout...')
+                    : isTunnel
+                    ? (isEditMode ? 'Modifier la session' : '🌬️ Enregistrer la session')
                     : !form.note_globale
                     ? '★ Note globale obligatoire'
                     : isMoniteur
