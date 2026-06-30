@@ -134,8 +134,8 @@ function DemoPassportCard({ compact = false }: { compact?: boolean }) {
 
             {/* Identity */}
             <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 flex items-center justify-center overflow-hidden" style={{ width: compact ? 58 : 76, height: compact ? 58 : 76, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.08)' }}>
-                <User style={{ width: 24, height: 24, color: 'rgba(255,255,255,0.5)' }} />
+              <div className="flex-shrink-0 overflow-hidden" style={{ width: compact ? 58 : 76, height: compact ? 58 : 76, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)' }}>
+                <img src="/sophie-martin.png" alt="Sophie Martin" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
               </div>
               <div className="flex-1 min-w-0">
                 <div style={{ fontSize: compact ? 18 : 22, fontWeight: 800, letterSpacing: '0.04em', color: '#fff', lineHeight: 1.1, textTransform: 'uppercase' }}>MARTIN</div>
