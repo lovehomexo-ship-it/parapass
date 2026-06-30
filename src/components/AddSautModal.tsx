@@ -1062,7 +1062,8 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
       localStorage.setItem('parapass_last_jump_values', JSON.stringify({ hauteur_m: form.hauteur_m, hauteur_ouverture: form.hauteur_ouverture }));
       onClose();
       resetForm();
-    } catch {
+    } catch (err) {
+      console.error('AddSautModal error:', err);
       setError(isEditMode ? 'Erreur lors de la modification du saut' : 'Erreur lors de l\'ajout du saut');
     } finally {
       setLoading(false);
