@@ -969,7 +969,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
           })
           .select()
           .single();
-        if (insertError) throw insertError;
+        if (insertError) { console.error('INSERT ERROR:', JSON.stringify(insertError)); throw insertError; }
         data = inserted as Saut;
       }
 
