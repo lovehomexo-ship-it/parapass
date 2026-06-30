@@ -6,6 +6,7 @@ import { ParachuteIcon, ParachuteDropIcon, AltitudeIcon } from '../components/Pa
 import { QRCodeSVG } from 'qrcode.react';
 import { DemoSelectModal } from '../components/DemoSelectModal';
 import { supabase } from '../lib/supabase';
+import { MODULES, STUDIO, ECONOMIE_STUDIO } from '../data/modules';
 
 void Smartphone; void FileText; void AltitudeIcon; void Wind; void Target; void Trophy; void User;
 
@@ -452,6 +453,203 @@ function SectionOCR() {
             </div>
           ))}
         </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Section Modules complémentaires ─────────────────────────────────────────
+
+function SectionModules() {
+  const [waitlistEmail, setWaitlistEmail] = useState<Record<string, string>>({});
+  const [waitlistSent, setWaitlistSent] = useState<Set<string>>(new Set());
+  const [waitlistOpen, setWaitlistOpen] = useState<string | null>(null);
+
+  const handleWaitlist = async (moduleId: string) => {
+    const email = (waitlistEmail[moduleId] ?? '').trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+    // Insertion Supabase — table module_waitlist via email anonyme
+    // TODO: brancher sur module_waitlist avec source='landing' quand auth centre dispo
+    // await supabase.from('module_waitlist_public').insert({ module_id: moduleId, email, source: 'landing' });
+    void supabase; // placeholder jusqu'à la table public waitlist
+    setWaitlistSent((s) => new Set([...s, moduleId]));
+    setWaitlistOpen(null);
+  };
+
+  const liveModules = MODULES.filter((m) => m.status === 'live');
+  const soonModules = MODULES.filter((m) => m.status === 'soon');
+
+  return (
+    <section className="py-20" style={{ background: '#F8FAFC' }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* En-tête */}
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold mb-3" style={{ color: '#001A4D' }}>
+            Des modules pensés pour votre dropzone
+          </h2>
+          <p className="max-w-xl mx-auto" style={{ color: '#64748B' }}>
+            Activez uniquement ce dont vous avez besoin, en supplément de votre abonnement centre. Sans engagement.
+          </p>
+        </div>
+
+        {/* Pack Studio */}
+        <div className="mb-8 max-w-4xl mx-auto">
+          <div
+            className="relative rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center gap-5"
+            style={{
+              border: '2px solid #F97316',
+              background: 'linear-gradient(135deg, #FFF7ED 0%, #FFFFFF 70%)',
+              boxShadow: '0 4px 24px rgba(249,115,22,0.12)',
+            }}
+          >
+            <div className="absolute -top-3.5 left-6 px-3 py-1 rounded-full text-[11px] font-bold text-white" style={{ background: '#F97316' }}>
+              Le plus avantageux
+            </div>
+            <div className="text-4xl flex-shrink-0 mt-2 sm:mt-0">{STUDIO.icon}</div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-lg" style={{ color: '#001A4D' }}>{STUDIO.nom}</p>
+              <p className="text-sm mt-1 leading-relaxed" style={{ color: '#64748B' }}>{STUDIO.desc}</p>
+              <div className="flex flex-wrap items-center gap-3 mt-2">
+                <span className="text-xl font-extrabold" style={{ color: '#F97316' }}>
+                  {STUDIO.prix?.toFixed(2).replace('.', ',')} €
+                  <span className="text-sm font-normal text-gray-500"> /mois</span>
+                </span>
+                <span className="text-xs px-2.5 py-1 rounded-full font-semibold"
+                  style={{ background: 'rgba(16,185,129,0.1)', color: '#10B981', border: '1px solid rgba(16,185,129,0.25)' }}>
+                  Économisez ~{ECONOMIE_STUDIO}€/mois vs modules séparés
+                </span>
+              </div>
+            </div>
+            <Link
+              to="/inscription-centre"
+              className="flex-shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold text-white no-underline transition-all"
+              style={{ background: '#F97316', boxShadow: '0 4px 12px rgba(249,115,22,0.3)', whiteSpace: 'nowrap' }}
+            >
+              En savoir plus →
+            </Link>
+          </div>
+        </div>
+
+        {/* Modules disponibles */}
+        <div className="mb-4 max-w-4xl mx-auto">
+          <p className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: '#10B981' }}>
+            ✓ Disponibles maintenant
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {liveModules.map((mod) => (
+              <div
+                key={mod.id}
+                className="rounded-xl p-5 flex flex-col gap-3 bg-white"
+                style={{ border: '1.5px solid #E2E8F0', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
+              >
+                <div className="flex items-start justify-between">
+                  <span className="text-2xl">{mod.icon}</span>
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                    style={{ background: 'rgba(16,185,129,0.1)', color: '#10B981', border: '1px solid rgba(16,185,129,0.25)' }}>
+                    Disponible
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-sm" style={{ color: '#001A4D' }}>{mod.nom}</p>
+                  <p className="text-xs mt-1 leading-relaxed" style={{ color: '#64748B' }}>{mod.desc}</p>
+                </div>
+                <div className="flex items-center justify-between pt-1">
+                  <span className="font-bold text-sm" style={{ color: '#001A4D' }}>
+                    {mod.prix?.toFixed(2).replace('.', ',')} €
+                    <span className="font-normal text-xs text-gray-400"> /mois</span>
+                  </span>
+                  <Link
+                    to="/inscription-centre"
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold no-underline transition-all"
+                    style={{ background: 'rgba(37,99,235,0.08)', color: '#2563EB', border: '1px solid rgba(37,99,235,0.2)' }}
+                  >
+                    En savoir plus →
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Séparateur */}
+        <div className="max-w-4xl mx-auto my-8 flex items-center gap-3">
+          <div className="flex-1 h-px" style={{ background: '#E2E8F0' }} />
+          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#94A3B8' }}>Prochainement</span>
+          <div className="flex-1 h-px" style={{ background: '#E2E8F0' }} />
+        </div>
+
+        {/* Modules roadmap */}
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {soonModules.map((mod) => (
+              <div
+                key={mod.id}
+                className="rounded-xl p-5 flex flex-col gap-3"
+                style={{
+                  border: '1.5px solid #E2E8F0',
+                  background: '#F8FAFC',
+                  opacity: 0.8,
+                }}
+              >
+                <div className="flex items-start justify-between">
+                  <span className="text-2xl" style={{ filter: 'grayscale(0.6)' }}>{mod.icon}</span>
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                    style={{ background: '#F1F5F9', color: '#64748B', border: '1px solid #E2E8F0' }}>
+                    Prochainement
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-sm" style={{ color: '#334155' }}>{mod.nom}</p>
+                  <p className="text-xs mt-1 leading-relaxed" style={{ color: '#94A3B8' }}>{mod.desc}</p>
+                </div>
+                <div className="pt-1">
+                  {waitlistSent.has(mod.id) ? (
+                    <div className="w-full py-1.5 rounded-lg text-xs font-semibold text-center"
+                      style={{ background: 'rgba(16,185,129,0.08)', color: '#10B981', border: '1px solid rgba(16,185,129,0.2)' }}>
+                      ✓ Vous serez prévenu au lancement
+                    </div>
+                  ) : waitlistOpen === mod.id ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="email"
+                        placeholder="votre@email.fr"
+                        value={waitlistEmail[mod.id] ?? ''}
+                        onChange={(e) => setWaitlistEmail((w) => ({ ...w, [mod.id]: e.target.value }))}
+                        onKeyDown={(e) => e.key === 'Enter' && handleWaitlist(mod.id)}
+                        className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg text-xs outline-none"
+                        style={{ border: '1px solid #CBD5E1', fontSize: 12 }}
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => handleWaitlist(mod.id)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white flex-shrink-0"
+                        style={{ background: '#2563EB' }}
+                      >
+                        OK
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setWaitlistOpen(mod.id)}
+                      className="w-full py-1.5 rounded-lg text-xs font-semibold transition-all"
+                      style={{ background: '#F1F5F9', color: '#64748B', border: '1px solid #E2E8F0' }}
+                    >
+                      Être prévenu →
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Ligne de réassurance */}
+        <p className="text-center text-xs mt-10 max-w-xl mx-auto" style={{ color: '#94A3B8' }}>
+          Les modules sont optionnels et indépendants de votre abonnement de base.
+          Votre carnet de sauts et la conformité réglementaire restent inclus.
+        </p>
+
       </div>
     </section>
   );
@@ -1705,6 +1903,9 @@ export function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ─── MODULES COMPLÉMENTAIRES ────────────────────────────────────────── */}
+      <SectionModules />
 
       {/* ─── CTA FINAL ──────────────────────────────────────────────────────── */}
       <section className="py-28 relative overflow-hidden text-center" style={{ background: 'linear-gradient(135deg, #001A4D 0%, #1E3A5F 100%)' }}>
