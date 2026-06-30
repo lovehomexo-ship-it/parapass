@@ -1561,9 +1561,9 @@ export function LandingPage() {
             <p style={{ color: '#64748B' }}>Gratuit pour les parachutistes · À partir de 49€ pour les centres · Sans engagement</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto items-start">
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-start">
 
-            {/* Colonne 1 — Parachutiste */}
+            {/* Carte 1 — Parachutiste */}
             <div className="rounded-2xl border border-gray-200 p-7 flex flex-col bg-white">
               <div className="mb-1">
                 <span className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: '#EFF6FF', color: '#2563EB' }}>
@@ -1603,27 +1603,22 @@ export function LandingPage() {
               </Link>
             </div>
 
-            {/* Colonne 2 — Centre (mise en avant) */}
+            {/* Carte 2 — Centre agréé */}
             <div
-              className="rounded-2xl p-7 flex flex-col relative"
+              className="rounded-2xl p-7 flex flex-col"
               style={{
                 border: '2px solid #F97316',
                 background: 'linear-gradient(180deg, #FFF7ED 0%, #FFFFFF 60%)',
                 boxShadow: '0 4px 24px rgba(249,115,22,0.15)',
               }}
             >
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold text-white whitespace-nowrap" style={{ background: '#F97316' }}>
-                Le plus populaire
-              </div>
-              <div className="mb-1 mt-1">
+              <div className="mb-1">
                 <span className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: 'rgba(249,115,22,0.1)', color: '#EA580C' }}>
                   Pour les centres agréés
                 </span>
               </div>
               <div className="mt-4 mb-1">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold" style={{ color: '#001A4D' }}>À partir de 49€</span>
-                </div>
+                <div className="text-4xl font-extrabold" style={{ color: '#001A4D' }}>À partir de 49€</div>
                 <div className="text-sm font-medium mt-0.5" style={{ color: '#64748B' }}>HT / mois · Sans engagement</div>
                 <div className="text-xs mt-1" style={{ color: '#94A3B8' }}>Tarif adapté à la taille de votre centre · De 49€ à 199€/mois</div>
               </div>
@@ -1650,21 +1645,18 @@ export function LandingPage() {
                 ))}
               </ul>
 
-              {/* Grille de tarifs discrète */}
+              {/* Paliers tarifaires */}
               <div className="mb-3 rounded-lg overflow-hidden" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}>
                 {[
-                  { label: 'Starter', detail: '< 500 licenciés', price: '49€' },
-                  { label: 'Essentiel', detail: '500 – 1 500', price: '99€' },
-                  { label: 'Pro', detail: '1 500 – 2 500', price: '149€' },
-                  { label: 'Premium', detail: '> 2 500', price: '199€' },
+                  { label: 'Starter',   detail: '< 500 licenciés',   price: '49€' },
+                  { label: 'Essentiel', detail: '500 – 1 500',        price: '99€' },
+                  { label: 'Pro',       detail: '1 500 – 2 500',      price: '149€' },
+                  { label: 'Premium',   detail: '> 2 500',            price: '199€' },
                 ].map((tier, i) => (
                   <div
                     key={tier.label}
                     className="flex items-center justify-between px-3 py-1.5"
-                    style={{
-                      borderTop: i > 0 ? '1px solid rgba(0,0,0,0.05)' : undefined,
-                      fontSize: '11px',
-                    }}
+                    style={{ borderTop: i > 0 ? '1px solid rgba(0,0,0,0.05)' : undefined, fontSize: '11px' }}
                   >
                     <span className="font-semibold" style={{ color: '#374151' }}>{tier.label}</span>
                     <span style={{ color: '#94A3B8' }}>{tier.detail}</span>
@@ -1689,49 +1681,6 @@ export function LandingPage() {
               </p>
             </div>
 
-            {/* Colonne 3 — Renouvellement licence */}
-            <div className="rounded-2xl border border-gray-200 p-7 flex flex-col bg-white">
-              <div className="mb-1">
-                <span className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: '#F8FAFC', color: '#64748B', border: '1px solid #E2E8F0' }}>
-                  Service optionnel
-                </span>
-              </div>
-              <div className="mt-4 mb-1">
-                <div className="text-4xl font-extrabold" style={{ color: '#001A4D' }}>4,99€</div>
-                <div className="text-sm font-medium mt-0.5" style={{ color: '#64748B' }}>par renouvellement · Une seule fois/an</div>
-              </div>
-              <p className="text-sm mb-6 mt-3 leading-relaxed" style={{ color: '#64748B' }}>
-                Renouvelez votre licence FFP en 1 clic depuis ParaPass. On s'occupe de tout.
-              </p>
-              <ul className="space-y-2.5 flex-1 mb-6">
-                {[
-                  'Renouvellement assisté licence FFP',
-                  'Pré-remplissage automatique du dossier',
-                  'Confirmation par email',
-                  'Mise à jour instantanée dans ParaPass',
-                  'Assistance en cas de problème',
-                ].map(f => (
-                  <li key={f} className="flex items-start gap-2 text-sm" style={{ color: '#0F172A' }}>
-                    <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#10B981' }} strokeWidth={2.5} />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <div className="flex items-center justify-center gap-1.5 mb-4 py-2 rounded-lg" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                <span className="text-sm">🔒</span>
-                <span className="text-xs font-medium" style={{ color: '#64748B' }}>Paiement sécurisé Stripe</span>
-              </div>
-              <Link
-                to="/register"
-                className="w-full text-center py-2.5 rounded-lg text-sm font-semibold no-underline border transition-colors"
-                style={{ borderColor: '#E2E8F0', color: '#64748B' }}
-              >
-                En savoir plus →
-              </Link>
-              <p className="text-center text-[11px] mt-2.5" style={{ color: '#94A3B8' }}>
-                Paiement unique · Disponible depuis votre espace
-              </p>
-            </div>
           </div>
 
           {/* Bandeau de réassurance */}
