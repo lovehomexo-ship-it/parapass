@@ -86,9 +86,10 @@ function DemoPassportCard({ compact = false }: { compact?: boolean }) {
   const size = compact ? 'max-w-[340px]' : 'max-w-[420px]';
 
   return (
+    <div className={`relative w-full ${size}`} style={{ perspective: 1200 }}>
     <div
-      className={`demo-card-wrapper relative w-full ${size} select-none cursor-pointer`}
-      style={{ perspective: 1200, minHeight: compact ? 260 : 320 }}
+      className={`demo-card-wrapper relative w-full select-none cursor-pointer`}
+      style={{ minHeight: compact ? 260 : 320 }}
       onClick={() => setFlipped(f => !f)}
     >
       <div
@@ -249,6 +250,7 @@ function DemoPassportCard({ compact = false }: { compact?: boolean }) {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }
