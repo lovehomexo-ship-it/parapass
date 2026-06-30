@@ -14,12 +14,13 @@ import {
   AlertTriangle, CheckCircle, Clock, ChevronRight, Plus,
   Search, Filter, Eye, Trash2, UserCheck, UserX, Mail,
   Download, Upload, Hash, TrendingUp, MapPin, Send, Zap, Key, Check, Sun, Moon,
-  GraduationCap, MoreVertical, UserMinus, Euro, BookCheck,
+  GraduationCap, MoreVertical, UserMinus, Euro, BookCheck, Puzzle,
 } from 'lucide-react';
 import { PlanningCentre } from './PlanningCentre';
 import { GestionPliage } from './centre/GestionPliage';
 import { FinancesSection } from './centre/FinancesSection';
 import { ValidationsCarnet } from './centre/ValidationsCarnet';
+import { ModulesSection } from './centre/ModulesSection';
 
 void Calendar; void Upload; void Hash; void TrendingUp; void MapPin;
 void Download; void Filter; void Plus; void Trash2; void Zap;
@@ -3009,6 +3010,7 @@ export function CentreDashboardPage() {
     { key: 'messages', label: 'Messages', icon: MessageSquare, badge: msgUnread },
     { key: 'validations', label: 'Validations carnet', icon: BookCheck, badge: carnetsEnAttente > 0 ? carnetsEnAttente : undefined },
     { key: 'finances', label: 'Finances', icon: Euro },
+    { key: 'modules', label: 'Modules', icon: Puzzle },
   ];
 
   if (authLoading || loading) {
@@ -3233,6 +3235,9 @@ export function CentreDashboardPage() {
           )}
           {activeSection === 'validations' && centreId && (
             <ValidationsCarnet dzId={centreId} />
+          )}
+          {activeSection === 'modules' && centreId && (
+            <ModulesSection centreId={centreId} />
           )}
           {activeSection === 'finances' && centreId && (
             isProPlan
