@@ -822,6 +822,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
     }
     if (!form.nature_saut) errors.nature_saut = 'Obligatoire';
     if (!isTunnel) {
+      if (!form.aeronef_immat.trim()) errors.aeronef_immat = "Immatriculation de l'aéronef obligatoire";
       if (!form.categorie) errors.categorie = 'Obligatoire';
       if (!isMoniteur && !moniteurSelectionne) errors.moniteur = 'Obligatoire';
       if (form.hauteur_ouverture !== null && form.hauteur_ouverture >= form.hauteur_m) {
@@ -1063,7 +1064,13 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
       resetForm();
     } catch (err) {
       console.error('AddSautModal error:', err);
-      setError(isEditMode ? 'Erreur lors de la modification du saut' : 'Erreur lors de l\'ajout du saut');
+      const pgErr = err as { code?: string; message?: string };
+      if (pgErr?.code === '23502' && pgErr?.message?.includes('aeronef_immat')) {
+        setFieldErrors((e) => ({ ...e, aeronef_immat: "Immatriculation de l'aéronef obligatoire" }));
+        setError("Veuillez renseigner l'immatriculation de l'aéronef.");
+      } else {
+        setError(isEditMode ? 'Erreur lors de la modification du saut.' : "Erreur lors de l'ajout du saut.");
+      }
     } finally {
       setLoading(false);
     }
@@ -1221,9 +1228,10 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
             {!isTunnel && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>Aéronef immat.</label>
+                <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>Aéronef immat. <span style={{ color: '#F87171' }}>*</span></label>
                 <input type="text" value={form.aeronef_immat} onChange={(e) => update('aeronef_immat', e.target.value)}
-                  style={darkInput} placeholder="F-HBGP" />
+                  style={fieldErrors.aeronef_immat ? darkInputErr : darkInput} placeholder="F-HBGP" />
+                <FieldError field="aeronef_immat" />
               </div>
               <div>
                 <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>Programme</label>
