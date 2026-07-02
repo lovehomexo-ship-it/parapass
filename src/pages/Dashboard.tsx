@@ -18,6 +18,7 @@ import { useAlertes } from '../lib/useAlertes';
 import { useBadges } from '../lib/useBadges';
 import { usePassport } from '../lib/usePassport';
 import { useDemo } from '../lib/useDemo';
+import { PasseportCardView } from '../components/PasseportCardView';
 import {
   Plus, FileDown, QrCode, Calendar, TrendingUp,
   ChevronDown, ChevronUp, Trash2, X, ShieldCheck, Hash,
@@ -472,57 +473,34 @@ export function DashboardPage() {
           {/* ─── ACCUEIL ─────────────────────────────────────────────────────── */}
           {activeTab === 'accueil' && (
             <>
-              {/* 1 — Hero Profile Block */}
-              <div
-                className="mb-6 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-                style={{ background: 'linear-gradient(135deg, #0F2549, #1a3a6e)', border: '1px solid rgba(255,255,255,0.1)' }}
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: '#7A9CC0', letterSpacing: '1px' }}>
-                    {centreNom ?? 'Parachutiste'}
-                  </p>
-                  <h1 style={{ color: '#FFFFFF', fontSize: 26, fontWeight: 700, lineHeight: 1.2, marginBottom: 6 }}>
-                    {profile.prenom} {profile.nom}
-                  </h1>
-                  <div className="flex flex-wrap items-center gap-2 mt-1">
-                    <span style={{ color: '#7A9CC0', fontSize: 13 }}>
-                      {[
-                        licenceFFP?.numero_licence ?? null,
-                        centreNom ?? null,
-                      ].filter(Boolean).join(' · ')}
-                    </span>
+              {/* 1 — Bandeau compact brevet + autorisation */}
+              {statutDocs && (() => {
+                const cfg = statutDocs === 'expire'
+                  ? { bg: 'rgba(239,68,68,0.12)', color: '#F87171', border: 'rgba(239,68,68,0.25)', label: '🔴 Non autorisé à sauter' }
+                  : statutDocs === 'expire_bientot'
+                  ? { bg: 'rgba(245,158,11,0.12)', color: '#FCD34D', border: 'rgba(245,158,11,0.25)', label: '⚠️ Documents expirent bientôt' }
+                  : { bg: 'rgba(16,185,129,0.12)', color: '#6EE7B7', border: 'rgba(16,185,129,0.25)', label: '✅ Autorisé à sauter' };
+                return (
+                  <div
+                    className="mb-3 flex items-center justify-between gap-3 rounded-xl px-4"
+                    style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, minHeight: 44 }}
+                  >
+                    <span style={{ color: cfg.color, fontSize: 13, fontWeight: 600 }}>{cfg.label}</span>
                     {topBrevet && (
                       <span
-                        className="text-xs font-bold px-3 py-1 rounded-full"
+                        className="text-xs font-bold px-3 py-1 rounded-full flex-shrink-0"
                         style={{ background: 'rgba(249,115,22,0.2)', color: '#F97316', border: '1px solid rgba(249,115,22,0.4)' }}
                       >
                         Brevet {topBrevet}
                       </span>
                     )}
                   </div>
+                );
+              })()}
 
-                  {/* ── Badge statut autorisation ── */}
-                  {statutDocs && (() => {
-                    const cfg = statutDocs === 'expire'
-                      ? { bg: 'rgba(239,68,68,0.18)', color: '#F87171', border: 'rgba(239,68,68,0.35)', label: '🔴 Non autorisé à sauter — Documents expirés' }
-                      : statutDocs === 'expire_bientot'
-                      ? { bg: 'rgba(245,158,11,0.18)', color: '#FCD34D', border: 'rgba(245,158,11,0.35)', label: '⚠️ Attention — Document(s) expirent bientôt' }
-                      : { bg: 'rgba(16,185,129,0.18)', color: '#6EE7B7', border: 'rgba(16,185,129,0.35)', label: '✅ Autorisé à sauter' };
-                    return (
-                      <div
-                        className="mt-3 w-full text-center rounded-xl"
-                        style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, color: cfg.color, fontSize: 14, fontWeight: 600, padding: '8px 16px' }}
-                      >
-                        {cfg.label}
-                      </div>
-                    );
-                  })()}
-                </div>
-                <div className="flex flex-col items-center flex-shrink-0" style={{ minWidth: 80 }}>
-                  <ParachuteDropIcon className="w-8 h-8 mb-1" style={{ color: '#F97316' }} />
-                  <p style={{ color: '#FFFFFF', fontSize: 36, fontWeight: 700, lineHeight: 1 }}>{totalSauts}</p>
-                  <p style={{ color: '#7A9CC0', fontSize: 11 }}>sauts au total</p>
-                </div>
+              {/* 2 — Carte dématérialisée */}
+              <div className="mb-6">
+                <PasseportCardView userId={user!.id} compact={true} />
               </div>
 
               {(profile.type_pratiquant === 'professionnel' || !!(profile.preferences as Record<string, unknown> | null | undefined)?.suivi_dgac) && (() => {

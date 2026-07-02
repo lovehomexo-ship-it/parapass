@@ -782,9 +782,10 @@ interface PasseportCardViewProps {
   userId: string;
   centreId?: string;
   adminId?: string;
+  compact?: boolean; // dashboard mode — card only, no action buttons or validity summary
 }
 
-export function PasseportCardView({ userId, centreId, adminId }: PasseportCardViewProps) {
+export function PasseportCardView({ userId, centreId, adminId, compact = false }: PasseportCardViewProps) {
   const [data, setData] = useState<PasseportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
@@ -908,6 +909,15 @@ export function PasseportCardView({ userId, centreId, adminId }: PasseportCardVi
         </div>
         <p className="font-medium text-gray-700">Partage désactivé</p>
         <p className="text-sm text-gray-500">Ce licencié a désactivé le partage de sa carte.</p>
+      </div>
+    );
+  }
+
+  // Compact mode (dashboard): card only, no action buttons or validity summary
+  if (compact) {
+    return (
+      <div className="w-full" style={{ maxWidth: 480 }}>
+        <FlippableCard data={data} isOwner={isOwner} rectoId={rectoId} versoId={versoId} />
       </div>
     );
   }
