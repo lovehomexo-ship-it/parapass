@@ -1301,7 +1301,7 @@ function SautDetailModal({ saut, onClose }: { saut: Saut; onClose: () => void })
       <div style={{ background: '#002266', border: '1px solid rgba(255,255,255,0.15)' }} className="rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }} className="flex items-center justify-between p-5">
           <div>
-            <p style={{ color: 'rgba(255,255,255,0.4)' }} className="text-xs font-medium uppercase tracking-wide">Détail du saut</p>
+            <p style={{ color: 'rgba(255,255,255,0.4)' }} className="text-xs font-medium uppercase tracking-wide">{saut.source === 'soufflerie' ? '🌬️ Session soufflerie' : 'Détail du saut'}</p>
             <h2 className="text-lg font-bold text-white mt-0.5">
               {new Date(saut.date_saut).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </h2>
@@ -1312,6 +1312,23 @@ function SautDetailModal({ saut, onClose }: { saut: Saut; onClose: () => void })
         </div>
 
         <div className="p-5 space-y-5">
+          {saut.source === 'soufflerie' ? (
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: 'Centre', value: saut.lieu },
+                { label: 'Temps de vol', value: (saut as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes ? `${(saut as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes} min` : null },
+                { label: 'Nb de vols', value: (saut as { tunnel_flight_count?: number | null }).tunnel_flight_count ? String((saut as { tunnel_flight_count?: number | null }).tunnel_flight_count) : null },
+                { label: 'Discipline', value: (saut as { tunnel_discipline?: string | null }).tunnel_discipline },
+                { label: 'Coach / encadrant', value: (saut as { tunnel_coach?: string | null }).tunnel_coach },
+                { label: 'Nature', value: NATURE_SAUT_LABELS[saut.nature_saut] || saut.nature_saut },
+              ].map(({ label, value }) => (
+                <div key={label} style={{ background: 'rgba(96,165,250,0.08)', borderRadius: 12, border: '1px solid rgba(96,165,250,0.15)' }} className="p-3">
+                  <p style={{ color: 'rgba(96,165,250,0.6)' }} className="text-xs mb-0.5">{label}</p>
+                  <p className="text-sm font-semibold text-white">{value || '—'}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
           <div className="grid grid-cols-2 gap-3">
             {[
               { label: 'Lieu / DZ', value: saut.lieu },
@@ -1328,8 +1345,9 @@ function SautDetailModal({ saut, onClose }: { saut: Saut; onClose: () => void })
               </div>
             ))}
           </div>
+          )}
 
-          {(saut.programme || saut.exercice_chute || saut.exercice_voile) && (
+          {saut.source !== 'soufflerie' && (saut.programme || saut.exercice_chute || saut.exercice_voile) && (
             <div className="space-y-2">
               <p style={{ color: 'rgba(255,255,255,0.4)' }} className="text-xs font-semibold uppercase tracking-wide">Programme moniteur</p>
               {saut.programme && (
@@ -1353,7 +1371,7 @@ function SautDetailModal({ saut, onClose }: { saut: Saut; onClose: () => void })
             </div>
           )}
 
-          {posFields.some((f) => saut[f.key] !== null && saut[f.key] !== undefined) && (
+          {saut.source !== 'soufflerie' && posFields.some((f) => saut[f.key] !== null && saut[f.key] !== undefined) && (
             <div>
               <p style={{ color: 'rgba(255,255,255,0.4)' }} className="text-xs font-semibold uppercase tracking-wide mb-2">Notation position</p>
               <div className="grid grid-cols-2 gap-2">
@@ -1376,7 +1394,7 @@ function SautDetailModal({ saut, onClose }: { saut: Saut; onClose: () => void })
             </div>
           )}
 
-          {ternaireFields.some((f) => saut[f.key] !== null) && (
+          {saut.source !== 'soufflerie' && ternaireFields.some((f) => saut[f.key] !== null) && (
             <div>
               <p style={{ color: 'rgba(255,255,255,0.4)' }} className="text-xs font-semibold uppercase tracking-wide mb-2">Observations techniques</p>
               <div className="grid grid-cols-2 gap-2">
@@ -1412,7 +1430,7 @@ function SautDetailModal({ saut, onClose }: { saut: Saut; onClose: () => void })
             </div>
           )}
 
-          {saut.signature_moniteur_url && (
+          {saut.source !== 'soufflerie' && saut.signature_moniteur_url && (
             <div>
               <p style={{ color: 'rgba(255,255,255,0.4)' }} className="text-xs font-semibold uppercase tracking-wide mb-2">Signature moniteur</p>
               <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} className="p-3">
@@ -1433,11 +1451,13 @@ function SautDetailModal({ saut, onClose }: { saut: Saut; onClose: () => void })
             </div>
           )}
 
+          {saut.source !== 'soufflerie' && (
           <div className="pt-1">
             {statutBadge(saut)}
             {saut.valide_par && <p style={{ color: 'rgba(255,255,255,0.35)' }} className="text-xs mt-1">Signé par : {saut.valide_par}</p>}
             {saut.valide_le && <p style={{ color: 'rgba(255,255,255,0.35)' }} className="text-xs">Le : {new Date(saut.valide_le).toLocaleDateString('fr-FR')}</p>}
           </div>
+          )}
         </div>
       </div>
     </div>
