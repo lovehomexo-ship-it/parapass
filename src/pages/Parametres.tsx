@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useJumpCount } from '../lib/useJumpCount';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useDemo } from '../lib/useDemo';
@@ -60,7 +61,7 @@ export function ParametresPage() {
   const [fullscreen, setFullscreen] = useState(false);
   const [licence, setLicence] = useState<Licence | null>(null);
   const [brevet, setBrevet] = useState<Brevet | null>(null);
-  const [totalSauts, setTotalSauts] = useState<number>(0);
+  const totalSauts = useJumpCount(user?.id);
 
   // Notification prefs — stored in profile.preferences
   const prefs = (profile?.preferences ?? {}) as Record<string, boolean>;
@@ -83,8 +84,6 @@ export function ParametresPage() {
       .then(({ data }) => setLicence(data as Licence | null));
     supabase.from('brevets').select('*').eq('parachutiste_id', user.id).order('date_obtention', { ascending: false }).limit(1).maybeSingle()
       .then(({ data }) => setBrevet(data as Brevet | null));
-    supabase.from('sauts').select('id', { count: 'exact', head: true }).eq('parachutiste_id', user.id)
-      .then(({ count }) => setTotalSauts(count ?? 0));
   }, [user]);
 
   const regenerateToken = async () => {

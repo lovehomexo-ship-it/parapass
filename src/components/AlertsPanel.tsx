@@ -315,7 +315,7 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter, statutDocs, l
         style={{ background: 'rgba(22,163,74,0.15)', borderBottom: '1px solid rgba(22,163,74,0.2)' }}
       >
         <ShieldCheck className="w-4 h-4 text-green-400 flex-shrink-0" />
-        <span className="text-green-400 text-sm font-medium">Autorisations à jour — Vous êtes autorisé à sauter</span>
+        <span className="text-green-400 text-sm font-medium">Documents à jour — Licence · Médical · Assurances valides</span>
         <span className="ml-auto text-green-400/60 text-xs hidden sm:inline">Licence · Médical · Assurances ✓</span>
       </div>
     );
@@ -363,7 +363,7 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter, statutDocs, l
                   {nbAttention > 0 && ` · ${nbAttention} attention`}
                 </>
               ) : (
-                <>Non autorisé à sauter — Document(s) expiré(s)</>
+                <>Documents à renouveler — Document(s) expiré(s)</>
               )
             ) : nbAttention > 0 ? (
               <>{nbAttention} point{nbAttention > 1 ? 's' : ''} à vérifier</>

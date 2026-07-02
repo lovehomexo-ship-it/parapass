@@ -421,7 +421,7 @@ function RechercheMoniteur({
           {isTous ? (
             <>
               <p className="text-white font-semibold text-sm">Envoyer à tous les validateurs</p>
-              <p className="text-blue-400 text-xs">Le premier à valider certifie le saut</p>
+              <p className="text-blue-400 text-xs">Le premier à valider enregistre le saut</p>
             </>
           ) : (
             <>
@@ -584,7 +584,7 @@ function RechercheMoniteur({
       </div>
 
       <p className="text-xs px-1" style={{ color: 'rgba(255,255,255,0.3)' }}>
-        La validation par un moniteur agréé est obligatoire pour certifier le saut dans votre carnet officiel.
+        La validation par un moniteur breveté est obligatoire pour enregistrer le saut dans votre carnet numérique.
       </p>
     </div>
   );
@@ -963,7 +963,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
             // Soufflerie = declarative, always validated directly. Normal: admin or moniteur flow.
             statut: (isTunnel || isAdminMode) ? 'valide' : (validateDirectly ? 'valide' : 'en_attente'),
             ...(isAdminMode ? { valide_par: profile ? `${profile.prenom} ${profile.nom}` : 'Admin Centre', valide_le: new Date().toISOString(), source: 'odc' } : {}),
-            ...(isTunnel ? { valide_par: profile ? `${profile.prenom} ${profile.nom}` : 'Auto', valide_le: new Date().toISOString(), source: 'soufflerie' } : {}),
+            ...(isTunnel ? { valide_par: profile ? `${profile.prenom} ${profile.nom}` : 'Auto', valide_le: new Date().toISOString(), source: 'soufflerie', is_tunnel: true } : {}),
             ...payload,
           })
           .select()
@@ -1131,7 +1131,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
         onConfirmed={handleReAuthConfirmed}
         onCancel={() => setReAuthOpen(false)}
         title="Confirmer la validation"
-        description="Re-saisissez votre mot de passe pour signer et valider ce saut officiellement"
+        description="Re-saisissez votre mot de passe pour signer et valider ce saut"
       />
 
       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/60" onClick={onClose}>
@@ -1614,7 +1614,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                   <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
                     <span className="text-white text-xs font-bold">✍</span>
                   </div>
-                  <p className="text-sm font-bold text-amber-400">Validation officielle moniteur</p>
+                  <p className="text-sm font-bold text-amber-400">Validation moniteur</p>
                 </div>
 
                 <div className="p-4 space-y-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
@@ -1708,7 +1708,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
               </div>
               {!isMoniteur && !moniteurSelectionne && (
                 <p className="text-center text-xs mt-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                  Un moniteur agréé doit valider chaque saut pour qu'il soit certifié DGAC.
+                  Un moniteur breveté doit valider chaque saut pour qu'il soit enregistré dans votre carnet.
                 </p>
               )}
             </div>

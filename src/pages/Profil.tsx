@@ -384,7 +384,7 @@ export function ProfilPage() {
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-[#001A4D]">Mon Profil</h1>
-          <p className="text-sm text-gray-500">Page de garde — Carnet de sauts FFP officiel</p>
+          <p className="text-sm text-gray-500">Page de garde — Carnet de sauts numérique FFP</p>
         </div>
 
         <div className="space-y-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
@@ -488,7 +488,7 @@ export function ProfilPage() {
 
           {/* ── Section signature ── */}
           <div className="border-t border-gray-100 pt-4">
-            <SectionHeader num="4" title="Ma signature officielle" />
+            <SectionHeader num="4" title="Ma signature" />
           </div>
           <p className="text-xs text-gray-500">Signez dans le cadre ci-dessous. Cette signature apparaîtra sur votre passeport numérique.</p>
           <div className="space-y-2">
@@ -605,7 +605,7 @@ export function ProfilPage() {
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Éléments visibles publiquement</p>
             <div className="space-y-2">
               {([
-                { key: 'visibilite_sauts', label: 'Nombre de sauts certifiés' },
+                { key: 'visibilite_sauts', label: 'Nombre de sauts validés' },
                 { key: 'visibilite_brevets', label: 'Brevets et qualifications' },
                 { key: 'visibilite_badges', label: 'Badges obtenus' },
                 { key: 'visibilite_centre', label: 'Centre(s) principal(aux)' },

@@ -139,7 +139,7 @@ export function LoginPage() {
           </div>
         </div>
         <div className="flex items-center gap-6 text-white/40 text-xs">
-          <span>✓ Conforme DGAC</span>
+          <span>✓ Conforme réglementation</span>
           <span>✓ Données chiffrées</span>
           <span>✓ Hébergé en Europe</span>
         </div>
@@ -229,7 +229,7 @@ export function LoginPage() {
                 alt="Logo FFP — Fédération Française de Parachutisme"
                 style={{ height: '22px', width: 'auto', filter: 'brightness(0) saturate(100%)', opacity: 0.45 }}
               />
-              <span className="text-xs" style={{ color: '#94A3B8' }}>Carnet officiel FFP</span>
+              <span className="text-xs" style={{ color: '#94A3B8' }}>Carnet de sauts numérique</span>
             </div>
 
             {showTestPanel && (

@@ -127,7 +127,7 @@ function DemoPassportCard({ compact = false }: { compact?: boolean }) {
                 <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-6 w-auto flex-shrink-0" />
                 <div>
                   <div style={{ fontSize: 9, color: 'rgba(147,197,253,0.9)', letterSpacing: '0.04em' }}>Carnet de sauts numérique</div>
-                  <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.08em', color: '#F97316' }}>CARNET OFFICIEL FFP</div>
+                  <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.08em', color: '#F97316' }}>CARNET DE SAUTS NUMÉRIQUE</div>
                 </div>
               </div>
               <div style={{ background: '#10B981', color: '#fff', fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', padding: '2px 8px', borderRadius: 20 }}>ACTIF</div>
@@ -170,7 +170,7 @@ function DemoPassportCard({ compact = false }: { compact?: boolean }) {
 
             {/* Footer */}
             <div className="flex items-center justify-between" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 5, marginTop: 1 }}>
-              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Conforme DGAC</div>
+              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>parapass.fr</div>
               <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)' }}>↺ retourner</div>
             </div>
           </div>
@@ -298,7 +298,7 @@ const OCR_STEPS = [
   {
     num: '04', icon: '✅',
     titre: 'Votre carnet est numérisé',
-    desc: 'Les sauts importés reçoivent le statut "Historique · Déclaré sur l\'honneur" — conforme à la réglementation DGAC et FFP.',
+    desc: 'Les sauts importés reçoivent le statut "Historique · Déclaré sur l\'honneur" — archivés et horodatés.',
   },
 ];
 
@@ -307,7 +307,7 @@ const OCR_FEATURES = [
   'Toutes les pages de votre carnet',
   'Reconnaissance écriture manuscrite',
   'Validation manuelle incluse',
-  'Statut "Historique · Conforme DGAC"',
+  'Statut "Historique · Déclaré sur l\'honneur"',
   'Paiement sécurisé Stripe',
 ];
 
@@ -430,9 +430,9 @@ function SectionOCR() {
                 <Shield className="w-4 h-4" style={{ color: '#34D399' }} />
               </div>
               <div>
-                <p className="text-sm font-semibold mb-0.5" style={{ color: '#34D399' }}>Conforme réglementation FFP et DGAC</p>
+                <p className="text-sm font-semibold mb-0.5" style={{ color: '#34D399' }}>Conforme à la réglementation en vigueur</p>
                 <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                  Les sauts importés reçoivent le statut "Déclaré sur l'honneur" — identique à la procédure officielle FFP pour les carnets perdus. Archivé et horodaté.
+                  Les sauts importés reçoivent le statut "Déclaré sur l'honneur" — identique à la procédure FFP pour les carnets perdus. Archivé et horodaté.
                 </p>
               </div>
             </div>
@@ -797,8 +797,8 @@ export function LandingPage() {
               {/* Trust badges */}
               <div className="flex flex-wrap gap-2.5 mb-8">
                 {[
-                  { color: '#10B981', icon: '✓', label: 'Conforme DGAC' },
-                  { color: '#60A5FA', icon: <Lock className="w-3 h-3" />, label: 'Signature eIDAS' },
+                  { color: '#10B981', icon: '✓', label: 'Conforme réglementation' },
+                  { color: '#60A5FA', icon: <Lock className="w-3 h-3" />, label: 'Signature électronique avancée' },
                   { color: '#F59E0B', icon: '🇪🇺', label: 'RGPD Europe' },
                 ].map(b => (
                   <span
@@ -824,7 +824,7 @@ export function LandingPage() {
                   }}
                 >
                   <img src="/logo-ffp-footer.png" alt="Logo FFP" style={{ height: '18px', width: 'auto' }} />
-                  Partenaire officiel
+                  Partenaire
                 </span>
               </div>
 
@@ -846,7 +846,7 @@ export function LandingPage() {
 
               {/* Subtitle */}
               <p className="mb-8 leading-relaxed max-w-[480px]" style={{ fontSize: '18px', color: 'rgba(255,255,255,0.72)', lineHeight: 1.65 }}>
-                Le premier carnet de sauts numérique certifié DGAC. Validé par vos moniteurs en temps réel, accessible partout, même sans connexion.
+                Le carnet de sauts numérique pour parachutistes. Validé par vos moniteurs en temps réel, accessible partout, même sans connexion.
               </p>
 
               {/* Mobile card — visible only on small screens, with DGAC badge */}
@@ -854,7 +854,7 @@ export function LandingPage() {
                 <div className="relative" style={{ width: '100%', maxWidth: 360, padding: '32px 40px 32px 24px' }}>
                   <FloatingBadge
                     icon={<span className="text-green-500 font-bold text-sm">✓</span>}
-                    label="Certifié DGAC"
+                    label="Conforme réglementation"
                     delay="0.8s"
                     className="top-2 -left-2 z-10"
                   />
@@ -970,7 +970,7 @@ export function LandingPage() {
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-3" style={{ color: '#001A4D' }}>Comment ça marche</h2>
             <p className="max-w-xl mx-auto" style={{ color: '#64748B' }}>
-              Trois étapes simples pour digitaliser votre carnet et rester en règle avec la DGAC
+              Trois étapes simples pour digitaliser votre carnet
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-8 relative">
@@ -994,7 +994,7 @@ export function LandingPage() {
                 bg: '#FFFBEB',
                 iconColor: '#D97706',
                 title: 'Enregistrez vos sauts',
-                desc: 'Ajoutez chaque saut, votre moniteur le valide par signature électronique certifiée. Conforme au format DGAC.',
+                desc: 'Ajoutez chaque saut, votre moniteur le valide par signature électronique certifiée. Archivé et horodaté.',
               },
               {
                 step: '03',
@@ -1065,8 +1065,8 @@ export function LandingPage() {
                   {[
                     { icon: '🪪', text: 'Licence FFP avec alertes d\'expiration' },
                     { icon: '🏥', text: 'Certificat médical avec rappels automatiques' },
-                    { icon: '🎓', text: 'Brevets A, B, BPA, C, D certifiés' },
-                    { icon: '✅', text: 'Sauts validés par moniteur agréé' },
+                    { icon: '🎓', text: 'Brevets A, B, BPA, C, D enregistrés' },
+                    { icon: '✅', text: 'Sauts validés par moniteur breveté' },
                     { icon: '📱', text: 'QR code pour contrôles DGAC' },
                     { icon: '🛡️', text: 'Matériel avec alertes de révision' },
                     { icon: '👥', text: 'Communauté + messagerie privée' },
@@ -1163,10 +1163,10 @@ export function LandingPage() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[
               { emoji: '🪪', title: 'Passeport numérique', desc: 'Licence, brevet, certificat médical. Tout vérifié en un scan de QR code.', border: '#2563EB' },
-              { emoji: '✅', title: 'Validation moniteur', desc: 'Vos moniteurs signent vos sauts directement depuis leur téléphone. Horodaté et certifié eIDAS.', border: '#10B981' },
+              { emoji: '✅', title: 'Validation moniteur', desc: 'Vos moniteurs signent vos sauts directement depuis leur téléphone. Horodaté et signé électroniquement.', border: '#10B981' },
               { emoji: '⚠️', title: 'Alertes intelligentes', desc: 'Expiration licence, révision parachute, certificat médical. ParaPass vous prévient avant qu\'il soit trop tard.', border: '#F59E0B' },
               { emoji: '📊', title: 'Statistiques avancées', desc: 'Sauts par mois, altitude moyenne, dropzones visitées, prochain badge. Votre progression visualisée.', border: '#8B5CF6' },
-              { emoji: '👥', title: 'Communauté', desc: 'Suivez vos amis parachutistes, messagerie privée, partagez vos sauts. Le réseau social certifié.', border: '#06B6D4' },
+              { emoji: '👥', title: 'Communauté', desc: 'Suivez vos amis parachutistes, messagerie privée, partagez vos sauts. Le réseau social parachutiste.', border: '#06B6D4' },
               { emoji: '🌤️', title: 'Météo réglementaire', desc: 'Vent au sol comparé à vos limites selon votre brevet. Alerte si conditions hors normes.', border: '#0EA5E9' },
               { emoji: '🏅', title: 'Badges et jalons', desc: '10, 50, 100, 500 sauts… Chaque progression est récompensée et visible par votre communauté.', border: '#EAB308' },
               { emoji: '🔧', title: 'Suivi matériel', desc: 'Parachute, AAD, altimètre. Dates de révision avec alertes automatiques avant échéance.', border: '#EF4444' },
@@ -1218,7 +1218,7 @@ export function LandingPage() {
               </p>
               <ul className="space-y-3 mb-8">
                 {[
-                  '31 sauts certifiés, historique complet',
+                  '31 sauts validés, historique complet',
                   'Note de progression : 4,2 / 5',
                   'Dernière DZ : BigAir Rochefort',
                   'Licence valide jusqu\'au 31/12/2026',
@@ -1281,7 +1281,7 @@ export function LandingPage() {
                     </div>
                     <div className="text-right flex-shrink-0">
                       <div className="text-2xl font-extrabold text-white">31</div>
-                      <div className="text-[9px]" style={{ color: 'rgba(255,255,255,0.45)' }}>sauts certifiés</div>
+                      <div className="text-[9px]" style={{ color: 'rgba(255,255,255,0.45)' }}>sauts validés</div>
                     </div>
                   </div>
                 </div>
@@ -1747,7 +1747,7 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-sm font-medium mb-4 uppercase tracking-wider" style={{ color: '#94A3B8' }}>Bêta ouverte</p>
           <p className="text-2xl font-bold mb-3" style={{ color: '#001A4D' }}>Conçu pour les 60 000 licenciés et les 57 centres agréés FFP de France</p>
-          <p className="text-sm max-w-md mx-auto" style={{ color: '#64748B' }}>ParaPass est conçu pour les 60 000 licenciés et les 57 centres agréés FFP de France. Rejoignez la bêta et participez à la digitalisation officielle du carnet de sauts.</p>
+          <p className="text-sm max-w-md mx-auto" style={{ color: '#64748B' }}>ParaPass est conçu pour les 60 000 licenciés et les 57 centres agréés FFP de France. Rejoignez la bêta et participez à la digitalisation du carnet de sauts.</p>
         </div>
       </section>
 
@@ -1773,15 +1773,15 @@ export function LandingPage() {
                 <div className="text-sm font-medium mt-0.5" style={{ color: '#10B981' }}>Pour toujours</div>
               </div>
               <p className="text-sm mb-6 leading-relaxed" style={{ color: '#64748B' }}>
-                Votre carnet numérique officiel, accessible partout, même sans connexion.
+                Votre carnet de sauts numérique, accessible partout, même sans connexion.
               </p>
               <ul className="space-y-2.5 flex-1 mb-7">
                 {[
-                  'Carnet de sauts certifié DGAC',
+                  'Carnet de sauts numérique',
                   'QR code de vérification instantané',
                   'Alertes expiration licence et médical',
                   'Suivi de progression personnalisé',
-                  'Export PDF certifié',
+                  'Export PDF signé et horodaté',
                   'Communauté et messagerie',
                   'Météo dropzone personnalisée',
                   'Badges et jalons',
@@ -1923,7 +1923,7 @@ export function LandingPage() {
             Prêt à digitaliser votre carnet ?
           </h2>
           <p className="mb-10 max-w-lg mx-auto" style={{ color: 'rgba(255,255,255,0.72)', fontSize: '18px', lineHeight: 1.65 }}>
-            Rejoignez les parachutistes qui ne risquent plus jamais de perdre leur carnet. Gratuit, certifié, accessible partout.
+            Rejoignez les parachutistes qui ne risquent plus jamais de perdre leur carnet. Gratuit, accessible partout.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
             <Link
@@ -2012,11 +2012,14 @@ export function LandingPage() {
                 <span className="hover:text-white/80 cursor-pointer transition-colors">CGU</span>
                 <a href="mailto:contact@parapass.fr" className="hover:text-white/80 transition-colors no-underline" style={{ color: '#475569' }}>Contact</a>
               </div>
-              <span className="text-xs text-center sm:text-right" style={{ color: '#475569' }}>Conforme DGAC · RGPD · Données hébergées en France 🇫🇷</span>
+              <span className="text-xs text-center sm:text-right" style={{ color: '#475569' }}>RGPD · Données hébergées en France 🇫🇷</span>
             </div>
           </div>
           <div className="pt-6 border-t text-center text-xs" style={{ borderColor: 'rgba(255,255,255,0.06)', color: '#334155' }}>
             Hébergé en Europe · Chiffré AES-256 · Politique de confidentialité
+          </div>
+          <div className="pt-4 text-center text-xs leading-relaxed" style={{ color: '#475569' }}>
+            ParaPass est un service indépendant. Il n'est, à ce jour, ni affilié à la Fédération Française de Parachutisme, ni certifié par la DGAC. Le carnet numérique complète le carnet de sauts papier sans s'y substituer.
           </div>
         </div>
       </footer>

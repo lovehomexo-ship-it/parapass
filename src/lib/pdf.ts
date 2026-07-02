@@ -54,7 +54,7 @@ function addFooter(doc: jsPDF, pageNum: number, totalPages: number, qrTokenUrl?:
   doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(255, 255, 255);
-  doc.text('CONFORME DGAC  •  Certifié ParaPass', 8, ph - 4);
+  doc.text('Signé et horodaté  •  ParaPass', 8, ph - 4);
   doc.text(`parapass.fr  •  Page ${pageNum}/${totalPages}`, pw - 8, ph - 4, { align: 'right' });
 }
 
@@ -82,7 +82,7 @@ function addRecapPage(
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(255, 255, 255);
-  doc.text('ParaPass — Carnet Officiel DGAC', margin, 10);
+  doc.text('ParaPass — Carnet de Sauts Numérique', margin, 10);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(180, 200, 255);
@@ -179,7 +179,7 @@ function addRecapPage(
   y += 3;
 
   // 7 — TAMPONS & SIGNATURES
-  y = sectionHeader(doc, '7 — TAMPONS & SIGNATURES OFFICIELS', margin, y, cw);
+  y = sectionHeader(doc, '7 — TAMPONS & SIGNATURES', margin, y, cw);
   const stampZoneH = 35;
   const halfW = (cw - 4) / 2;
 
@@ -241,7 +241,7 @@ function addJumpLog(doc: jsPDF, profile: Profile, sauts: Saut[], pageNum: number
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(180, 200, 255);
-  doc.text(`${profile.nom.toUpperCase()} ${profile.prenom}  |  Licence : ${profile.numero_licence}  |  Document conforme DGAC`, margin, 15);
+  doc.text(`${profile.nom.toUpperCase()} ${profile.prenom}  |  Licence : ${profile.numero_licence}  |  Généré le ${new Date().toLocaleDateString('fr-FR')}`, margin, 15);
   y = 26;
 
   // Table
@@ -299,15 +299,18 @@ function addJumpLog(doc: jsPDF, profile: Profile, sauts: Saut[], pageNum: number
 
   // Totals
   y += 5;
-  const totalSauts = sauts.length;
-  const totalOA = sauts.filter((s) => s.categorie === 'OA').length;
-  const totalOC = sauts.filter((s) => s.categorie === 'OC').length;
-  const totalOR = sauts.filter((s) => ['OR30', 'OR60', 'OR60plus'].includes(s.categorie)).length;
+  const vrais = sauts.filter((s) => !s.is_tunnel);
+  const totalSauts = vrais.length;
+  const validSauts = vrais.filter((s) => s.statut === 'valide' || s.statut === 'historique').length;
+  const totalOA = vrais.filter((s) => s.categorie === 'OA').length;
+  const totalOC = vrais.filter((s) => s.categorie === 'OC').length;
+  const totalOR = vrais.filter((s) => ['OR30', 'OR60', 'OR60plus'].includes(s.categorie)).length;
+  const validLine = validSauts < totalSauts ? `  (dont ${validSauts} validés)` : '';
   doc.setFontSize(8.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(11, 29, 58);
   doc.text(
-    `TOTAUX — ${totalSauts} sauts  |  OA : ${totalOA}  |  OC : ${totalOC}  |  OR : ${totalOR}`,
+    `TOTAUX — ${totalSauts} sauts${validLine}  |  OA : ${totalOA}  |  OC : ${totalOC}  |  OR : ${totalOR}`,
     margin, y
   );
 
@@ -340,5 +343,5 @@ export function generatePassportPDF(
   doc.addPage('a4', 'landscape');
   addJumpLog(doc, profile, sauts, 2, 2);
 
-  doc.save(`ParaPass_${profile.nom}_${profile.prenom}_passeport-officiel.pdf`);
+  doc.save(`ParaPass_${profile.nom}_${profile.prenom}_carnet-numerique.pdf`);
 }

@@ -54,11 +54,11 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
   const isActive = (path: string) => location.pathname === path;
 
   const statutBadge = statutDocs === 'expire'
-    ? { label: '🔴 Non autorisé à sauter', bg: 'rgba(239,68,68,0.15)', color: '#F87171', border: 'rgba(239,68,68,0.3)' }
+    ? { label: '🔴 Documents à renouveler', bg: 'rgba(239,68,68,0.15)', color: '#F87171', border: 'rgba(239,68,68,0.3)' }
     : statutDocs === 'expire_bientot'
     ? { label: '🟠 Attention', bg: 'rgba(245,158,11,0.15)', color: '#FCD34D', border: 'rgba(245,158,11,0.3)' }
     : statutDocs === 'valide'
-    ? { label: '🟢 Autorisé à sauter', bg: 'rgba(16,185,129,0.15)', color: '#6EE7B7', border: 'rgba(16,185,129,0.3)' }
+    ? { label: '🟢 Documents à jour', bg: 'rgba(16,185,129,0.15)', color: '#6EE7B7', border: 'rgba(16,185,129,0.3)' }
     : null;
 
   const parachutisteItems = [
@@ -463,7 +463,7 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
             <span className="hidden sm:inline">En partenariat avec la FFP</span>
           </div>
           <div className="flex items-center justify-center sm:justify-end">
-            <span>Conforme DGAC · RGPD · Hébergé en France</span>
+            <span>RGPD · Données hébergées en France</span>
           </div>
         </div>
       </footer>

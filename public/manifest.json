@@ -1,0 +1,17 @@
+{
+  "name": "ParaPass",
+  "short_name": "ParaPass",
+  "description": "Carnet de saut numérique parachutiste",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0B1F3A",
+  "theme_color": "#0B1F3A",
+  "icons": [
+    {
+      "src": "/Logo_ParaPass.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

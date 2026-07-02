@@ -1,12 +1,30 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
+import { useJumpCounts } from '../lib/useJumpCount';
 import { Layout } from '../components/Layout';
 import { ParachuteIcon } from '../components/ParachuteIcon';
 import { QRCodeSVG } from 'qrcode.react';
 import { Maximize2, Minimize2, RefreshCw } from 'lucide-react';
 import type { Licence, Brevet, CertificatMedical } from '../lib/types';
 import { TYPE_BREVET_LABELS } from '../lib/types';
+
+const QR_CACHE_KEY = 'parapass_signed_qr';
+const QR_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 h
+
+function getCachedJws(userId: string): string | null {
+  try {
+    const raw = localStorage.getItem(`${QR_CACHE_KEY}_${userId}`);
+    if (!raw) return null;
+    const { jws, ts } = JSON.parse(raw);
+    if (Date.now() - ts > QR_CACHE_TTL_MS) return null;
+    return jws;
+  } catch { return null; }
+}
+
+function setCachedJws(userId: string, jws: string) {
+  localStorage.setItem(`${QR_CACHE_KEY}_${userId}`, JSON.stringify({ jws, ts: Date.now() }));
+}
 
 // Nettoie les caractères parasites du numéro de licence
 function cleanLicence(num: string | null | undefined): string {
@@ -16,41 +34,57 @@ function cleanLicence(num: string | null | undefined): string {
 
 export function QRCodePage() {
   const { user, profile } = useAuth();
-  const [token, setToken] = useState<string | null>(null);
+  const [jws, setJws] = useState<string | null>(null);
+  const [jwsLoading, setJwsLoading] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [licence, setLicence] = useState<Licence | null>(null);
   const [brevet, setBrevet] = useState<Brevet | null>(null);
   const [certif, setCertif] = useState<CertificatMedical | null>(null);
-  const [totalSauts, setTotalSauts] = useState<number>(0);
+  const { total: totalSauts, valid: validSauts } = useJumpCounts(user?.id);
+
+  const loadSignedQr = useCallback(async (force = false) => {
+    if (!user) return;
+    if (!force) {
+      const cached = getCachedJws(user.id);
+      if (cached) { setJws(cached); return; }
+    }
+    setJwsLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sign-qr`,
+        { method: 'POST', headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' } },
+      );
+      const json = await res.json();
+      if (json.jws) {
+        setCachedJws(user.id, json.jws);
+        setJws(json.jws);
+      }
+    } catch (e) {
+      console.error('sign-qr error:', e);
+    } finally {
+      setJwsLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
-    supabase.from('qr_tokens').select('token').eq('parachutiste_id', user.id).maybeSingle()
-      .then(({ data }) => {
-        if (data) { setToken(data.token); }
-        else {
-          supabase.from('qr_tokens').insert({ parachutiste_id: user.id }).select('token').single()
-            .then(({ data: d }) => { if (d) setToken(d.token); });
-        }
-      });
+    loadSignedQr();
     supabase.from('licences').select('*').eq('parachutiste_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
       .then(({ data }) => setLicence(data as Licence | null));
     supabase.from('brevets').select('*').eq('parachutiste_id', user.id).order('date_obtention', { ascending: false }).limit(1).maybeSingle()
       .then(({ data }) => setBrevet(data as Brevet | null));
     supabase.from('certificats_medicaux').select('*').eq('parachutiste_id', user.id).order('date_expiration', { ascending: false }).limit(1).maybeSingle()
       .then(({ data }) => setCertif(data as CertificatMedical | null));
-    supabase.from('sauts').select('id', { count: 'exact', head: true }).eq('parachutiste_id', user.id)
-      .then(({ count }) => setTotalSauts(count ?? 0));
-  }, [user]);
+  }, [user, loadSignedQr]);
 
-  const regenerateToken = async () => {
+  const regenerateQr = () => {
     if (!user) return;
-    await supabase.from('qr_tokens').delete().eq('parachutiste_id', user.id);
-    const { data } = await supabase.from('qr_tokens').insert({ parachutiste_id: user.id }).select('token').single();
-    if (data) setToken(data.token);
+    localStorage.removeItem(`${QR_CACHE_KEY}_${user.id}`);
+    loadSignedQr(true);
   };
 
-  const qrUrl = token ? `${window.location.origin}/verify/${token}` : '';
+  const qrUrl = jws ? `https://parapass.fr/v/#${jws}` : '';
 
   if (!profile) return null;
 
@@ -59,7 +93,7 @@ export function QRCodePage() {
   const licenceExpired = licence?.date_expiration ? new Date(licence.date_expiration) < now : null;
   const licenceActif = licence?.statut === 'actif' && licenceExpired === false;
 
-  if (fullscreen && token) {
+  if (fullscreen && jws) {
     return (
       <div className="fixed inset-0 z-50 bg-[#001A4D] flex flex-col items-center justify-center p-6 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none opacity-[0.06]">
@@ -97,13 +131,13 @@ export function QRCodePage() {
           <h1 className="text-xl font-bold text-[#001A4D] mb-2">Mon QR Code</h1>
           <p className="text-sm text-gray-500 mb-6">Présentez ce QR code lors des contrôles DGAC ou gendarmerie</p>
 
-          {token ? (
+          {jws ? (
             <div className="inline-block bg-white p-4 rounded-xl border-2 border-gray-100">
-              <QRCodeSVG value={qrUrl} size={200} level="H" />
+              <QRCodeSVG value={qrUrl} size={200} level="M" />
             </div>
           ) : (
             <div className="w-[200px] h-[200px] bg-gray-100 rounded-xl mx-auto flex items-center justify-center">
-              <p className="text-gray-400 text-sm">Chargement...</p>
+              <p className="text-gray-400 text-sm">{jwsLoading ? 'Génération…' : 'Chargement...'}</p>
             </div>
           )}
 
@@ -112,9 +146,9 @@ export function QRCodePage() {
               className="w-full flex items-center justify-center gap-2 bg-[#001A4D] hover:bg-[#1E3A5F] text-white py-2.5 rounded-lg text-sm font-semibold transition-colors">
               <Maximize2 className="w-4 h-4" /> Plein écran
             </button>
-            <button onClick={regenerateToken}
-              className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 py-2.5 rounded-lg text-sm font-medium transition-colors">
-              <RefreshCw className="w-4 h-4" /> Régénérer le QR code
+            <button onClick={regenerateQr} disabled={jwsLoading}
+              className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
+              <RefreshCw className={`w-4 h-4 ${jwsLoading ? 'animate-spin' : ''}`} /> Régénérer le QR code
             </button>
           </div>
 
@@ -131,7 +165,10 @@ export function QRCodePage() {
               }
               highlight={certifExpired === true ? 'red' : certifExpired === false ? 'green' : undefined}
             />
-            <InfoRow label="Nombre de sauts" value={String(totalSauts)} />
+            <InfoRow label="Sauts totaux" value={String(totalSauts)} />
+            {validSauts < totalSauts && (
+              <InfoRow label="dont validés" value={String(validSauts)} />
+            )}
             <div className="flex items-center justify-between py-0.5">
               <span className="text-sm text-gray-500 font-medium">Statut</span>
               <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${

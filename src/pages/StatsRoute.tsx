@@ -10,7 +10,7 @@ export function StatsRoute() {
 
   const fetch = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase.from('sauts').select('*').eq('parachutiste_id', user.id).order('date_saut', { ascending: false });
+    const { data } = await supabase.from('sauts').select('*').eq('parachutiste_id', user.id).eq('is_tunnel', false).order('date_saut', { ascending: false });
     setSauts(data ?? []);
   }, [user]);
 

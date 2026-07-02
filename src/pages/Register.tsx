@@ -72,7 +72,7 @@ export function RegisterPage() {
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <div className="mb-7">
             <h1 className="text-2xl font-bold text-[#0F172A]">Créer un compte</h1>
-            <p className="text-sm text-[#64748B] mt-1">Votre carnet de sauts numérique, gratuit et conforme DGAC</p>
+            <p className="text-sm text-[#64748B] mt-1">Votre carnet de sauts numérique, gratuit et accessible partout</p>
           </div>
 
           {error && (

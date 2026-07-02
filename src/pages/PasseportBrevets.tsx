@@ -198,7 +198,7 @@ export function BrevetsModulesTab({
   return (
     <div className="space-y-4">
       <div className="bg-[#001A4D]/5 rounded-xl p-4">
-        <p className="text-xs text-[#001A4D] font-semibold">Carnet de brevets FFP officiel</p>
+        <p className="text-xs text-[#001A4D] font-semibold">Brevets FFP</p>
         <p className="text-xs text-gray-500 mt-0.5">Les modules sont validés par le Directeur Technique ou un moniteur habilité. Chaque ligne correspond à une page du carnet papier.</p>
       </div>
 

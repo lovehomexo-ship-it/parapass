@@ -507,7 +507,7 @@ export function ProfilPublicPage() {
               {/* Stats */}
               {profile.visibilite_sauts && (
                 <div className="flex gap-3 overflow-x-auto pb-1">
-                  <StatCard label="Sauts certifiés" value={profile.total_sauts} icon={<TrendingUp className="w-5 h-5" />} />
+                  <StatCard label="Sauts validés" value={profile.total_sauts} icon={<TrendingUp className="w-5 h-5" />} />
                   <StatCard label="Cette année" value={profile.sauts_annee} icon={<Calendar className="w-5 h-5" />} />
                   <StatCard label="DZ visitées" value={dzVisitees} icon={<MapPin className="w-5 h-5" />} />
                   {profile.visibilite_badges && (
@@ -661,7 +661,7 @@ export function ProfilPublicPage() {
                 )}
                 <div className="flex items-center gap-1.5 mt-1.5">
                   <Shield className="w-3.5 h-3.5 text-[#F97316]" />
-                  <span className="text-[#F97316] text-xs font-semibold">Certifié ParaPass</span>
+                  <span className="text-[#F97316] text-xs font-semibold">Vérifié ParaPass</span>
                 </div>
               </div>
               <Link to={`/verify/${profile.id}`}

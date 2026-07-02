@@ -298,12 +298,14 @@ export function DashboardPage() {
     setSautAEditer(null);
   };
 
-  const vraisSauts = sauts.filter((s) => s.source !== 'soufflerie');
+  const vraisSauts = sauts.filter((s) => !s.is_tunnel);
   const totalSauts = vraisSauts.length;
+  const validSauts = vraisSauts.filter((s) => s.statut === 'valide' || s.statut === 'historique').length;
+
   const sautsCetteAnnee = vraisSauts.filter((s) => new Date(s.date_saut).getFullYear() === new Date().getFullYear()).length;
   const sortedByDate = [...sauts].sort((a, b) => b.date_saut.localeCompare(a.date_saut));
-  const dernierSaut = sortedByDate.find((s) => s.source !== 'soufflerie')
-    ? new Date(sortedByDate.find((s) => s.source !== 'soufflerie')!.date_saut).toLocaleDateString('fr-FR')
+  const dernierSaut = sortedByDate.find((s) => !s.is_tunnel)
+    ? new Date(sortedByDate.find((s) => !s.is_tunnel)!.date_saut).toLocaleDateString('fr-FR')
     : null;
 
   const sortedSauts = [...sauts].sort((a, b) => {
@@ -316,7 +318,7 @@ export function DashboardPage() {
   // Calculé sur tous les sauts triés par date asc → attribue un numéro croissant aux non-soufflerie
   const sautNumeroMap = (() => {
     const byDateAsc = [...sauts]
-      .filter((s) => s.source !== 'soufflerie' && s.statut !== 'declaration_honneur')
+      .filter((s) => !s.is_tunnel && s.statut !== 'declaration_honneur')
       .sort((a, b) => a.date_saut.localeCompare(b.date_saut));
     const map: Record<string, number> = {};
     byDateAsc.forEach((s, i) => { map[s.id] = i + 1; });
@@ -445,6 +447,11 @@ export function DashboardPage() {
 
   return (
     <Layout noPadding>
+      {isDemo && (
+        <div className="sticky top-0 z-50 flex items-center justify-center gap-2 px-4 py-1.5 text-xs font-bold tracking-widest" style={{ background: '#F59E0B', color: '#1C1917' }}>
+          ⚠ DONNÉES DE DÉMONSTRATION — Les informations affichées sont fictives
+        </div>
+      )}
       <BandeauAlertes alertes={alertes} acquittees={acquittees} onAcquitter={acquitterAlertes} statutDocs={statutDocs} licenceExpiration={licenceFFP?.date_expiration ?? null} certifExpiration={certifMedical?.date_expiration ?? null} userId={user?.id} />
 
       {/* Sub-nav */}
@@ -476,10 +483,10 @@ export function DashboardPage() {
               {/* 1 — Bandeau compact brevet + autorisation */}
               {statutDocs && (() => {
                 const cfg = statutDocs === 'expire'
-                  ? { bg: 'rgba(239,68,68,0.12)', color: '#F87171', border: 'rgba(239,68,68,0.25)', label: '🔴 Non autorisé à sauter' }
+                  ? { bg: 'rgba(239,68,68,0.12)', color: '#F87171', border: 'rgba(239,68,68,0.25)', label: '🔴 Documents à renouveler' }
                   : statutDocs === 'expire_bientot'
                   ? { bg: 'rgba(245,158,11,0.12)', color: '#FCD34D', border: 'rgba(245,158,11,0.25)', label: '⚠️ Documents expirent bientôt' }
-                  : { bg: 'rgba(16,185,129,0.12)', color: '#6EE7B7', border: 'rgba(16,185,129,0.25)', label: '✅ Autorisé à sauter' };
+                  : { bg: 'rgba(16,185,129,0.12)', color: '#6EE7B7', border: 'rgba(16,185,129,0.25)', label: '✅ Documents à jour' };
                 return (
                   <div
                     className="mb-3 flex items-center justify-between gap-3 rounded-xl px-4"
@@ -503,7 +510,7 @@ export function DashboardPage() {
 
                 {/* Colonne gauche : carte dématérialisée */}
                 <div className="lg:flex-shrink-0 lg:w-[480px] mb-6 lg:mb-0">
-                  <PasseportCardView userId={user!.id} compact={true} />
+                  <PasseportCardView userId={user!.id} compact={true} sautsCountOverride={totalSauts} validSautsCountOverride={validSauts} />
                 </div>
 
                 {/* Colonne droite : KPI tiles + bouton ajouter un saut */}
@@ -1060,7 +1067,7 @@ function SautCardMobile({
               Solde antérieur — {saut.nb_sauts_declares ?? '?'} sauts déclarés sur l'honneur
             </p>
             <p className="text-xs" style={{ color: 'var(--c-dim)' }}>
-              Déclaré le {new Date(saut.created_at).toLocaleDateString('fr-FR')} · Conforme DGAC
+              Déclaré le {new Date(saut.created_at).toLocaleDateString('fr-FR')} · Déclaré sur l'honneur
             </p>
           </div>
         </div>
@@ -1177,7 +1184,7 @@ function SautRowCarnet({
                 Solde antérieur — {saut.nb_sauts_declares ?? '?'} sauts déclarés sur l'honneur
               </p>
               <p className="text-xs" style={{ color: 'var(--c-dim)' }}>
-                Déclaré le {new Date(saut.created_at).toLocaleDateString('fr-FR')} · Conforme DGAC
+                Déclaré le {new Date(saut.created_at).toLocaleDateString('fr-FR')} · Déclaré sur l'honneur
               </p>
             </div>
           </div>
@@ -1433,7 +1440,7 @@ function SautDetailModal({ saut, onClose }: { saut: Saut; onClose: () => void })
                 <Hash className="w-4 h-4 text-green-400" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-green-400">Saut certifié cryptographiquement</p>
+                <p className="text-xs font-semibold text-green-400">Saut signé cryptographiquement</p>
                 <p className="text-xs text-green-400 font-mono mt-0.5">{hashShort}…</p>
               </div>
             </div>
@@ -1458,7 +1465,7 @@ function BanniereOCR({ onClic }: { onClic: () => void }) {
   const [visible, setVisible] = useState(true);
   if (!visible) return null;
 
-  const points = ['Sauts illimités', 'Écriture manuscrite', 'Validation manuelle', 'Statut officiel DGAC'];
+  const points = ['Sauts illimités', 'Écriture manuscrite', 'Validation manuelle', 'Statut Historique · Déclaré sur l\'honneur'];
 
   return (
     <div
@@ -1506,7 +1513,7 @@ function BanniereOCR({ onClic }: { onClic: () => void }) {
             Importez votre carnet papier avec l'IA
           </h3>
           <p className="text-xs mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            Photographiez vos pages · Claude Vision extrait tous vos sauts · Conforme DGAC
+            Photographiez vos pages · Claude Vision extrait tous vos sauts · Archivé et horodaté
           </p>
           <div className="hidden sm:flex flex-wrap gap-x-3 gap-y-1">
             {points.map((p) => (

@@ -55,11 +55,16 @@ export function PasseportPage() {
 
   return (
     <Layout>
+      {isDemo && (
+        <div className="flex items-center justify-center gap-2 px-4 py-1.5 text-xs font-bold tracking-widest" style={{ background: '#F59E0B', color: '#1C1917' }}>
+          ⚠ DONNÉES DE DÉMONSTRATION — Les informations affichées sont fictives
+        </div>
+      )}
       <div className="min-h-screen overflow-x-hidden" style={{ background: '#001A4D' }}>
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-white">Mon Passeport</h1>
-            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Votre identité parachutiste numérique officielle</p>
+            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Votre identité parachutiste numérique</p>
           </div>
 
           {/* Tab bar — scrollable on mobile */}
@@ -520,7 +525,7 @@ function ValidationDZStatus({ activeLicencie, userId }: { activeLicencie: Centre
 
   return (
     <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-      <p className="text-sm font-semibold text-white mb-3">Validation officielle DZ</p>
+      <p className="text-sm font-semibold text-white mb-3">Validation DZ</p>
       <div className="flex items-center gap-2 mb-3">
         {carnet_statut === 'valide' && (
           <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-green-400">

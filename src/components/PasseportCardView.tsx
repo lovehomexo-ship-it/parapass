@@ -47,6 +47,7 @@ interface PasseportData {
   centresLicencies: CentreLicencie[];
   qualifications: Qualification[];
   sautsCount: number;
+  validSautsCount: number;
   qrToken: string | null;
   tamponConfig: TamponConfig | null;
   centre: CentreData | null;
@@ -118,7 +119,7 @@ function CachetSVG({ nomCentre, nomDT, couleur = '#1D4ED8' }: { nomCentre: strin
 // ─── Recto card ─────────────────────────────────────────────────────────────────
 
 function CardRecto({ data, id }: { data: PasseportData; id: string }) {
-  const { profile, licences, brevets, certificats, centresLicencies, sautsCount, qrToken, tamponConfig } = data;
+  const { profile, licences, brevets, certificats, centresLicencies, sautsCount, validSautsCount, qrToken, tamponConfig } = data;
   const now = new Date();
   const licence = licences[0];
   const certif = certificats[0];
@@ -175,7 +176,7 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
             <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-7 w-auto flex-shrink-0" />
             <div>
               <div style={{ fontSize: 10, color: 'rgba(147,197,253,0.9)', letterSpacing: '0.04em' }}>Carnet de sauts numérique</div>
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: '#F97316' }}>CARNET OFFICIEL FFP</div>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: '#F97316' }}>CARNET DE SAUTS NUMÉRIQUE</div>
             </div>
           </div>
           <div
@@ -257,6 +258,9 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
             <div>
               <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Sauts totaux</div>
               <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', lineHeight: 1.3 }}>{sautsCount}</div>
+              {validSautsCount < sautsCount && (
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', lineHeight: 1.3 }}>dont {validSautsCount} validés</div>
+              )}
             </div>
           )}
         </div>
@@ -316,7 +320,7 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
 
         {/* ── Footer ── */}
         <div className="flex items-center justify-between" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 6, marginTop: 2 }}>
-          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Conforme DGAC</div>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>parapass.fr</div>
           <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', fontFamily: 'monospace' }}>parapass.fr</div>
         </div>
       </div>
@@ -386,7 +390,7 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
             <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '0.04em', color: '#fff', lineHeight: 1.1, textTransform: 'uppercase' }}>
               {profile.nom} <span style={{ fontWeight: 400, fontSize: 14, textTransform: 'none', letterSpacing: 0 }}>{profile.prenom}</span>
             </div>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: '#F97316', marginTop: 2 }}>CARNET OFFICIEL FFP</div>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: '#F97316', marginTop: 2 }}>CARNET DE SAUTS NUMÉRIQUE</div>
             <div style={{ fontSize: 9, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>
               Fédération Française de Parachutisme
             </div>
@@ -538,7 +542,7 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
                 border: '1px solid rgba(16,185,129,0.22)', padding: '2px 8px', borderRadius: 20,
               }}
             >
-              ✓ Conforme DGAC
+              ✓ Conforme réglementation
             </span>
             <div style={{ fontSize: 9, fontFamily: 'monospace', color: 'rgba(255,255,255,0.28)' }}>parapass.fr</div>
           </div>
@@ -579,7 +583,7 @@ function FlippableCard({
         >
           {/* Recto — face avant */}
           <div style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
-            <CardRecto data={data} id={rectoId} />
+            <CardRecto data={displayData} id={rectoId} />
           </div>
 
           {/* Verso — face arrière */}
@@ -595,7 +599,7 @@ function FlippableCard({
               bottom: 0,
             }}
           >
-            <CardVerso data={data} id={versoId} isOwner={isOwner} />
+            <CardVerso data={displayData} id={versoId} isOwner={isOwner} />
           </div>
         </div>
       </div>
@@ -759,10 +763,10 @@ function FullscreenModal({
         <X className="w-6 h-6" />
       </button>
       <div className="w-full max-w-md">
-        <FlippableCard data={data} isOwner={isOwner} rectoId={rectoId} versoId={versoId} />
+        <FlippableCard data={displayData} isOwner={isOwner} rectoId={rectoId} versoId={versoId} />
         <div className="mt-3 flex justify-center gap-3">
           <button
-            onClick={() => exportCartesPDF(data, isOwner, data.profile.nom, data.profile.prenom)}
+            onClick={() => exportCartesPDF(displayData, isOwner, displayData.profile.nom, displayData.profile.prenom)}
             className="flex items-center gap-1.5 text-xs text-white/60 hover:text-white transition px-3 py-1.5 rounded-lg hover:bg-white/10"
           >
             <Download className="w-3.5 h-3.5" /> Télécharger PDF
@@ -783,9 +787,11 @@ interface PasseportCardViewProps {
   centreId?: string;
   adminId?: string;
   compact?: boolean; // dashboard mode — card only, no action buttons or validity summary
+  sautsCountOverride?: number;
+  validSautsCountOverride?: number;
 }
 
-export function PasseportCardView({ userId, centreId, adminId, compact = false }: PasseportCardViewProps) {
+export function PasseportCardView({ userId, centreId, adminId, compact = false, sautsCountOverride, validSautsCountOverride }: PasseportCardViewProps) {
   const [data, setData] = useState<PasseportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
@@ -806,6 +812,7 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false }
         { data: centresData },
         { data: qualsData },
         { count: sautsCountData },
+        { count: validSautsCountData },
         { data: qrData },
         { data: dernierSautData },
       ] = await Promise.all([
@@ -815,7 +822,8 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false }
         supabase.from('certificats_medicaux').select('*').eq('parachutiste_id', userId).order('date_expiration', { ascending: false }),
         supabase.from('licencies_centres').select('*, centre:centres(id, nom, ville, created_at)').eq('parachutiste_id', userId),
         supabase.from('qualifications').select('*').eq('parachutiste_id', userId),
-        supabase.from('sauts').select('*', { count: 'exact', head: true }).eq('parachutiste_id', userId).eq('statut', 'valide'),
+        supabase.from('sauts').select('*', { count: 'exact', head: true }).eq('parachutiste_id', userId).eq('is_tunnel', false),
+        supabase.from('sauts').select('*', { count: 'exact', head: true }).eq('parachutiste_id', userId).eq('is_tunnel', false).in('statut', ['valide', 'historique']),
         supabase.from('qr_tokens').select('token').eq('parachutiste_id', userId).order('created_at', { ascending: false }).limit(1),
         supabase.from('sauts').select('valide_par, valide_le, lieu').eq('parachutiste_id', userId).eq('statut', 'valide').order('valide_le', { ascending: false }).limit(1).maybeSingle(),
       ]);
@@ -855,6 +863,7 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false }
         centresLicencies: (centresData ?? []) as CentreLicencie[],
         qualifications: (qualsData ?? []) as Qualification[],
         sautsCount: sautsCountData ?? 0,
+        validSautsCount: validSautsCountData ?? 0,
         qrToken: qrData?.[0]?.token ?? null,
         tamponConfig,
         centre: centreInfo,
@@ -882,7 +891,7 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false }
     if (!data) return;
     setExporting(true);
     try {
-      await exportCartesPDF(data, isOwner, data.profile.nom, data.profile.prenom);
+      await exportCartesPDF(displayData, isOwner, displayData.profile.nom, displayData.profile.prenom);
     } finally {
       setExporting(false);
     }
@@ -901,6 +910,13 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false }
     return <div className="text-center py-12 text-gray-400 text-sm">Impossible de charger les données</div>;
   }
 
+  // Apply parent overrides at render time — avoids race with async load() overwriting them
+  const displayData: PasseportData = {
+    ...data,
+    sautsCount: sautsCountOverride ?? data.sautsCount,
+    validSautsCount: validSautsCountOverride ?? data.validSautsCount,
+  };
+
   if (!data.profile.partage_carte_centre && adminId && adminId !== userId) {
     return (
       <div className="bg-gray-50 rounded-2xl p-8 text-center border border-gray-200 space-y-3">
@@ -917,7 +933,7 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false }
   if (compact) {
     return (
       <div className="w-full" style={{ maxWidth: 480 }}>
-        <FlippableCard data={data} isOwner={isOwner} rectoId={rectoId} versoId={versoId} />
+        <FlippableCard data={displayData} isOwner={isOwner} rectoId={rectoId} versoId={versoId} />
       </div>
     );
   }
@@ -929,7 +945,7 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false }
         {/* Shield badge */}
         <div className="flex items-center gap-1.5 text-xs text-gray-400">
           <Shield className="w-3.5 h-3.5 flex-shrink-0" />
-          <span>Données officielles en temps réel</span>
+          <span>Données à jour en temps réel</span>
         </div>
         {/* Buttons — PDF full width on mobile, then row */}
         {isOwner && (
@@ -973,13 +989,13 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false }
       </div>
 
       {/* Flippable card */}
-      <FlippableCard data={data} isOwner={isOwner} rectoId={rectoId} versoId={versoId} />
+      <FlippableCard data={displayData} isOwner={isOwner} rectoId={rectoId} versoId={versoId} />
 
       {/* Validity summary */}
-      <ValiditySummary data={data} />
+      <ValiditySummary data={displayData} />
 
       {/* Fullscreen modal */}
-      {fullscreen && <FullscreenModal data={data} onClose={() => setFullscreen(false)} isOwner={isOwner} />}
+      {fullscreen && <FullscreenModal data={displayData} onClose={() => setFullscreen(false)} isOwner={isOwner} />}
     </div>
   );
 }

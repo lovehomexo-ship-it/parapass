@@ -170,9 +170,9 @@ export function DeclarationHonneur({ profile, userId, onClose, onConfirmed }: Pr
                 className="rounded-xl p-3 text-xs"
                 style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.2)', color: 'var(--c-text2)', lineHeight: 1.6 }}
               >
-                <strong style={{ color: '#A78BFA' }}>ℹ️ Procédure officielle FFP</strong> — Cette déclaration est
+                <strong style={{ color: '#A78BFA' }}>ℹ️ Procédure FFP</strong> — Cette déclaration est
                 identique à celle utilisée pour les carnets perdus ou endommagés. Elle est
-                horodatée et archivée conformément à la réglementation DGAC.
+                horodatée et archivée.
               </div>
 
               {/* Nombre de sauts */}

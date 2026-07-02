@@ -393,7 +393,7 @@ function EcranPaiementLayout({
           <span className="font-bold text-base" style={{ color: '#F97316' }}>4,99 €</span>
         </div>
         <div className="mt-3 space-y-1">
-          {['Analyse Claude Vision haute précision', 'Validation manuelle incluse', 'Import illimité de sauts', 'Statut Historique · Conforme DGAC'].map(f => (
+          {['Analyse Claude Vision haute précision', 'Validation manuelle incluse', 'Import illimité de sauts', 'Statut Historique · Déclaré sur l\'honneur'].map(f => (
             <p key={f} className="text-xs flex items-center gap-1.5" style={{ color: 'var(--c-muted)' }}>
               <CheckCircle className="w-3 h-3 text-emerald-500 flex-shrink-0" /> {f}
             </p>
@@ -435,7 +435,7 @@ function EcranPaiementLayout({
       <div className="grid grid-cols-3 gap-2">
         {[
           { icon: Zap, label: 'Analyse IA', sub: 'Claude Vision' },
-          { icon: Shield, label: 'Conforme FFP', sub: 'DGAC' },
+          { icon: Shield, label: 'Conforme FFP', sub: 'validé' },
           { icon: FileImage, label: `${photos.length} page${photos.length > 1 ? 's' : ''}`, sub: `incluse${photos.length > 1 ? 's' : ''}` },
         ].map(({ icon: Icon, label, sub }) => (
           <div key={label} className="rounded-xl p-3 text-center" style={{ background: 'rgba(249,115,22,0.05)', border: '1px solid rgba(249,115,22,0.1)' }}>
@@ -1012,7 +1012,7 @@ export function ImportOCR({ userId, onClose, onImported }: Props) {
               <div className="rounded-xl p-3 flex items-start gap-2" style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)' }}>
                 <BookOpen className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-blue-400">
-                  Ces sauts seront importés avec le statut <strong>Historique</strong> — déclarés sur l'honneur conformément à la réglementation DGAC.
+                  Ces sauts seront importés avec le statut <strong>Historique</strong> — déclarés sur l'honneur, archivés et horodatés.
                 </p>
               </div>
 

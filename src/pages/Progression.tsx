@@ -185,8 +185,9 @@ export function ProgressionPage() {
           .limit(100),
         supabase
           .from('sauts')
-          .select('id, date_saut, lieu, hauteur_m, statut, nature_saut, categorie, created_at')
+          .select('id, date_saut, lieu, hauteur_m, statut, nature_saut, categorie, created_at, source')
           .eq('parachutiste_id', user.id)
+          .eq('is_tunnel', false)
           .order('date_saut', { ascending: false })
           .limit(200),
       ]);

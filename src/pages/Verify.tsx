@@ -126,8 +126,8 @@ export function VerifyPage() {
         supabase.from('licences').select('*').eq('parachutiste_id', pid).order('date_expiration', { ascending: false }),
         supabase.from('certificats_medicaux').select('*').eq('parachutiste_id', pid).order('date_expiration', { ascending: false }),
         supabase.from('brevets').select('*').eq('parachutiste_id', pid).order('date_obtention', { ascending: false }),
-        supabase.from('sauts').select('*', { count: 'exact', head: true }).eq('parachutiste_id', pid).eq('statut', 'valide'),
-        supabase.from('sauts').select('*', { count: 'exact', head: true }).eq('parachutiste_id', pid),
+        supabase.from('sauts').select('*', { count: 'exact', head: true }).eq('parachutiste_id', pid).eq('is_tunnel', false).in('statut', ['valide', 'historique']),
+        supabase.from('sauts').select('*', { count: 'exact', head: true }).eq('parachutiste_id', pid).eq('is_tunnel', false),
         supabase.from('sauts').select('date_saut').eq('parachutiste_id', pid).order('date_saut', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('centres_licencies').select('centre_id, centres(nom)').eq('parachutiste_id', pid).eq('statut', 'actif').limit(1).maybeSingle(),
         supabase.from('sauts').select('id, parachutiste_id, moniteur_id, date_saut, lieu, aeronef_immat, hauteur_m, categorie, validation_hash, validation_timestamp, valide_par, statut').eq('parachutiste_id', pid).eq('statut', 'valide').not('validation_hash', 'is', null).order('date_saut', { ascending: false }).limit(20),
@@ -195,7 +195,7 @@ export function VerifyPage() {
         <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-8 w-auto object-contain" />
         <div className="flex items-center gap-1 bg-[#001A4D]/5 rounded-full px-3 py-1">
           <Shield className="w-3 h-3 text-[#001A4D]" />
-          <span className="text-[10px] font-semibold text-[#001A4D] uppercase tracking-wider">Vérification officielle</span>
+          <span className="text-[10px] font-semibold text-[#001A4D] uppercase tracking-wider">Vérification ParaPass</span>
         </div>
       </div>
 
@@ -264,7 +264,7 @@ export function VerifyPage() {
 
         {/* ── ACTIVITÉ ── */}
         <InfoCard title="Activité récente" icon="🪂">
-          <InfoRow label="Sauts certifiés ParaPass" value={String(d.sautsValidés)} highlight />
+          <InfoRow label="Sauts validés ParaPass" value={String(d.sautsValidés)} highlight />
           <InfoRow label="Total sauts enregistrés" value={String(d.sautsTotal)} />
           <InfoRow label="Dernier saut" value={d.dernierSaut ? fmtDate(d.dernierSaut) : 'Aucun'} />
           <InfoRow label="Centre principal" value={d.centrePrincipal || '—'} last />
@@ -446,7 +446,7 @@ function PasseportCard({ profile, licence, brevet, certif, sautsTotal, licNum, s
 
       {/* Bottom row */}
       <div className="flex items-center justify-between px-4 pb-4">
-        <span className="text-white/40 tracking-[0.15em]" style={{ fontSize: '9px' }}>CONFORME DGAC</span>
+        <span className="text-white/40 tracking-[0.15em]" style={{ fontSize: '9px' }}>PARAPASS.FR</span>
         <span className="text-white/40" style={{ fontSize: '9px' }}>parapass.fr</span>
       </div>
     </div>
@@ -636,12 +636,12 @@ function Footer({ verifiedAt, token }: { verifiedAt: Date; token: string }) {
   return (
     <footer className="mt-4 px-4 py-6 text-center" style={{ background: '#001A4D' }}>
       <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-7 w-auto object-contain  mx-auto mb-3" />
-      <p className="text-white/80 font-semibold mb-1" style={{ fontSize: '12px' }}>Vérification certifiée ParaPass</p>
+      <p className="text-white/80 font-semibold mb-1" style={{ fontSize: '12px' }}>Vérification ParaPass</p>
       <p className="text-white/50" style={{ fontSize: '11px' }}>
         Données chiffrées AES-256 · Hébergé en Europe
       </p>
       <p className="text-white/50" style={{ fontSize: '11px' }}>
-        Conforme RGPD · Certifié parapass.fr
+        Conforme RGPD · parapass.fr
       </p>
       <p className="text-white/30 mt-2" style={{ fontSize: '10px' }}>
         Consultation enregistrée le {fmtDateTime(verifiedAt)}

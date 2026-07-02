@@ -13,6 +13,7 @@ import { RegisterPage } from './pages/Register';
 import { DashboardPage } from './pages/Dashboard';
 import { QRCodePage } from './pages/QRCode';
 import { VerifyPage } from './pages/Verify';
+import { VerifyOfflinePage } from './pages/VerifyOffline';
 import { MoniteurPage } from './pages/Moniteur';
 import { ValidationsPage } from './pages/Validations';
 import { AdminPage } from './pages/Admin';
@@ -145,6 +146,7 @@ function App() {
                 <Route path="/demo/centre" element={<DemoCentrePage />} />
                 <Route path="/pliage/scan/:token" element={<ScanPliagePage />} />
                 <Route path="/verify/:token" element={<VerifyPage />} />
+                <Route path="/v" element={<VerifyOfflinePage />} />
                 <Route path="/auth-redirect" element={<AuthRedirect />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
