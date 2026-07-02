@@ -583,7 +583,7 @@ function FlippableCard({
         >
           {/* Recto — face avant */}
           <div style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
-            <CardRecto data={displayData} id={rectoId} />
+            <CardRecto data={data} id={rectoId} />
           </div>
 
           {/* Verso — face arrière */}
@@ -599,7 +599,7 @@ function FlippableCard({
               bottom: 0,
             }}
           >
-            <CardVerso data={displayData} id={versoId} isOwner={isOwner} />
+            <CardVerso data={data} id={versoId} isOwner={isOwner} />
           </div>
         </div>
       </div>
@@ -763,10 +763,10 @@ function FullscreenModal({
         <X className="w-6 h-6" />
       </button>
       <div className="w-full max-w-md">
-        <FlippableCard data={displayData} isOwner={isOwner} rectoId={rectoId} versoId={versoId} />
+        <FlippableCard data={data} isOwner={isOwner} rectoId={rectoId} versoId={versoId} />
         <div className="mt-3 flex justify-center gap-3">
           <button
-            onClick={() => exportCartesPDF(displayData, isOwner, displayData.profile.nom, displayData.profile.prenom)}
+            onClick={() => exportCartesPDF(data, isOwner, data.profile.nom, data.profile.prenom)}
             className="flex items-center gap-1.5 text-xs text-white/60 hover:text-white transition px-3 py-1.5 rounded-lg hover:bg-white/10"
           >
             <Download className="w-3.5 h-3.5" /> Télécharger PDF
@@ -891,7 +891,8 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
     if (!data) return;
     setExporting(true);
     try {
-      await exportCartesPDF(displayData, isOwner, displayData.profile.nom, displayData.profile.prenom);
+      const d = { ...data, sautsCount: sautsCountOverride ?? data.sautsCount, validSautsCount: validSautsCountOverride ?? data.validSautsCount };
+      await exportCartesPDF(d, isOwner, d.profile.nom, d.profile.prenom);
     } finally {
       setExporting(false);
     }
