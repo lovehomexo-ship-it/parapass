@@ -914,6 +914,12 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
         voilure_principale: isTunnel ? null : (form.voilure_principale || null),
         observations: form.observations || null,
         moniteur_id: isTunnel ? null : moniteur_id,
+        // Champs soufflerie — colonnes existantes en base (migration 095/096)
+        tunnel_name: isTunnel ? (form.tunnel_name.trim() || null) : null,
+        tunnel_flight_minutes: isTunnel ? (Number(form.tunnel_flight_minutes) || null) : null,
+        tunnel_flight_count: isTunnel ? (Number(form.tunnel_flight_count) || null) : null,
+        tunnel_coach: isTunnel ? (form.tunnel_coach.trim() || null) : null,
+        tunnel_discipline: isTunnel ? (form.tunnel_discipline.trim() || null) : null,
         ...(validateDirectly ? {
           statut: 'valide',
           valide_par: validateur,
