@@ -128,8 +128,8 @@ function App() {
                 <Route path="/badges" element={<ProtectedRoute roles={['parachutiste', 'moniteur', 'moniteur_delegue']}><BadgesPage /></ProtectedRoute>} />
                 <Route path="/communaute" element={<ProtectedRoute><CommunautePage /></ProtectedRoute>} />
                 <Route path="/qr-code" element={<ProtectedRoute roles={['parachutiste', 'moniteur', 'moniteur_delegue']}><QRCodePage /></ProtectedRoute>} />
-                <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
-                <Route path="/regles-ffp" element={<ProtectedRoute><ReglesFFPPage /></ProtectedRoute>} />
+                <Route path="/messages" element={<ProtectedRoute><ErrorBoundary><MessagesPage /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/regles-ffp" element={<ProtectedRoute><ErrorBoundary><ReglesFFPPage /></ErrorBoundary></ProtectedRoute>} />
                 <Route path="/validations" element={<ProtectedRoute roles={['parachutiste', 'moniteur', 'moniteur_delegue']}><ValidationsPage /></ProtectedRoute>} />
                 <Route path="/moniteur" element={<ProtectedRoute roles={['moniteur']}><MoniteurPage /></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AdminPage /></ProtectedRoute>} />
