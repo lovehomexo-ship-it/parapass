@@ -498,10 +498,125 @@ export function DashboardPage() {
                 );
               })()}
 
-              {/* 2 — Carte dématérialisée */}
-              <div className="mb-6">
-                <PasseportCardView userId={user!.id} compact={true} />
-              </div>
+              {/* 2 — Layout 2 colonnes desktop : carte (gauche) + tuiles+boutons (droite) */}
+              <div className="flex flex-col lg:flex-row lg:items-start lg:gap-6 mb-6">
+
+                {/* Colonne gauche : carte dématérialisée */}
+                <div className="lg:flex-shrink-0 lg:w-[480px] mb-6 lg:mb-0">
+                  <PasseportCardView userId={user!.id} compact={true} />
+                </div>
+
+                {/* Colonne droite : KPI tiles + bouton ajouter un saut */}
+                <div className="flex-1 min-w-0 flex flex-col gap-4">
+
+                  {/* 4 KPI cards */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Card 1 — Total sauts */}
+                    <KpiCard
+                      accent="#F97316"
+                      label="Total sauts"
+                      value={
+                        <span className="flex items-center gap-2">
+                          <ParachuteDropIcon className="w-6 h-6 text-orange-500" />
+                          {totalSauts}
+                        </span>
+                      }
+                      sub={`+${sautsCetteAnnee} cette année`}
+                    />
+                    {/* Card 2 — Cette année */}
+                    <KpiCard
+                      accent="#003082"
+                      label="Cette année"
+                      value={<span className="flex items-center gap-2"><TrendingUp className="w-5 h-5 text-blue-400" />{sautsCetteAnnee}</span>}
+                      sub={dernierSaut ? `Dernier : ${dernierSaut}` : 'Aucun saut encore'}
+                    />
+                    {/* Card 3 — Licence FFP */}
+                    <KpiCard
+                      accent="#10B981"
+                      label="Licence FFP"
+                      value={
+                        <span style={{ fontSize: 15, fontWeight: 700, color: licenceFFP ? '#fff' : 'rgba(255,255,255,0.3)' }}>
+                          {licenceFFP?.date_expiration
+                            ? new Date(licenceFFP.date_expiration).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
+                            : '—'}
+                        </span>
+                      }
+                      expiry={{ date: licenceFFP?.date_expiration ?? null, months: licenceMonths }}
+                      sub={
+                        licenceFFP?.date_expiration
+                          ? licenceMonths !== null && licenceMonths < 0
+                            ? <span style={{ color: '#EF4444', fontWeight: 600 }}>EXPIRÉE</span>
+                            : `Valide · ${licenceMonths} mois restants`
+                          : 'Non renseignée'
+                      }
+                    />
+                    {/* Card 4 — Certificat médical */}
+                    <KpiCard
+                      accent="#8B5CF6"
+                      label="Certificat médical"
+                      value={
+                        <span style={{ fontSize: 15, fontWeight: 700, color: certifMedical ? '#fff' : 'rgba(255,255,255,0.3)' }}>
+                          {certifMedical?.date_expiration
+                            ? new Date(certifMedical.date_expiration).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
+                            : '—'}
+                        </span>
+                      }
+                      expiry={{ date: certifMedical?.date_expiration ?? null, months: certifMonths }}
+                      sub={
+                        certifMedical?.date_expiration
+                          ? certifMonths !== null && certifMonths < 0
+                            ? <span style={{ color: '#EF4444', fontWeight: 600 }}>EXPIRÉ</span>
+                            : `Valide · ${certifMonths} mois restants`
+                          : 'Non renseigné'
+                      }
+                    />
+                  </div>
+
+                  {/* Bouton Ajouter un saut */}
+                  <div>
+                    <button
+                      onClick={() => { if (!blockIfDemo()) setModalOpen(true); }}
+                      disabled={isDemo}
+                      title={isDemo ? 'Non disponible en mode démo' : undefined}
+                      className="flex items-center justify-center gap-2 text-white px-5 rounded-lg text-sm font-bold transition-colors shadow-lg w-full"
+                      style={{
+                        height: 48,
+                        background: isDemo ? 'var(--c-muted)' : '#F97316',
+                        cursor: isDemo ? 'not-allowed' : 'pointer',
+                        opacity: isDemo ? 0.6 : 1,
+                      }}
+                    >
+                      <Plus className="w-5 h-5" /> Ajouter un saut
+                    </button>
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={() => navigate('/qr-code')}
+                        className="flex items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors flex-1"
+                        style={{ height: 44, background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)' }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--c-hover)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--c-surface)')}
+                      >
+                        <QrCode className="w-4 h-4" /> Mon QR Code
+                      </button>
+                      <button
+                        onClick={() => { if (!blockIfDemo()) generatePDF(profile, sauts); }}
+                        disabled={sauts.length === 0 || isDemo}
+                        title={isDemo ? 'Non disponible en mode démo' : undefined}
+                        className="flex items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 flex-1"
+                        style={{
+                          height: 44, background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)',
+                          cursor: isDemo ? 'not-allowed' : 'pointer',
+                        }}
+                        onMouseEnter={(e) => { if (!isDemo) e.currentTarget.style.background = 'var(--c-hover)'; }}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--c-surface)')}
+                      >
+                        <FileDown className="w-4 h-4" /> Exporter PDF
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>{/* fin layout 2 colonnes */}
 
               {(profile.type_pratiquant === 'professionnel' || !!(profile.preferences as Record<string, unknown> | null | undefined)?.suivi_dgac) && (() => {
                 const now = new Date();
@@ -565,111 +680,6 @@ export function DashboardPage() {
                 </div>
               )}
 
-              {/* 2 — 4 KPI cards */}
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                {/* Card 1 — Total sauts */}
-                <KpiCard
-                  accent="#F97316"
-                  label="Total sauts"
-                  value={
-                    <span className="flex items-center gap-2">
-                      <ParachuteDropIcon className="w-6 h-6 text-orange-500" />
-                      {totalSauts}
-                    </span>
-                  }
-                  sub={`+${sautsCetteAnnee} cette année`}
-                />
-                {/* Card 2 — Cette année */}
-                <KpiCard
-                  accent="#003082"
-                  label="Cette année"
-                  value={<span className="flex items-center gap-2"><TrendingUp className="w-5 h-5 text-blue-400" />{sautsCetteAnnee}</span>}
-                  sub={dernierSaut ? `Dernier : ${dernierSaut}` : 'Aucun saut encore'}
-                />
-                {/* Card 3 — Licence FFP */}
-                <KpiCard
-                  accent="#10B981"
-                  label="Licence FFP"
-                  value={
-                    <span style={{ fontSize: 15, fontWeight: 700, color: licenceFFP ? '#fff' : 'rgba(255,255,255,0.3)' }}>
-                      {licenceFFP?.date_expiration
-                        ? new Date(licenceFFP.date_expiration).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
-                        : '—'}
-                    </span>
-                  }
-                  expiry={{ date: licenceFFP?.date_expiration ?? null, months: licenceMonths }}
-                  sub={
-                    licenceFFP?.date_expiration
-                      ? licenceMonths !== null && licenceMonths < 0
-                        ? <span style={{ color: '#EF4444', fontWeight: 600 }}>EXPIRÉE</span>
-                        : `Valide · ${licenceMonths} mois restants`
-                      : 'Non renseignée'
-                  }
-                />
-                {/* Card 4 — Certificat médical */}
-                <KpiCard
-                  accent="#8B5CF6"
-                  label="Certificat médical"
-                  value={
-                    <span style={{ fontSize: 15, fontWeight: 700, color: certifMedical ? '#fff' : 'rgba(255,255,255,0.3)' }}>
-                      {certifMedical?.date_expiration
-                        ? new Date(certifMedical.date_expiration).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
-                        : '—'}
-                    </span>
-                  }
-                  expiry={{ date: certifMedical?.date_expiration ?? null, months: certifMonths }}
-                  sub={
-                    certifMedical?.date_expiration
-                      ? certifMonths !== null && certifMonths < 0
-                        ? <span style={{ color: '#EF4444', fontWeight: 600 }}>EXPIRÉ</span>
-                        : `Valide · ${certifMonths} mois restants`
-                      : 'Non renseigné'
-                  }
-                />
-              </div>
-
-              {/* Action buttons */}
-              <div className="mb-6">
-                <button
-                  onClick={() => { if (!blockIfDemo()) setModalOpen(true); }}
-                  disabled={isDemo}
-                  title={isDemo ? 'Non disponible en mode démo' : undefined}
-                  className="flex items-center justify-center gap-2 text-white px-5 rounded-lg text-sm font-bold transition-colors shadow-lg w-full md:w-auto"
-                  style={{
-                    height: 48,
-                    background: isDemo ? 'var(--c-muted)' : '#F97316',
-                    cursor: isDemo ? 'not-allowed' : 'pointer',
-                    opacity: isDemo ? 0.6 : 1,
-                  }}
-                >
-                  <Plus className="w-5 h-5" /> Ajouter un saut
-                </button>
-                <div className="flex gap-2 mt-2">
-                  <button
-                    onClick={() => navigate('/qr-code')}
-                    className="flex items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors flex-1 md:flex-none md:px-4 md:py-2.5"
-                    style={{ height: 44, background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--c-hover)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--c-surface)')}
-                  >
-                    <QrCode className="w-4 h-4" /> Mon QR Code
-                  </button>
-                  <button
-                    onClick={() => { if (!blockIfDemo()) generatePDF(profile, sauts); }}
-                    disabled={sauts.length === 0 || isDemo}
-                    title={isDemo ? 'Non disponible en mode démo' : undefined}
-                    className="flex items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 flex-1 md:flex-none md:px-4 md:py-2.5"
-                    style={{
-                      height: 44, background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)',
-                      cursor: isDemo ? 'not-allowed' : 'pointer',
-                    }}
-                    onMouseEnter={(e) => { if (!isDemo) e.currentTarget.style.background = 'var(--c-hover)'; }}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--c-surface)')}
-                  >
-                    <FileDown className="w-4 h-4" /> Exporter PDF
-                  </button>
-                </div>
-              </div>
 
               {/* Ma Progression card */}
               {!aDejaImporte && !isDemo && (
