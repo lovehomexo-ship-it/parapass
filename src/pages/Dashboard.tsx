@@ -130,6 +130,47 @@ type DashTab = 'accueil' | 'carnet' | 'planning' | 'compte';
 
 const STAR_COLORS = ['', '#EF4444', '#F59E0B', '#EAB308', '#84CC16', '#10B981'];
 
+// ─── Mon sac du jour ──────────────────────────────────────────────────────────
+
+function MonSacDuJour({ userId }: { userId: string }) {
+  const [assignment, setAssignment] = useState<{ sac_id: string; start_at: string; sac: { nom_court: string | null; marque: string | null; modele: string | null; etat_journee: string } | null } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase
+      .from('sac_assignments')
+      .select('sac_id, start_at, sac:sacs_parachute(nom_court, marque, modele, etat_journee)')
+      .eq('licencie_id', userId)
+      .is('end_at', null)
+      .maybeSingle()
+      .then(({ data }) => { setAssignment(data as typeof assignment); setLoading(false); });
+  }, [userId]);
+
+  if (loading || !assignment) return null;
+
+  const { sac, sac_id, start_at } = assignment;
+  const nom = sac?.nom_court || [sac?.marque, sac?.modele].filter(Boolean).join(' ') || 'Mon sac';
+  const etat = sac?.etat_journee ?? 'pris';
+  const age = Math.floor((Date.now() - new Date(start_at).getTime()) / 60000);
+  const etatCfg = etat === 'a_plier'
+    ? { label: 'Au tapis — à plier', color: '#F97316', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.3)' }
+    : { label: 'En votre possession', color: '#60A5FA', bg: 'rgba(96,165,250,0.08)', border: 'rgba(96,165,250,0.25)' };
+
+  return (
+    <a href={`/sac/${sac_id}`}
+      className="block rounded-xl px-4 py-3 mb-4 flex items-center gap-3 transition-all no-underline"
+      style={{ background: etatCfg.bg, border: `1px solid ${etatCfg.border}`, textDecoration: 'none' }}>
+      <span className="text-2xl flex-shrink-0">🎒</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-bold" style={{ color: 'var(--c-text)' }}>{nom}</p>
+        <p className="text-xs" style={{ color: etatCfg.color }}>{etatCfg.label}</p>
+        <p className="text-xs" style={{ color: 'var(--c-muted)' }}>Depuis {age < 60 ? `${age} min` : `${Math.floor(age / 60)} h ${age % 60} min`} · Toucher pour gérer</p>
+      </div>
+      <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--c-muted)' }} />
+    </a>
+  );
+}
+
 function MiniStars({ value }: { value: number | null }) {
   if (!value) return <span style={{ color: 'var(--c-dim)' }} className="text-xs">—</span>;
   return (
@@ -624,6 +665,8 @@ export function DashboardPage() {
 
                 </div>
               </div>{/* fin layout 2 colonnes */}
+
+              <MonSacDuJour userId={user!.id} />
 
               {(profile.type_pratiquant === 'professionnel' || !!(profile.preferences as Record<string, unknown> | null | undefined)?.suivi_dgac) && (() => {
                 const now = new Date();

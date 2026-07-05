@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { QRCodeSVG } from 'qrcode.react';
-import { X, Plus, Printer, Download, ChevronRight } from 'lucide-react';
+import { X, Plus, Printer, Download, ChevronRight, Clock, Package } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -12,6 +12,7 @@ interface Sac {
   modele: string | null;
   numero_serie: string | null;
   statut: string;
+  etat_journee: string;
   owner_licencie_id: string | null;
   owner: { nom: string; prenom: string } | null;
   created_at: string;
@@ -29,7 +30,7 @@ interface PliageJour {
   parachutiste: { nom: string; prenom: string } | null;
 }
 
-type Onglet = 'jour' | 'sacs' | 'stats' | 'releve';
+// Onglet type defined later near GestionPliage
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -367,6 +368,93 @@ function ModalNouveauSac({
 
 // ─── Onglet Pliage du Jour ────────────────────────────────────────────────────
 
+// ─── File de pliage (sacs À_PLIER) ───────────────────────────────────────────
+
+interface SacAPlier {
+  id: string;
+  nom_court: string | null;
+  marque: string | null;
+  modele: string | null;
+  assignment: { start_at: string; porteur: { prenom: string; nom: string } | null } | null;
+}
+
+function FileDePliage({ centreId }: { centreId: string }) {
+  const [sacs, setSacs] = useState<SacAPlier[]>([]);
+
+  const load = useCallback(async () => {
+    const { data } = await supabase
+      .from('sacs_parachute')
+      .select('id, nom_court, marque, modele')
+      .eq('centre_id', centreId)
+      .eq('statut', 'en_service')
+      .eq('etat_journee', 'a_plier')
+      .eq('actif', true)
+      .order('updated_at', { ascending: true });
+
+    if (!data) { setSacs([]); return; }
+
+    // Fetch active assignments for these sacs
+    const ids = data.map((s: { id: string }) => s.id);
+    const { data: assigns } = ids.length > 0
+      ? await supabase.from('sac_assignments')
+          .select('sac_id, start_at, porteur:profiles!sac_assignments_licencie_id_fkey(prenom, nom)')
+          .in('sac_id', ids).is('end_at', null)
+      : { data: [] };
+
+    const assignMap = Object.fromEntries((assigns ?? []).map((a: { sac_id: string; start_at: string; porteur: { prenom: string; nom: string } | null }) => [a.sac_id, a]));
+
+    setSacs(data.map((s: { id: string; nom_court: string | null; marque: string | null; modele: string | null }) => ({
+      ...s,
+      assignment: assignMap[s.id] ?? null,
+    })));
+  }, [centreId]);
+
+  useEffect(() => {
+    load();
+    const channel = supabase.channel(`file_pliage_${centreId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sacs_parachute', filter: `centre_id=eq.${centreId}` }, load)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [centreId, load]);
+
+  if (sacs.length === 0) return null;
+
+  return (
+    <div className="rounded-xl overflow-hidden mb-6" style={{ border: '1px solid rgba(249,115,22,0.3)', background: 'rgba(249,115,22,0.05)' }}>
+      <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '1px solid rgba(249,115,22,0.2)' }}>
+        <Clock className="w-4 h-4" style={{ color: '#F97316' }} />
+        <p className="text-sm font-bold" style={{ color: '#F97316' }}>File de pliage — {sacs.length} sac{sacs.length > 1 ? 's' : ''} en attente</p>
+        <span className="ml-auto text-xs" style={{ color: 'rgba(249,115,22,0.6)' }}>Temps réel</span>
+      </div>
+      {sacs.map((s, i) => {
+        const nom = s.nom_court || [s.marque, s.modele].filter(Boolean).join(' ') || 'Sac sans nom';
+        const age = s.assignment ? Math.floor((Date.now() - new Date(s.assignment.start_at).getTime()) / 60000) : null;
+        return (
+          <div key={s.id} className="flex items-center gap-3 px-4 py-3"
+            style={{ borderTop: i > 0 ? '1px solid rgba(249,115,22,0.12)' : 'none' }}>
+            <span className="text-xl">🎒</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold" style={{ color: 'var(--c-text)' }}>{nom}</p>
+              {s.assignment?.porteur && (
+                <p className="text-xs" style={{ color: 'var(--c-muted)' }}>
+                  {s.assignment.porteur.prenom} {s.assignment.porteur.nom}
+                  {age !== null ? ` · Déposé il y a ${age} min` : ''}
+                </p>
+              )}
+            </div>
+            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full"
+              style={{ background: 'rgba(249,115,22,0.15)', color: '#F97316', border: '1px solid rgba(249,115,22,0.3)' }}>
+              À plier
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Onglet Du Jour ───────────────────────────────────────────────────────────
+
 function OngletPliageDuJour({ centreId }: { centreId: string }) {
   const [pliages, setPliages] = useState<PliageJour[]>([]);
   const [loading, setLoading] = useState(true);
@@ -395,6 +483,8 @@ function OngletPliageDuJour({ centreId }: { centreId: string }) {
 
   return (
     <div>
+      <FileDePliage centreId={centreId} />
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         <KpiCard label="Pliages aujourd'hui" val={totalJour} color="#3B82F6" />
         <KpiCard label="Payés" val={`${revenuJour.toFixed(0)} €`} color="#10B981" />
@@ -822,13 +912,134 @@ function OngletRelevePlieurs({ centreId }: { centreId: string }) {
   );
 }
 
+// ─── Onglet Parc de sacs ──────────────────────────────────────────────────────
+
+interface SacParc {
+  id: string;
+  nom_court: string | null;
+  marque: string | null;
+  modele: string | null;
+  statut: string;
+  etat_journee: string;
+  assignment: { start_at: string; porteur: { prenom: string; nom: string } | null } | null;
+}
+
+function OngletParcSacs({ centreId }: { centreId: string }) {
+  const [sacs, setSacs] = useState<SacParc[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    const { data } = await supabase
+      .from('sacs_parachute')
+      .select('id, nom_court, marque, modele, statut, etat_journee')
+      .eq('centre_id', centreId)
+      .eq('actif', true)
+      .order('nom_court', { ascending: true });
+    if (!data) { setSacs([]); setLoading(false); return; }
+
+    const ids = data.map((s: { id: string }) => s.id);
+    const { data: assigns } = ids.length > 0
+      ? await supabase.from('sac_assignments')
+          .select('sac_id, start_at, porteur:profiles!sac_assignments_licencie_id_fkey(prenom, nom)')
+          .in('sac_id', ids).is('end_at', null)
+      : { data: [] };
+    const assignMap = Object.fromEntries((assigns ?? []).map((a: { sac_id: string; start_at: string; porteur: { prenom: string; nom: string } | null }) => [a.sac_id, a]));
+
+    setSacs(data.map((s: { id: string; nom_court: string | null; marque: string | null; modele: string | null; statut: string; etat_journee: string }) => ({
+      ...s,
+      assignment: assignMap[s.id] ?? null,
+    })));
+    setLoading(false);
+  }, [centreId]);
+
+  useEffect(() => {
+    load();
+    const ch = supabase.channel(`parc_sacs_${centreId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sacs_parachute', filter: `centre_id=eq.${centreId}` }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sac_assignments' }, load)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [centreId, load]);
+
+  const libres = sacs.filter(s => s.statut === 'en_service' && s.etat_journee === 'libre');
+  const pris = sacs.filter(s => s.statut === 'en_service' && s.etat_journee === 'pris');
+  const aPlier = sacs.filter(s => s.statut === 'en_service' && s.etat_journee === 'a_plier');
+  const horsService = sacs.filter(s => s.statut !== 'en_service');
+
+  const etatConfig = {
+    libre: { label: 'Libre', color: '#10B981', bg: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.25)' },
+    pris: { label: 'Pris', color: '#60A5FA', bg: 'rgba(96,165,250,0.1)', border: 'rgba(96,165,250,0.25)' },
+    a_plier: { label: 'À plier', color: '#F97316', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.25)' },
+    hors_service: { label: 'Hors service', color: '#94A3B8', bg: 'rgba(148,163,184,0.1)', border: 'rgba(148,163,184,0.25)' },
+  };
+
+  if (loading) return <div className="text-center py-12" style={{ color: 'var(--c-muted)' }}>Chargement...</div>;
+
+  return (
+    <div>
+      {/* KPI compteurs */}
+      <div className="grid grid-cols-4 gap-3 mb-6">
+        {([
+          { label: 'Libres', val: libres.length, color: '#10B981' },
+          { label: 'Sortis', val: pris.length, color: '#60A5FA' },
+          { label: 'À plier', val: aPlier.length, color: '#F97316' },
+          { label: 'Hors service', val: horsService.length, color: '#94A3B8' },
+        ] as { label: string; val: number; color: string }[]).map(k => (
+          <KpiCard key={k.label} label={k.label} val={k.val} color={k.color} />
+        ))}
+      </div>
+
+      {/* Grille sacs */}
+      {[
+        { titre: '🟠 À plier', items: aPlier, etat: 'a_plier' as const },
+        { titre: '🔵 Sortis', items: pris, etat: 'pris' as const },
+        { titre: '🟢 Libres', items: libres, etat: 'libre' as const },
+        { titre: '⚫ Hors service', items: horsService, etat: 'hors_service' as const },
+      ].map(({ titre, items, etat }) => items.length > 0 && (
+        <div key={etat} className="mb-6">
+          <h3 className="text-sm font-bold mb-3" style={{ color: 'var(--c-muted)' }}>{titre} ({items.length})</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {items.map(s => {
+              const cfg = etatConfig[etat];
+              const nom = s.nom_court || [s.marque, s.modele].filter(Boolean).join(' ') || '—';
+              const age = s.assignment ? Math.floor((Date.now() - new Date(s.assignment.start_at).getTime()) / 60000) : null;
+              return (
+                <div key={s.id} className="rounded-xl p-3 flex flex-col gap-1.5"
+                  style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
+                  <div className="flex items-center gap-2">
+                    <Package className="w-4 h-4 flex-shrink-0" style={{ color: cfg.color }} />
+                    <p className="text-sm font-bold truncate" style={{ color: 'var(--c-text)' }}>{nom}</p>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full self-start"
+                    style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
+                    {cfg.label}
+                  </span>
+                  {s.assignment?.porteur && (
+                    <p className="text-xs" style={{ color: 'var(--c-muted)' }}>
+                      {s.assignment.porteur.prenom} {s.assignment.porteur.nom}
+                      {age !== null ? ` · ${age} min` : ''}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
+
+type Onglet = 'jour' | 'sacs' | 'parc' | 'stats' | 'releve';
 
 export function GestionPliage({ centreId }: { centreId: string }) {
   const [onglet, setOnglet] = useState<Onglet>('jour');
 
   const ONGLETS: { id: Onglet; label: string }[] = [
     { id: 'jour', label: '📋 Du jour' },
+    { id: 'parc', label: '🅿️ Parc de sacs' },
     { id: 'sacs', label: '🎒 Sacs' },
     { id: 'stats', label: '📊 Stats' },
     { id: 'releve', label: '💶 Relevé plieurs' },
@@ -867,6 +1078,7 @@ export function GestionPliage({ centreId }: { centreId: string }) {
       </div>
 
       {onglet === 'jour' && <OngletPliageDuJour centreId={centreId} />}
+      {onglet === 'parc' && <OngletParcSacs centreId={centreId} />}
       {onglet === 'sacs' && <OngletGestionSacs centreId={centreId} />}
       {onglet === 'stats' && <OngletStats centreId={centreId} />}
       {onglet === 'releve' && <OngletRelevePlieurs centreId={centreId} />}
