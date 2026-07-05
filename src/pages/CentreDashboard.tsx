@@ -21,6 +21,7 @@ import { GestionPliage } from './centre/GestionPliage';
 import { FinancesSection } from './centre/FinancesSection';
 import { ValidationsCarnet } from './centre/ValidationsCarnet';
 import { ModulesSection } from './centre/ModulesSection';
+import { TandemSection } from './centre/TandemSection';
 
 void Calendar; void Upload; void Hash; void TrendingUp; void MapPin;
 void Download; void Filter; void Plus; void Trash2; void Zap;
@@ -3010,6 +3011,7 @@ export function CentreDashboardPage() {
     { key: 'messages', label: 'Messages', icon: MessageSquare, badge: msgUnread },
     { key: 'validations', label: 'Validations carnet', icon: BookCheck, badge: carnetsEnAttente > 0 ? carnetsEnAttente : undefined },
     { key: 'finances', label: 'Finances', icon: Euro },
+    { key: 'tandem', label: 'Module Tandem', icon: GraduationCap },
     { key: 'modules', label: 'Modules', icon: Puzzle },
   ];
 
@@ -3235,6 +3237,9 @@ export function CentreDashboardPage() {
           )}
           {activeSection === 'validations' && centreId && (
             <ValidationsCarnet dzId={centreId} />
+          )}
+          {activeSection === 'tandem' && centreId && (
+            <TandemSection centreId={centreId} />
           )}
           {activeSection === 'modules' && centreId && (
             <ModulesSection centreId={centreId} />

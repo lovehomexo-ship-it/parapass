@@ -38,6 +38,9 @@ import { DemoCentrePage } from './pages/demo/DemoCentre';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ScanPliagePage } from './pages/ScanPliage';
 import { SacPage } from './pages/SacPage';
+import { TandemPublicPage } from './pages/TandemPublicPage';
+import { TandemPreparerPage } from './pages/TandemPreparerPage';
+import { TandemCertifPage } from './pages/TandemCertifPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { supabase } from './lib/supabase';
 
@@ -146,6 +149,9 @@ function App() {
                 <Route path="/demo/dashboard" element={<DemoDashboardPage />} />
                 <Route path="/demo/centre" element={<DemoCentrePage />} />
                 <Route path="/sac/:id" element={<SacPage />} />
+                <Route path="/dz/:slug/tandem" element={<TandemPublicPage />} />
+                <Route path="/tandem/preparer/:token" element={<TandemPreparerPage />} />
+                <Route path="/tandem/certif/:certifToken" element={<TandemCertifPage />} />
                 <Route path="/pliage/scan/:token" element={<ScanPliagePage />} />
                 <Route path="/verify/:token" element={<VerifyPage />} />
                 <Route path="/v" element={<VerifyOfflinePage />} />
