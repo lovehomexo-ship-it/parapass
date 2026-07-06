@@ -38,6 +38,9 @@ import { DemoCentrePage } from './pages/demo/DemoCentre';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ScanPliagePage } from './pages/ScanPliage';
 import { SacPage } from './pages/SacPage';
+import { AcademiePage } from './pages/Academie';
+import { AcademieQuizPage } from './pages/AcademieQuiz';
+import { QuizAdminPage } from './pages/admin/QuizAdmin';
 import { TandemPublicPage } from './pages/TandemPublicPage';
 import { TandemPreparerPage } from './pages/TandemPreparerPage';
 import { TandemCertifPage } from './pages/TandemCertifPage';
@@ -152,6 +155,9 @@ function App() {
                 <Route path="/dz/:slug/tandem" element={<TandemPublicPage />} />
                 <Route path="/tandem/preparer/:token" element={<TandemPreparerPage />} />
                 <Route path="/tandem/certif/:certifToken" element={<TandemCertifPage />} />
+                <Route path="/academie" element={<ProtectedRoute roles={['parachutiste', 'moniteur', 'moniteur_delegue']}><AcademiePage /></ProtectedRoute>} />
+                <Route path="/academie/quiz" element={<ProtectedRoute roles={['parachutiste', 'moniteur', 'moniteur_delegue']}><AcademieQuizPage /></ProtectedRoute>} />
+                <Route path="/admin/quiz" element={<ProtectedRoute roles={['admin']}><QuizAdminPage /></ProtectedRoute>} />
                 <Route path="/pliage/scan/:token" element={<ScanPliagePage />} />
                 <Route path="/verify/:token" element={<VerifyPage />} />
                 <Route path="/v" element={<VerifyOfflinePage />} />

@@ -697,6 +697,20 @@ export function DashboardPage() {
 
               <MonSacDuJour userId={user!.id} />
 
+              {/* Académie ParaPass */}
+              {!isDemo && (
+                <Link to="/academie"
+                  className="flex items-center gap-3 rounded-xl px-4 py-3 mb-4 no-underline"
+                  style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(59,130,246,0.08))', border: '1px solid rgba(139,92,246,0.3)', textDecoration: 'none' }}>
+                  <span className="text-2xl">🎓</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold" style={{ color: '#C4B5FD' }}>Académie ParaPass</p>
+                    <p className="text-xs" style={{ color: '#64748B' }}>Quiz réglementaire · XP · Badges</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: '#8B5CF6' }} />
+                </Link>
+              )}
+
               {/* Bouton scanner sac (session correcte garantie) */}
               {!isDemo && (
                 <div className="mb-4">
