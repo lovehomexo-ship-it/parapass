@@ -925,12 +925,23 @@ interface SacParc {
   modele: string | null;
   statut: string;
   etat_journee: string;
-  assignment: { start_at: string; porteur: { prenom: string; nom: string } | null } | null;
+  assignment: { id: string; start_at: string; porteur: { prenom: string; nom: string } | null } | null;
 }
 
 function OngletParcSacs({ centreId }: { centreId: string }) {
   const [sacs, setSacs] = useState<SacParc[]>([]);
   const [loading, setLoading] = useState(true);
+  const [liberating, setLiberating] = useState<string | null>(null);
+
+  const libererSac = async (sac: SacParc) => {
+    if (!sac.assignment) return;
+    if (!confirm(`Libérer le sac "${sac.nom_court || [sac.marque, sac.modele].filter(Boolean).join(' ') || 'Sac'}" ? (porteur : ${sac.assignment.porteur?.prenom ?? '?'} ${sac.assignment.porteur?.nom ?? ''})`)) return;
+    setLiberating(sac.id);
+    await supabase.from('sac_assignments').update({ end_at: new Date().toISOString(), ended_by: 'staff' }).eq('id', sac.assignment.id).is('end_at', null);
+    await supabase.from('sacs_parachute').update({ etat_journee: 'libre' }).eq('id', sac.id);
+    setLiberating(null);
+    load();
+  };
 
   const load = useCallback(async () => {
     const { data } = await supabase
@@ -944,10 +955,10 @@ function OngletParcSacs({ centreId }: { centreId: string }) {
     const ids = data.map((s: { id: string }) => s.id);
     const { data: assigns } = ids.length > 0
       ? await supabase.from('sac_assignments')
-          .select('sac_id, start_at, porteur:profiles!sac_assignments_licencie_id_fkey(prenom, nom)')
+          .select('id, sac_id, start_at, porteur:profiles!sac_assignments_licencie_id_fkey(prenom, nom)')
           .in('sac_id', ids).is('end_at', null)
       : { data: [] };
-    const assignMap = Object.fromEntries((assigns ?? []).map((a: { sac_id: string; start_at: string; porteur: { prenom: string; nom: string } | null }) => [a.sac_id, a]));
+    const assignMap = Object.fromEntries((assigns ?? []).map((a: { id: string; sac_id: string; start_at: string; porteur: { prenom: string; nom: string } | null }) => [a.sac_id, a]));
 
     setSacs(data.map((s: { id: string; nom_court: string | null; marque: string | null; modele: string | null; statut: string; etat_journee: string }) => ({
       ...s,
@@ -1032,6 +1043,17 @@ function OngletParcSacs({ centreId }: { centreId: string }) {
                       {s.assignment.porteur.prenom} {s.assignment.porteur.nom}
                       {age !== null ? ` · ${age} min` : ''}
                     </p>
+                  )}
+                  {etat === 'pris' && s.assignment && (
+                    <button
+                      type="button"
+                      onClick={e => { e.stopPropagation(); libererSac(s); }}
+                      disabled={liberating === s.id}
+                      className="text-[10px] px-2 py-0.5 rounded-full mt-0.5 disabled:opacity-50"
+                      style={{ background: 'rgba(239,68,68,0.1)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.25)', cursor: 'pointer' }}
+                    >
+                      {liberating === s.id ? '...' : 'Libérer'}
+                    </button>
                   )}
                 </div>
               );

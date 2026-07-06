@@ -134,22 +134,26 @@ const STAR_COLORS = ['', '#EF4444', '#F59E0B', '#EAB308', '#84CC16', '#10B981'];
 // ─── Mon sac du jour ──────────────────────────────────────────────────────────
 
 function MonSacDuJour({ userId }: { userId: string }) {
-  const [assignment, setAssignment] = useState<{ sac_id: string; start_at: string; sac: { nom_court: string | null; marque: string | null; modele: string | null; etat_journee: string } | null } | null>(null);
+  const [assignment, setAssignment] = useState<{ id: string; sac_id: string; start_at: string; sac: { nom_court: string | null; marque: string | null; modele: string | null; etat_journee: string } | null } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [rendering, setRendering] = useState(false);
+  const [rendu, setRendu] = useState(false);
 
-  useEffect(() => {
+  const load = () => {
     supabase
       .from('sac_assignments')
-      .select('sac_id, start_at, sac:sacs_parachute(nom_court, marque, modele, etat_journee)')
+      .select('id, sac_id, start_at, sac:sacs_parachute(nom_court, marque, modele, etat_journee)')
       .eq('licencie_id', userId)
       .is('end_at', null)
       .maybeSingle()
       .then(({ data }) => { setAssignment(data as typeof assignment); setLoading(false); });
-  }, [userId]);
+  };
 
-  if (loading || !assignment) return null;
+  useEffect(() => { load(); }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { sac, sac_id, start_at } = assignment;
+  if (loading || !assignment || rendu) return null;
+
+  const { id: assignId, sac, sac_id, start_at } = assignment;
   const nom = sac?.nom_court || [sac?.marque, sac?.modele].filter(Boolean).join(' ') || 'Mon sac';
   const etat = sac?.etat_journee ?? 'pris';
   const age = Math.floor((Date.now() - new Date(start_at).getTime()) / 60000);
@@ -157,18 +161,42 @@ function MonSacDuJour({ userId }: { userId: string }) {
     ? { label: 'Au tapis — à plier', color: '#F97316', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.3)' }
     : { label: 'En votre possession', color: '#60A5FA', bg: 'rgba(96,165,250,0.08)', border: 'rgba(96,165,250,0.25)' };
 
+  const rendre = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setRendering(true);
+    await supabase.from('sac_assignments').update({ end_at: new Date().toISOString(), ended_by: 'user' }).eq('id', assignId).is('end_at', null);
+    await supabase.from('sacs_parachute').update({ etat_journee: 'libre' }).eq('id', sac_id);
+    setRendering(false);
+    setRendu(true);
+  };
+
   return (
-    <a href={`/sac/${sac_id}`}
-      className="block rounded-xl px-4 py-3 mb-4 flex items-center gap-3 transition-all no-underline"
-      style={{ background: etatCfg.bg, border: `1px solid ${etatCfg.border}`, textDecoration: 'none' }}>
-      <span className="text-2xl flex-shrink-0">🎒</span>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold" style={{ color: 'var(--c-text)' }}>{nom}</p>
-        <p className="text-xs" style={{ color: etatCfg.color }}>{etatCfg.label}</p>
-        <p className="text-xs" style={{ color: 'var(--c-muted)' }}>Depuis {age < 60 ? `${age} min` : `${Math.floor(age / 60)} h ${age % 60} min`} · Toucher pour gérer</p>
+    <div className="rounded-xl mb-4 overflow-hidden"
+      style={{ background: etatCfg.bg, border: `1px solid ${etatCfg.border}` }}>
+      <a href={`/sac/${sac_id}`}
+        className="flex items-center gap-3 px-4 py-3 no-underline"
+        style={{ textDecoration: 'none' }}>
+        <span className="text-2xl flex-shrink-0">🎒</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold" style={{ color: 'var(--c-text)' }}>{nom}</p>
+          <p className="text-xs" style={{ color: etatCfg.color }}>{etatCfg.label}</p>
+          <p className="text-xs" style={{ color: 'var(--c-muted)' }}>Depuis {age < 60 ? `${age} min` : `${Math.floor(age / 60)} h ${age % 60} min`} · Toucher pour gérer</p>
+        </div>
+        <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--c-muted)' }} />
+      </a>
+      <div className="px-4 pb-3">
+        <button
+          type="button"
+          onClick={rendre}
+          disabled={rendering}
+          className="w-full py-2 rounded-lg text-xs font-semibold disabled:opacity-50 transition-all"
+          style={{ background: 'rgba(239,68,68,0.1)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.25)', cursor: 'pointer' }}
+        >
+          {rendering ? 'Rendu en cours...' : '↩ Rendre le sac'}
+        </button>
       </div>
-      <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--c-muted)' }} />
-    </a>
+    </div>
   );
 }
 

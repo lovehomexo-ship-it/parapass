@@ -224,21 +224,24 @@ export function SacPage() {
 
       setLoading(false);
 
-      // Déterminer la vue
+      // ── Source de vérité unique : sac_assignments (pas etat_journee) ──
       if (sacData.statut !== 'en_service') { setView('hors_service'); return; }
-      const etat = sacData.etat_journee;
-      if (etat === 'libre') { setView('libre'); return; }
-      if (etat === 'pris') {
-        if (!cu) { setView('pris_autre'); return; }
-        // Fallback: si RLS bloque la lecture de assign, on détecte via myAssign (self-read garanti)
-        if (assign?.licencie_id === cu.id || myAssign?.sac_id === sacData.id) { setView('pris_moi'); return; }
-        setView('pris_autre'); return;
+
+      // Pas d'attribution active → LIBRE (quelle que soit etat_journee en base)
+      if (!assign) {
+        setView('libre');
+        setErreur(null); // effacer toute erreur résiduelle
+        return;
       }
-      if (etat === 'a_plier') {
-        if (!cu) { setView('a_plier_plieur'); return; }
-        if (assign?.licencie_id === cu.id || myAssign?.sac_id === sacData.id) { setView('a_plier_moi'); return; }
-        setView('a_plier_plieur'); return;
+
+      // Attribution active → PRIS ou À_PLIER selon etat_journee
+      const isMySac = assign.licencie_id === cu?.id || myAssign?.sac_id === sacData.id;
+      if (sacData.etat_journee === 'a_plier') {
+        setView(isMySac ? 'a_plier_moi' : 'a_plier_plieur'); return;
       }
+      // Par défaut: pris
+      if (!cu) { setView('pris_autre'); return; }
+      setView(isMySac ? 'pris_moi' : 'pris_autre');
     })();
   }, [id, loadSac]);
 
