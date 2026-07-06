@@ -61,6 +61,7 @@ export function ReflexeDuJourPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [result, setResult] = useState<DrillResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [timer, setTimer] = useState(DRILL_TIMER_SEC);
   const [timedOut, setTimedOut] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -138,8 +139,13 @@ export function ReflexeDuJourPage() {
 
     if (!error && data) {
       setResult(data as DrillResult);
-    } else if (error?.message?.includes('déjà fait')) {
-      setAlreadyDone(true);
+    } else if (error) {
+      if (error.message?.includes('déjà fait')) {
+        setAlreadyDone(true);
+      } else {
+        setSubmitError(error.message ?? 'Erreur lors de la validation');
+        setSelected(null);
+      }
     }
     setSubmitting(false);
   }, [scenario, submitting, result, stopTimer]);
@@ -268,6 +274,13 @@ export function ReflexeDuJourPage() {
           {scenario.situation}
         </p>
       </div>
+
+      {/* Erreur soumission */}
+      {submitError && (
+        <div className="rounded-xl px-4 py-3 mb-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
+          ⚠️ {submitError}
+        </div>
+      )}
 
       {/* Propositions */}
       <div className="flex flex-col gap-3 flex-1">
