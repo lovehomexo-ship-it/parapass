@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ParaPassLogo } from '../components/ParaPassLogo';
-import { ChevronDown, AlertTriangle, Clock, CheckCircle, X } from 'lucide-react';
+import { ChevronDown, AlertTriangle, Clock, CheckCircle, X, ArrowLeft } from 'lucide-react';
 import { CycleHelpButton } from '../components/CyclePliageSchema';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -31,6 +31,7 @@ interface CurrentUser {
   id: string;
   nom: string;
   prenom: string;
+  role: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -169,6 +170,7 @@ export function SacPage() {
   const [submitting, setSubmitting] = useState(false);
   const [flagQualif, setFlagQualif] = useState(false);
   const [newPliageId, setNewPliageId] = useState<string | null>(null);
+  const [confirmRendre, setConfirmRendre] = useState(false);
 
   const loadSac = useCallback(async (sacId: string) => {
     // Support UUID ou ancien token
@@ -190,7 +192,7 @@ export function SacPage() {
       let cu: CurrentUser | null = null;
       let myAssign: Assignment | null = null;
       if (user) {
-        const { data: prof } = await supabase.from('profiles').select('id, nom, prenom').eq('id', user.id).maybeSingle();
+        const { data: prof } = await supabase.from('profiles').select('id, nom, prenom, role').eq('id', user.id).maybeSingle();
         if (prof) cu = prof as CurrentUser;
         // Qualification plieur
         const { data: brevets } = await supabase.from('brevets').select('type_brevet').eq('parachutiste_id', user.id).in('type_brevet', ['C', 'D', 'moniteur', 'moniteur_delegue', 'DT053']);
@@ -416,11 +418,26 @@ export function SacPage() {
     );
   };
 
+  // ── Destination du bouton retour selon le rôle ──
+  const dashboardPath = currentUser
+    ? (currentUser.role === 'admin_centre' ? '/centre/dashboard' : '/dashboard')
+    : '/';
+
   // ── Header commun ──
   const Header = ({ etatLabel, etatColor }: { etatLabel: string; etatColor: string }) => (
     <div>
       <IdentityBandeau />
-      <div className="px-5 pt-5 pb-4 flex items-center justify-between">
+      <div className="px-4 pt-3 pb-1">
+        <button
+          onClick={() => navigate(dashboardPath)}
+          className="flex items-center gap-1.5 text-xs font-medium transition-opacity hover:opacity-80"
+          style={{ color: 'rgba(255,255,255,0.45)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Retour au tableau de bord
+        </button>
+      </div>
+      <div className="px-5 pt-3 pb-4 flex items-center justify-between">
         <ParaPassLogo className="h-7" />
         <div className="flex items-center gap-2">
           <CycleHelpButton />
@@ -509,7 +526,28 @@ export function SacPage() {
             ⚠️ Qualification plieur non renseignée sur votre profil
           </p>
         )}
-        <Btn onClick={rendreLesSac} secondary>Rendre le sac</Btn>
+        {confirmRendre ? (
+          <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)' }}>
+            <p className="text-sm text-center font-semibold text-white">Rendre ce sac ?</p>
+            <p className="text-xs text-center" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              Il redeviendra disponible pour vos collègues. Aucun pliage créé.
+            </p>
+            <div className="flex gap-2">
+              <button type="button" onClick={rendreLesSac} disabled={submitting}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
+                style={{ background: 'rgba(239,68,68,0.7)', border: 'none', cursor: 'pointer' }}>
+                {submitting ? '...' : 'Confirmer'}
+              </button>
+              <button type="button" onClick={() => setConfirmRendre(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm"
+                style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer' }}>
+                Annuler
+              </button>
+            </div>
+          </div>
+        ) : (
+          <Btn onClick={() => setConfirmRendre(true)} secondary>Rendre le sac</Btn>
+        )}
       </div>
     </div>
   );
