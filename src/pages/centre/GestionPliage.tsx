@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { QRCodeSVG } from 'qrcode.react';
 import { X, Plus, Printer, Download, ChevronRight, Clock, Package } from 'lucide-react';
+import { CycleHelpPanel } from '../../components/CyclePliageSchema';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -483,6 +484,8 @@ function OngletPliageDuJour({ centreId }: { centreId: string }) {
 
   return (
     <div>
+      <CycleHelpPanel pliageCount={pliages.length} />
+
       <FileDePliage centreId={centreId} />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">

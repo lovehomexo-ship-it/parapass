@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ParaPassLogo } from '../components/ParaPassLogo';
 import { ChevronDown, AlertTriangle, Clock, CheckCircle, X } from 'lucide-react';
+import { CycleHelpButton } from '../components/CyclePliageSchema';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -379,9 +380,12 @@ export function SacPage() {
   const Header = ({ etatLabel, etatColor }: { etatLabel: string; etatColor: string }) => (
     <div className="px-5 pt-6 pb-4 flex items-center justify-between">
       <ParaPassLogo className="h-7" />
-      <span className="text-[11px] font-bold px-3 py-1 rounded-full" style={{ background: `${etatColor}20`, color: etatColor, border: `1px solid ${etatColor}40` }}>
-        {etatLabel}
-      </span>
+      <div className="flex items-center gap-2">
+        <CycleHelpButton />
+        <span className="text-[11px] font-bold px-3 py-1 rounded-full" style={{ background: `${etatColor}20`, color: etatColor, border: `1px solid ${etatColor}40` }}>
+          {etatLabel}
+        </span>
+      </div>
     </div>
   );
 
