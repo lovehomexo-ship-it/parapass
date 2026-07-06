@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
+import { QrScannerButton } from '../components/QrScanner';
 import { ParachuteIcon, ParachuteDropIcon } from '../components/ParachuteIcon';
 import { PlanningDZ } from './PlanningDZ';
 import { Layout } from '../components/Layout';
@@ -667,6 +668,17 @@ export function DashboardPage() {
               </div>{/* fin layout 2 colonnes */}
 
               <MonSacDuJour userId={user!.id} />
+
+              {/* Bouton scanner sac (session correcte garantie) */}
+              {!isDemo && (
+                <div className="mb-4">
+                  <QrScannerButton
+                    label="📷 Scanner un sac"
+                    className="w-full flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-colors"
+                    style={{ height: 44, background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)', cursor: 'pointer' }}
+                  />
+                </div>
+              )}
 
               {(profile.type_pratiquant === 'professionnel' || !!(profile.preferences as Record<string, unknown> | null | undefined)?.suivi_dgac) && (() => {
                 const now = new Date();

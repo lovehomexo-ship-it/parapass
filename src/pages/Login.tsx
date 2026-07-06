@@ -36,7 +36,8 @@ export function LoginPage() {
 
   useEffect(() => {
     if (profile) {
-      navigate(getRolePath(profile.role), { replace: true });
+      const redirectTo = searchParams.get('redirect');
+      navigate(redirectTo || getRolePath(profile.role), { replace: true });
     }
   }, [profile, navigate]);
 
@@ -79,7 +80,8 @@ export function LoginPage() {
         }, { onConflict: 'id' }).select('role').maybeSingle();
         prof = created;
       }
-      navigate(getRolePath(prof?.role ?? 'parachutiste'), { replace: true });
+      const redirectTo = searchParams.get('redirect');
+      navigate(redirectTo || getRolePath(prof?.role ?? 'parachutiste'), { replace: true });
     }
   };
 

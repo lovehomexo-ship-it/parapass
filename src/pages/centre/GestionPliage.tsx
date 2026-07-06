@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { QRCodeSVG } from 'qrcode.react';
 import { X, Plus, Printer, Download, ChevronRight, Clock, Package } from 'lucide-react';
 import { CycleHelpPanel } from '../../components/CyclePliageSchema';
+import { QrScannerButton } from '../../components/QrScanner';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -980,6 +981,15 @@ function OngletParcSacs({ centreId }: { centreId: string }) {
 
   return (
     <div>
+      {/* Scanner rapide staff */}
+      <div className="mb-5">
+        <QrScannerButton
+          label="📷 Scanner un sac"
+          className="w-full flex items-center justify-center gap-2 rounded-xl text-sm font-semibold"
+          style={{ height: 44, background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)', cursor: 'pointer' }}
+        />
+      </div>
+
       {/* KPI compteurs */}
       <div className="grid grid-cols-4 gap-3 mb-6">
         {([

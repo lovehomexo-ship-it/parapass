@@ -376,15 +376,50 @@ export function SacPage() {
     </button>
   );
 
+  // ── Bandeau identité ──
+  const IdentityBandeau = () => {
+    const redirectParam = encodeURIComponent(window.location.pathname);
+    if (!currentUser) {
+      return (
+        <div className="px-4 py-2 flex items-center justify-between text-xs" style={{ background: 'rgba(249,115,22,0.12)', borderBottom: '1px solid rgba(249,115,22,0.2)' }}>
+          <span style={{ color: 'rgba(255,255,255,0.5)' }}>Non connecté — lecture seule</span>
+          <a href={`/login?redirect=${redirectParam}`} className="font-semibold" style={{ color: '#F97316', textDecoration: 'none' }}>
+            Se connecter →
+          </a>
+        </div>
+      );
+    }
+    return (
+      <div className="px-4 py-2 flex items-center justify-between text-xs" style={{ background: 'rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <span style={{ color: 'rgba(255,255,255,0.55)' }}>
+          Connecté : <strong className="text-white">{currentUser.prenom} {currentUser.nom}</strong>
+        </span>
+        <button
+          onClick={async () => {
+            await import('../lib/supabase').then(m => m.supabase.auth.signOut());
+            window.location.href = `/login?redirect=${redirectParam}`;
+          }}
+          className="font-semibold"
+          style={{ color: 'rgba(255,255,255,0.4)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11 }}
+        >
+          Changer de compte
+        </button>
+      </div>
+    );
+  };
+
   // ── Header commun ──
   const Header = ({ etatLabel, etatColor }: { etatLabel: string; etatColor: string }) => (
-    <div className="px-5 pt-6 pb-4 flex items-center justify-between">
-      <ParaPassLogo className="h-7" />
-      <div className="flex items-center gap-2">
-        <CycleHelpButton />
-        <span className="text-[11px] font-bold px-3 py-1 rounded-full" style={{ background: `${etatColor}20`, color: etatColor, border: `1px solid ${etatColor}40` }}>
-          {etatLabel}
-        </span>
+    <div>
+      <IdentityBandeau />
+      <div className="px-5 pt-5 pb-4 flex items-center justify-between">
+        <ParaPassLogo className="h-7" />
+        <div className="flex items-center gap-2">
+          <CycleHelpButton />
+          <span className="text-[11px] font-bold px-3 py-1 rounded-full" style={{ background: `${etatColor}20`, color: etatColor, border: `1px solid ${etatColor}40` }}>
+            {etatLabel}
+          </span>
+        </div>
       </div>
     </div>
   );
