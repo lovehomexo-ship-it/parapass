@@ -17,9 +17,46 @@ interface TandemConfig {
   validite_bon_mois: number;
   politique_meteo: string;
   url_avis_google: string | null;
+  texte_conversion_pac: string | null;
   description: string | null;
   email_post_saut_actif: boolean;
   email_j7_actif: boolean;
+}
+
+const DEFAULT_CONFIG = (centreId: string): TandemConfig => ({
+  centre_id: centreId,
+  actif: false,
+  prix_base: 220,
+  prix_video: 60,
+  prix_photos: 30,
+  pct_acompte: 30,
+  poids_min: 40,
+  poids_max: 100,
+  validite_bon_mois: 18,
+  politique_meteo: 'report_gratuit',
+  url_avis_google: null,
+  texte_conversion_pac: null,
+  description: null,
+  email_post_saut_actif: true,
+  email_j7_actif: true,
+});
+
+// ─── Toast simple ─────────────────────────────────────────────────────────────
+
+function Toast({ msg, ok }: { msg: string; ok: boolean }) {
+  return (
+    <div
+      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[999] px-5 py-3 rounded-xl shadow-2xl text-sm font-semibold flex items-center gap-2 animate-in fade-in slide-in-from-bottom-4"
+      style={{
+        background: ok ? '#10B981' : '#EF4444',
+        color: 'white',
+        minWidth: 240,
+        textAlign: 'center',
+      }}
+    >
+      {ok ? '✓' : '⚠'} {msg}
+    </div>
+  );
 }
 
 interface Slot {
@@ -528,20 +565,40 @@ function OngletStats({ centreId }: { centreId: string }) {
 function OngletConfig({ centreId, config: initialConfig, onSaved }: { centreId: string; config: TandemConfig; onSaved: (c: TandemConfig) => void }) {
   const [form, setForm] = useState(initialConfig);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+
+  const showToast = (msg: string, ok: boolean) => {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const save = async () => {
     setSaving(true);
-    if (form.id) {
-      await supabase.from('tandem_config').update({ ...form, updated_at: new Date().toISOString() }).eq('id', form.id);
-    } else {
-      const { data } = await supabase.from('tandem_config').insert({ ...form, centre_id: centreId }).select('id').single();
-      if (data) setForm(f => ({ ...f, id: data.id }));
-    }
+    // UPSERT: crée la ligne si elle n'existe pas, met à jour sinon
+    const { data, error } = await supabase
+      .from('tandem_config')
+      .upsert(
+        { ...form, centre_id: centreId, updated_at: new Date().toISOString() },
+        { onConflict: 'centre_id' }
+      )
+      .select('id')
+      .single();
+
     setSaving(false);
-    setSaved(true);
-    onSaved(form);
-    setTimeout(() => setSaved(false), 2000);
+
+    if (error || !data) {
+      console.error('tandem_config upsert error', error);
+      // Rollback: recharger la config réelle depuis la base
+      const { data: fresh } = await supabase.from('tandem_config').select('*').eq('centre_id', centreId).maybeSingle();
+      if (fresh) { setForm(fresh as TandemConfig); onSaved(fresh as TandemConfig); }
+      showToast('Erreur d\'enregistrement — vérifiez votre connexion.', false);
+      return;
+    }
+
+    const saved = { ...form, id: data.id, centre_id: centreId };
+    setForm(saved);
+    onSaved(saved);
+    showToast('Configuration enregistrée.', true);
   };
 
   const inp: React.CSSProperties = { padding: '8px 12px', borderRadius: 9, fontSize: 14, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.07)', color: 'var(--c-text)', outline: 'none', width: '100%' };
@@ -606,9 +663,11 @@ function OngletConfig({ centreId, config: initialConfig, onSaved }: { centreId: 
         </label>
       </div>
 
-      <button onClick={save} disabled={saving} className="w-full py-3.5 rounded-xl font-bold text-white disabled:opacity-50" style={{ background: saved ? '#10B981' : '#F97316' }}>
-        {saving ? 'Enregistrement...' : saved ? '✓ Enregistré' : 'Enregistrer la configuration'}
+      <button onClick={save} disabled={saving} className="w-full py-3.5 rounded-xl font-bold text-white disabled:opacity-50" style={{ background: '#F97316' }}>
+        {saving ? 'Enregistrement...' : 'Enregistrer la configuration'}
       </button>
+
+      {toast && <Toast msg={toast.msg} ok={toast.ok} />}
     </div>
   );
 }
@@ -621,6 +680,37 @@ export function TandemSection({ centreId }: { centreId: string }) {
   const [licencies, setLicencies] = useState<Licencie[]>([]);
   const [centreSlug, setCentreSlug] = useState(centreId);
   const [loading, setLoading] = useState(true);
+  const [toggleSaving, setToggleSaving] = useState(false);
+  const [headerToast, setHeaderToast] = useState<{ msg: string; ok: boolean } | null>(null);
+
+  const showHeaderToast = (msg: string, ok: boolean) => {
+    setHeaderToast({ msg, ok });
+    setTimeout(() => setHeaderToast(null), 3000);
+  };
+
+  // Quick-toggle activation sans passer par OngletConfig
+  const toggleActif = async () => {
+    if (!config || toggleSaving) return;
+    const newActif = !config.actif;
+    setToggleSaving(true);
+    const { data, error } = await supabase
+      .from('tandem_config')
+      .upsert(
+        { ...config, centre_id: centreId, actif: newActif, updated_at: new Date().toISOString() },
+        { onConflict: 'centre_id' }
+      )
+      .select('id')
+      .single();
+    setToggleSaving(false);
+
+    if (error || !data) {
+      console.error('toggle actif error', error);
+      showHeaderToast('Erreur — activation non enregistrée.', false);
+      return;
+    }
+    setConfig(c => c ? { ...c, id: data.id, actif: newActif } : c);
+    showHeaderToast(newActif ? 'Module activé — page publique accessible.' : 'Module désactivé.', true);
+  };
 
   useEffect(() => {
     (async () => {
@@ -628,12 +718,7 @@ export function TandemSection({ centreId }: { centreId: string }) {
       if (centreInfo?.slug) setCentreSlug(centreInfo.slug);
 
       const { data: cfg } = await supabase.from('tandem_config').select('*').eq('centre_id', centreId).maybeSingle();
-      setConfig(cfg as TandemConfig ?? {
-        centre_id: centreId, actif: false, prix_base: 220, prix_video: 60, prix_photos: 30,
-        pct_acompte: 30, poids_min: 40, poids_max: 100, validite_bon_mois: 18,
-        politique_meteo: 'report_gratuit', url_avis_google: null, description: null,
-        email_post_saut_actif: true, email_j7_actif: true,
-      });
+      setConfig((cfg as TandemConfig) ?? DEFAULT_CONFIG(centreId));
 
       const { data: lic } = await supabase
         .from('licencies_centres')
@@ -664,12 +749,23 @@ export function TandemSection({ centreId }: { centreId: string }) {
           <p className="text-sm mt-0.5" style={{ color: 'var(--c-muted)' }}>Réservations, bons cadeaux, dossiers passagers</p>
         </div>
         <div className="flex items-center gap-2">
-          {config?.actif ? (
-            <span className="text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: 'rgba(16,185,129,0.12)', color: '#10B981', border: '1px solid rgba(16,185,129,0.3)' }}>● Actif</span>
-          ) : (
-            <span className="text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: 'rgba(148,163,184,0.12)', color: '#94A3B8', border: '1px solid rgba(148,163,184,0.3)' }}>○ Inactif</span>
-          )}
+          <button
+            onClick={toggleActif}
+            disabled={toggleSaving}
+            title={config?.actif ? 'Désactiver le module tandem' : 'Activer le module tandem'}
+            className="flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full transition-all disabled:opacity-50"
+            style={config?.actif
+              ? { background: 'rgba(16,185,129,0.12)', color: '#10B981', border: '1px solid rgba(16,185,129,0.3)' }
+              : { background: 'rgba(148,163,184,0.12)', color: '#94A3B8', border: '1px solid rgba(148,163,184,0.3)' }
+            }
+          >
+            <div className="w-6 h-3.5 rounded-full relative flex-shrink-0" style={{ background: config?.actif ? '#10B981' : '#94A3B8' }}>
+              <div className="w-2.5 h-2.5 rounded-full bg-white absolute top-0.5 transition-all" style={{ left: config?.actif ? 12 : 2 }} />
+            </div>
+            {toggleSaving ? '...' : config?.actif ? 'Actif' : 'Inactif'}
+          </button>
         </div>
+        {headerToast && <Toast msg={headerToast.msg} ok={headerToast.ok} />}
       </div>
 
       <div className="flex mb-6 overflow-x-auto" style={{ borderBottom: '1px solid var(--c-border)' }}>
