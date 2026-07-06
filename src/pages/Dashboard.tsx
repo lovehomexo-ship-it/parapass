@@ -23,7 +23,7 @@ import { PasseportCardView } from '../components/PasseportCardView';
 import {
   Plus, FileDown, QrCode, Calendar, TrendingUp,
   ChevronDown, ChevronUp, Trash2, X, ShieldCheck, Hash,
-  Pencil, Lock, Award, ChevronRight, Wind, Thermometer, Cloud, Sun, CloudRain, Camera, Wallet,
+  Pencil, Lock, Award, ChevronRight, Wind, Thermometer, Cloud, Sun, CloudRain, Camera, Wallet, Flame,
 } from 'lucide-react';
 
 // ─── Weather helpers (reused from PlanningDZ) ────────────────────────────────
@@ -130,6 +130,60 @@ type DashTab = 'accueil' | 'carnet' | 'planning' | 'compte';
 // ─── Notation helpers ─────────────────────────────────────────────────────────
 
 const STAR_COLORS = ['', '#EF4444', '#F59E0B', '#EAB308', '#84CC16', '#10B981'];
+
+// ─── Réflexe du Jour card ─────────────────────────────────────────────────────
+
+function ReflexeDuJourCard({ userId }: { userId: string }) {
+  const navigate = useNavigate();
+  const [done, setDone]       = useState(false);
+  const [streak, setStreak]   = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      const today = new Date().toISOString().slice(0, 10);
+      const [{ data: attempt }, { data: streakRow }] = await Promise.all([
+        supabase.from('drill_attempts').select('id').eq('profil_id', userId).eq('drill_date', today).maybeSingle(),
+        supabase.from('drill_streaks').select('streak_courant').eq('profil_id', userId).maybeSingle(),
+      ]);
+      setDone(!!attempt);
+      setStreak(streakRow?.streak_courant ?? 0);
+      setLoading(false);
+    }
+    load();
+  }, [userId]);
+
+  if (loading) return null;
+
+  return (
+    <button
+      onClick={() => navigate('/reflexe')}
+      className="w-full flex items-center gap-3 rounded-xl px-4 py-3 mb-4 text-left"
+      style={{
+        background: done
+          ? 'rgba(16,185,129,0.07)'
+          : 'linear-gradient(135deg, rgba(239,68,68,0.12), rgba(249,115,22,0.08))',
+        border: done ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(239,68,68,0.35)',
+        cursor: 'pointer',
+      }}>
+      <span className="text-2xl">{done ? '✅' : '🔴'}</span>
+      <div className="flex-1">
+        <p className="text-sm font-bold" style={{ color: done ? '#6EE7B7' : '#FCA5A5' }}>
+          Réflexe du jour {done ? '— fait !' : ''}
+        </p>
+        <p className="text-xs" style={{ color: '#64748B' }}>
+          {done ? 'Revenez demain pour le prochain scénario' : 'Scénario d\'urgence · 30 secondes · Gratuit'}
+        </p>
+      </div>
+      {streak > 0 && (
+        <span className="flex items-center gap-1 text-xs font-bold flex-shrink-0" style={{ color: '#F97316' }}>
+          <Flame className="w-3.5 h-3.5" /> {streak}
+        </span>
+      )}
+      {!done && <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: '#EF4444' }} />}
+    </button>
+  );
+}
 
 // ─── Mon sac du jour ──────────────────────────────────────────────────────────
 
@@ -696,6 +750,9 @@ export function DashboardPage() {
               </div>{/* fin layout 2 colonnes */}
 
               <MonSacDuJour userId={user!.id} />
+
+              {/* Réflexe du Jour */}
+              {!isDemo && <ReflexeDuJourCard userId={user!.id} />}
 
               {/* Académie ParaPass */}
               {!isDemo && (

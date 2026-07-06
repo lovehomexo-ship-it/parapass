@@ -41,6 +41,8 @@ import { SacPage } from './pages/SacPage';
 import { AcademiePage } from './pages/Academie';
 import { AcademieQuizPage } from './pages/AcademieQuiz';
 import { QuizAdminPage } from './pages/admin/QuizAdmin';
+import { ReflexeDuJourPage } from './pages/ReflexeDuJour';
+import { DrillAdminPage } from './pages/admin/DrillAdmin';
 import { TandemPublicPage } from './pages/TandemPublicPage';
 import { TandemPreparerPage } from './pages/TandemPreparerPage';
 import { TandemCertifPage } from './pages/TandemCertifPage';
@@ -158,6 +160,8 @@ function App() {
                 <Route path="/academie" element={<ProtectedRoute roles={['parachutiste', 'moniteur', 'moniteur_delegue']}><AcademiePage /></ProtectedRoute>} />
                 <Route path="/academie/quiz" element={<ProtectedRoute roles={['parachutiste', 'moniteur', 'moniteur_delegue']}><AcademieQuizPage /></ProtectedRoute>} />
                 <Route path="/admin/quiz" element={<ProtectedRoute roles={['admin']}><QuizAdminPage /></ProtectedRoute>} />
+                <Route path="/reflexe" element={<ProtectedRoute roles={['parachutiste', 'moniteur', 'moniteur_delegue']}><ReflexeDuJourPage /></ProtectedRoute>} />
+                <Route path="/admin/drill" element={<ProtectedRoute roles={['admin']}><DrillAdminPage /></ProtectedRoute>} />
                 <Route path="/pliage/scan/:token" element={<ScanPliagePage />} />
                 <Route path="/verify/:token" element={<VerifyPage />} />
                 <Route path="/v" element={<VerifyOfflinePage />} />
