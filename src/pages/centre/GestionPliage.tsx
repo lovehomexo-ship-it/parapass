@@ -1043,9 +1043,196 @@ function OngletParcSacs({ centreId }: { centreId: string }) {
   );
 }
 
+// ─── Onglet Habilitations plieurs ────────────────────────────────────────────
+
+interface PlieurValide {
+  id: string;
+  plieur_id: string;
+  actif: boolean;
+  date_habilitation: string;
+  date_expiration: string | null;
+  numero_qualif: string | null;
+  note: string | null;
+  plieur: { nom: string; prenom: string; email: string | null } | null;
+  validateur: { nom: string; prenom: string } | null;
+}
+
+interface LicencieCentre {
+  id: string;
+  nom: string;
+  prenom: string;
+}
+
+function OngletHabilitations({ centreId }: { centreId: string }) {
+  const [plieurs, setPlieurs] = useState<PlieurValide[]>([]);
+  const [licencies, setLicencies] = useState<LicencieCentre[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ plieur_id: '', numero_qualif: '', date_expiration: '', note: '' });
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    const { data } = await supabase.from('plieurs_valides')
+      .select('id, plieur_id, actif, date_habilitation, date_expiration, numero_qualif, note, plieur:profiles!plieurs_valides_plieur_id_fkey(nom, prenom, email), validateur:profiles!plieurs_valides_validateur_id_fkey(nom, prenom)')
+      .eq('centre_id', centreId)
+      .order('date_habilitation', { ascending: false });
+    setPlieurs((data ?? []) as PlieurValide[]);
+    setLoading(false);
+  }, [centreId]);
+
+  useEffect(() => {
+    load();
+    supabase.auth.getUser().then(({ data: { user } }) => setCurrentUserId(user?.id ?? null));
+    supabase.from('licencies_centres')
+      .select('profil:profiles!licencies_centres_parachutiste_id_fkey(id, nom, prenom)')
+      .eq('centre_id', centreId).eq('statut', 'actif')
+      .then(({ data }) => {
+        if (data) setLicencies(
+          data.map((l: { profil: { id: string; nom: string; prenom: string } | null }) => l.profil)
+            .filter((p): p is LicencieCentre => !!p)
+        );
+      });
+  }, [centreId, load]);
+
+  const habiliter = async () => {
+    if (!form.plieur_id || !currentUserId) return;
+    setSaving(true);
+    await supabase.from('plieurs_valides').upsert({
+      centre_id: centreId,
+      plieur_id: form.plieur_id,
+      validateur_id: currentUserId,
+      actif: true,
+      numero_qualif: form.numero_qualif || null,
+      date_expiration: form.date_expiration || null,
+      note: form.note || null,
+    }, { onConflict: 'centre_id,plieur_id' });
+    setSaving(false);
+    setShowForm(false);
+    setForm({ plieur_id: '', numero_qualif: '', date_expiration: '', note: '' });
+    load();
+  };
+
+  const revoquer = async (id: string) => {
+    if (!confirm('Révoquer l\'habilitation de ce plieur ?')) return;
+    await supabase.from('plieurs_valides').update({ actif: false }).eq('id', id);
+    load();
+  };
+
+  const actifs = plieurs.filter(p => p.actif);
+  const inactifs = plieurs.filter(p => !p.actif);
+
+  if (loading) return <div className="text-center py-12" style={{ color: 'var(--c-muted)' }}>Chargement...</div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl p-4" style={{ background: 'rgba(167,139,250,0.06)', border: '1px solid rgba(167,139,250,0.2)' }}>
+        <p className="text-sm" style={{ color: 'rgba(167,139,250,0.9)' }}>
+          <strong>Plieurs habilités DZ</strong> — seuls ces licenciés peuvent valider un pliage <strong>payable</strong>. Les autres peuvent plier mais le pliage est flagué «&nbsp;non habilité&nbsp;» et non payable.
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-bold" style={{ color: 'var(--c-text)' }}>Habilitations actives ({actifs.length})</h3>
+        <button
+          onClick={() => setShowForm(s => !s)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+          style={{ background: 'rgba(167,139,250,0.12)', color: '#A78BFA', border: '1px solid rgba(167,139,250,0.3)', cursor: 'pointer' }}
+        >
+          <Plus className="w-3.5 h-3.5" /> Habiliter un plieur
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="rounded-xl p-4 space-y-3" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--c-muted)' }}>Licencié</label>
+            <select value={form.plieur_id} onChange={e => setForm(f => ({ ...f, plieur_id: e.target.value }))}
+              className="w-full rounded-lg px-3 py-2 text-sm" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)' }}>
+              <option value="">— Choisir —</option>
+              {licencies.map(l => <option key={l.id} value={l.id}>{l.prenom} {l.nom}</option>)}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--c-muted)' }}>N° qualification (optionnel)</label>
+              <input type="text" value={form.numero_qualif} onChange={e => setForm(f => ({ ...f, numero_qualif: e.target.value }))}
+                placeholder="DT053-XXXX"
+                className="w-full rounded-lg px-3 py-2 text-sm" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)' }} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--c-muted)' }}>Expiration (optionnel)</label>
+              <input type="date" value={form.date_expiration} onChange={e => setForm(f => ({ ...f, date_expiration: e.target.value }))}
+                className="w-full rounded-lg px-3 py-2 text-sm" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)' }} />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={habiliter} disabled={saving || !form.plieur_id}
+              className="px-4 py-2 rounded-lg text-xs font-semibold disabled:opacity-50"
+              style={{ background: 'rgba(167,139,250,0.2)', color: '#A78BFA', border: '1px solid rgba(167,139,250,0.4)', cursor: 'pointer' }}>
+              {saving ? 'Enregistrement...' : 'Valider l\'habilitation'}
+            </button>
+            <button onClick={() => setShowForm(false)}
+              className="px-4 py-2 rounded-lg text-xs"
+              style={{ background: 'transparent', color: 'var(--c-muted)', border: '1px solid var(--c-border)', cursor: 'pointer' }}>
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
+      {actifs.length === 0 && !showForm && (
+        <p className="text-sm text-center py-8" style={{ color: 'var(--c-muted)' }}>Aucun plieur habilité pour ce centre.</p>
+      )}
+
+      <div className="space-y-2">
+        {actifs.map(p => (
+          <div key={p.id} className="rounded-xl px-4 py-3 flex items-center justify-between"
+            style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+            <div>
+              <p className="text-sm font-semibold" style={{ color: 'var(--c-text)' }}>
+                {p.plieur?.prenom} {p.plieur?.nom}
+                {p.numero_qualif && <span className="ml-2 text-[11px] font-mono" style={{ color: 'var(--c-muted)' }}>{p.numero_qualif}</span>}
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--c-muted)' }}>
+                Habilité par {p.validateur?.prenom} {p.validateur?.nom} · {new Date(p.date_habilitation).toLocaleDateString('fr-FR')}
+                {p.date_expiration && ` · expire ${new Date(p.date_expiration).toLocaleDateString('fr-FR')}`}
+              </p>
+            </div>
+            <button onClick={() => revoquer(p.id)}
+              className="text-xs px-3 py-1 rounded-lg"
+              style={{ background: 'rgba(239,68,68,0.08)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)', cursor: 'pointer' }}>
+              Révoquer
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {inactifs.length > 0 && (
+        <details className="mt-4">
+          <summary className="text-xs cursor-pointer" style={{ color: 'var(--c-muted)' }}>Habilitations révoquées ({inactifs.length})</summary>
+          <div className="mt-2 space-y-1">
+            {inactifs.map(p => (
+              <div key={p.id} className="rounded-lg px-3 py-2 flex items-center justify-between opacity-50"
+                style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
+                <p className="text-xs" style={{ color: 'var(--c-text)' }}>{p.plieur?.prenom} {p.plieur?.nom}</p>
+                <button onClick={() => supabase.from('plieurs_valides').update({ actif: true }).eq('id', p.id).then(load)}
+                  className="text-[11px] px-2 py-0.5 rounded"
+                  style={{ background: 'rgba(167,139,250,0.1)', color: '#A78BFA', border: 'none', cursor: 'pointer' }}>
+                  Réactiver
+                </button>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-type Onglet = 'jour' | 'sacs' | 'parc' | 'stats' | 'releve';
+type Onglet = 'jour' | 'sacs' | 'parc' | 'stats' | 'releve' | 'habilitations';
 
 export function GestionPliage({ centreId }: { centreId: string }) {
   const [onglet, setOnglet] = useState<Onglet>('jour');
@@ -1056,6 +1243,7 @@ export function GestionPliage({ centreId }: { centreId: string }) {
     { id: 'sacs', label: '🎒 Sacs' },
     { id: 'stats', label: '📊 Stats' },
     { id: 'releve', label: '💶 Relevé plieurs' },
+    { id: 'habilitations', label: '🛡️ Habilitations' },
   ];
 
   return (
@@ -1095,6 +1283,7 @@ export function GestionPliage({ centreId }: { centreId: string }) {
       {onglet === 'sacs' && <OngletGestionSacs centreId={centreId} />}
       {onglet === 'stats' && <OngletStats centreId={centreId} />}
       {onglet === 'releve' && <OngletRelevePlieurs centreId={centreId} />}
+      {onglet === 'habilitations' && <OngletHabilitations centreId={centreId} />}
     </div>
   );
 }

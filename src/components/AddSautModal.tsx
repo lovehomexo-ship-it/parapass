@@ -1335,6 +1335,11 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                   </button>
                 ))}
               </div>
+              {form.type_pliage === 'auto' && (
+                <p className="mt-2 text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(167,139,250,0.1)', color: 'rgba(167,139,250,0.9)', border: '1px solid rgba(167,139,250,0.25)' }}>
+                  ⚠️ Auto-pliage déclaratif — vous certifiez avoir plié votre propre parachute. Brevet C/D ou qualification plieur requis. Non-payant.
+                </p>
+              )}
             </div>}
 
             {/* Hauteur + Fonction — masqués pour soufflerie */}

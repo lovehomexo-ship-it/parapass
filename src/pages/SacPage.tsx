@@ -188,15 +188,17 @@ export function SacPage() {
       // Auth + profil
       const { data: { user } } = await supabase.auth.getUser();
       let cu: CurrentUser | null = null;
+      let myAssign: Assignment | null = null;
       if (user) {
         const { data: prof } = await supabase.from('profiles').select('id, nom, prenom').eq('id', user.id).maybeSingle();
         if (prof) cu = prof as CurrentUser;
         // Qualification plieur
         const { data: brevets } = await supabase.from('brevets').select('type_brevet').eq('parachutiste_id', user.id).in('type_brevet', ['C', 'D', 'moniteur', 'moniteur_delegue', 'DT053']);
         setIsQualif((brevets?.length ?? 0) > 0);
-        // Mon attribution active (peut être un autre sac)
-        const { data: myAssign } = await supabase.from('sac_assignments').select('id, sac_id, licencie_id, start_at, porteur:profiles!sac_assignments_licencie_id_fkey(nom, prenom)').eq('licencie_id', user.id).is('end_at', null).maybeSingle();
-        setMyAssignment(myAssign as Assignment | null);
+        // Mon attribution active (peut être un autre sac) — hoistée pour view determination
+        const { data: myAssignData } = await supabase.from('sac_assignments').select('id, sac_id, licencie_id, start_at, porteur:profiles!sac_assignments_licencie_id_fkey(nom, prenom)').eq('licencie_id', user.id).is('end_at', null).maybeSingle();
+        myAssign = myAssignData as Assignment | null;
+        setMyAssignment(myAssign);
       }
       setCurrentUser(cu);
 
@@ -226,12 +228,13 @@ export function SacPage() {
       if (etat === 'libre') { setView('libre'); return; }
       if (etat === 'pris') {
         if (!cu) { setView('pris_autre'); return; }
-        if (assign?.licencie_id === cu.id) { setView('pris_moi'); return; }
+        // Fallback: si RLS bloque la lecture de assign, on détecte via myAssign (self-read garanti)
+        if (assign?.licencie_id === cu.id || myAssign?.sac_id === sacData.id) { setView('pris_moi'); return; }
         setView('pris_autre'); return;
       }
       if (etat === 'a_plier') {
         if (!cu) { setView('a_plier_plieur'); return; }
-        if (assign?.licencie_id === cu.id) { setView('a_plier_moi'); return; }
+        if (assign?.licencie_id === cu.id || myAssign?.sac_id === sacData.id) { setView('a_plier_moi'); return; }
         setView('a_plier_plieur'); return;
       }
     })();
@@ -327,17 +330,22 @@ export function SacPage() {
     setSubmitting(true);
     const montant = (sac.centre as { tarif_pliage?: number } | null)?.tarif_pliage ?? 7;
     const qualifie = isQualif;
+    // Vérification habilitation DZ
+    const { data: pvRow } = await supabase.from('plieurs_valides')
+      .select('id').eq('centre_id', sac.centre_id).eq('plieur_id', currentUser.id).eq('actif', true)
+      .maybeSingle();
+    const isHabilite = !!pvRow;
     const { data: p } = await supabase.from('pliages').insert({
       sac_id: sac.id,
       plieur_id: currentUser.id,
       centre_id: sac.centre_id,
       parachutiste_id: assignment?.licencie_id ?? null,
-      statut_paiement: assignment?.licencie_id ? 'a_regler' : 'non_attribue',
+      statut_paiement: (assignment?.licencie_id && isHabilite) ? 'a_regler' : 'non_attribue',
       montant,
-      flag_qualif: !qualifie || forceHorsFile,
-      note: forceHorsFile ? 'Pliage hors file (bouton "plier quand même")' : null,
+      flag_qualif: !qualifie || !isHabilite || forceHorsFile,
+      note: forceHorsFile ? 'Pliage hors file (bouton "plier quand même")' : !isHabilite ? 'Plieur non habilité DZ' : null,
     }).select('id').single();
-    if (!qualifie) setFlagQualif(true);
+    if (!qualifie || !isHabilite) setFlagQualif(true);
     if (p) setNewPliageId(p.id);
     // Repasse PRIS (le sac sort de la file)
     await supabase.from('sacs_parachute').update({ etat_journee: 'pris' }).eq('id', sac.id);
