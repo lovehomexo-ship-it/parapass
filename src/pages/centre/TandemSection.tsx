@@ -95,7 +95,7 @@ function KpiCard({ label, val, color }: { label: string; val: string | number; c
 
 // ─── Onglet Planning ──────────────────────────────────────────────────────────
 
-function OngletPlanning({ centreId, config, licencies }: { centreId: string; config: TandemConfig; licencies: Licencie[] }) {
+function OngletPlanning({ centreId, centreSlug, config, licencies }: { centreId: string; centreSlug: string; config: TandemConfig; licencies: Licencie[] }) {
   const [slots, setSlots] = useState<Slot[]>([]);
   const [selectedDate, setSelectedDate] = useState(isoDate(new Date()));
   const [loading, setLoading] = useState(true);
@@ -207,7 +207,7 @@ function OngletPlanning({ centreId, config, licencies }: { centreId: string; con
           <Plus className="w-3.5 h-3.5" /> Nouveau créneau
         </button>
         <a
-          href={`${window.location.origin}/dz/${centreId}/tandem`}
+          href={`${window.location.origin}/dz/${centreSlug}/tandem`}
           target="_blank"
           rel="noopener noreferrer"
           className="text-xs px-3 py-2 rounded-xl"
@@ -619,10 +619,14 @@ export function TandemSection({ centreId }: { centreId: string }) {
   const [onglet, setOnglet] = useState<Onglet>('planning');
   const [config, setConfig] = useState<TandemConfig | null>(null);
   const [licencies, setLicencies] = useState<Licencie[]>([]);
+  const [centreSlug, setCentreSlug] = useState(centreId);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
+      const { data: centreInfo } = await supabase.from('centres').select('slug').eq('id', centreId).maybeSingle();
+      if (centreInfo?.slug) setCentreSlug(centreInfo.slug);
+
       const { data: cfg } = await supabase.from('tandem_config').select('*').eq('centre_id', centreId).maybeSingle();
       setConfig(cfg as TandemConfig ?? {
         centre_id: centreId, actif: false, prix_base: 220, prix_video: 60, prix_photos: 30,
@@ -678,7 +682,7 @@ export function TandemSection({ centreId }: { centreId: string }) {
         ))}
       </div>
 
-      {onglet === 'planning' && config && <OngletPlanning centreId={centreId} config={config} licencies={licencies} />}
+      {onglet === 'planning' && config && <OngletPlanning centreId={centreId} centreSlug={centreSlug} config={config} licencies={licencies} />}
       {onglet === 'bons' && <OngletBons centreId={centreId} />}
       {onglet === 'stats' && <OngletStats centreId={centreId} />}
       {onglet === 'config' && config && <OngletConfig centreId={centreId} config={config} onSaved={setConfig} />}

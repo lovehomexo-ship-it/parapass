@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ParaPassLogo } from '../components/ParaPassLogo';
 import { ChevronLeft, ChevronRight, Video, Camera, Gift, Check, X, AlertCircle } from 'lucide-react';
@@ -181,8 +181,11 @@ interface BookingForm {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function TandemPublicPage() {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const [centre, setCentre] = useState<Centre | null>(null);
   const [config, setConfig] = useState<TandemConfig | null>(null);
   const [slots, setSlots] = useState<Slot[]>([]);
@@ -213,53 +216,66 @@ export function TandemPublicPage() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   // Load centre + config + slots
+  // Tolerant: if slug param is a UUID, resolve by id then redirect to slug URL
   useEffect(() => {
     (async () => {
-      const { data: centreData } = await supabase
-        .from('centres')
-        .select('id, nom, ville, logo_url, slug, telephone, email')
-        .eq('slug', slug ?? '')
-        .maybeSingle();
-      if (!centreData) { setErreur('Centre introuvable.'); setLoading(false); return; }
-      setCentre(centreData as Centre);
+      const param = slug ?? '';
+      let centreData: Centre | null = null;
+
+      if (UUID_RE.test(param)) {
+        // Legacy URL with centre ID — resolve slug and redirect
+        const { data } = await supabase
+          .from('centres_public')
+          .select('id, nom, slug, ville, logo_url, telephone, email')
+          .eq('id', param)
+          .maybeSingle();
+        if (data?.slug) {
+          navigate(`/dz/${data.slug}/tandem`, { replace: true });
+          return;
+        }
+        centreData = data as Centre | null;
+      } else {
+        const { data } = await supabase
+          .from('centres_public')
+          .select('id, nom, slug, ville, logo_url, telephone, email')
+          .eq('slug', param)
+          .maybeSingle();
+        centreData = data as Centre | null;
+      }
+
+      if (!centreData) { setErreur('not_found'); setLoading(false); return; }
+      setCentre(centreData);
 
       const { data: cfg } = await supabase
         .from('tandem_config')
         .select('*')
         .eq('centre_id', centreData.id)
         .maybeSingle();
-      if (!cfg || !cfg.actif) { setErreur('La réservation tandem n\'est pas encore disponible pour ce centre.'); setLoading(false); return; }
+      if (!cfg || !cfg.actif) { setErreur('not_active'); setLoading(false); return; }
       setConfig(cfg as TandemConfig);
 
-      // Load slots for the next 90 days
+      // Load slots via aggregated view (anon-safe: no passenger data)
       const from = isoDate(new Date());
       const to = isoDate(addMonths(new Date(), 3));
-      const { data: slotData } = await supabase
-        .from('tandem_slots')
-        .select('id, date, heure, capacite, statut')
+      const { data: availData } = await supabase
+        .from('tandem_slot_availability')
+        .select('slot_id, date, heure, capacite, statut, booked')
         .eq('centre_id', centreData.id)
         .gte('date', from)
         .lte('date', to)
         .order('date').order('heure');
 
-      if (slotData) {
-        // Count bookings per slot
-        const slotIds = slotData.map(s => s.id);
-        const { data: bookings } = await supabase
-          .from('tandem_bookings')
-          .select('slot_id')
-          .in('slot_id', slotIds)
-          .in('statut', ['en_attente', 'confirme']);
-
-        const booked = new Map<string, number>();
-        for (const b of bookings ?? []) {
-          booked.set(b.slot_id, (booked.get(b.slot_id) ?? 0) + 1);
-        }
-        setSlots(slotData.map(s => ({ ...s, booked: booked.get(s.id) ?? 0 })) as Slot[]);
-      }
+      setSlots((availData ?? []).map(s => ({
+        id: s.slot_id,
+        date: s.date,
+        heure: s.heure,
+        capacite: s.capacite,
+        statut: s.statut,
+        booked: Number(s.booked),
+      })) as Slot[]);
       setLoading(false);
     })();
-  }, [slug]);
+  }, [slug, navigate]);
 
   // Derived pricing
   const prixBase = config?.prix_base ?? 220;
@@ -374,15 +390,31 @@ export function TandemPublicPage() {
     </div>
   );
 
-  if (erreur) return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
-      <div className="text-center max-w-sm">
-        <div className="text-5xl mb-4">🪂</div>
-        <h1 className="text-xl font-bold text-gray-900 mb-2">Centre introuvable</h1>
-        <p className="text-sm text-gray-500">{erreur}</p>
+  if (erreur) {
+    const isNotFound = erreur === 'not_found';
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-[#001A4D] to-[#003082]">
+        <div className="text-center max-w-sm">
+          <div className="text-6xl mb-5">{isNotFound ? '🔍' : '🪂'}</div>
+          <h1 className="text-2xl font-black text-white mb-3">
+            {isNotFound ? 'Centre introuvable' : 'Réservations non disponibles'}
+          </h1>
+          <p className="text-white/60 text-sm mb-6">
+            {isNotFound
+              ? 'Ce centre n\'existe pas ou n\'est pas encore référencé sur ParaPass.'
+              : 'La réservation en ligne n\'est pas encore activée pour ce centre. Contactez-les directement pour réserver.'}
+          </p>
+          <a
+            href="https://parapass.fr"
+            className="inline-block px-6 py-3 rounded-xl font-bold text-[#001A4D] text-sm"
+            style={{ background: 'white' }}
+          >
+            ← Retour sur ParaPass
+          </a>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   // ── Confirmation ──
   if (step === 'confirme') {
