@@ -575,7 +575,7 @@ export function SacPage() {
           <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>🪂 Avant de sauter : scannez à nouveau pour "Déposer au tapis"</p>
           <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>🎒 Fin de journée : scannez pour "Rendre le sac"</p>
         </div>
-        <button onClick={() => navigate(-1)} className="w-full py-3 rounded-xl text-sm font-semibold"
+        <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/dashboard')} className="w-full py-3 rounded-xl text-sm font-semibold"
           style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer' }}>
           ← Retour
         </button>
@@ -592,7 +592,7 @@ export function SacPage() {
         <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
           <strong className="text-white">{nomSac}</strong> est déposé au tapis. Un plieur va s'en occuper.
         </p>
-        <button onClick={() => navigate(-1)} className="w-full py-3 rounded-xl text-sm font-semibold"
+        <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/dashboard')} className="w-full py-3 rounded-xl text-sm font-semibold"
           style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer' }}>
           ← Retour
         </button>
@@ -615,7 +615,7 @@ export function SacPage() {
             <p className="text-xs" style={{ color: '#FCD34D' }}>Qualification plieur non renseignée — pliage flagué pour le DT.</p>
           </div>
         )}
-        <button onClick={() => navigate(-1)} className="w-full py-3 rounded-xl text-sm font-semibold"
+        <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/dashboard')} className="w-full py-3 rounded-xl text-sm font-semibold"
           style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer' }}>
           ← Retour
         </button>
@@ -646,10 +646,10 @@ export function SacPage() {
             centreId={sac!.centre_id}
             defaultLicencieId={assignment.licencie_id}
             defaultNom={assignment.porteur ? `${assignment.porteur.prenom} ${assignment.porteur.nom}` : null}
-            onDone={() => navigate(-1)}
+            onDone={() => window.history.length > 1 ? navigate(-1) : navigate('/dashboard')}
           />
         )}
-        <button onClick={() => navigate(-1)} className="w-full py-3 rounded-xl text-sm font-semibold"
+        <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/dashboard')} className="w-full py-3 rounded-xl text-sm font-semibold"
           style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer' }}>
           ← Scanner suivant
         </button>
@@ -666,7 +666,7 @@ export function SacPage() {
         <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
           <strong className="text-white">{nomSac}</strong> est de nouveau disponible pour vos collègues.
         </p>
-        <button onClick={() => navigate(-1)} className="w-full py-3 rounded-xl text-sm font-semibold"
+        <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/dashboard')} className="w-full py-3 rounded-xl text-sm font-semibold"
           style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer' }}>
           ← Retour
         </button>
