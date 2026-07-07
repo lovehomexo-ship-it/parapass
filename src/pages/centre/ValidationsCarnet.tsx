@@ -373,7 +373,7 @@ export function ValidationsCarnet({ dzId }: { dzId: string }) {
       .eq('statut', 'actif');
 
     if (data) {
-      const list: ParaEnAttente[] = (data as unknown as Array<{
+      const rows = data as unknown as Array<{
         id: string;
         parachutiste_id: string;
         carnet_statut: string;
@@ -383,7 +383,25 @@ export function ValidationsCarnet({ dzId }: { dzId: string }) {
         carnet_tampon_url: string | null;
         carnet_motif_refus: string | null;
         profiles: { id: string; nom: string; prenom: string; email: string; numero_licence: string | null; photo_profil_url: string | null };
-      }>).map(d => ({
+      }>;
+
+      // Fetch licences for all parachutistes to get canonical numero_licence
+      const paraIds = rows.map(d => d.parachutiste_id);
+      const { data: licencesData } = await supabase
+        .from('licences')
+        .select('parachutiste_id, numero_licence, date_expiration')
+        .in('parachutiste_id', paraIds)
+        .order('date_expiration', { ascending: false });
+
+      // Keep only the most recent licence per parachutiste
+      const licenceMap = new Map<string, string>();
+      for (const l of (licencesData ?? [])) {
+        if (!licenceMap.has(l.parachutiste_id)) {
+          licenceMap.set(l.parachutiste_id, l.numero_licence);
+        }
+      }
+
+      const list: ParaEnAttente[] = rows.map(d => ({
         licencie_id: d.id,
         parachutiste_id: d.parachutiste_id,
         carnet_statut: d.carnet_statut,
@@ -392,7 +410,10 @@ export function ValidationsCarnet({ dzId }: { dzId: string }) {
         carnet_signature_url: d.carnet_signature_url,
         carnet_tampon_url: d.carnet_tampon_url,
         carnet_motif_refus: d.carnet_motif_refus,
-        profile: d.profiles,
+        profile: {
+          ...d.profiles,
+          numero_licence: licenceMap.get(d.parachutiste_id) ?? d.profiles.numero_licence,
+        },
       }));
       setParas(list);
     }
