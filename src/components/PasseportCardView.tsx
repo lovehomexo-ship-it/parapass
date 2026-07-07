@@ -39,6 +39,16 @@ interface CentreData {
   tampon_numero_agrement?: string | null;
 }
 
+interface DernierControle {
+  controle_le: string;
+  licence_ok: boolean;
+  medical_ok: boolean;
+  assurance_ok: boolean;
+  note: string | null;
+  centre_nom: string | null;
+  controle_par_nom: string | null;
+}
+
 interface PasseportData {
   profile: ProfileData;
   licences: Licence[];
@@ -53,6 +63,7 @@ interface PasseportData {
   centre: CentreData | null;
   loadedAt: Date;
   dernierSautValide: { valide_par: string | null; valide_le: string | null; lieu: string | null } | null;
+  dernierControle: DernierControle | null;
 }
 
 // ─── Status helpers ─────────────────────────────────────────────────────────────
@@ -159,7 +170,6 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
       style={{
         background: 'linear-gradient(135deg, #001A4D 0%, #0f1a30 60%, #1E3A5F 100%)',
         boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-        height: '100%',
       }}
     >
       {/* Filigrane */}
@@ -169,7 +179,7 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
       {/* Bande orange FFP */}
       <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: '#F97316' }} />
 
-      <div className="relative flex flex-col gap-2" style={{ padding: '14px 14px 12px', height: '100%', justifyContent: 'space-between', boxSizing: 'border-box' }}>
+      <div className="relative flex flex-col gap-2" style={{ padding: '14px 14px 12px' }}>
 
         {/* ── Row 1 : Header ── */}
         <div className="flex items-center justify-between">
@@ -320,8 +330,7 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
         </div>
 
         {/* ── Footer ── */}
-        <div className="flex items-center justify-between" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 6, marginTop: 2 }}>
-          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>parapass.fr</div>
+        <div className="flex items-center justify-end" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 6, marginTop: 2 }}>
           <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', fontFamily: 'monospace' }}>parapass.fr</div>
         </div>
       </div>
@@ -332,7 +341,7 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
 // ─── Verso card ─────────────────────────────────────────────────────────────────
 
 function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isOwner: boolean }) {
-  const { profile, licences, centresLicencies, qrToken, centre, tamponConfig, dernierSautValide } = data;
+  const { profile, licences, centresLicencies, qrToken, centre, tamponConfig, dernierSautValide, dernierControle } = data;
   const licence = licences[0];
   const activeLicencie = centresLicencies.find(c => c.statut === 'actif');
 
@@ -372,7 +381,6 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
       style={{
         background: 'linear-gradient(135deg, #001A4D 0%, #0d1f3e 55%, #1a3060 100%)',
         boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-        height: '100%',
       }}
     >
       {/* Top accent stripe — FFP orange */}
@@ -383,7 +391,7 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
         <ParachuteIcon className="w-48 h-48 text-white" />
       </div>
 
-      <div className="relative flex flex-col gap-1.5" style={{ padding: '12px 14px 10px', height: '100%', justifyContent: 'space-between', boxSizing: 'border-box' }}>
+      <div className="relative flex flex-col gap-2" style={{ padding: '12px 14px 10px' }}>
 
         {/* ── Row 1 : Header ── */}
         <div className="flex items-start justify-between gap-3">
@@ -399,54 +407,10 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
           <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-6 w-auto flex-shrink-0" style={{ opacity: 0.7 }} />
         </div>
 
-        {/* ── Row 2 : Cachet + QR ── */}
-        <div className="flex items-center gap-4">
-
-          {/* Cachet DZ */}
-          <div className="flex flex-col items-center gap-1 flex-shrink-0" style={{ minWidth: 80 }}>
-            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Cachet DZ</div>
-            <div
-              className="flex items-center justify-center overflow-hidden"
-              style={{
-                width: 68, height: 68, borderRadius: '50%',
-                background: 'rgba(255,255,255,0.06)',
-                border: `2px solid ${couleurCachet}40`,
-              }}
-            >
-              {logoUrl ? (
-                <img src={logoUrl} alt="Logo DZ" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 5 }} />
-              ) : tamponConfig ? (
-                <TamponDZ
-                  config={{ ...tamponConfig, rotation: 0, opacity: 0.95, dateValidation: licence?.tampon_date_validation ?? undefined }}
-                  className="w-full h-full"
-                  stampEffect
-                />
-              ) : (
-                <CachetSVG nomCentre={nomCentre} nomDT={nomDT} couleur={couleurCachet} />
-              )}
-            </div>
-          </div>
-
-          {/* QR code */}
-          <div className="flex flex-col items-center gap-1 flex-1">
-            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Vérification</div>
-            {qrToken ? (
-              <>
-                <div className="bg-white rounded-xl flex-shrink-0" style={{ padding: 5, boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
-                  <QRCodeSVG value={`${window.location.origin}/verify/${qrToken}`} size={74} level="M" />
-                </div>
-                <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>Scanner pour vérifier</div>
-              </>
-            ) : (
-              <div style={{ flex: 1 }} />
-            )}
-          </div>
-        </div>
-
-        {/* ── Row 3 : Certifications ── */}
+        {/* ── Row 2 : Certifications (EN HAUT) ── */}
         <div className="rounded-lg" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', padding: '7px 10px' }}>
           <div style={{ fontSize: 7, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(249,163,22,0.85)', marginBottom: 5, fontWeight: 600 }}>
-            Informations de certification
+            Informations de licence
           </div>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
             <div>
@@ -455,53 +419,108 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
                 {numeroLicence || <span style={{ color: 'rgba(255,255,255,0.3)' }}>—</span>}
               </div>
             </div>
-
-            <div>
-              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Validé par</div>
-              {signatureDtUrl ? (
-                <div>
-                  <img src={signatureDtUrl} alt="Signature DT" style={{ height: 22, maxWidth: 100, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.8 }} />
-                  <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', lineHeight: 1.2, marginTop: 1 }}>{validateurNom}</div>
-                </div>
-              ) : (
-                <div style={{ fontSize: 12, color: '#fff', fontWeight: 600, lineHeight: 1.2 }}>
-                  {validateurNom || <span style={{ color: 'rgba(255,255,255,0.3)' }}>—</span>}
-                </div>
-              )}
-            </div>
-
             <div>
               <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Valide jusqu'au</div>
               <div style={{ fontSize: 12, color: licence?.date_expiration ? '#fff' : 'rgba(255,255,255,0.3)', fontFamily: 'monospace', fontWeight: 600, lineHeight: 1.2 }}>
                 {licence?.date_expiration ? new Date(licence.date_expiration).toLocaleDateString('fr-FR') : '—'}
               </div>
             </div>
-
             <div>
-              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Validation DZ</div>
-              <div style={{ fontSize: 12, color: validationDzDate ? '#fff' : 'rgba(255,255,255,0.3)', fontFamily: 'monospace', lineHeight: 1.2 }}>
-                {validationDzDate ? new Date(validationDzDate).toLocaleDateString('fr-FR') : '—'}
+              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Contrôle DZ</div>
+              <div style={{ fontSize: 11, color: dernierControle ? '#fff' : 'rgba(255,255,255,0.3)', fontFamily: 'monospace', lineHeight: 1.3 }}>
+                {dernierControle
+                  ? `${new Date(dernierControle.controle_le).toLocaleDateString('fr-FR')}${dernierControle.centre_nom ? ` · ${dernierControle.centre_nom}` : ''}`
+                  : 'Non contrôlé'}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Contrôlé par</div>
+              <div style={{ fontSize: 11, color: dernierControle?.controle_par_nom ? '#fff' : 'rgba(255,255,255,0.3)', fontWeight: 600, lineHeight: 1.3 }}>
+                {dernierControle?.controle_par_nom || '—'}
               </div>
             </div>
           </div>
         </div>
 
-        {/* ── Footer : signature titulaire + statut + url ── */}
-        <div className="flex items-center gap-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 5 }}>
-          {/* Signature titulaire */}
-          <div className="flex flex-col gap-0.5 flex-shrink-0" style={{ minWidth: 90 }}>
-            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Signature du titulaire</div>
-            {isOwner && profile.signature_url ? (
-              <img src={profile.signature_url} alt="Signature" style={{ height: 28, maxWidth: 90, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.8 }} />
+        {/* ── Row 3 : QR (gauche) + Cachet & Signature (droite) ── */}
+        <div className="flex items-stretch gap-4">
+
+          {/* Gauche — QR code */}
+          <div className="flex flex-col items-center gap-1 flex-shrink-0">
+            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Vérification</div>
+            {qrToken ? (
+              <>
+                <div className="bg-white rounded-xl" style={{ padding: 5, boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
+                  <QRCodeSVG value={`${window.location.origin}/verify/${qrToken}`} size={76} level="M" />
+                </div>
+                <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>Scanner pour vérifier</div>
+              </>
             ) : (
-              <div style={{ width: 90, height: 20, borderBottom: '1px dashed rgba(255,255,255,0.2)' }} />
+              <div style={{ width: 86, height: 86, background: 'rgba(255,255,255,0.04)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.08)' }} />
             )}
           </div>
-          <div className="flex-1 flex items-center justify-between">
-            <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', background: 'rgba(16,185,129,0.12)', color: '#34D399', border: '1px solid rgba(16,185,129,0.22)', padding: '2px 7px', borderRadius: 20 }}>
-              ✓ Documents à jour
-            </span>
+
+          {/* Droite — Cachet DZ (haut) + Signature titulaire (bas) */}
+          <div className="flex flex-col gap-2 flex-1 justify-between">
+
+            {/* Cachet DZ */}
+            <div className="flex flex-col items-center gap-1">
+              <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Cachet DZ</div>
+              <div
+                className="flex items-center justify-center overflow-hidden"
+                style={{
+                  width: 60, height: 60, borderRadius: '50%',
+                  background: dernierControle ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)',
+                  border: `2px solid ${dernierControle ? couleurCachet + '60' : 'rgba(255,255,255,0.08)'}`,
+                  opacity: dernierControle ? 1 : 0.3,
+                }}
+              >
+                {dernierControle ? (
+                  logoUrl ? (
+                    <img src={logoUrl} alt="Logo DZ" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 4 }} />
+                  ) : tamponConfig ? (
+                    <TamponDZ
+                      config={{ ...tamponConfig, rotation: 0, opacity: 0.95, dateValidation: dernierControle.controle_le }}
+                      className="w-full h-full"
+                      stampEffect
+                    />
+                  ) : (
+                    <CachetSVG nomCentre={nomCentre} nomDT={nomDT} couleur={couleurCachet} />
+                  )
+                ) : (
+                  <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>—</span>
+                )}
+              </div>
+            </div>
+
+            {/* Signature titulaire */}
+            <div className="flex flex-col gap-0.5">
+              <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Signature titulaire</div>
+              {isOwner && profile.signature_url ? (
+                <img src={profile.signature_url} alt="Signature" style={{ height: 26, maxWidth: 110, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.8 }} />
+              ) : (
+                <div style={{ height: 20, borderBottom: '1px dashed rgba(255,255,255,0.2)' }} />
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Footer : badge + url + micro-mention ── */}
+        <div className="flex flex-col gap-1" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 6 }}>
+          <div className="flex items-center justify-between">
+            {dernierControle ? (
+              <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', background: 'rgba(16,185,129,0.12)', color: '#34D399', border: '1px solid rgba(16,185,129,0.22)', padding: '2px 7px', borderRadius: 20 }}>
+                ✓ Documents contrôlés
+              </span>
+            ) : (
+              <span style={{ fontSize: 8, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.28)', border: '1px solid rgba(255,255,255,0.1)', padding: '2px 7px', borderRadius: 20 }}>
+                Non contrôlé
+              </span>
+            )}
             <div style={{ fontSize: 8, fontFamily: 'monospace', color: 'rgba(255,255,255,0.28)' }}>parapass.fr</div>
+          </div>
+          <div style={{ fontSize: 6.5, color: 'rgba(255,255,255,0.18)', lineHeight: 1.3 }}>
+            Contrôle documentaire effectué par le centre, sans valeur de certification fédérale.
           </div>
         </div>
       </div>
@@ -523,30 +542,31 @@ function FlippableCard({
 
   return (
     <div className="w-full max-w-lg mx-auto">
-      {/* Aspect-ratio container — ratio ID-1 card: 85.6 × 53.98 mm ≈ 86/54 */}
+      {/* Grid-stack container — adopts height of tallest face, no aspect-ratio clip */}
       <div
         className="relative w-full cursor-pointer"
-        style={{ perspective: '1000px', aspectRatio: '86 / 54' }}
+        style={{ perspective: '1000px' }}
         onClick={() => setFlipped(f => !f)}
       >
-        {/* 3D flip inner — fills the aspect-ratio box */}
+        {/* 3D flip inner — grid so both faces stack and container = max(recto,verso) */}
         <div
-          className="absolute inset-0"
           style={{
+            display: 'grid',
+            gridTemplateAreas: '"card"',
             transformStyle: 'preserve-3d',
             transition: 'transform 0.6s ease',
             transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
           }}
         >
           {/* Recto — face avant */}
-          <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
+          <div style={{ gridArea: 'card', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
             <CardRecto data={data} id={rectoId} />
           </div>
 
           {/* Verso — face arrière */}
           <div
             style={{
-              position: 'absolute', inset: 0,
+              gridArea: 'card',
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',
               transform: 'rotateY(180deg)',
@@ -577,9 +597,7 @@ function FlippableCard({
 // — no FlippableCard wrapper, no 3D transforms, no mirror artifacts.
 
 async function exportCartesPDF(data: PasseportData, isOwner: boolean, nom: string, prenom: string) {
-  // Fixed card dimensions — ID-1 ratio (85.6 × 53.98 mm ≈ 86/54)
   const CARD_W = 520;
-  const CARD_H = Math.round(CARD_W * 54 / 86); // ≈ 326 px
 
   const captureComponent = (
     component: React.ReactElement,
@@ -592,7 +610,6 @@ async function exportCartesPDF(data: PasseportData, isOwner: boolean, nom: strin
         left: -9999px;
         top: 0;
         width: ${CARD_W}px;
-        height: ${CARD_H}px;
         pointer-events: none;
         z-index: -1;
       `;
@@ -690,8 +707,17 @@ function ValiditySummary({ data }: { data: PasseportData }) {
           <StatusPill status={licence?.assurance_individuelle && licence?.assurance_rc ? 'valide' : 'expire'} days={null} />
         </div>
         <div className="flex items-center justify-between gap-2">
-          <span className="text-sm text-gray-700">Validation DZ</span>
+          <span className="text-sm text-gray-700">Validation carnet DZ</span>
           <StatusPill status={carnetValide ? 'valide' : 'manquant'} days={null} />
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm text-gray-700">Contrôle documentaire DZ</span>
+          <div className="flex items-center gap-2">
+            {data.dernierControle && (
+              <span className="text-xs text-gray-400 font-mono">{new Date(data.dernierControle.controle_le).toLocaleDateString('fr-FR')}</span>
+            )}
+            <StatusPill status={data.dernierControle ? 'valide' : 'manquant'} days={null} />
+          </div>
         </div>
       </div>
       <p className="text-[10px] text-gray-400 text-right">
@@ -771,6 +797,7 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
         { count: validSautsCountData },
         { data: qrData },
         { data: dernierSautData },
+        { data: controleData },
       ] = await Promise.all([
         supabase.from('profiles').select('id, nom, prenom, avatar_url, photo_profil_url, numero_licence, date_naissance, lieu_naissance, partage_carte_centre, signature_url').eq('id', userId).maybeSingle(),
         supabase.from('licences').select('*').eq('parachutiste_id', userId).order('date_expiration', { ascending: false }),
@@ -782,6 +809,7 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
         supabase.from('sauts').select('*', { count: 'exact', head: true }).eq('parachutiste_id', userId).eq('is_tunnel', false).in('statut', ['valide', 'historique']),
         supabase.from('qr_tokens').select('token').eq('parachutiste_id', userId).order('created_at', { ascending: false }).limit(1),
         supabase.from('sauts').select('valide_par, valide_le, lieu').eq('parachutiste_id', userId).eq('statut', 'valide').order('valide_le', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('controle_documents').select('controle_le, licence_ok, medical_ok, assurance_ok, note, controleur:profiles!controle_par(nom, prenom), centre:centres!centre_id(nom)').eq('licencie_id', userId).order('controle_le', { ascending: false }).limit(1).maybeSingle(),
       ]);
 
       if (!profileData) { setLoading(false); return; }
@@ -825,6 +853,18 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
         centre: centreInfo,
         loadedAt: new Date(),
         dernierSautValide: dernierSautData as { valide_par: string | null; valide_le: string | null; lieu: string | null } | null,
+        dernierControle: controleData ? {
+          controle_le: (controleData as Record<string, unknown>).controle_le as string,
+          licence_ok: (controleData as Record<string, unknown>).licence_ok as boolean,
+          medical_ok: (controleData as Record<string, unknown>).medical_ok as boolean,
+          assurance_ok: (controleData as Record<string, unknown>).assurance_ok as boolean,
+          note: (controleData as Record<string, unknown>).note as string | null,
+          centre_nom: ((controleData as Record<string, unknown>).centre as Record<string, string> | null)?.nom ?? null,
+          controle_par_nom: (() => {
+            const c = (controleData as Record<string, unknown>).controleur as { nom: string; prenom: string } | null;
+            return c ? `${c.prenom} ${c.nom}` : null;
+          })(),
+        } : null,
       });
 
       if (centreId && adminId && adminId !== userId) {
