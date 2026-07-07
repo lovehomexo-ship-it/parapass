@@ -3060,6 +3060,7 @@ export function CentreDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [notifCount, setNotifCount] = useState(0);
   const [carnetsEnAttente, setCarnetsEnAttente] = useState(0);
+  const [activeModules, setActiveModules] = useState<Set<string>>(new Set());
   const [drawerLicencie, setDrawerLicencie] = useState<LicencieSummary | null>(null);
   const [drawerInitialTab, setDrawerInitialTab] = useState<'carte' | 'sauts' | 'messages' | 'actions'>('carte');
   const { totalUnread: msgUnread } = useConversations(profile?.id);
@@ -3127,6 +3128,14 @@ export function CentreDashboardPage() {
         alertes: 0,
       });
 
+      // Active modules
+      const { data: modulesData } = await supabase
+        .from('centre_modules')
+        .select('module_id')
+        .eq('centre_id', resolvedCentreId)
+        .eq('active', true);
+      setActiveModules(new Set((modulesData ?? []).map((m: { module_id: string }) => m.module_id)));
+
       // Carnets en attente de validation
       const { count: carnetCount } = await supabase
         .from('licencies_centres')
@@ -3167,15 +3176,15 @@ export function CentreDashboardPage() {
     { key: 'licencies', label: 'Mes licenciés', icon: Users },
     { key: 'demandes', label: "Demandes d'adhésion", icon: ClipboardList, badge: stats.demandesAttente },
     { key: 'sauts', label: 'Activité des sauts', icon: Activity },
-    { key: 'pliage', label: 'Gestion pliage', icon: Shield },
     { key: 'planning', label: 'Planning DZ', icon: Calendar },
     { key: 'stats', label: 'Statistiques', icon: BarChart2 },
     { key: 'equipe', label: 'Mon équipe', icon: Shield },
     { key: 'centre', label: 'Mon centre', icon: Settings },
     { key: 'messages', label: 'Messages', icon: MessageSquare, badge: msgUnread },
     { key: 'validations', label: 'Validations carnet', icon: BookCheck, badge: carnetsEnAttente > 0 ? carnetsEnAttente : undefined },
+    ...(activeModules.has('pliage') ? [{ key: 'pliage', label: 'Gestion pliage', icon: Shield }] : []),
     { key: 'finances', label: 'Finances', icon: Euro },
-    { key: 'tandem', label: 'Module Tandem', icon: GraduationCap },
+    ...(activeModules.has('tandem') ? [{ key: 'tandem', label: 'Module Tandem', icon: GraduationCap }] : []),
     { key: 'modules', label: 'Modules', icon: Puzzle },
   ];
 
@@ -3218,7 +3227,7 @@ export function CentreDashboardPage() {
   }
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-1 min-h-0">
       {/* Centre info */}
       <div className="px-4 py-5" style={{ borderBottom: '1px solid var(--c-border)' }}>
         <div className="flex items-center gap-3">
@@ -3243,7 +3252,7 @@ export function CentreDashboardPage() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 min-h-0 px-2 py-3 space-y-0.5 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
         {navItems.map(item => {
           const Icon = item.icon;
           const isActive = activeSection === item.key;
@@ -3280,8 +3289,8 @@ export function CentreDashboardPage() {
         })}
       </nav>
 
-      {/* Bottom: notifs + logout */}
-      <div className="px-2 py-3 space-y-0.5" style={{ borderTop: '1px solid var(--c-border)' }}>
+      {/* Bottom: notifs + logout — always visible, never scrolled away */}
+      <div className="px-2 py-3 space-y-0.5 flex-shrink-0" style={{ borderTop: '1px solid var(--c-border)', paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
         <button className="w-full flex items-center gap-2.5 rounded-lg transition"
           style={{ padding: '9px 12px', fontSize: 12, color: 'var(--c-dim)' }}
           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--c-card)'; (e.currentTarget as HTMLElement).style.color = 'var(--c-text)'; }}
@@ -3328,7 +3337,7 @@ export function CentreDashboardPage() {
       {sidebarOpen && (
         <>
           <div className="fixed inset-0 bg-black/60 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
-          <aside className="fixed top-0 left-0 h-full z-50 lg:hidden flex flex-col" style={{ width: 220, background: 'var(--c-nav)', borderRight: '1px solid var(--c-border)' }}>
+          <aside className="fixed top-0 left-0 z-50 lg:hidden flex flex-col" style={{ width: 220, height: '100dvh', background: 'var(--c-nav)', borderRight: '1px solid var(--c-border)' }}>
             <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid var(--c-border)' }}>
               <span className="text-sm font-bold text-white">ParaPass</span>
               <button onClick={() => setSidebarOpen(false)} className="p-1.5 rounded-lg" style={{ color: 'var(--c-muted)' }}>
