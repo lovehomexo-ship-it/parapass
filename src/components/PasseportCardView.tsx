@@ -543,7 +543,7 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
                 border: '1px solid rgba(16,185,129,0.22)', padding: '2px 8px', borderRadius: 20,
               }}
             >
-              ✓ Conforme réglementation
+              ✓ Documents à jour
             </span>
             <div style={{ fontSize: 9, fontFamily: 'monospace', color: 'rgba(255,255,255,0.28)' }}>parapass.fr</div>
           </div>

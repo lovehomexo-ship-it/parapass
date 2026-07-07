@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { MODULES } from '../data/modules';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useTheme } from '../lib/ThemeContext';
@@ -207,6 +208,7 @@ function DashboardHome({
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
       const today = new Date().toISOString().split('T')[0];
 
+      // Fetch member count via direct licencies_centres query (no in() needed)
       const { data: membresIds } = await supabase
         .from('licencies_centres')
         .select('parachutiste_id')
@@ -216,61 +218,43 @@ function DashboardHome({
       const ids = (membresIds ?? []).map((m: { parachutiste_id: string }) => m.parachutiste_id);
       const total = ids.length;
 
+      // Use RPCs to avoid long in() lists that cause 503 on HEAD requests
+      const [
+        { data: expLicData },
+        { data: expMedData },
+        { data: monthCountData },
+      ] = await Promise.all([
+        supabase.rpc('get_licences_expirees', { p_centre_id: centre.id, p_today: today }),
+        supabase.rpc('get_certificats_expirants', { p_centre_id: centre.id, p_today: today, p_in_30: thirtyDaysFromNow.toISOString().split('T')[0] }),
+        supabase.rpc('get_sauts_mois', { p_centre_id: centre.id, p_first_of_month: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0] }),
+      ]);
+
+      const expLic = (expLicData as number) ?? 0;
+      const expMed = (expMedData as number) ?? 0;
+      setAlerteExpires(expLic);
+      setLicencesExpirees(expLic);
+      setLicencesValides(Math.max(0, total - expLic));
+      setAlerteMedical(expMed);
+      setCertifExpirant(expMed);
+      setCertifOk(Math.max(0, total - expMed));
+      setSautsThisMonth((monthCountData as number) ?? 0);
+
+      // Recent sauts via join to avoid long in() on GET
       if (ids.length > 0) {
-        // Expired licences
-        const { count: expLic } = await supabase
-          .from('licences')
-          .select('*', { count: 'exact', head: true })
-          .in('parachutiste_id', ids)
-          .lt('date_expiration', today)
-          .eq('statut', 'actif');
-        setAlerteExpires(expLic ?? 0);
-        setLicencesExpirees(expLic ?? 0);
-        setLicencesValides(Math.max(0, total - (expLic ?? 0)));
-
-        // Certificates expiring in 30 days
-        const { count: expMed } = await supabase
-          .from('certificats_medicaux')
-          .select('*', { count: 'exact', head: true })
-          .in('parachutiste_id', ids)
-          .lte('date_expiration', thirtyDaysFromNow.toISOString().split('T')[0])
-          .gte('date_expiration', today);
-        setAlerteMedical(expMed ?? 0);
-        setCertifExpirant(expMed ?? 0);
-        setCertifOk(Math.max(0, total - (expMed ?? 0)));
-
-        // Recent sauts (all statuses, last 5)
         const { data: sautsData } = await supabase
           .from('sauts')
-          .select('id, parachutiste_id, date_saut, lieu, hauteur_m, categorie, statut')
+          .select('id, parachutiste_id, date_saut, lieu, hauteur_m, categorie, statut, profiles!parachutiste_id(nom, prenom)')
           .in('parachutiste_id', ids)
           .order('date_saut', { ascending: false })
           .limit(5);
 
         if (sautsData && sautsData.length > 0) {
-          const profileIds = sautsData.map((s: SautSummary) => s.parachutiste_id);
-          const { data: profilesData } = await supabase
-            .from('profiles')
-            .select('id, nom, prenom')
-            .in('id', profileIds);
-          const profileMap: Record<string, { nom: string; prenom: string }> = {};
-          (profilesData ?? []).forEach((p: { id: string; nom: string; prenom: string }) => { profileMap[p.id] = p; });
-          setRecentSauts(sautsData.map((s: SautSummary) => ({
+          setRecentSauts((sautsData as unknown as Array<SautSummary & { profiles: { nom: string; prenom: string } | null }>).map((s) => ({
             ...s,
-            parachutiste_nom: profileMap[s.parachutiste_id]?.nom,
-            parachutiste_prenom: profileMap[s.parachutiste_id]?.prenom,
+            parachutiste_nom: s.profiles?.nom,
+            parachutiste_prenom: s.profiles?.prenom,
           })));
         }
-
-        // Sauts this month
-        const firstOfMonth = new Date();
-        firstOfMonth.setDate(1);
-        const { count: monthCount } = await supabase
-          .from('sauts')
-          .select('*', { count: 'exact', head: true })
-          .in('parachutiste_id', ids)
-          .gte('date_saut', firstOfMonth.toISOString().split('T')[0]);
-        setSautsThisMonth(monthCount ?? 0);
       }
     })();
   }, [centre]);
@@ -2428,14 +2412,14 @@ function MonCentreSection({ centre, onSaved }: { centre: Centre | null; onSaved:
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <h2 className="font-semibold text-gray-900 mb-3">Plan</h2>
         <div className="flex items-center gap-3">
-          <span className={`px-3 py-1 rounded-full text-sm font-medium ${centre?.plan === 'agrée' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
-            {centre?.plan === 'agrée' ? 'Centre Agréé' : 'Essai'}
+          <span className={`px-3 py-1 rounded-full text-sm font-medium ${isActivePlan ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+            {centre ? planLabel(centre.plan) : '—'}
           </span>
-          {centre?.plan !== 'agrée' && (
+          {!isActivePlan && (
             <span className="text-sm text-gray-500">Passez en Centre Agréé pour accéder à toutes les fonctionnalités</span>
           )}
         </div>
-        {centre?.plan !== 'agrée' && (
+        {!isActivePlan && (
           <button className="mt-4 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition">
             Passer en Centre Agréé
           </button>
@@ -3122,21 +3106,12 @@ export function CentreDashboardPage() {
         .eq('statut', 'en_attente');
 
       const today = new Date().toISOString().split('T')[0];
-      const { data: membresData } = await supabase
-        .from('licencies_centres')
-        .select('parachutiste_id')
-        .eq('centre_id', resolvedCentreId)
-        .eq('statut', 'actif');
-      const ids = (membresData ?? []).map((m: { parachutiste_id: string }) => m.parachutiste_id);
-      let sautsToday = 0;
-      if (ids.length > 0) {
-        const { count } = await supabase
-          .from('sauts')
-          .select('*', { count: 'exact', head: true })
-          .in('parachutiste_id', ids)
-          .eq('date_saut', today);
-        sautsToday = count ?? 0;
-      }
+      // Use RPC to avoid long in() list that causes 503 on HEAD requests
+      const { data: sautsTodayData } = await supabase.rpc('get_sauts_today', {
+        p_centre_id: resolvedCentreId,
+        p_today: today,
+      });
+      const sautsToday = (sautsTodayData as number) ?? 0;
 
       setStats({
         totalLicencies: licCount ?? 0,
@@ -3172,7 +3147,13 @@ export function CentreDashboardPage() {
       .then(({ count }) => setNotifCount(count ?? 0));
   }, [profile]);
 
-  const isProPlan = centre ? ['pro', 'enterprise'].includes(centre.plan) : false;
+  // Plans actifs : 'centre' (agréé), 'centre_premium' (premium), 'essai' (trial)
+  const isActivePlan = centre ? ['centre', 'centre_premium'].includes(centre.plan) : false;
+  const planLabel = (plan: string) => {
+    if (plan === 'centre_premium') return 'Premium';
+    if (plan === 'centre') return 'Centre Agréé';
+    return 'Essai';
+  };
 
   const navItems = [
     { key: 'dashboard', label: 'Tableau de bord', icon: Home },
@@ -3244,11 +3225,11 @@ export function CentreDashboardPage() {
           <div className="min-w-0 flex-1">
             <p className="font-bold text-white truncate" style={{ fontSize: 13 }}>{centre.nom}</p>
             <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{
-              background: centre.plan === 'agrée' ? 'rgba(37,99,235,0.2)' : 'rgba(249,115,22,0.2)',
-              color: centre.plan === 'agrée' ? '#60A5FA' : '#F97316',
-              border: `1px solid ${centre.plan === 'agrée' ? 'rgba(37,99,235,0.3)' : 'rgba(249,115,22,0.3)'}`,
+              background: isActivePlan ? 'rgba(37,99,235,0.2)' : 'rgba(249,115,22,0.2)',
+              color: isActivePlan ? '#60A5FA' : '#F97316',
+              border: `1px solid ${isActivePlan ? 'rgba(37,99,235,0.3)' : 'rgba(249,115,22,0.3)'}`,
             }}>
-              {centre.plan === 'agrée' ? 'Agréé FFP' : 'Pro'}
+              {planLabel(centre.plan)}
             </span>
           </div>
         </div>
@@ -3421,7 +3402,7 @@ export function CentreDashboardPage() {
             <ModulesSection centreId={centreId} />
           )}
           {activeSection === 'finances' && centreId && (
-            isProPlan
+            isActivePlan
               ? <FinancesSection dzId={centreId} />
               : (
                 <div className="flex items-center justify-center py-16 px-6">
@@ -3431,13 +3412,13 @@ export function CentreDashboardPage() {
                     </div>
                     <h3 className="text-xl font-bold" style={{ color: 'var(--c-text)' }}>Module Finances</h3>
                     <p className="text-sm leading-relaxed" style={{ color: 'var(--c-dim)' }}>
-                      Gérez les tarifs, suivez les soldes de vos licenciés et encaissez en ligne via Stripe. Disponible en plan Pro.
+                      Gérez les tarifs, suivez les soldes de vos licenciés et encaissez en ligne via Stripe.
                     </p>
                     <div className="rounded-xl py-3 px-4" style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.2)' }}>
-                      <p className="text-lg font-bold" style={{ color: '#F97316' }}>199 € / mois</p>
-                      <p className="text-xs mt-0.5" style={{ color: 'var(--c-dim)' }}>Plan Pro — sans engagement</p>
+                      <p className="text-lg font-bold" style={{ color: '#F97316' }}>{MODULES.find(m => m.id === 'finances')?.prix?.toFixed(2).replace('.', ',')} € / mois</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--c-dim)' }}>Sans engagement</p>
                     </div>
-                    <a href="mailto:contact@parapass.fr?subject=Passage en plan Pro"
+                    <a href="mailto:contact@parapass.fr?subject=Activation module Finances"
                       className="block w-full py-3 rounded-xl text-sm font-bold text-white transition"
                       style={{ background: 'linear-gradient(135deg, #F97316, #EA580C)' }}>
                       Contacter l'équipe ParaPass

@@ -904,7 +904,7 @@ export function LandingPage() {
               <div className="flex items-center gap-2 mb-7">
                 <img src="/logo-ffp-footer.png" alt="Logo FFP — Fédération Française de Parachutisme" style={{ height: '20px', width: 'auto', opacity: 0.8 }} />
                 <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>
-                  Application reconnue par la Fédération Française de Parachutisme
+                  Conçue pour les licenciés et clubs de la Fédération Française de Parachutisme
                 </span>
               </div>
 
@@ -929,7 +929,7 @@ export function LandingPage() {
                 {/* Badge — top left: Certifié DGAC */}
                 <FloatingBadge
                   icon={<span className="text-green-500 font-bold text-sm">✓</span>}
-                  label="Certifié DGAC"
+                  label="Suivi DGAC"
                   delay="0.8s"
                   className="top-2 -left-2 z-10"
                 />
@@ -994,7 +994,7 @@ export function LandingPage() {
                 bg: '#FFFBEB',
                 iconColor: '#D97706',
                 title: 'Enregistrez vos sauts',
-                desc: 'Ajoutez chaque saut, votre moniteur le valide par signature électronique certifiée. Archivé et horodaté.',
+                desc: 'Ajoutez chaque saut, votre moniteur le valide par signature électronique horodatée. Archivé et infalsifiable.',
               },
               {
                 step: '03',
@@ -1973,10 +1973,10 @@ export function LandingPage() {
             />
             <div>
               <div className="text-sm font-semibold text-white">
-                Application reconnue par la <strong>Fédération Française de Parachutisme</strong>
+                Conçue pour les licenciés et clubs de la <strong>Fédération Française de Parachutisme</strong>
               </div>
               <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                En cours de déploiement dans les 57 clubs agréés FFP du réseau national
+                Disponible pour les clubs agréés FFP — marché cible
               </div>
             </div>
           </a>
@@ -2002,7 +2002,7 @@ export function LandingPage() {
                   onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
                   onMouseLeave={e => (e.currentTarget.style.opacity = '0.7')}
                 />
-                <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>En partenariat avec la Fédération Française de Parachutisme</span>
+                <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>Pour les clubs et licenciés FFP</span>
               </a>
             </div>
             {/* Col droite */}
