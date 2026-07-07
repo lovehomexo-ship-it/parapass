@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
-import { QrScannerButton } from '../components/QrScanner';
+import { QrScannerButton, QrScanner } from '../components/QrScanner';
 import { ParachuteIcon, ParachuteDropIcon } from '../components/ParachuteIcon';
 import { PlanningDZ } from './PlanningDZ';
 import { Layout } from '../components/Layout';
@@ -131,57 +131,89 @@ type DashTab = 'accueil' | 'carnet' | 'planning' | 'compte';
 
 const STAR_COLORS = ['', '#EF4444', '#F59E0B', '#EAB308', '#84CC16', '#10B981'];
 
-// ─── Réflexe du Jour card ─────────────────────────────────────────────────────
+// ─── Raccourcis secondaires (grille 3 tuiles) ────────────────────────────────
 
-function ReflexeDuJourCard({ userId }: { userId: string }) {
+function ShortcutTiles({ userId }: { userId: string }) {
   const navigate = useNavigate();
-  const [done, setDone]       = useState(false);
-  const [streak, setStreak]   = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [reflexeDone, setReflexeDone] = useState(false);
+  const [streak, setStreak]           = useState(0);
+  const [reflexeLoading, setReflexeLoading] = useState(true);
+  const [scanOpen, setScanOpen]       = useState(false);
 
   useEffect(() => {
-    async function load() {
-      const today = new Date().toISOString().slice(0, 10);
-      const [{ data: attempt }, { data: streakRow }] = await Promise.all([
-        supabase.from('drill_attempts').select('id').eq('profil_id', userId).eq('drill_date', today).maybeSingle(),
-        supabase.from('drill_streaks').select('streak_courant').eq('profil_id', userId).maybeSingle(),
-      ]);
-      setDone(!!attempt);
+    const today = new Date().toISOString().slice(0, 10);
+    Promise.all([
+      supabase.from('drill_attempts').select('id').eq('profil_id', userId).eq('drill_date', today).maybeSingle(),
+      supabase.from('drill_streaks').select('streak_courant').eq('profil_id', userId).maybeSingle(),
+    ]).then(([{ data: attempt }, { data: streakRow }]) => {
+      setReflexeDone(!!attempt);
       setStreak(streakRow?.streak_courant ?? 0);
-      setLoading(false);
-    }
-    load();
+      setReflexeLoading(false);
+    });
   }, [userId]);
 
-  if (loading) return null;
+  const tiles = [
+    {
+      key: 'reflexe',
+      icon: reflexeDone ? '✅' : '🎯',
+      label: 'Réflexe du jour',
+      badge: reflexeLoading ? null : reflexeDone
+        ? <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.15)', color: '#34D399' }}>✓ fait</span>
+        : <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(239,68,68,0.12)', color: '#FCA5A5' }}>à faire</span>,
+      streak: streak > 0 ? streak : null,
+      bg: reflexeDone ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.07)',
+      border: reflexeDone ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(239,68,68,0.25)',
+      onClick: () => navigate('/reflexe'),
+    },
+    {
+      key: 'academie',
+      icon: '🎓',
+      label: 'Académie',
+      badge: <span className="text-[10px]" style={{ color: '#A78BFA' }}>Quiz · XP</span>,
+      streak: null,
+      bg: 'rgba(139,92,246,0.07)',
+      border: '1px solid rgba(139,92,246,0.2)',
+      onClick: () => navigate('/academie'),
+    },
+    {
+      key: 'scanner',
+      icon: '🎒',
+      label: 'Scanner un sac',
+      badge: <span className="text-[10px]" style={{ color: 'var(--c-dim)' }}>QR code</span>,
+      streak: null,
+      bg: 'var(--c-surface)',
+      border: '1px solid var(--c-border-f)',
+      onClick: () => setScanOpen(true),
+    },
+  ];
 
   return (
-    <button
-      onClick={() => navigate('/reflexe')}
-      className="w-full flex items-center gap-3 rounded-xl px-4 py-3 mb-4 text-left"
-      style={{
-        background: done
-          ? 'rgba(16,185,129,0.07)'
-          : 'linear-gradient(135deg, rgba(239,68,68,0.12), rgba(249,115,22,0.08))',
-        border: done ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(239,68,68,0.35)',
-        cursor: 'pointer',
-      }}>
-      <span className="text-2xl">{done ? '✅' : '🔴'}</span>
-      <div className="flex-1">
-        <p className="text-sm font-bold" style={{ color: done ? '#6EE7B7' : '#FCA5A5' }}>
-          Réflexe du jour {done ? '— fait !' : ''}
-        </p>
-        <p className="text-xs" style={{ color: '#64748B' }}>
-          {done ? 'Revenez demain pour le prochain scénario' : 'Scénario d\'urgence · 30 secondes · Gratuit'}
-        </p>
+    <>
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        {tiles.map(t => (
+          <button
+            key={t.key}
+            onClick={t.onClick}
+            className="flex flex-col items-center gap-1 rounded-xl py-3 px-2 text-center transition-opacity active:opacity-70"
+            style={{ background: t.bg, border: t.border, cursor: 'pointer' }}
+          >
+            <span className="text-xl leading-none">{t.icon}</span>
+            <span className="text-[11px] font-semibold leading-tight" style={{ color: 'var(--c-text)' }}>
+              {t.label}
+            </span>
+            <div className="flex items-center gap-1 flex-wrap justify-center">
+              {t.badge}
+              {t.streak !== null && (
+                <span className="flex items-center gap-0.5 text-[10px] font-bold" style={{ color: '#F97316' }}>
+                  <Flame className="w-2.5 h-2.5" />{t.streak}
+                </span>
+              )}
+            </div>
+          </button>
+        ))}
       </div>
-      {streak > 0 && (
-        <span className="flex items-center gap-1 text-xs font-bold flex-shrink-0" style={{ color: '#F97316' }}>
-          <Flame className="w-3.5 h-3.5" /> {streak}
-        </span>
-      )}
-      {!done && <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: '#EF4444' }} />}
-    </button>
+      {scanOpen && <QrScanner onClose={() => setScanOpen(false)} />}
+    </>
   );
 }
 
@@ -751,33 +783,8 @@ export function DashboardPage() {
 
               <MonSacDuJour userId={user!.id} />
 
-              {/* Réflexe du Jour */}
-              {!isDemo && <ReflexeDuJourCard userId={user!.id} />}
-
-              {/* Académie ParaPass */}
-              {!isDemo && (
-                <Link to="/academie"
-                  className="flex items-center gap-3 rounded-xl px-4 py-3 mb-4 no-underline"
-                  style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(59,130,246,0.08))', border: '1px solid rgba(139,92,246,0.3)', textDecoration: 'none' }}>
-                  <span className="text-2xl">🎓</span>
-                  <div className="flex-1">
-                    <p className="text-sm font-bold" style={{ color: '#C4B5FD' }}>Académie ParaPass</p>
-                    <p className="text-xs" style={{ color: '#64748B' }}>Quiz réglementaire · XP · Badges</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: '#8B5CF6' }} />
-                </Link>
-              )}
-
-              {/* Bouton scanner sac (session correcte garantie) */}
-              {!isDemo && (
-                <div className="mb-4">
-                  <QrScannerButton
-                    label="📷 Scanner un sac"
-                    className="w-full flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-colors"
-                    style={{ height: 44, background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)', cursor: 'pointer' }}
-                  />
-                </div>
-              )}
+              {/* Raccourcis secondaires — grille 3 tuiles compactes */}
+              {!isDemo && <ShortcutTiles userId={user!.id} />}
 
               {(profile.type_pratiquant === 'professionnel' || !!(profile.preferences as Record<string, unknown> | null | undefined)?.suivi_dgac) && (() => {
                 const now = new Date();
