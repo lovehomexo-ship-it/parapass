@@ -225,12 +225,13 @@ export function AcademieQuizPage() {
     setSubmitError(null);
 
     const tempMs = Date.now() - startTimeRef.current;
+    const modeDb = mode === 'daily' ? 'jour' : 'entrainement';
 
     const { data, error } = await supabase.rpc('submit_quiz_answer', {
       p_question_id: q.id,
       p_reponse: propId,
-      p_temps_ms: tempMs,
-      p_mode: mode,
+      p_temps_ms: Math.round(tempMs),
+      p_mode: modeDb,
       p_session_id: sessionId,
     });
 
