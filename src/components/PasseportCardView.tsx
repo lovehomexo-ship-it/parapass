@@ -442,8 +442,8 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
           </div>
         </div>
 
-        {/* ── Row 3 : QR (gauche) + Cachet & Signature (droite) ── */}
-        <div className="flex items-stretch gap-4">
+        {/* ── Row 3 : QR (gauche) · Cachet (centre) · Signature (droite) ── */}
+        <div className="flex items-center justify-between gap-3">
 
           {/* Gauche — QR code */}
           <div className="flex flex-col items-center gap-1 flex-shrink-0">
@@ -460,46 +460,44 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
             )}
           </div>
 
-          {/* Droite — Cachet DZ (haut) + Signature titulaire (bas) */}
-          <div className="flex flex-col gap-2 flex-1 justify-between">
-
-            {/* Cachet DZ */}
-            <div className="flex flex-col items-center gap-1">
-              <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Cachet DZ</div>
-              <div
-                className="flex items-center justify-center overflow-hidden"
-                style={{
-                  width: 60, height: 60, borderRadius: '50%',
-                  background: dernierControle ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)',
-                  border: `2px solid ${dernierControle ? couleurCachet + '60' : 'rgba(255,255,255,0.08)'}`,
-                  opacity: dernierControle ? 1 : 0.3,
-                }}
-              >
-                {dernierControle ? (
-                  logoUrl ? (
-                    <img src={logoUrl} alt="Logo DZ" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 4 }} />
-                  ) : tamponConfig ? (
-                    <TamponDZ
-                      config={{ ...tamponConfig, rotation: 0, opacity: 0.95, dateValidation: dernierControle.controle_le }}
-                      className="w-full h-full"
-                      stampEffect
-                    />
-                  ) : (
-                    <CachetSVG nomCentre={nomCentre} nomDT={nomDT} couleur={couleurCachet} />
-                  )
+          {/* Centre — Cachet DZ */}
+          <div className="flex flex-col items-center gap-1 flex-shrink-0">
+            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Cachet DZ</div>
+            <div
+              className="flex items-center justify-center overflow-hidden"
+              style={{
+                width: 72, height: 72, borderRadius: '50%',
+                background: dernierControle ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)',
+                border: `2px solid ${dernierControle ? couleurCachet + '60' : 'rgba(255,255,255,0.08)'}`,
+                opacity: dernierControle ? 1 : 0.3,
+              }}
+            >
+              {dernierControle ? (
+                logoUrl ? (
+                  <img src={logoUrl} alt="Logo DZ" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 5 }} />
+                ) : tamponConfig ? (
+                  <TamponDZ
+                    config={{ ...tamponConfig, rotation: 0, opacity: 0.95, dateValidation: dernierControle.controle_le }}
+                    className="w-full h-full"
+                    stampEffect
+                  />
                 ) : (
-                  <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>—</span>
-                )}
-              </div>
-            </div>
-
-            {/* Signature titulaire */}
-            <div className="flex flex-col gap-0.5">
-              <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Signature titulaire</div>
-              {isOwner && profile.signature_url ? (
-                <img src={profile.signature_url} alt="Signature" style={{ height: 26, maxWidth: 110, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.8 }} />
+                  <CachetSVG nomCentre={nomCentre} nomDT={nomDT} couleur={couleurCachet} />
+                )
               ) : (
-                <div style={{ height: 20, borderBottom: '1px dashed rgba(255,255,255,0.2)' }} />
+                <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>—</span>
+              )}
+            </div>
+          </div>
+
+          {/* Droite — Signature titulaire (aussi grande que le QR) */}
+          <div className="flex flex-col items-center gap-1 flex-1">
+            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Signature titulaire</div>
+            <div style={{ width: '100%', minHeight: 76, display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid rgba(255,255,255,0.12)', paddingBottom: 4 }}>
+              {isOwner && profile.signature_url ? (
+                <img src={profile.signature_url} alt="Signature" style={{ maxHeight: 72, maxWidth: '100%', objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.85 }} />
+              ) : (
+                <div style={{ width: '100%', height: 72 }} />
               )}
             </div>
           </div>
