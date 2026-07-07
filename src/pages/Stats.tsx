@@ -43,10 +43,10 @@ export function StatsPage({ sauts }: StatsPageProps) {
     const ouvertures = sauts.map((s) => s.hauteur_ouverture).filter((v): v is number => typeof v === 'number' && v > 0);
     const ouvertureMoyenne = ouvertures.length > 0 ? Math.round(ouvertures.reduce((a, b) => a + b, 0) / ouvertures.length) : 0;
 
-    // Chute libre moyenne: (largage - ouverture) / 200 * 60 seconds
+    // Altitude de chute libre moyenne (m) = altitude largage - altitude ouverture
     const sautsAvecDual = sauts.filter((s) => s.hauteur_m > 0 && s.hauteur_ouverture && s.hauteur_ouverture > 0 && s.hauteur_m > s.hauteur_ouverture!);
     const chuteLibreMoyenne = sautsAvecDual.length > 0
-      ? Math.round(sautsAvecDual.reduce((acc, s) => acc + (s.hauteur_m - s.hauteur_ouverture!) / 200 * 60, 0) / sautsAvecDual.length)
+      ? Math.round(sautsAvecDual.reduce((acc, s) => acc + (s.hauteur_m - s.hauteur_ouverture!), 0) / sautsAvecDual.length)
       : 0;
 
     // Dropzone préférée
@@ -230,7 +230,7 @@ export function StatsPage({ sauts }: StatsPageProps) {
             { label: 'Altitude moyenne', value: `${stats.altMoyenne.toLocaleString('fr-FR')} m`, icon: <AltitudeIcon className="w-10 h-10 text-sky-600" />, bg: 'bg-sky-50' },
             { label: 'Altitude record', value: `${stats.altMax.toLocaleString('fr-FR')} m`, icon: <Trophy className="w-5 h-5 text-amber-600" />, bg: 'bg-amber-50' },
             { label: 'Dropzone préférée', value: stats.dropzoneFav, icon: <MapPin className="w-5 h-5 text-red-500" />, bg: 'bg-red-50' },
-            ...(stats.chuteLibreMoyenne > 0 ? [{ label: 'Chute libre moy.', value: `${stats.chuteLibreMoyenne} s`, icon: <TrendingUp className="w-5 h-5 text-purple-500" />, bg: 'bg-purple-50', subtitle: undefined as string | undefined }] : []),
+            ...(stats.chuteLibreMoyenne > 0 ? [{ label: 'Chute libre moy.', value: `${stats.chuteLibreMoyenne.toLocaleString('fr-FR')} m`, icon: <TrendingUp className="w-5 h-5 text-purple-500" />, bg: 'bg-purple-50', subtitle: undefined as string | undefined }] : []),
             ...(() => {
               const souffs = sauts.filter((s) => s.source === 'soufflerie');
               const nbSess = souffs.length;

@@ -129,13 +129,13 @@ export function AcademieQuizPage() {
       if (!user) return;
 
       // XP avant session (pour détecter nouveau grade)
-      const { data: xpRows } = await supabase.from('quiz_xp').select('xp_gagnes').eq('profil_id', user.id);
-      setXpBeforeSession((xpRows ?? []).reduce((s: number, r: { xp_gagnes: number }) => s + r.xp_gagnes, 0));
+      const { data: xpRows } = await supabase.from('quiz_xp').select('xp').eq('user_id', user.id);
+      setXpBeforeSession((xpRows ?? []).reduce((s: number, r: { xp: number }) => s + r.xp, 0));
 
       let query = supabase
         .from('quiz_questions')
         .select('id, enonce, propositions, theme, niveau_brevet_mini, difficulte')
-        .eq('valide', true);
+        .eq('statut', 'validee');
 
       if (mode === 'daily') {
         // Sélection déterministe du jour

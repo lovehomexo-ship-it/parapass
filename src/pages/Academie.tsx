@@ -59,15 +59,15 @@ function useAcademieData(userId: string | undefined) {
       // XP total
       const { data: xpRows } = await supabase
         .from('quiz_xp')
-        .select('xp_gagnes')
-        .eq('profil_id', userId!);
-      const total = (xpRows ?? []).reduce((s: number, r: { xp_gagnes: number }) => s + r.xp_gagnes, 0);
+        .select('xp')
+        .eq('user_id', userId!);
+      const total = (xpRows ?? []).reduce((s: number, r: { xp: number }) => s + r.xp, 0);
 
       // Streak
       const { data: streak } = await supabase
         .from('quiz_streaks')
-        .select('streak_courant')
-        .eq('profil_id', userId!)
+        .select('streak_actuel')
+        .eq('user_id', userId!)
         .maybeSingle();
 
       // Quiz du jour déjà fait ?
@@ -75,14 +75,14 @@ function useAcademieData(userId: string | undefined) {
       const { data: attempts } = await supabase
         .from('quiz_attempts')
         .select('id')
-        .eq('profil_id', userId!)
+        .eq('user_id', userId!)
         .eq('mode', 'daily')
-        .gte('attempted_at', today)
+        .gte('created_at', today)
         .limit(1);
 
       setXp({
         xp_total: total,
-        streak: streak?.streak_courant ?? 0,
+        streak: streak?.streak_actuel ?? 0,
         daily_done: (attempts?.length ?? 0) > 0,
       });
 
@@ -90,37 +90,53 @@ function useAcademieData(userId: string | undefined) {
       const { data: earned } = await supabase
         .from('quiz_badges_earned')
         .select('badge_id, earned_at')
-        .eq('profil_id', userId!);
+        .eq('user_id', userId!);
       setBadges(earned ?? []);
 
       // Classement DZ
       if (cid) {
         const { data: ranking } = await supabase
           .from('quiz_xp')
-          .select('profil_id, xp_gagnes, profil:profiles(nom, prenom, centre_id)')
-          .eq('profil:profiles.centre_id', cid);
+          .select('user_id, xp, profil:profiles!user_id(nom, prenom, centre_id)');
 
         if (ranking) {
           const byUser: Record<string, { nom: string; prenom: string; xp: number }> = {};
-          for (const r of ranking as Array<{ profil_id: string; xp_gagnes: number; profil: { nom: string; prenom: string } | null }>) {
-            if (!r.profil) continue;
-            if (!byUser[r.profil_id]) byUser[r.profil_id] = { nom: r.profil.nom, prenom: r.profil.prenom, xp: 0 };
-            byUser[r.profil_id].xp += r.xp_gagnes;
+          for (const r of ranking as Array<{ user_id: string; xp: number; profil: { nom: string; prenom: string; centre_id: string | null } | null }>) {
+            if (!r.profil || r.profil.centre_id !== cid) continue;
+            if (!byUser[r.user_id]) byUser[r.user_id] = { nom: r.profil.nom, prenom: r.profil.prenom, xp: 0 };
+            byUser[r.user_id].xp += r.xp;
           }
           const sorted = Object.entries(byUser)
-            .map(([id, v], i) => ({ profil_id: id, nom: v.nom, prenom: v.prenom, xp_total: v.xp, rang: i + 1 }))
+            .map(([id, v]) => ({ profil_id: id, nom: v.nom, prenom: v.prenom, xp_total: v.xp, rang: 0 }))
             .sort((a, b) => b.xp_total - a.xp_total)
             .map((r, i) => ({ ...r, rang: i + 1 }));
           setClassement(sorted.slice(0, 10));
         }
       }
 
-      // Progrès par thème
+      // Progrès par thème : join quiz_questions pour récupérer le thème
       const { data: prog } = await supabase
         .from('quiz_progress')
-        .select('theme, nb_questions, nb_correctes')
-        .eq('profil_id', userId!);
-      setThemeProgress(prog ?? []);
+        .select('nb_fois_vue, nb_fois_correcte, question:quiz_questions!question_id(theme)')
+        .eq('user_id', userId!);
+
+      if (prog) {
+        const byTheme: Record<string, { vues: number; correctes: number }> = {};
+        for (const row of prog as Array<{ nb_fois_vue: number; nb_fois_correcte: number; question: { theme: string } | null }>) {
+          const theme = row.question?.theme;
+          if (!theme) continue;
+          if (!byTheme[theme]) byTheme[theme] = { vues: 0, correctes: 0 };
+          byTheme[theme].vues += row.nb_fois_vue;
+          byTheme[theme].correctes += row.nb_fois_correcte;
+        }
+        setThemeProgress(Object.entries(byTheme).map(([theme, v]) => ({
+          theme,
+          nb_questions: v.vues,
+          nb_correctes: v.correctes,
+        })));
+      } else {
+        setThemeProgress([]);
+      }
 
       setLoading(false);
     }

@@ -23,7 +23,7 @@ interface Question {
   difficulte: 1 | 2 | 3;
   niveau_brevet_mini: string | null;
   propositions: Proposition[];
-  valide: boolean;
+  statut: string;
   created_at: string;
 }
 
@@ -237,7 +237,7 @@ export function QuizAdminPage() {
       difficulte: form.difficulte,
       niveau_brevet_mini: form.niveau_brevet_mini || null,
       propositions: form.propositions,
-      valide: true,
+      statut: 'validee',
     };
 
     if (editing) {
@@ -251,7 +251,7 @@ export function QuizAdminPage() {
   };
 
   const toggleValide = async (q: Question) => {
-    await supabase.from('quiz_questions').update({ valide: !q.valide }).eq('id', q.id);
+    await supabase.from('quiz_questions').update({ statut: q.statut === 'validee' ? 'brouillon' : 'validee' }).eq('id', q.id);
     await load();
   };
 
@@ -262,7 +262,7 @@ export function QuizAdminPage() {
   };
 
   const filtered = questions.filter(q =>
-    filterValide === 'all' ? true : filterValide === 'valide' ? q.valide : !q.valide
+    filterValide === 'all' ? true : filterValide === 'valide' ? q.statut === 'validee' : q.statut !== 'validee'
   );
 
   return (
@@ -271,7 +271,7 @@ export function QuizAdminPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-xl font-bold" style={{ color: 'var(--c-text)' }}>Quiz Admin</h1>
-            <p className="text-sm" style={{ color: 'var(--c-muted)' }}>{questions.length} questions · {questions.filter(q => q.valide).length} validées</p>
+            <p className="text-sm" style={{ color: 'var(--c-muted)' }}>{questions.length} questions · {questions.filter(q => q.statut === 'validee').length} validées</p>
           </div>
           <button
             onClick={() => { setShowForm(true); setEditing(null); }}
@@ -332,7 +332,7 @@ export function QuizAdminPage() {
                       <p className="text-sm font-semibold truncate" style={{ color: 'var(--c-text)' }}>{q.enonce}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: `${diff.color}15`, color: diff.color }}>{diff.label}</span>
-                        {!q.valide && <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B' }}>Brouillon</span>}
+                        {q.statut !== 'validee' && <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B' }}>Brouillon</span>}
                       </div>
                     </div>
                     {isExpanded ? <ChevronUp className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--c-muted)' }} /> : <ChevronDown className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--c-muted)' }} />}
@@ -356,8 +356,8 @@ export function QuizAdminPage() {
                         <button
                           onClick={() => toggleValide(q)}
                           className="flex-1 rounded-lg py-2 text-xs font-semibold"
-                          style={{ background: q.valide ? 'rgba(245,158,11,0.1)' : 'rgba(16,185,129,0.1)', color: q.valide ? '#F59E0B' : '#10B981', border: `1px solid ${q.valide ? 'rgba(245,158,11,0.3)' : 'rgba(16,185,129,0.3)'}` }}>
-                          {q.valide ? 'Dépublier' : 'Valider & Publier'}
+                          style={{ background: q.statut === 'validee' ? 'rgba(245,158,11,0.1)' : 'rgba(16,185,129,0.1)', color: q.statut === 'validee' ? '#F59E0B' : '#10B981', border: `1px solid ${q.statut === 'validee' ? 'rgba(245,158,11,0.3)' : 'rgba(16,185,129,0.3)'}` }}>
+                          {q.statut === 'validee' ? 'Dépublier' : 'Valider & Publier'}
                         </button>
                         <button
                           onClick={() => { setEditing(q); setShowForm(false); setExpanded(null); }}

@@ -265,7 +265,7 @@ export function BadgesPage() {
   const newBadgeTypes = new Set(badges.filter((b) => !b.notifie).map((b) => b.type_badge));
   const obtained = badges.length;
   const total = BADGES.length;
-  const totalSauts = sauts.length;
+  const totalSauts = sauts.filter(s => s.statut === 'valide' || s.statut === 'historique').length;
 
   const rareteCount = (rarete: string) =>
     BADGES.filter((b) => b.rarete === rarete && obtainedSet.has(b.type)).length;
