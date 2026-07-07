@@ -104,30 +104,6 @@ export function ReflexeDuJourPage() {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
   }, []);
 
-  useEffect(() => {
-    if (loading || alreadyDone || result || !scenario) return;
-    startRef.current = Date.now();
-    timedOutRef.current = false;
-    setTimer(DRILL_TIMER_SEC);
-    timerRef.current = setInterval(() => {
-      setTimer(t => {
-        if (t <= 1) {
-          stopTimer();
-          setTimedOut(true);
-          // Ne pas appeler submitAnswer depuis un state updater (effet de bord interdit)
-          // On déclenche le submit après le cycle de rendu via setTimeout
-          if (!timedOutRef.current) {
-            timedOutRef.current = true;
-            setTimeout(() => submitAnswer('__timeout__'), 0);
-          }
-          return 0;
-        }
-        return t - 1;
-      });
-    }, 1000);
-    return () => stopTimer();
-  }, [loading, alreadyDone, scenario, stopTimer, submitAnswer]);
-
   // ── Soumission ──────────────────────────────────────────────────────────────
 
   const submitAnswer = useCallback(async (propId: string) => {
@@ -156,6 +132,28 @@ export function ReflexeDuJourPage() {
     }
     setSubmitting(false);
   }, [scenario, submitting, result, stopTimer]);
+
+  useEffect(() => {
+    if (loading || alreadyDone || result || !scenario) return;
+    startRef.current = Date.now();
+    timedOutRef.current = false;
+    setTimer(DRILL_TIMER_SEC);
+    timerRef.current = setInterval(() => {
+      setTimer(t => {
+        if (t <= 1) {
+          stopTimer();
+          setTimedOut(true);
+          if (!timedOutRef.current) {
+            timedOutRef.current = true;
+            setTimeout(() => submitAnswer('__timeout__'), 0);
+          }
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => stopTimer();
+  }, [loading, alreadyDone, scenario, stopTimer, submitAnswer]);
 
   // ── États d'affichage ───────────────────────────────────────────────────────
 
