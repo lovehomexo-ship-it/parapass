@@ -52,7 +52,9 @@ export function useBadges(userId: string | undefined, sauts: Saut[]) {
     const existingTypes = new Set((freshData ?? []).map((b) => b.type_badge));
 
     const toAward: string[] = [];
-    const total = sauts.length;
+    // Seuls les sauts validés comptent pour les badges de volume
+    const validSauts = sauts.filter((s) => s.statut === 'valide' || s.statut === 'historique');
+    const total = validSauts.length;
     const lieux = [...new Set(sauts.map((s) => s.lieu))];
     const sorted = [...sauts].sort((a, b) => a.date_saut.localeCompare(b.date_saut));
     const firstDate = sorted[0]?.date_saut ? new Date(sorted[0].date_saut) : null;

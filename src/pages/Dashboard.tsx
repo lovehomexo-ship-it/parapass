@@ -513,7 +513,7 @@ export function DashboardPage() {
   ];
   const nextVolume = volumeThresholds.find(([, type]) => !earnedTypes.has(type));
   const nextBadgeDef = nextVolume ? BADGES.find((b) => b.type === nextVolume[1]) : null;
-  const nextBadgeSautsRestants = nextVolume ? Math.max(0, nextVolume[0] - totalSauts) : 0;
+  const nextBadgeSautsRestants = nextVolume ? Math.max(0, nextVolume[0] - validSauts) : 0;
 
   // ─── Licence & certificat médical data ───────────────────────────────────
   const licenceFFP = licences.find((l) => l.organisme === 'FFP') ?? licences[0] ?? null;
@@ -916,9 +916,9 @@ export function DashboardPage() {
                         <div className="flex items-center gap-2">
                           <Award className="w-3.5 h-3.5 text-orange-400" />
                           <span className="text-xs font-bold" style={{ color: 'var(--c-text)' }}>Badges</span>
-                          {earnedDefs.length > 0 && (
+                          {badges.length > 0 && (
                             <span style={{ background: 'rgba(249,115,22,0.2)', color: '#FB923C', fontSize: 10 }} className="font-semibold px-1.5 py-0.5 rounded-full">
-                              {earnedDefs.length}
+                              {badges.length}
                             </span>
                           )}
                         </div>
@@ -1701,7 +1701,10 @@ function BanniereOCR({ onClic }: { onClic: () => void }) {
 
 interface JumpProgSummary {
   note_globale: number | null;
-  score_position: number | null;
+  note_tete: number | null;
+  note_bassin: number | null;
+  note_jambes: number | null;
+  note_bras: number | null;
   note_ouverture_voile: number | null;
   note_atterrissage: number | null;
   note_mental: number | null;
@@ -1741,11 +1744,11 @@ function ProgressionCard({ userId }: { userId: string | null }) {
     (async () => {
       const { data: rows } = await supabase
         .from('jump_progression')
-        .select('note_globale,score_position,note_ouverture_voile,note_atterrissage,note_mental,precision_metres,sortie_avion,retour_face_sol,vigilance_altitude,ouverture,separation,trajectoire,declenchement,pilotage_voile,circuit_atterro,precision_atterro,gestion_urgences,created_at')
+        .select('note_globale,note_tete,note_bassin,note_jambes,note_bras,note_ouverture_voile,note_atterrissage,note_mental,precision_metres,sortie_avion,retour_face_sol,vigilance_altitude,ouverture,separation,trajectoire,declenchement,pilotage_voile,circuit_atterro,precision_atterro,gestion_urgences,created_at')
         .eq('user_id', userId)
         .not('note_globale', 'is', null)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(100);
       setData((rows as JumpProgSummary[]) ?? []);
       setLoading(false);
     })();
@@ -1755,7 +1758,10 @@ function ProgressionCard({ userId }: { userId: string | null }) {
   if (data.length < 1) return null;
 
   const noteGlobaleAvg = avg(data.map((d) => d.note_globale));
-  const positionAvg = avg(data.map((d) => d.score_position ?? avg([d.note_globale])));
+  const positionAvg = avg(data.map((d) => {
+    const vals = [d.note_tete, d.note_bassin, d.note_jambes, d.note_bras].filter((v): v is number => v !== null);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+  }));
   const atterrissageAvg = avg(data.map((d) => d.note_atterrissage));
   const mentalAvg = avg(data.map((d) => d.note_mental));
 
