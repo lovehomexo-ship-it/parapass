@@ -132,25 +132,46 @@ export function AcademieQuizPage() {
       const { data: xpRows } = await supabase.from('quiz_xp').select('xp').eq('user_id', user.id);
       setXpBeforeSession((xpRows ?? []).reduce((s: number, r: { xp: number }) => s + r.xp, 0));
 
+      // Brevet du user → filtre niveau_brevet_mini
+      const { data: profData } = await supabase
+        .from('profiles')
+        .select('type_brevet_principal')
+        .eq('id', user.id)
+        .maybeSingle();
+      const userBrevet = profData?.type_brevet_principal ?? null;
+      const BREVET_ORDER = ['A', 'B', 'C', 'D'];
+      const userBrevetIdx = userBrevet ? BREVET_ORDER.indexOf(userBrevet) : BREVET_ORDER.length - 1;
+      const allowedBrevets = BREVET_ORDER.slice(0, userBrevetIdx + 1);
+
       let query = supabase
         .from('quiz_questions')
         .select('id, enonce, propositions, theme, niveau_brevet_mini, difficulte')
-        .eq('statut', 'validee');
+        .eq('statut', 'validee')
+        .or(`niveau_brevet_mini.is.null,niveau_brevet_mini.in.(${allowedBrevets.join(',')})`);
 
       if (mode === 'daily') {
-        // Sélection déterministe du jour
-        query = query.order('id'); // on filtrera côté client avec hash simulé
+        query = query.order('id');
       } else if (theme) {
         query = query.eq('theme', theme);
       }
 
-      const { data } = await query.limit(50);
-      if (!data || data.length === 0) { setLoading(false); return; }
+      const { data, error } = await query.limit(100);
+
+      if (error) {
+        console.error('[AcademieQuiz] Erreur chargement questions:', error.message, error.details);
+        setLoading(false);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        console.warn('[AcademieQuiz] 0 question retournée — theme:', theme, 'brevet:', userBrevet);
+        setLoading(false);
+        return;
+      }
 
       let pool = data as QuizQuestion[];
 
       if (mode === 'daily') {
-        // pseudo-déterministe: shuffle avec seed = date
         const seed = new Date().toISOString().slice(0, 10).replace(/-/g, '');
         pool = [...pool].sort((a, b) => {
           const ha = parseInt(a.id.replace(/-/g, '').slice(0, 8), 16) ^ parseInt(seed);
@@ -161,7 +182,9 @@ export function AcademieQuizPage() {
         pool = [...pool].sort(() => Math.random() - 0.5);
       }
 
-      setQuestions(pool.slice(0, QUESTIONS_PER_SESSION));
+      // Pour le défi du jour : minimum 5 questions, on sert ce qui est dispo
+      const count = mode === 'daily' ? Math.max(Math.min(pool.length, QUESTIONS_PER_SESSION), Math.min(5, pool.length)) : QUESTIONS_PER_SESSION;
+      setQuestions(pool.slice(0, count));
       setLoading(false);
     }
     load();
@@ -246,7 +269,10 @@ export function AcademieQuizPage() {
       <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: '#0F172A' }}>
         <div className="text-5xl mb-4">📭</div>
         <p className="text-lg font-semibold mb-2" style={{ color: '#F8FAFC' }}>Aucune question disponible</p>
-        <p className="text-sm mb-6" style={{ color: '#94A3B8' }}>Revenez bientôt, la banque de questions s'enrichit régulièrement.</p>
+        <p className="text-sm mb-2" style={{ color: '#94A3B8' }}>
+          {theme ? `Aucune question trouvée pour le thème « ${theme} ».` : 'La banque de questions est vide pour ce mode.'}
+        </p>
+        <p className="text-sm mb-6" style={{ color: '#475569' }}>La banque s'enrichit régulièrement — revenez bientôt.</p>
         <button onClick={() => navigate('/academie')} className="rounded-xl px-6 py-3 font-semibold" style={{ background: '#7C3AED', color: '#fff' }}>
           Retour à l'Académie
         </button>

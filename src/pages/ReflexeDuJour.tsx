@@ -90,7 +90,7 @@ export function ReflexeDuJourPage() {
         .select('id, situation, propositions, categorie, niveau_brevet_mini')
         .eq('valide', true);
 
-      const brevet = (profile as { brevet?: string | null } | null)?.brevet ?? null;
+      const brevet = (profile as { type_brevet_principal?: string | null } | null)?.type_brevet_principal ?? null;
       const picked = pickTodayScenario((data ?? []) as DrillScenario[], brevet);
       setScenario(picked);
       setLoading(false);

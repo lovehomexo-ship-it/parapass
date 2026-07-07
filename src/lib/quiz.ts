@@ -38,7 +38,7 @@ export const THEMES: Record<string, { label: string; icone: string; color: strin
   materiel:      { label: 'Matériel',              icone: '🪂', color: '#F97316', bg: 'rgba(249,115,22,0.1)' },
   meteo:         { label: 'Météo & aérologie',     icone: '🌤',  color: '#06B6D4', bg: 'rgba(6,182,212,0.1)' },
   pilotage:      { label: 'Pilotage sous voile',   icone: '🎮', color: '#10B981', bg: 'rgba(16,185,129,0.1)' },
-  procedures:    { label: 'Procédures DZ',         icone: '🏔️',  color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)' },
+  procedures_dz: { label: 'Procédures DZ',         icone: '🏔️',  color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)' },
 };
 
 // ─── Grades par XP cumulé ─────────────────────────────────────────────────────
