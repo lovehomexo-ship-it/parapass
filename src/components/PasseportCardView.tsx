@@ -159,7 +159,7 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
       style={{
         background: 'linear-gradient(135deg, #001A4D 0%, #0f1a30 60%, #1E3A5F 100%)',
         boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-        minHeight: 320,
+        height: '100%',
       }}
     >
       {/* Filigrane */}
@@ -169,15 +169,15 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
       {/* Bande orange FFP */}
       <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: '#F97316' }} />
 
-      <div className="relative flex flex-col gap-2" style={{ padding: '14px 14px 12px', minHeight: 'calc(320px - 6px)', justifyContent: 'space-between' }}>
+      <div className="relative flex flex-col gap-2" style={{ padding: '14px 14px 12px', height: '100%', justifyContent: 'space-between', boxSizing: 'border-box' }}>
 
         {/* ── Row 1 : Header ── */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-7 w-auto flex-shrink-0" />
             <div>
-              <div style={{ fontSize: 10, color: 'rgba(147,197,253,0.9)', letterSpacing: '0.04em' }}>Carnet de sauts numérique</div>
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: '#F97316' }}>CARNET DE SAUTS NUMÉRIQUE</div>
+              <div style={{ fontSize: 10, color: 'rgba(147,197,253,0.9)', letterSpacing: '0.04em' }}>Licence numérique</div>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: '#F97316' }}>LICENCE NUMÉRIQUE</div>
             </div>
           </div>
           <div
@@ -372,7 +372,7 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
       style={{
         background: 'linear-gradient(135deg, #001A4D 0%, #0d1f3e 55%, #1a3060 100%)',
         boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-        minHeight: 320,
+        height: '100%',
       }}
     >
       {/* Top accent stripe — FFP orange */}
@@ -383,38 +383,38 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
         <ParachuteIcon className="w-48 h-48 text-white" />
       </div>
 
-      <div className="relative flex flex-col gap-2" style={{ padding: '14px 14px 12px', minHeight: 'calc(320px - 6px)', justifyContent: 'space-between' }}>
+      <div className="relative flex flex-col gap-1.5" style={{ padding: '12px 14px 10px', height: '100%', justifyContent: 'space-between', boxSizing: 'border-box' }}>
 
         {/* ── Row 1 : Header ── */}
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '0.04em', color: '#fff', lineHeight: 1.1, textTransform: 'uppercase' }}>
-              {profile.nom} <span style={{ fontWeight: 400, fontSize: 14, textTransform: 'none', letterSpacing: 0 }}>{profile.prenom}</span>
+            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '0.04em', color: '#fff', lineHeight: 1.1, textTransform: 'uppercase' }}>
+              {profile.nom} <span style={{ fontWeight: 400, fontSize: 13, textTransform: 'none', letterSpacing: 0 }}>{profile.prenom}</span>
             </div>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: '#F97316', marginTop: 2 }}>CARNET DE SAUTS NUMÉRIQUE</div>
-            <div style={{ fontSize: 9, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: '#F97316', marginTop: 2 }}>LICENCE NUMÉRIQUE</div>
+            <div style={{ fontSize: 8, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>
               Fédération Française de Parachutisme
             </div>
           </div>
-          <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-7 w-auto flex-shrink-0" style={{ opacity: 0.7 }} />
+          <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-6 w-auto flex-shrink-0" style={{ opacity: 0.7 }} />
         </div>
 
         {/* ── Row 2 : Cachet + QR ── */}
-        <div className="flex items-start gap-4">
+        <div className="flex items-center gap-4">
 
           {/* Cachet DZ */}
-          <div className="flex flex-col items-center gap-1.5 flex-shrink-0" style={{ minWidth: 96 }}>
-            <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Cachet DZ</div>
+          <div className="flex flex-col items-center gap-1 flex-shrink-0" style={{ minWidth: 80 }}>
+            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Cachet DZ</div>
             <div
               className="flex items-center justify-center overflow-hidden"
               style={{
-                width: 80, height: 80, borderRadius: '50%',
+                width: 68, height: 68, borderRadius: '50%',
                 background: 'rgba(255,255,255,0.06)',
                 border: `2px solid ${couleurCachet}40`,
               }}
             >
               {logoUrl ? (
-                <img src={logoUrl} alt="Logo DZ" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 6 }} />
+                <img src={logoUrl} alt="Logo DZ" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 5 }} />
               ) : tamponConfig ? (
                 <TamponDZ
                   config={{ ...tamponConfig, rotation: 0, opacity: 0.95, dateValidation: licence?.tampon_date_validation ?? undefined }}
@@ -425,38 +425,17 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
                 <CachetSVG nomCentre={nomCentre} nomDT={nomDT} couleur={couleurCachet} />
               )}
             </div>
-
-            {/* Signature validateur */}
-            <div className="flex flex-col items-center gap-0.5" style={{ width: 96 }}>
-              {signatureDtUrl ? (
-                <img
-                  src={signatureDtUrl}
-                  alt="Signature DT"
-                  style={{ height: 44, maxWidth: 96, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.75 }}
-                />
-              ) : (
-                <div style={{ width: 80, height: 28, borderBottom: '1px dashed rgba(255,255,255,0.2)' }} />
-              )}
-              {validateurNom && (
-                <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', textAlign: 'center', lineHeight: 1.3 }}>
-                  {validateurNom}
-                </div>
-              )}
-            </div>
           </div>
 
           {/* QR code */}
-          <div className="flex flex-col items-center gap-1.5 flex-1">
-            <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Vérification</div>
+          <div className="flex flex-col items-center gap-1 flex-1">
+            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Vérification</div>
             {qrToken ? (
               <>
-                <div
-                  className="bg-white rounded-xl flex-shrink-0"
-                  style={{ padding: 6, boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}
-                >
-                  <QRCodeSVG value={`${window.location.origin}/verify/${qrToken}`} size={88} level="M" />
+                <div className="bg-white rounded-xl flex-shrink-0" style={{ padding: 5, boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
+                  <QRCodeSVG value={`${window.location.origin}/verify/${qrToken}`} size={74} level="M" />
                 </div>
-                <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>Scanner pour vérifier</div>
+                <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>Scanner pour vérifier</div>
               </>
             ) : (
               <div style={{ flex: 1 }} />
@@ -465,87 +444,64 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
         </div>
 
         {/* ── Row 3 : Certifications ── */}
-        <div
-          className="rounded-lg"
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', padding: '10px 12px' }}
-        >
-          <div style={{ fontSize: 8, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(249,163,22,0.85)', marginBottom: 8, fontWeight: 600 }}>
+        <div className="rounded-lg" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', padding: '7px 10px' }}>
+          <div style={{ fontSize: 7, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(249,163,22,0.85)', marginBottom: 5, fontWeight: 600 }}>
             Informations de certification
           </div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
             <div>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Numéro licence</div>
-              <div style={{ fontSize: 14, color: '#fff', fontFamily: 'monospace', fontWeight: 700, lineHeight: 1.2 }}>
+              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Numéro licence</div>
+              <div style={{ fontSize: 12, color: '#fff', fontFamily: 'monospace', fontWeight: 700, lineHeight: 1.2 }}>
                 {numeroLicence || <span style={{ color: 'rgba(255,255,255,0.3)' }}>—</span>}
               </div>
             </div>
 
             <div>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Validé par</div>
+              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Validé par</div>
               {signatureDtUrl ? (
                 <div>
-                  <img
-                    src={signatureDtUrl}
-                    alt="Signature DT"
-                    style={{ height: 28, maxWidth: 110, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.8 }}
-                  />
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', lineHeight: 1.2, marginTop: 1 }}>
-                    {validateurNom}
-                  </div>
+                  <img src={signatureDtUrl} alt="Signature DT" style={{ height: 22, maxWidth: 100, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.8 }} />
+                  <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', lineHeight: 1.2, marginTop: 1 }}>{validateurNom}</div>
                 </div>
               ) : (
-                <div style={{ fontSize: 14, color: '#fff', fontWeight: 600, lineHeight: 1.2 }}>
+                <div style={{ fontSize: 12, color: '#fff', fontWeight: 600, lineHeight: 1.2 }}>
                   {validateurNom || <span style={{ color: 'rgba(255,255,255,0.3)' }}>—</span>}
                 </div>
               )}
             </div>
 
             <div>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Valide jusqu'au</div>
-              <div style={{ fontSize: 14, color: licence?.date_expiration ? '#fff' : 'rgba(255,255,255,0.3)', fontFamily: 'monospace', fontWeight: 600, lineHeight: 1.2 }}>
+              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Valide jusqu'au</div>
+              <div style={{ fontSize: 12, color: licence?.date_expiration ? '#fff' : 'rgba(255,255,255,0.3)', fontFamily: 'monospace', fontWeight: 600, lineHeight: 1.2 }}>
                 {licence?.date_expiration ? new Date(licence.date_expiration).toLocaleDateString('fr-FR') : '—'}
               </div>
             </div>
 
             <div>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Validation DZ</div>
-              <div style={{ fontSize: 14, color: validationDzDate ? '#fff' : 'rgba(255,255,255,0.3)', fontFamily: 'monospace', lineHeight: 1.2 }}>
+              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Validation DZ</div>
+              <div style={{ fontSize: 12, color: validationDzDate ? '#fff' : 'rgba(255,255,255,0.3)', fontFamily: 'monospace', lineHeight: 1.2 }}>
                 {validationDzDate ? new Date(validationDzDate).toLocaleDateString('fr-FR') : '—'}
               </div>
             </div>
           </div>
         </div>
 
-        {/* ── Row 4 : Signature titulaire ── */}
-        <div className="flex items-end gap-3">
-          <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0, paddingBottom: 2 }}>Signature du titulaire</div>
-          {isOwner && profile.signature_url ? (
-            <img
-              src={profile.signature_url}
-              alt="Signature"
-              style={{ height: 56, maxWidth: 160, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.8 }}
-            />
-          ) : (
-            <div style={{ flex: 1, height: 32, borderBottom: '1px dashed rgba(255,255,255,0.2)', maxWidth: 160 }} />
-          )}
-        </div>
-
-        {/* ── Footer ── */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 6, marginTop: 2 }}>
-          <div className="flex items-center justify-center" style={{ marginBottom: 5 }}>
-            <img src="/logo-ffp-footer.png" alt="FFP" style={{ height: 18, width: 'auto', opacity: 0.8 }} />
+        {/* ── Footer : signature titulaire + statut + url ── */}
+        <div className="flex items-center gap-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 5 }}>
+          {/* Signature titulaire */}
+          <div className="flex flex-col gap-0.5 flex-shrink-0" style={{ minWidth: 90 }}>
+            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Signature du titulaire</div>
+            {isOwner && profile.signature_url ? (
+              <img src={profile.signature_url} alt="Signature" style={{ height: 28, maxWidth: 90, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.8 }} />
+            ) : (
+              <div style={{ width: 90, height: 20, borderBottom: '1px dashed rgba(255,255,255,0.2)' }} />
+            )}
           </div>
-          <div className="flex items-center justify-between">
-            <span
-              style={{
-                fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
-                background: 'rgba(16,185,129,0.12)', color: '#34D399',
-                border: '1px solid rgba(16,185,129,0.22)', padding: '2px 8px', borderRadius: 20,
-              }}
-            >
+          <div className="flex-1 flex items-center justify-between">
+            <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', background: 'rgba(16,185,129,0.12)', color: '#34D399', border: '1px solid rgba(16,185,129,0.22)', padding: '2px 7px', borderRadius: 20 }}>
               ✓ Documents à jour
             </span>
-            <div style={{ fontSize: 9, fontFamily: 'monospace', color: 'rgba(255,255,255,0.28)' }}>parapass.fr</div>
+            <div style={{ fontSize: 8, fontFamily: 'monospace', color: 'rgba(255,255,255,0.28)' }}>parapass.fr</div>
           </div>
         </div>
       </div>
@@ -566,38 +522,34 @@ function FlippableCard({
   const [flipped, setFlipped] = useState(false);
 
   return (
-    <div className="w-full max-w-lg mx-auto overflow-hidden">
-      {/* Perspective container */}
+    <div className="w-full max-w-lg mx-auto">
+      {/* Aspect-ratio container — ratio ID-1 card: 85.6 × 53.98 mm ≈ 86/54 */}
       <div
         className="relative w-full cursor-pointer"
-        style={{ perspective: '1000px' }}
+        style={{ perspective: '1000px', aspectRatio: '86 / 54' }}
         onClick={() => setFlipped(f => !f)}
       >
+        {/* 3D flip inner — fills the aspect-ratio box */}
         <div
-          className="relative w-full"
+          className="absolute inset-0"
           style={{
             transformStyle: 'preserve-3d',
             transition: 'transform 0.6s ease',
             transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
-            minHeight: 320,
           }}
         >
           {/* Recto — face avant */}
-          <div style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
+          <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
             <CardRecto data={data} id={rectoId} />
           </div>
 
           {/* Verso — face arrière */}
           <div
             style={{
+              position: 'absolute', inset: 0,
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',
               transform: 'rotateY(180deg)',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
             }}
           >
             <CardVerso data={data} id={versoId} isOwner={isOwner} />
@@ -625,7 +577,9 @@ function FlippableCard({
 // — no FlippableCard wrapper, no 3D transforms, no mirror artifacts.
 
 async function exportCartesPDF(data: PasseportData, isOwner: boolean, nom: string, prenom: string) {
+  // Fixed card dimensions — ID-1 ratio (85.6 × 53.98 mm ≈ 86/54)
   const CARD_W = 520;
+  const CARD_H = Math.round(CARD_W * 54 / 86); // ≈ 326 px
 
   const captureComponent = (
     component: React.ReactElement,
@@ -638,6 +592,7 @@ async function exportCartesPDF(data: PasseportData, isOwner: boolean, nom: strin
         left: -9999px;
         top: 0;
         width: ${CARD_W}px;
+        height: ${CARD_H}px;
         pointer-events: none;
         z-index: -1;
       `;
