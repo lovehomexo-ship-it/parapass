@@ -2729,6 +2729,7 @@ function LicencieDrawer({
   const [controleNote, setControleNote] = useState('');
   const [controleSubmitting, setControleSubmitting] = useState(false);
   const [controleSuccess, setControleSuccess] = useState(false);
+  const [controleError, setControleError] = useState<string | null>(null);
   const [dernierControle, setDernierControle] = useState<{
     controle_le: string; licence_ok: boolean; medical_ok: boolean; assurance_ok: boolean;
     controle_par_nom: string | null; note: string | null;
@@ -2772,11 +2773,12 @@ function LicencieDrawer({
   useEffect(() => {
     if (!licencie || tab !== 'actions') return;
     setControleSuccess(false);
+    setControleError(null);
     setControleOk({ licence: false, medical: false, assurance: false });
     setControleNote('');
     supabase
       .from('controle_documents')
-      .select('controle_le, licence_ok, medical_ok, assurance_ok, note, controleur:profiles!controle_par(nom, prenom)')
+      .select('controle_le, licence_ok, medical_ok, assurance_ok, note, controle_par_nom')
       .eq('licencie_id', licencie.id)
       .eq('centre_id', centreId)
       .order('controle_le', { ascending: false })
@@ -2785,14 +2787,13 @@ function LicencieDrawer({
       .then(({ data }) => {
         if (!data) { setDernierControle(null); return; }
         const d = data as Record<string, unknown>;
-        const ctrl = d.controleur as { nom: string; prenom: string } | null;
         setDernierControle({
           controle_le: d.controle_le as string,
           licence_ok: d.licence_ok as boolean,
           medical_ok: d.medical_ok as boolean,
           assurance_ok: d.assurance_ok as boolean,
           note: d.note as string | null,
-          controle_par_nom: ctrl ? `${ctrl.prenom} ${ctrl.nom}` : null,
+          controle_par_nom: (d.controle_par_nom as string | null) ?? null,
         });
       });
   }, [licencie, tab, centreId]);
@@ -2824,25 +2825,38 @@ function LicencieDrawer({
   const handleControlerDocuments = async () => {
     if (!licencie || !currentProfile || controleSubmitting) return;
     setControleSubmitting(true);
-    const { error } = await supabase.from('controle_documents').insert({
-      licencie_id: licencie.id,
-      centre_id: centreId,
-      controle_par: currentProfile.id,
-      licence_ok: controleOk.licence,
-      medical_ok: controleOk.medical,
-      assurance_ok: controleOk.assurance,
-      note: controleNote.trim() || null,
-    });
-    if (!error) {
-      setControleSuccess(true);
-      setDernierControle({
-        controle_le: new Date().toISOString(),
+    setControleError(null);
+    const nomControleur = `${currentProfile.prenom} ${currentProfile.nom}`;
+    // Fetch centre name for denormalization
+    const { data: centreRow } = await supabase.from('centres').select('nom').eq('id', centreId).maybeSingle();
+    const { data: inserted, error } = await supabase
+      .from('controle_documents')
+      .insert({
+        licencie_id: licencie.id,
+        centre_id: centreId,
+        controle_par: currentProfile.id,
+        controle_par_nom: nomControleur,
+        centre_nom: centreRow?.nom ?? null,
         licence_ok: controleOk.licence,
         medical_ok: controleOk.medical,
         assurance_ok: controleOk.assurance,
         note: controleNote.trim() || null,
-        controle_par_nom: `${currentProfile.prenom} ${currentProfile.nom}`,
+      })
+      .select('id')
+      .single();
+    if (!error && inserted) {
+      const now = new Date().toISOString();
+      setControleSuccess(true);
+      setDernierControle({
+        controle_le: now,
+        licence_ok: controleOk.licence,
+        medical_ok: controleOk.medical,
+        assurance_ok: controleOk.assurance,
+        note: controleNote.trim() || null,
+        controle_par_nom: nomControleur,
       });
+    } else {
+      setControleError(error?.message ?? 'Erreur lors de l\'enregistrement');
     }
     setControleSubmitting(false);
   };
@@ -3032,6 +3046,11 @@ function LicencieDrawer({
                       style={{ background: 'rgba(255,255,255,0.8)' }}
                     />
 
+                    {controleError && (
+                      <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                        ⚠️ {controleError}
+                      </div>
+                    )}
                     <button
                       onClick={handleControlerDocuments}
                       disabled={controleSubmitting}

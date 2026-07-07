@@ -807,7 +807,7 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
         supabase.from('sauts').select('*', { count: 'exact', head: true }).eq('parachutiste_id', userId).eq('is_tunnel', false).in('statut', ['valide', 'historique']),
         supabase.from('qr_tokens').select('token').eq('parachutiste_id', userId).order('created_at', { ascending: false }).limit(1),
         supabase.from('sauts').select('valide_par, valide_le, lieu').eq('parachutiste_id', userId).eq('statut', 'valide').order('valide_le', { ascending: false }).limit(1).maybeSingle(),
-        supabase.from('controle_documents').select('controle_le, licence_ok, medical_ok, assurance_ok, note, controleur:profiles!controle_par(nom, prenom), centre:centres!centre_id(nom)').eq('licencie_id', userId).order('controle_le', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('controle_documents').select('controle_le, licence_ok, medical_ok, assurance_ok, note, controle_par_nom, centre_nom').eq('licencie_id', userId).order('controle_le', { ascending: false }).limit(1).maybeSingle(),
       ]);
 
       if (!profileData) { setLoading(false); return; }
@@ -857,11 +857,8 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
           medical_ok: (controleData as Record<string, unknown>).medical_ok as boolean,
           assurance_ok: (controleData as Record<string, unknown>).assurance_ok as boolean,
           note: (controleData as Record<string, unknown>).note as string | null,
-          centre_nom: ((controleData as Record<string, unknown>).centre as Record<string, string> | null)?.nom ?? null,
-          controle_par_nom: (() => {
-            const c = (controleData as Record<string, unknown>).controleur as { nom: string; prenom: string } | null;
-            return c ? `${c.prenom} ${c.nom}` : null;
-          })(),
+          centre_nom: (controleData as Record<string, unknown>).centre_nom as string | null,
+          controle_par_nom: (controleData as Record<string, unknown>).controle_par_nom as string | null,
         } : null,
       });
 
