@@ -130,7 +130,7 @@ function CachetSVG({ nomCentre, nomDT, couleur = '#1D4ED8' }: { nomCentre: strin
 // ─── Recto card ─────────────────────────────────────────────────────────────────
 
 function CardRecto({ data, id }: { data: PasseportData; id: string }) {
-  const { profile, licences, brevets, certificats, centresLicencies, sautsCount, validSautsCount, qrToken, tamponConfig } = data;
+  const { profile, licences, brevets, certificats, centresLicencies, sautsCount, validSautsCount, qrToken } = data;
   const now = new Date();
   const licence = licences[0];
   const certif = certificats[0];
@@ -138,10 +138,6 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
   const certifExp = certif?.date_expiration ? new Date(certif.date_expiration) : null;
   const brevetPrincipal = brevets[0];
   const centre = centresLicencies.find(c => c.statut === 'actif')?.centre;
-  const activeLicencie = centresLicencies.find(c => c.statut === 'actif');
-  const carnetValide = activeLicencie?.carnet_statut === 'valide' || licence?.tampon_statut === 'valide';
-  const validationDzDate = activeLicencie?.carnet_date_validation ?? null;
-  const validateurNom = activeLicencie?.carnet_valide_par || licence?.tampon_valide_par || null;
   const avatar = profile.avatar_url || profile.photo_profil_url;
 
   const getGlobalStatus = () => {
@@ -301,7 +297,7 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
           </div>
         )}
 
-        {/* ── Row 5 : Badges + QR ── */}
+        {/* ── Row 5 : Badge assurance + QR ── */}
         <div className="flex items-end justify-between gap-3">
           <div className="flex items-center gap-1.5 flex-wrap">
             {licence && (
@@ -310,18 +306,6 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
               ) : (
                 <span style={{ fontSize: 10, background: 'rgba(239,68,68,0.18)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.3)', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>✗ Non assuré</span>
               )
-            )}
-            {carnetValide ? (
-              <div className="flex items-center gap-1">
-                {tamponConfig && (
-                  <TamponDZ config={{ ...tamponConfig, rotation: -1.5, opacity: 0.9, dateValidation: validationDzDate ?? undefined }} className="w-6 h-6" stampEffect />
-                )}
-                <span style={{ fontSize: 10, background: 'rgba(16,185,129,0.18)', color: '#6EE7B7', border: '1px solid rgba(16,185,129,0.3)', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>
-                  ✓ Validé par {validateurNom || 'DZ'}
-                </span>
-              </div>
-            ) : (
-              <span style={{ fontSize: 10, background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: 20 }}>Non validé</span>
             )}
           </div>
           <div className="bg-white rounded-lg flex-shrink-0" style={{ padding: 4 }}>
@@ -341,38 +325,11 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
 // ─── Verso card ─────────────────────────────────────────────────────────────────
 
 function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isOwner: boolean }) {
-  const { profile, licences, centresLicencies, qrToken, centre, tamponConfig, dernierSautValide, dernierControle } = data;
+  const { profile, licences, centresLicencies, qrToken, dernierControle } = data;
   const licence = licences[0];
   const activeLicencie = centresLicencies.find(c => c.statut === 'actif');
 
   const numeroLicence = licence?.numero_licence || profile.numero_licence || null;
-  const nomCentre = centre?.tampon_nom_officiel || centre?.nom || 'CENTRE';
-  const nomDT = activeLicencie?.carnet_valide_par || licence?.tampon_valide_par || centre?.nom_dt || 'DIRECTEUR TECHNIQUE';
-  const couleurCachet = centre?.tampon_couleur_primaire || '#1D4ED8';
-
-  const signatureDtUrl = activeLicencie?.carnet_signature_url
-    ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/parapass-docs/${activeLicencie.carnet_signature_url}`
-    : centre?.signature_dt_url
-      ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/parapass-docs/${centre.signature_dt_url}`
-      : null;
-  const logoUrl = centre?.logo_url
-    ? (centre.logo_url.startsWith('/') || centre.logo_url.startsWith('http') ? centre.logo_url : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/centre-logos/${centre.logo_url}`)
-    : null;
-
-  // "Validé par" — prefer carnet DZ data, fallback to tampon then last saut
-  const validateurNom = activeLicencie?.carnet_valide_par
-    || licence?.tampon_valide_par
-    || dernierSautValide?.valide_par
-    || centre?.nom_dt
-    || null;
-
-  // "Validation DZ" date — prefer carnet DZ, fallback to tampon then last saut valide_le
-  const validationDzDate = activeLicencie?.carnet_date_validation
-    || licence?.tampon_date_validation
-    || dernierSautValide?.valide_le
-    || null;
-
-  const carnetValide = activeLicencie?.carnet_statut === 'valide' || licence?.tampon_statut === 'valide';
 
   return (
     <div
@@ -442,8 +399,8 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
           </div>
         </div>
 
-        {/* ── Row 3 : QR (gauche) · Cachet (centre) · Signature (droite) ── */}
-        <div className="flex items-center justify-between gap-3">
+        {/* ── Row 3 : QR (gauche) · Signature (droite) ── */}
+        <div className="flex items-center gap-4">
 
           {/* Gauche — QR code */}
           <div className="flex flex-col items-center gap-1 flex-shrink-0">
@@ -451,53 +408,23 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
             {qrToken ? (
               <>
                 <div className="bg-white rounded-xl" style={{ padding: 5, boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
-                  <QRCodeSVG value={`${window.location.origin}/verify/${qrToken}`} size={76} level="M" />
+                  <QRCodeSVG value={`${window.location.origin}/verify/${qrToken}`} size={80} level="M" />
                 </div>
                 <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>Scanner pour vérifier</div>
               </>
             ) : (
-              <div style={{ width: 86, height: 86, background: 'rgba(255,255,255,0.04)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.08)' }} />
+              <div style={{ width: 90, height: 90, background: 'rgba(255,255,255,0.04)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.08)' }} />
             )}
           </div>
 
-          {/* Centre — Cachet DZ */}
-          <div className="flex flex-col items-center gap-1 flex-shrink-0">
-            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Cachet DZ</div>
-            <div
-              className="flex items-center justify-center overflow-hidden"
-              style={{
-                width: 72, height: 72, borderRadius: '50%',
-                background: dernierControle ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)',
-                border: `2px solid ${dernierControle ? couleurCachet + '60' : 'rgba(255,255,255,0.08)'}`,
-                opacity: dernierControle ? 1 : 0.3,
-              }}
-            >
-              {dernierControle ? (
-                logoUrl ? (
-                  <img src={logoUrl} alt="Logo DZ" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 5 }} />
-                ) : tamponConfig ? (
-                  <TamponDZ
-                    config={{ ...tamponConfig, rotation: 0, opacity: 0.95, dateValidation: dernierControle.controle_le }}
-                    className="w-full h-full"
-                    stampEffect
-                  />
-                ) : (
-                  <CachetSVG nomCentre={nomCentre} nomDT={nomDT} couleur={couleurCachet} />
-                )
-              ) : (
-                <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>—</span>
-              )}
-            </div>
-          </div>
-
-          {/* Droite — Signature titulaire (aussi grande que le QR) */}
-          <div className="flex flex-col items-center gap-1 flex-1">
-            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Signature titulaire</div>
-            <div style={{ width: '100%', minHeight: 76, display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid rgba(255,255,255,0.12)', paddingBottom: 4 }}>
+          {/* Droite — Signature titulaire */}
+          <div className="flex flex-col gap-1 flex-1">
+            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Signature du titulaire</div>
+            <div style={{ flex: 1, minHeight: 72, display: 'flex', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.12)', paddingBottom: 4 }}>
               {isOwner && profile.signature_url ? (
-                <img src={profile.signature_url} alt="Signature" style={{ maxHeight: 72, maxWidth: '100%', objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.85 }} />
+                <img src={profile.signature_url} alt="Signature" style={{ maxHeight: 68, maxWidth: '100%', objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.85 }} />
               ) : (
-                <div style={{ width: '100%', height: 72 }} />
+                <div style={{ width: '100%', height: 68 }} />
               )}
             </div>
           </div>
