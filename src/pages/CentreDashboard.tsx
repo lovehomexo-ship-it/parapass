@@ -182,11 +182,12 @@ function AvatarCircle({
 // ─── DashboardHome ─────────────────────────────────────────────────────────────
 
 function DashboardHome({
-  centre, stats, onNavigate,
+  centre, stats, onNavigate, carnetsEnAttente,
 }: {
   centre: Centre | null;
   stats: DashStats;
   onNavigate: (s: string) => void;
+  carnetsEnAttente: number;
 }) {
   const [alerteExpires, setAlerteExpires] = useState(0);
   const [alerteMedical, setAlerteMedical] = useState(0);
@@ -314,7 +315,7 @@ function DashboardHome({
       </div>
 
       {/* 2 — 4 KPI cards */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 xl:grid-cols-5 gap-3">
         <CentreKpiCard
           accent="#3B82F6"
           label="Licenciés actifs"
@@ -324,10 +325,17 @@ function DashboardHome({
         />
         <CentreKpiCard
           accent={stats.demandesAttente > 0 ? '#F97316' : 'var(--c-border-f)'}
-          label="Demandes"
+          label="Adhésions"
           value={<span style={{ color: stats.demandesAttente > 0 ? '#F97316' : 'var(--c-text)' }}>{stats.demandesAttente}</span>}
           sub="En attente"
           onClick={() => onNavigate('demandes')}
+        />
+        <CentreKpiCard
+          accent={carnetsEnAttente > 0 ? '#8B5CF6' : 'var(--c-border-f)'}
+          label="Carnets à valider"
+          value={<span style={{ color: carnetsEnAttente > 0 ? '#8B5CF6' : 'var(--c-text)' }}>{carnetsEnAttente}</span>}
+          sub="En attente"
+          onClick={() => onNavigate('validations')}
         />
         <CentreKpiCard
           accent="#10B981"
@@ -3370,7 +3378,7 @@ export function CentreDashboardPage() {
 
         <div className="p-6">
           {activeSection === 'dashboard' && (
-            <DashboardHome centre={centre} stats={stats} onNavigate={setActiveSection} />
+            <DashboardHome centre={centre} stats={stats} onNavigate={setActiveSection} carnetsEnAttente={carnetsEnAttente} />
           )}
           {activeSection === 'licencies' && (
             <LicenciesSection

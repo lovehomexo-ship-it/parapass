@@ -392,7 +392,7 @@ function RechercheMoniteur({
           numero_brevet_moniteur: m.numero_brevet_moniteur as string | null,
           type_brevet_moniteur: m.type_brevet_moniteur as string | null,
           centre_nom: m.centre_nom as string | null,
-          role_centre: m.source === 'dt' ? 'admin' : 'delegation',
+          role_centre: (m.role_centre as string) ?? (m.source === 'dt' ? 'admin' : 'delegation'),
         });
       }
       setMoniteurs(result);
@@ -662,7 +662,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
           numero_brevet_moniteur: m.numero_brevet_moniteur as string | null,
           type_brevet_moniteur: m.type_brevet_moniteur as string | null,
           centre_nom: m.centre_nom as string | null,
-          role_centre: m.source === 'dt' ? 'admin' : 'delegation',
+          role_centre: (m.role_centre as string) ?? (m.source === 'dt' ? 'admin' : 'delegation'),
         });
       }
       setAllMoniteurs(result);

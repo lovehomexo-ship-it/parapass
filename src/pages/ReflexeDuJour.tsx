@@ -64,8 +64,9 @@ export function ReflexeDuJourPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [timer, setTimer] = useState(DRILL_TIMER_SEC);
   const [timedOut, setTimedOut] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const startRef  = useRef<number>(Date.now());
+  const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startRef    = useRef<number>(Date.now());
+  const timedOutRef = useRef(false);
 
   // ── Chargement ──────────────────────────────────────────────────────────────
 
@@ -106,20 +107,26 @@ export function ReflexeDuJourPage() {
   useEffect(() => {
     if (loading || alreadyDone || result || !scenario) return;
     startRef.current = Date.now();
+    timedOutRef.current = false;
     setTimer(DRILL_TIMER_SEC);
     timerRef.current = setInterval(() => {
       setTimer(t => {
         if (t <= 1) {
           stopTimer();
           setTimedOut(true);
-          submitAnswer('__timeout__');
+          // Ne pas appeler submitAnswer depuis un state updater (effet de bord interdit)
+          // On déclenche le submit après le cycle de rendu via setTimeout
+          if (!timedOutRef.current) {
+            timedOutRef.current = true;
+            setTimeout(() => submitAnswer('__timeout__'), 0);
+          }
           return 0;
         }
         return t - 1;
       });
     }, 1000);
     return () => stopTimer();
-  }, [loading, alreadyDone, scenario]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loading, alreadyDone, scenario, stopTimer, submitAnswer]);
 
   // ── Soumission ──────────────────────────────────────────────────────────────
 
