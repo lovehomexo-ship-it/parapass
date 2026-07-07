@@ -260,6 +260,34 @@ export function MaterielPage() {
                       <div className="mt-2">
                         <ProgressStatus materiel={mat} maintenances={maints} />
                       </div>
+                      {mat.type === 'parachute_secours' && (() => {
+                        const lastPliage = maints
+                          .filter(m => m.type_maintenance === 'pliage_secours')
+                          .sort((a, b) => b.date_maintenance.localeCompare(a.date_maintenance))[0];
+                        const sixMoisApres = lastPliage
+                          ? new Date(new Date(lastPliage.date_maintenance).getTime() + 6 * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('fr-FR')
+                          : null;
+                        const echeance = lastPliage?.prochain_echeance
+                          ? new Date(lastPliage.prochain_echeance).toLocaleDateString('fr-FR')
+                          : sixMoisApres;
+                        const isDepassee = echeance && lastPliage?.prochain_echeance
+                          ? new Date(lastPliage.prochain_echeance) < new Date()
+                          : lastPliage
+                            ? (new Date().getTime() - new Date(lastPliage.date_maintenance).getTime()) > 6 * 30 * 24 * 60 * 60 * 1000
+                            : false;
+                        return (
+                          <div className="mt-1.5 space-y-0.5">
+                            <div className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                              Dernier pliage : <span style={{ color: lastPliage ? 'rgba(255,255,255,0.75)' : '#F87171' }}>{lastPliage ? new Date(lastPliage.date_maintenance).toLocaleDateString('fr-FR') : 'Non renseigné'}</span>
+                            </div>
+                            {echeance && (
+                              <div className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                                Prochaine échéance : <span style={{ color: isDepassee ? '#F87171' : '#4ADE80', fontWeight: 600 }}>{echeance}{isDepassee ? ' ⚠️ dépassée' : ''}</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div className="flex items-center gap-1 ml-2">
                       <button

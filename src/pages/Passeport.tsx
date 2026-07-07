@@ -945,7 +945,7 @@ function MedicalTab({ certificats, userId, onRefresh, saving, setSaving }: {
           <div key={c.id} className={`rounded-xl p-4 shadow-sm`} style={{ background: 'rgba(255,255,255,0.06)', border: `1px solid ${expired ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.1)'}` }}>
             <div className="flex items-start justify-between">
               <div>
-                <div className="font-semibold text-white">Dr. {c.medecin}</div>
+                <div className="font-semibold text-white">{/^Dr\.?\s/i.test(c.medecin) ? c.medecin : `Dr. ${c.medecin}`}</div>
                 <div className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>{c.type.replace(/_/g, ' ')}</div>
                 <div className={`text-sm mt-1 ${expired ? 'text-red-400 font-medium' : 'text-green-400'}`}>
                   {expired ? 'Expiré' : 'Valide'} — jusqu'au {new Date(c.date_expiration).toLocaleDateString('fr-FR')}

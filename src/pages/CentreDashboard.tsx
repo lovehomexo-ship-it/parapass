@@ -64,6 +64,7 @@ interface SautSummary {
   hauteur_m: number;
   categorie: string;
   statut: 'en_attente' | 'valide' | 'refuse';
+  is_tunnel: boolean;
   parachutiste_nom?: string;
   parachutiste_prenom?: string;
 }
@@ -243,7 +244,7 @@ function DashboardHome({
       if (ids.length > 0) {
         const { data: sautsData } = await supabase
           .from('sauts')
-          .select('id, parachutiste_id, date_saut, lieu, hauteur_m, categorie, statut, profiles!parachutiste_id(nom, prenom)')
+          .select('id, parachutiste_id, date_saut, lieu, hauteur_m, categorie, statut, is_tunnel, profiles!parachutiste_id(nom, prenom)')
           .in('parachutiste_id', ids)
           .order('date_saut', { ascending: false })
           .limit(5);
@@ -1056,7 +1057,7 @@ function SautsSection({ centreId }: { centreId: string | undefined }) {
     const today = new Date().toISOString().split('T')[0];
     let query = supabase
       .from('sauts')
-      .select('id, parachutiste_id, date_saut, lieu, hauteur_m, categorie, statut')
+      .select('id, parachutiste_id, date_saut, lieu, hauteur_m, categorie, statut, is_tunnel')
       .in('parachutiste_id', ids);
 
     if (tab === 'attente') query = query.eq('statut', 'en_attente');
@@ -1162,8 +1163,8 @@ function SautsSection({ centreId }: { centreId: string | undefined }) {
                   <td className="px-4 py-3 font-medium text-gray-900">{s.parachutiste_prenom} {s.parachutiste_nom}</td>
                   <td className="px-4 py-3 text-gray-600">{fr(s.date_saut)}</td>
                   <td className="px-4 py-3 text-gray-600">{s.lieu}</td>
-                  <td className="px-4 py-3 text-gray-600">{s.hauteur_m}m</td>
-                  <td className="px-4 py-3 text-gray-600">{s.categorie}</td>
+                  <td className="px-4 py-3 text-gray-600">{s.is_tunnel ? '—' : `${s.hauteur_m}m`}</td>
+                  <td className="px-4 py-3 text-gray-600">{s.is_tunnel ? 'Soufflerie' : s.categorie}</td>
                   <td className="px-4 py-3">
                     {s.statut === 'valide' && <span className="text-xs bg-green-100 text-green-700 rounded-full px-2 py-0.5">Validé</span>}
                     {s.statut === 'en_attente' && <span className="text-xs bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">En attente</span>}
@@ -2476,10 +2477,16 @@ function StatsSection({ centreId }: { centreId: string | undefined }) {
       // Brevets repartition
       const { data: brevetsData } = await supabase
         .from('brevets')
-        .select('type_brevet')
+        .select('parachutiste_id, type_brevet')
         .in('parachutiste_id', ids);
+      // Dédup par parachutiste_id : un seul brevet (le premier trouvé) par personne
+      const seenParaIds = new Set<string>();
       const bCounts: Record<string, number> = {};
-      (brevetsData ?? []).forEach((b: { type_brevet: string }) => { bCounts[b.type_brevet] = (bCounts[b.type_brevet] ?? 0) + 1; });
+      (brevetsData as Array<{ parachutiste_id: string; type_brevet: string }> ?? []).forEach((b) => {
+        if (seenParaIds.has(b.parachutiste_id)) return;
+        seenParaIds.add(b.parachutiste_id);
+        bCounts[b.type_brevet] = (bCounts[b.type_brevet] ?? 0) + 1;
+      });
       setBrevetData(Object.entries(bCounts).map(([type, count]) => ({ type, count })).sort((a, b) => b.count - a.count).slice(0, 8));
 
       // Top 5 parachutistes

@@ -142,7 +142,7 @@ function DemoPassportCard({ compact = false }: { compact?: boolean }) {
                 <div style={{ fontSize: compact ? 18 : 22, fontWeight: 800, letterSpacing: '0.04em', color: '#fff', lineHeight: 1.1, textTransform: 'uppercase' }}>MARTIN</div>
                 <div style={{ fontSize: compact ? 14 : 16, fontWeight: 400, color: '#fff', lineHeight: 1.2 }}>Sophie</div>
                 <div style={{ fontSize: 11, color: '#F97316', marginTop: 1 }}>Fédération Française de Parachutisme</div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 1 }}>Né(e) le 14/03/1992 à Bordeaux</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 1 }}>Né(e) le 30/01/1990 à Paris</div>
                 <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.75)', marginTop: 3, lineHeight: 1.4 }}>FFP-2024-8801 · Code Club 0916 · Brevet B</div>
               </div>
             </div>

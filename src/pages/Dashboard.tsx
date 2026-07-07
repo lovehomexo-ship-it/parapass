@@ -48,7 +48,7 @@ async function fetchThreeDayMeteo(lat: number, lon: number): Promise<DayMeteo[]>
     const data = await res.json();
     return (data.daily?.weathercode ?? []).map((_: unknown, i: number) => ({
       temp: Math.round(data.daily.temperature_2m_max[i] ?? 20),
-      wind_kmh: Math.round((data.daily.windspeed_10m_max[i] ?? 0) * 3.6),
+      wind_kmh: Math.round(data.daily.windspeed_10m_max[i] ?? 0),
       precip_prob: data.daily.precipitation_probability_max[i] ?? 0,
       weathercode: data.daily.weathercode[i] ?? 0,
     }));
@@ -1207,7 +1207,7 @@ function SautCardMobile({
   onDelete: (id: string) => void;
 }) {
   const canEdit = saut.statut !== 'valide' && saut.statut !== 'refuse';
-  const isSoufflerie = !!saut.source === 'soufflerie';
+  const isSoufflerie = saut.source === 'soufflerie' || saut.is_tunnel === true;
 
   if (saut.statut === 'declaration_honneur') {
     return (
@@ -1325,7 +1325,7 @@ function SautRowCarnet({
 }) {
   const [hovered, setHovered] = useState(false);
   const canEdit = saut.statut !== 'valide' && saut.statut !== 'refuse';
-  const isSoufflerie = !!saut.source === 'soufflerie';
+  const isSoufflerie = saut.source === 'soufflerie' || saut.is_tunnel === true;
 
   if (saut.statut === 'declaration_honneur') {
     return (
