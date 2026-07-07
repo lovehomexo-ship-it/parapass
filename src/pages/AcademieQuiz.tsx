@@ -116,12 +116,14 @@ export function AcademieQuizPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [result, setResult] = useState<QuizResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [timer, setTimer] = useState(TIMER_SEC);
   const [sessionStats, setSessionStats] = useState<SessionStats | null>(null);
   const [sessionId] = useState(() => crypto.randomUUID());
   const [xpBeforeSession, setXpBeforeSession] = useState(0);
   const startTimeRef = useRef<number>(Date.now());
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const submittingRef = useRef(false); // ref pour éviter closure stale dans le timer
 
   // Charger les questions
   useEffect(() => {
@@ -208,9 +210,9 @@ export function AcademieQuizPage() {
 
   const handleTimeout = useCallback(() => {
     stopTimer();
-    if (submitting || result) return;
+    if (submittingRef.current || result) return;
     submitAnswer('__timeout__');
-  }, [submitting, result]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [result]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const submitAnswer = useCallback(async (propId: string) => {
     if (!user || submitting) return;
@@ -218,7 +220,9 @@ export function AcademieQuizPage() {
     if (!q) return;
     stopTimer();
     setSubmitting(true);
+    submittingRef.current = true;
     setSelected(propId);
+    setSubmitError(null);
 
     const tempMs = Date.now() - startTimeRef.current;
 
@@ -230,9 +234,22 @@ export function AcademieQuizPage() {
       p_session_id: sessionId,
     });
 
-    if (!error && data) {
-      setResult(data as QuizResult);
+    if (error) {
+      console.error('[AcademieQuiz] submit_quiz_answer error:', error.message, error.details);
+      setSubmitError(error.message ?? 'Erreur lors de la validation');
+      setSelected(null);
+    } else if (data) {
+      // RPC may return {error: '...'} in the jsonb payload
+      const payload = data as QuizResult & { error?: string };
+      if (payload.error) {
+        console.error('[AcademieQuiz] RPC payload error:', payload.error);
+        setSubmitError(payload.error);
+        setSelected(null);
+      } else {
+        setResult(payload);
+      }
     }
+    submittingRef.current = false;
     setSubmitting(false);
   }, [user, submitting, questions, currentIdx, mode, sessionId]);
 
@@ -315,6 +332,13 @@ export function AcademieQuizPage() {
       <div className="rounded-2xl p-5 mb-6" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
         <p className="text-lg font-semibold leading-snug" style={{ color: '#F8FAFC' }}>{q.enonce}</p>
       </div>
+
+      {/* Erreur soumission */}
+      {submitError && (
+        <div className="rounded-xl px-4 py-3 mb-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
+          ⚠️ {submitError}
+        </div>
+      )}
 
       {/* Propositions */}
       <div className="flex flex-col gap-3 flex-1">
