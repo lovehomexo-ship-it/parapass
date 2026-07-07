@@ -10,6 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       manifest: false, // served from public/manifest.json
       workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
