@@ -197,7 +197,7 @@ function SautDetailModal({ saut, onClose }: { saut: Saut; onClose: () => void })
                 <Hash className="w-4 h-4 text-green-400" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-green-400">Saut certifié cryptographiquement</p>
+                <p className="text-xs font-semibold text-green-400">Saut signé et horodaté</p>
                 <p className="text-xs text-green-400 font-mono mt-0.5">{hashShort}…</p>
               </div>
             </div>

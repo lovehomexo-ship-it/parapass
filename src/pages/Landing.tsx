@@ -60,7 +60,8 @@ function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
 
 function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: string }) {
   const { ref, inView } = useInView();
-  const [val, setVal] = useState(0);
+  // Initialisé à la valeur cible pour éviter le flash « 0 » avant le déclenchement
+  const [val, setVal] = useState(target);
   useEffect(() => {
     if (!inView) return;
     const duration = 1400;
@@ -502,18 +503,15 @@ function SectionModules() {
             <div className="max-w-4xl mx-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {soonModules.map((mod) => (
-                  <div key={mod.id} className="rounded-xl p-5 flex flex-col gap-3" style={{ border: '1.5px solid #E2E8F0', background: '#F8FAFC', opacity: 0.8 }}>
-                    <div className="flex items-start justify-between">
-                      <span className="text-2xl" style={{ filter: 'grayscale(0.6)' }}>{mod.icon}</span>
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: '#F1F5F9', color: '#64748B', border: '1px solid #E2E8F0' }}>
-                        Prochainement
+                  <div key={mod.id} className="rounded-xl p-3.5 flex flex-col gap-2" style={{ border: '1.5px solid #E2E8F0', background: '#F8FAFC', opacity: 0.85 }}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg" style={{ filter: 'grayscale(0.6)' }}>{mod.icon}</span>
+                      <p className="font-semibold text-sm flex-1 truncate" style={{ color: '#334155' }}>{mod.nom}</p>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: '#F1F5F9', color: '#64748B', border: '1px solid #E2E8F0' }}>
+                        Bientôt
                       </span>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm" style={{ color: '#334155' }}>{mod.nom}</p>
-                      <p className="text-xs mt-1 leading-relaxed" style={{ color: '#94A3B8' }}>{mod.desc}</p>
-                    </div>
-                    <div className="pt-1">
+                    <div>
                       {waitlistSent.has(mod.id) ? (
                         <div className="w-full py-1.5 rounded-lg text-xs font-semibold text-center"
                           style={{ background: 'rgba(16,185,129,0.08)', color: '#10B981', border: '1px solid rgba(16,185,129,0.2)' }}>
@@ -953,17 +951,80 @@ export function LandingPage() {
       {/* ─── BARRE DE CHIFFRES ──────────────────────────────────────────────── */}
       <section className="py-10 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
             {[
-              { target: 60000, suffix: '', label: 'licenciés FFP en France' },
+              { target: 505576, suffix: '', label: 'sauts réalisés en France en 2024' },
+              { target: 12000, prefix: '~', suffix: '', label: 'parachutistes licenciés' },
               { target: 57, suffix: '', label: 'centres agréés' },
               { target: 3, suffix: ' s', label: 'pour vérifier un QR code' },
             ].map(s => (
               <div key={s.label}>
                 <p className="text-2xl sm:text-3xl font-extrabold" style={{ color: '#001A4D' }}>
-                  <AnimatedCounter target={s.target} suffix={s.suffix} />
+                  {s.prefix ?? ''}<AnimatedCounter target={s.target} suffix={s.suffix} />
                 </p>
                 <p className="text-xs sm:text-sm mt-1" style={{ color: '#64748B' }}>{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── COMMENT ÇA MARCHE ──────────────────────────────────────────────── */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="text-center mb-14">
+              <h2 className="text-3xl font-bold mb-3" style={{ color: '#001A4D' }}>Comment ça marche</h2>
+              <p className="max-w-xl mx-auto" style={{ color: '#64748B' }}>
+                De votre premier saut au millième, tout votre carnet dans une seule appli — et plus jamais de papier.
+              </p>
+            </div>
+          </Reveal>
+          <div className="grid md:grid-cols-3 gap-8 relative">
+            <div
+              className="hidden md:block absolute top-[56px] left-[calc(16.66%+24px)] right-[calc(16.66%+24px)] pointer-events-none"
+              style={{ borderTop: '2px dashed #E2E8F0', zIndex: 0 }}
+            />
+            {[
+              {
+                step: '01',
+                icon: '🪪',
+                bg: '#EFF6FF',
+                title: 'Créez votre profil',
+                desc: 'Licence FFP, brevets, certificat médical, qualifs : tout au même endroit, en 5 minutes. Fini les documents éparpillés.',
+              },
+              {
+                step: '02',
+                icon: '🪂',
+                bg: '#FFFBEB',
+                title: 'Enregistrez vos sauts',
+                desc: 'Chaque saut s\'ajoute en quelques secondes, validé par votre moniteur d\'une signature horodatée. Un carnet qui grandit avec vous, sécurisé et horodaté.',
+              },
+              {
+                step: '03',
+                icon: '📱',
+                bg: '#F0FDF4',
+                title: 'Toujours prêt',
+                desc: 'Votre carte licence toujours à jour, dans votre poche. Au renouvellement comme à l\'accueil d\'une nouvelle DZ : un QR code, vérifié en 3 secondes.',
+              },
+            ].map(item => (
+              <div
+                key={item.step}
+                className="step-card relative bg-white rounded-2xl p-8 border overflow-hidden z-10"
+                style={{ border: '1px solid #E2E8F0', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
+              >
+                <div
+                  className="absolute top-4 right-5 font-black select-none"
+                  style={{ fontSize: '48px', lineHeight: 1, color: 'rgba(37,99,235,0.08)' }}
+                  aria-hidden
+                >
+                  {item.step}
+                </div>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 text-2xl" style={{ background: item.bg }}>
+                  {item.icon}
+                </div>
+                <h3 className="text-base font-semibold mb-2" style={{ color: '#001A4D' }}>{item.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: '#64748B' }}>{item.desc}</p>
               </div>
             ))}
           </div>
@@ -1633,7 +1694,7 @@ export function LandingPage() {
             </div>
           </div>
           <div className="pt-6 border-t text-center text-xs" style={{ borderColor: 'rgba(255,255,255,0.06)', color: '#334155' }}>
-            Hébergé en Europe · Chiffré AES-256 · Politique de confidentialité
+            Hébergé en Europe · Données chiffrées et horodatées · Politique de confidentialité
           </div>
           <div className="pt-4 text-center text-xs leading-relaxed" style={{ color: '#475569' }}>
             ParaPass est un service indépendant. Il n'est, à ce jour, ni affilié à la Fédération Française de Parachutisme, ni certifié par la DGAC. Le carnet numérique complète le carnet de sauts papier sans s'y substituer.
