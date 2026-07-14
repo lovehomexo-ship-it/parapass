@@ -6,48 +6,17 @@ import { Layout } from '../components/Layout';
 import { uploadDocument, getSignedUrl } from '../lib/usePassport';
 import type { Materiel, Maintenance } from '../lib/types';
 import { TYPE_MATERIEL_LABELS, TYPE_MAINTENANCE_LABELS } from '../lib/types';
-import { Plus, Trash2, CreditCard as Edit3, Check, X, Upload, ExternalLink, ChevronDown, ChevronUp, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { Plus, Trash2, CreditCard as Edit3, Check, X, Upload, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import { getComplianceStatus, useComplianceRules, getMaterielEcheance, type ComplianceRules } from '../lib/compliance';
+import { ComplianceBadge } from '../components/ComplianceBadge';
 
-const inputCls = 'w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#001A4D]/20';
-const selectCls = inputCls;
 const darkInputStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'white', width: '100%', borderRadius: 8, padding: '8px 12px', fontSize: 14, outline: 'none' };
 
-function ProgressStatus({ materiel, maintenances }: { materiel: Materiel; maintenances: Maintenance[] }) {
-  const now = new Date();
-  const last = maintenances.sort((a, b) => b.date_maintenance.localeCompare(a.date_maintenance))[0];
-  const nextEch = last?.prochain_echeance ? new Date(last.prochain_echeance) : null;
-
-  let color = 'green';
-  let label = 'OK';
-  let days: number | null = null;
-
-  if (nextEch) {
-    days = Math.floor((nextEch.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    if (days < 0) { color = 'red'; label = 'En retard'; }
-    else if (days < 30) { color = 'amber'; label = `Dans ${days}j`; }
-    else { color = 'green'; label = `OK — ${nextEch.toLocaleDateString('fr-FR')}`; }
-  } else if (materiel.type === 'parachute_secours') {
-    if (!last) { color = 'red'; label = 'Non renseigné'; }
-    else {
-      const monthsSince = (now.getTime() - new Date(last.date_maintenance).getTime()) / (1000 * 60 * 60 * 24 * 30);
-      if (monthsSince > 6) { color = 'red'; label = `${Math.round(monthsSince)}m sans pliage`; }
-      else { color = 'green'; label = 'OK'; }
-    }
-  }
-
-  const icon = color === 'green'
-    ? <CheckCircle className="w-4 h-4 text-green-500" />
-    : color === 'amber'
-    ? <Clock className="w-4 h-4 text-amber-500" />
-    : <AlertTriangle className="w-4 h-4 text-red-500" />;
-
-  return (
-    <div className={`flex items-center gap-1 text-xs font-medium ${
-      color === 'green' ? 'text-green-600' : color === 'amber' ? 'text-amber-600' : 'text-red-600'
-    }`}>
-      {icon} {label}
-    </div>
-  );
+function ProgressStatus({ materiel, maintenances, rules }: { materiel: Materiel; maintenances: Maintenance[]; rules: ComplianceRules }) {
+  const echeance = getMaterielEcheance(materiel, maintenances, rules);
+  // Un secours ou un AAD sans aucune intervention connue : état inconnu (gris) — l'humain décide
+  const status = getComplianceStatus(echeance, rules);
+  return <ComplianceBadge status={status} echeance={echeance} />;
 }
 
 export function MaterielPage() {
@@ -75,6 +44,8 @@ export function MaterielPage() {
     document_url: null as string | null,
   };
   const [maintForm, setMaintForm] = useState(emptyMaint);
+  const { rules } = useComplianceRules();
+  const [writeError, setWriteError] = useState<string | null>(null);
 
   const photoRef = useRef<HTMLInputElement>(null);
   const docRef = useRef<HTMLInputElement>(null);
@@ -113,12 +84,17 @@ export function MaterielPage() {
       date_acquisition: matForm.date_acquisition || null,
       notes: matForm.notes || null,
     };
-    if (editingMateriel) {
-      await supabase.from('materiels').update(payload).eq('id', editingMateriel);
-    } else {
-      await supabase.from('materiels').insert({ ...payload, parachutiste_id: user.id });
-    }
+    setWriteError(null);
+    // .select() indispensable : sans lui, un blocage RLS renvoie error:null (écriture silencieuse)
+    const { data: written, error } = editingMateriel
+      ? await supabase.from('materiels').update(payload).eq('id', editingMateriel).select('id')
+      : await supabase.from('materiels').insert({ ...payload, parachutiste_id: user.id }).select('id');
     setSaving(false);
+    if (error || !written || written.length === 0) {
+      console.error('Écriture matériel échouée :', error);
+      setWriteError(error?.message ?? 'Écriture refusée — le matériel n\'a pas été enregistré.');
+      return;
+    }
     setShowMaterielForm(false);
     setEditingMateriel(null);
     setMatForm(emptyMat);
@@ -127,21 +103,33 @@ export function MaterielPage() {
 
   const deleteMateriel = async (id: string) => {
     if (blockIfDemo()) return;
-    await supabase.from('materiels').update({ statut: 'hors_service' }).eq('id', id);
+    setWriteError(null);
+    const { data: written, error } = await supabase.from('materiels').update({ statut: 'hors_service' }).eq('id', id).select('id');
+    if (error || !written || written.length === 0) {
+      console.error('Suppression matériel échouée :', error);
+      setWriteError(error?.message ?? 'Suppression refusée.');
+      return;
+    }
     load();
   };
 
   const saveMaintenance = async (materielId: string) => {
     if (!user || blockIfDemo()) return;
     setSaving(true);
-    await supabase.from('maintenances').insert({
+    setWriteError(null);
+    const { data: written, error } = await supabase.from('maintenances').insert({
       ...maintForm,
       materiel_id: materielId,
       prochain_echeance: maintForm.prochain_echeance || null,
       centre: maintForm.centre || null,
       notes: maintForm.notes || null,
-    });
+    }).select('id');
     setSaving(false);
+    if (error || !written || written.length === 0) {
+      console.error('Écriture maintenance échouée :', error);
+      setWriteError(error?.message ?? 'Écriture refusée — la maintenance n\'a pas été enregistrée.');
+      return;
+    }
     setShowMaintenanceForm(null);
     setMaintForm(emptyMaint);
     load();
@@ -179,6 +167,15 @@ export function MaterielPage() {
             <Plus className="w-4 h-4" /> Ajouter
           </button>
         </div>
+
+        {/* Erreur d'écriture (toast inline) */}
+        {writeError && (
+          <div className="rounded-xl px-4 py-3 mb-4 text-sm flex items-center justify-between gap-3"
+            style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
+            <span>⚠️ {writeError}</span>
+            <button onClick={() => setWriteError(null)} style={{ color: '#FCA5A5' }}><X className="w-4 h-4" /></button>
+          </div>
+        )}
 
         {/* Formulaire matériel */}
         {showMaterielForm && (
@@ -258,31 +255,22 @@ export function MaterielPage() {
                       <div className="font-semibold" style={{ color: '#FFFFFF' }}>{mat.marque} {mat.modele}</div>
                       {mat.numero_serie && <div className="text-xs font-mono" style={{ color: 'rgba(255,255,255,0.3)' }}>N° {mat.numero_serie}</div>}
                       <div className="mt-2">
-                        <ProgressStatus materiel={mat} maintenances={maints} />
+                        <ProgressStatus materiel={mat} maintenances={maints} rules={rules} />
                       </div>
                       {mat.type === 'parachute_secours' && (() => {
                         const lastPliage = maints
                           .filter(m => m.type_maintenance === 'pliage_secours')
                           .sort((a, b) => b.date_maintenance.localeCompare(a.date_maintenance))[0];
-                        const sixMoisApres = lastPliage
-                          ? new Date(new Date(lastPliage.date_maintenance).getTime() + 6 * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('fr-FR')
-                          : null;
-                        const echeance = lastPliage?.prochain_echeance
-                          ? new Date(lastPliage.prochain_echeance).toLocaleDateString('fr-FR')
-                          : sixMoisApres;
-                        const isDepassee = echeance && lastPliage?.prochain_echeance
-                          ? new Date(lastPliage.prochain_echeance) < new Date()
-                          : lastPliage
-                            ? (new Date().getTime() - new Date(lastPliage.date_maintenance).getTime()) > 6 * 30 * 24 * 60 * 60 * 1000
-                            : false;
+                        const echeanceIso = getMaterielEcheance(mat, maints, rules);
+                        const isDepassee = echeanceIso ? new Date(echeanceIso) < new Date() : false;
                         return (
                           <div className="mt-1.5 space-y-0.5">
                             <div className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
                               Dernier pliage : <span style={{ color: lastPliage ? 'rgba(255,255,255,0.75)' : '#F87171' }}>{lastPliage ? new Date(lastPliage.date_maintenance).toLocaleDateString('fr-FR') : 'Non renseigné'}</span>
                             </div>
-                            {echeance && (
+                            {echeanceIso && (
                               <div className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                                Prochaine échéance : <span style={{ color: isDepassee ? '#F87171' : '#4ADE80', fontWeight: 600 }}>{echeance}{isDepassee ? ' ⚠️ dépassée' : ''}</span>
+                                Prochaine échéance : <span style={{ color: isDepassee ? '#F87171' : '#4ADE80', fontWeight: 600 }}>{new Date(echeanceIso).toLocaleDateString('fr-FR')}{isDepassee ? ' ⚠️ dépassée' : ''}</span>
                               </div>
                             )}
                           </div>

@@ -1,9 +1,16 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from './supabase';
 import type { Saut, Licence, CertificatMedical, Qualification, Alerte } from './types';
+import { DEFAULT_RULES, type ComplianceRules } from './compliance';
 
 function daysBetween(a: Date, b: Date) {
   return Math.floor((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+/** Échéance matériel à surveiller (calculée côté page depuis materiels + maintenances). */
+export interface MaterielEcheance {
+  label: string; // ex : « Pliage secours », « Maintenance AAD »
+  echeance: string; // date ISO
 }
 
 export function computeAlertes(
@@ -12,10 +19,38 @@ export function computeAlertes(
   licences: Licence[],
   certificats: CertificatMedical[],
   qualifications: Qualification[],
-  opts?: { typePratiquant?: string | null; suiviDgac?: boolean }
+  opts?: { typePratiquant?: string | null; suiviDgac?: boolean; materiel?: MaterielEcheance[]; rules?: ComplianceRules }
 ): Omit<Alerte, 'id' | 'created_at'>[] {
   const alertes: Omit<Alerte, 'id' | 'created_at'>[] = [];
   const now = new Date();
+  const rules = opts?.rules ?? DEFAULT_RULES;
+
+  // ─── Matériel (pliage secours, AAD…) ─────────────────────────────────────────
+  for (const mat of opts?.materiel ?? []) {
+    const exp = new Date(mat.echeance);
+    const days = daysBetween(now, exp);
+    if (days < 0) {
+      alertes.push({
+        parachutiste_id: userId,
+        type: 'materiel_revision',
+        titre: `${mat.label} : échéance dépassée`,
+        message: `${mat.label} a dépassé son échéance le ${exp.toLocaleDateString('fr-FR')}. Faites contrôler votre matériel.`,
+        date_echeance: mat.echeance,
+        urgence: 'critique',
+        lue: false,
+      });
+    } else if (days <= rules.alerte_j30) {
+      alertes.push({
+        parachutiste_id: userId,
+        type: 'materiel_revision',
+        titre: `${mat.label} : échéance proche`,
+        message: `${mat.label} expire dans ${days} jour${days > 1 ? 's' : ''} (${exp.toLocaleDateString('fr-FR')}).`,
+        date_echeance: mat.echeance,
+        urgence: days <= rules.alerte_j7 ? 'critique' : 'attention',
+        lue: false,
+      });
+    }
+  }
 
   // ─── Licences ────────────────────────────────────────────────────────────────
   for (const lic of licences) {
@@ -155,7 +190,7 @@ export function useAlertes(
   licences: Licence[],
   certificats: CertificatMedical[],
   qualifications: Qualification[],
-  opts?: { typePratiquant?: string | null; suiviDgac?: boolean }
+  opts?: { typePratiquant?: string | null; suiviDgac?: boolean; materiel?: MaterielEcheance[]; rules?: ComplianceRules }
 ) {
   const [alertes, setAlertes] = useState<Alerte[]>([]);
 
@@ -176,7 +211,7 @@ export function useAlertes(
       .delete()
       .eq('parachutiste_id', userId)
       .eq('lue', false)
-      .in('type', ['licence_expire', 'certificat_medical', 'saut_requis', 'qualification_expire']);
+      .in('type', ['licence_expire', 'certificat_medical', 'saut_requis', 'qualification_expire', 'materiel_revision']);
 
     if (computed.length > 0) {
       await supabase.from('alertes').insert(computed);
@@ -188,7 +223,7 @@ export function useAlertes(
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
     if (userId) sync();
-  }, [userId, sauts.length, licences.length, certificats.length, qualifications.length, opts?.typePratiquant, opts?.suiviDgac]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [userId, sauts.length, licences.length, certificats.length, qualifications.length, opts?.typePratiquant, opts?.suiviDgac, opts?.materiel?.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const markRead = async (id: string) => {
     await supabase.from('alertes').update({ lue: true }).eq('id', id);

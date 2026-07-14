@@ -13,9 +13,10 @@ import { DeclarationHonneur } from '../components/DeclarationHonneur';
 import { BandeauAlertes } from '../components/AlertsPanel';
 import { useAlertesContext } from '../lib/AlertesContext';
 import { generatePDF } from '../lib/pdf';
-import type { Saut, NotationTernaire, BadgeDefinition } from '../lib/types';
-import { NATURE_SAUT_LABELS, CATEGORIE_LABELS, FONCTION_LABELS, STATUT_LABELS, BADGES } from '../lib/types';
-import { useAlertes } from '../lib/useAlertes';
+import type { Saut, NotationTernaire, BadgeDefinition, Materiel, Maintenance } from '../lib/types';
+import { NATURE_SAUT_LABELS, CATEGORIE_LABELS, FONCTION_LABELS, STATUT_LABELS, BADGES, TYPE_MATERIEL_LABELS } from '../lib/types';
+import { useAlertes, type MaterielEcheance } from '../lib/useAlertes';
+import { useComplianceRules, getMaterielEcheance } from '../lib/compliance';
 import { useBadges } from '../lib/useBadges';
 import { usePassport } from '../lib/usePassport';
 import { useDemo } from '../lib/useDemo';
@@ -359,9 +360,34 @@ export function DashboardPage() {
   }, []);
 
   const { licences, certificats, qualifications, brevets, centresLicencies } = usePassport(user?.id);
+  const { rules: complianceRules } = useComplianceRules();
+
+  // Échéances matériel (pliage secours, AAD…) pour le bandeau d'alertes
+  const [materielEcheances, setMaterielEcheances] = useState<MaterielEcheance[]>([]);
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      const { data: mats, error: matError } = await supabase
+        .from('materiels').select('*').eq('parachutiste_id', user.id).eq('statut', 'actif');
+      if (matError) { console.error('Chargement matériels échoué :', matError); return; }
+      if (!mats || mats.length === 0) { setMaterielEcheances([]); return; }
+      const { data: maints, error: maintError } = await supabase
+        .from('maintenances').select('*').in('materiel_id', mats.map((m) => m.id));
+      if (maintError) { console.error('Chargement maintenances échoué :', maintError); return; }
+      const echeances: MaterielEcheance[] = [];
+      for (const mat of mats as Materiel[]) {
+        const echeance = getMaterielEcheance(mat, (maints as Maintenance[] ?? []).filter((m) => m.materiel_id === mat.id), complianceRules);
+        if (echeance) echeances.push({ label: `${TYPE_MATERIEL_LABELS[mat.type] ?? mat.type} — ${mat.marque} ${mat.modele}`, echeance });
+      }
+      setMaterielEcheances(echeances);
+    })();
+  }, [user?.id, complianceRules]);
+
   const { alertes } = useAlertes(user?.id, sauts, licences, certificats, qualifications, {
     typePratiquant: profile?.type_pratiquant,
     suiviDgac: !!(profile?.preferences as Record<string, unknown> | null | undefined)?.suivi_dgac,
+    materiel: materielEcheances,
+    rules: complianceRules,
   });
   const { badges, newBadge, dismissBadgeNotif } = useBadges(user?.id, sauts);
 

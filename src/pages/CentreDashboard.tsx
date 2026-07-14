@@ -9,6 +9,8 @@ import { sendMessage, useConversationMessages, getOrCreateConversation, useConve
 import type { Message } from '../lib/useMessages';
 import { PasseportCardView } from '../components/PasseportCardView';
 import { AddSautModal } from '../components/AddSautModal';
+import { useComplianceRules, getComplianceStatus, worstStatus, type ComplianceStatus } from '../lib/compliance';
+import { ComplianceBadge, ComplianceDot } from '../components/ComplianceBadge';
 import {
   Home, Users, ClipboardList, Activity, BarChart2, Calendar,
   Settings, Shield, MessageSquare, Bell, LogOut, Menu, X,
@@ -646,6 +648,27 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
   const [sautCounts, setSautCounts] = useState<Record<string, number>>({});
   const [brevets, setBrevets] = useState<Record<string, string>>({});
   const [promoLicencie, setPromoLicencie] = useState<LicencieSummary | null>(null);
+  const { rules: complianceRules } = useComplianceRules();
+  const [conformiteMap, setConformiteMap] = useState<Record<string, ComplianceStatus>>({});
+  const [filtreConformite, setFiltreConformite] = useState<'tous' | ComplianceStatus>('tous');
+
+  // Conformité (licence + médical + matériel) via RPC sécurisée
+  useEffect(() => {
+    if (!centreId) return;
+    supabase.rpc('get_conformite_licencies', { p_centre_id: centreId }).then(({ data, error }) => {
+      if (error) { console.error('Chargement conformité licenciés échoué :', error); return; }
+      const map: Record<string, ComplianceStatus> = {};
+      for (const row of (data ?? []) as Array<{ parachutiste_id: string; licence_expiration: string | null; certificat_expiration: string | null; materiel_echeance: string | null }>) {
+        map[row.parachutiste_id] = worstStatus([
+          getComplianceStatus(row.licence_expiration, complianceRules),
+          getComplianceStatus(row.certificat_expiration, complianceRules),
+          // Pas de matériel renseigné = pas bloquant côté vue centre : on ignore l'inconnu matériel
+          row.materiel_echeance ? getComplianceStatus(row.materiel_echeance, complianceRules) : 'ok',
+        ]);
+      }
+      setConformiteMap(map);
+    });
+  }, [centreId, complianceRules]);
 
   const fetchLicencies = useCallback(async () => {
     if (!centreId) return;
@@ -763,6 +786,7 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
 
   const filtered = licencies.filter(l =>
     `${l.prenom} ${l.nom} ${l.numero_licence}`.toLowerCase().includes(search.toLowerCase())
+    && (filtreConformite === 'tous' || (conformiteMap[l.id] ?? 'inconnu') === filtreConformite)
   );
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>;
@@ -797,6 +821,35 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
         </div>
       </div>
 
+      {/* Filtre conformité */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Conformité :</span>
+        {([
+          { key: 'tous' as const, label: 'Tous' },
+          { key: 'expire' as const, label: 'Expiré' },
+          { key: 'bientot' as const, label: 'Bientôt' },
+          { key: 'ok' as const, label: 'À jour' },
+        ]).map(f => {
+          const count = f.key === 'tous' ? licencies.length : licencies.filter(l => (conformiteMap[l.id] ?? 'inconnu') === f.key).length;
+          const active = filtreConformite === f.key;
+          const color = f.key === 'expire' ? '#EF4444' : f.key === 'bientot' ? '#F59E0B' : f.key === 'ok' ? '#10B981' : '#60A5FA';
+          return (
+            <button
+              key={f.key}
+              onClick={() => setFiltreConformite(f.key)}
+              className="text-xs font-semibold px-3 py-1.5 rounded-full transition"
+              style={{
+                background: active ? `${color}26` : 'var(--c-border)',
+                color: active ? color : 'rgba(255,255,255,0.6)',
+                border: `1px solid ${active ? `${color}66` : 'var(--c-border-f)'}`,
+              }}
+            >
+              {f.label} ({count})
+            </button>
+          );
+        })}
+      </div>
+
       {filtered.length === 0 ? (
         <div className="text-center py-16" style={{ color: 'var(--c-dim)' }}>Aucun licencié trouvé</div>
       ) : viewMode === 'grid' ? (
@@ -825,7 +878,10 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
 
                 <AvatarCircle url={l.photo_profil_url} nom={l.nom} prenom={l.prenom} size="lg" />
                 <div>
-                  <p className="font-semibold text-white">{l.prenom} {l.nom}</p>
+                  <p className="font-semibold text-white flex items-center justify-center gap-2">
+                    <ComplianceDot status={conformiteMap[l.id] ?? 'inconnu'} />
+                    {l.prenom} {l.nom}
+                  </p>
                   <p className="text-xs" style={{ color: 'var(--c-dim)' }}>{brevets[l.id] ?? '—'}</p>
                   <p className="text-xs" style={{ color: 'var(--c-dim)' }}>{sautCounts[l.id] ?? 0} sauts</p>
                 </div>
@@ -867,7 +923,10 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
                       <div className="flex items-center gap-3">
                         <AvatarCircle url={l.photo_profil_url} nom={l.nom} prenom={l.prenom} size="sm" />
                         <div>
-                          <p className="font-medium text-white">{l.prenom} {l.nom}</p>
+                          <p className="font-medium text-white flex items-center gap-2">
+                            <ComplianceDot status={conformiteMap[l.id] ?? 'inconnu'} />
+                            {l.prenom} {l.nom}
+                          </p>
                           <p className="text-xs" style={{ color: 'var(--c-dim)' }}>{l.numero_licence}</p>
                         </div>
                       </div>
@@ -2735,6 +2794,24 @@ function LicencieDrawer({
     controle_par_nom: string | null; note: string | null;
   } | null>(null);
 
+  // Conformité globale du licencié (licence + médical + matériel)
+  const { rules: drawerRules } = useComplianceRules();
+  const [drawerConformite, setDrawerConformite] = useState<ComplianceStatus | null>(null);
+  useEffect(() => {
+    if (!licencie) { setDrawerConformite(null); return; }
+    supabase.rpc('get_conformite_licencies', { p_centre_id: centreId }).then(({ data, error }) => {
+      if (error) { console.error('Chargement conformité fiche échoué :', error); return; }
+      const row = ((data ?? []) as Array<{ parachutiste_id: string; licence_expiration: string | null; certificat_expiration: string | null; materiel_echeance: string | null }>)
+        .find(r => r.parachutiste_id === licencie.id);
+      if (!row) { setDrawerConformite('inconnu'); return; }
+      setDrawerConformite(worstStatus([
+        getComplianceStatus(row.licence_expiration, drawerRules),
+        getComplianceStatus(row.certificat_expiration, drawerRules),
+        row.materiel_echeance ? getComplianceStatus(row.materiel_echeance, drawerRules) : 'ok',
+      ]));
+    });
+  }, [licencie, centreId, drawerRules]);
+
   useEffect(() => {
     setTab(initialTab ?? 'carte');
   }, [initialTab, licencie?.id]);
@@ -2898,7 +2975,12 @@ function LicencieDrawer({
           <div className="flex items-center gap-3">
             <AvatarCircle url={licencie.photo_profil_url} nom={licencie.nom} prenom={licencie.prenom} size="md" />
             <div>
-              <p className="font-semibold text-gray-900">{licencie.prenom} {licencie.nom}</p>
+              <p className="font-semibold text-gray-900 flex items-center gap-2">
+                {licencie.prenom} {licencie.nom}
+                {drawerConformite && drawerConformite !== 'ok' && (
+                  <ComplianceBadge status={drawerConformite} />
+                )}
+              </p>
               <p className="text-xs text-gray-500">{licencie.numero_licence}</p>
             </div>
           </div>
