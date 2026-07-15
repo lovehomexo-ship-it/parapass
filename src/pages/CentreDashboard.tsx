@@ -11,6 +11,7 @@ import { PasseportCardView } from '../components/PasseportCardView';
 import { AddSautModal } from '../components/AddSautModal';
 import { useComplianceRules, getComplianceStatus, worstStatus, type ComplianceStatus } from '../lib/compliance';
 import { ComplianceBadge, ComplianceDot } from '../components/ComplianceBadge';
+import { useCurrencyRules, getCurrencyStatus, CURRENCY_STATUS_CONFIG } from '../lib/currency';
 import {
   Home, Users, ClipboardList, Activity, BarChart2, Calendar,
   Settings, Shield, MessageSquare, Bell, LogOut, Menu, X,
@@ -649,24 +650,29 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
   const [brevets, setBrevets] = useState<Record<string, string>>({});
   const [promoLicencie, setPromoLicencie] = useState<LicencieSummary | null>(null);
   const { rules: complianceRules } = useComplianceRules();
+  const { rules: currencyRules } = useCurrencyRules();
   const [conformiteMap, setConformiteMap] = useState<Record<string, ComplianceStatus>>({});
+  const [dernierSautMap, setDernierSautMap] = useState<Record<string, string | null>>({});
   const [filtreConformite, setFiltreConformite] = useState<'tous' | ComplianceStatus>('tous');
 
-  // Conformité (licence + médical + matériel) via RPC sécurisée
+  // Conformité (licence + médical + matériel) + récence via RPC sécurisée
   useEffect(() => {
     if (!centreId) return;
     supabase.rpc('get_conformite_licencies', { p_centre_id: centreId }).then(({ data, error }) => {
       if (error) { console.error('Chargement conformité licenciés échoué :', error); return; }
       const map: Record<string, ComplianceStatus> = {};
-      for (const row of (data ?? []) as Array<{ parachutiste_id: string; licence_expiration: string | null; certificat_expiration: string | null; materiel_echeance: string | null }>) {
+      const sautMap: Record<string, string | null> = {};
+      for (const row of (data ?? []) as Array<{ parachutiste_id: string; licence_expiration: string | null; certificat_expiration: string | null; materiel_echeance: string | null; dernier_saut: string | null }>) {
         map[row.parachutiste_id] = worstStatus([
           getComplianceStatus(row.licence_expiration, complianceRules),
           getComplianceStatus(row.certificat_expiration, complianceRules),
           // Pas de matériel renseigné = pas bloquant côté vue centre : on ignore l'inconnu matériel
           row.materiel_echeance ? getComplianceStatus(row.materiel_echeance, complianceRules) : 'ok',
         ]);
+        sautMap[row.parachutiste_id] = row.dernier_saut;
       }
       setConformiteMap(map);
+      setDernierSautMap(sautMap);
     });
   }, [centreId, complianceRules]);
 
@@ -906,6 +912,7 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
                 <th className="text-left px-4 py-3 font-medium" style={{ color: 'var(--c-dim)' }}>Brevet</th>
                 <th className="text-left px-4 py-3 font-medium" style={{ color: 'var(--c-dim)' }}>Sauts</th>
                 <th className="text-left px-4 py-3 font-medium" style={{ color: 'var(--c-dim)' }}>Statut</th>
+                <th className="text-left px-4 py-3 font-medium" style={{ color: 'var(--c-dim)' }}>Reprise</th>
                 <th className="text-left px-4 py-3 font-medium" style={{ color: 'var(--c-dim)' }}>Adhésion</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -942,6 +949,20 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
                           </span>
                         )}
                       </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {(() => {
+                        const st = getCurrencyStatus(dernierSautMap[l.id], brevets[l.id], currencyRules);
+                        const cfg = CURRENCY_STATUS_CONFIG[st];
+                        const label = st === 'reprise_obligatoire' ? 'Reprise' : st === 'reprise_conseillee' ? 'Conseillée' : st === 'a_jour' ? 'À jour' : '—';
+                        return (
+                          <span className="text-xs rounded-full px-2 py-0.5 inline-flex items-center gap-1.5" style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}
+                            title={dernierSautMap[l.id] ? `Dernier saut : ${new Date(dernierSautMap[l.id]!).toLocaleDateString('fr-FR')} — selon les règles paramétrées` : 'Aucun saut connu'}>
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: cfg.color }} />
+                            {label}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-3" style={{ color: 'var(--c-dim)' }}>{fr(l.date_adhesion)}</td>
                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>

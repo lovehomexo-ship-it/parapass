@@ -17,6 +17,7 @@ import type { Saut, NotationTernaire, BadgeDefinition, Materiel, Maintenance } f
 import { NATURE_SAUT_LABELS, CATEGORIE_LABELS, FONCTION_LABELS, STATUT_LABELS, BADGES, TYPE_MATERIEL_LABELS } from '../lib/types';
 import { useAlertes, type MaterielEcheance } from '../lib/useAlertes';
 import { useComplianceRules, getMaterielEcheance } from '../lib/compliance';
+import { MaRepriseCard } from '../components/MaRepriseCard';
 import { useBadges } from '../lib/useBadges';
 import { usePassport } from '../lib/usePassport';
 import { useDemo } from '../lib/useDemo';
@@ -686,6 +687,11 @@ export function DashboardPage() {
                   </div>
                 );
               })()}
+
+              {/* Carte « Ma reprise » — récence du dernier saut selon les règles paramétrées */}
+              <div className="mb-3">
+                <MaRepriseCard userId={user?.id} niveau={topBrevet} />
+              </div>
 
               {/* 2 — Layout 2 colonnes desktop : carte (gauche) + tuiles+boutons (droite) */}
               <div className="flex flex-col lg:flex-row lg:items-start lg:gap-6 mb-6">

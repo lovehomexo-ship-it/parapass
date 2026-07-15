@@ -7,6 +7,7 @@ import type { TamponConfig } from './TamponDZ';
 import { TYPE_BREVET_LABELS } from '../lib/types';
 import type { Licence, Brevet, CertificatMedical, CentreLicencie, Qualification } from '../lib/types';
 import { QRCodeSVG } from 'qrcode.react';
+import { useCurrencyRules, getCurrencyStatus, CURRENCY_STATUS_CONFIG } from '../lib/currency';
 import { User, RefreshCw, Maximize2, X, AlertTriangle, CheckCircle, Clock, Shield, Eye, Download, RotateCcw } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -63,6 +64,7 @@ interface PasseportData {
   centre: CentreData | null;
   loadedAt: Date;
   dernierSautValide: { valide_par: string | null; valide_le: string | null; lieu: string | null } | null;
+  dernierSautDate: string | null;
   dernierControle: DernierControle | null;
 }
 
@@ -150,6 +152,11 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
   const statut = getGlobalStatus();
   const statutColor = statut === 'ACTIF' ? '#10B981' : statut === 'BIENTÔT' ? '#F59E0B' : statut === 'EXPIRÉ' ? '#EF4444' : '#64748B';
 
+  // Pastille reprise (récence du dernier saut selon les règles paramétrées)
+  const { rules: currencyRules } = useCurrencyRules();
+  const currencyStatus = getCurrencyStatus(data.dernierSautDate, brevetPrincipal?.type_brevet, currencyRules);
+  const currencyCfg = CURRENCY_STATUS_CONFIG[currencyStatus];
+
   // Condensed info line parts
   const infoParts: string[] = [];
   const rectoNumero = licence?.numero_licence || profile.numero_licence;
@@ -186,18 +193,29 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
               <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: '#F97316' }}>LICENCE NUMÉRIQUE</div>
             </div>
           </div>
-          <div
-            style={{
-              background: statutColor,
-              color: '#fff',
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: '0.1em',
-              padding: '3px 10px',
-              borderRadius: 20,
-            }}
-          >
-            {statut}
+          <div className="flex items-center gap-1.5">
+            {/* Pastille reprise (récence) — discrète, à côté du statut documents */}
+            <span
+              title={`Reprise : ${currencyCfg.label}`}
+              aria-label={`Reprise : ${currencyCfg.label}`}
+              style={{
+                width: 9, height: 9, borderRadius: '50%', display: 'inline-block',
+                background: currencyCfg.color, boxShadow: `0 0 0 2px ${currencyCfg.bg}`,
+              }}
+            />
+            <div
+              style={{
+                background: statutColor,
+                color: '#fff',
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                padding: '3px 10px',
+                borderRadius: 20,
+              }}
+            >
+              {statut}
+            </div>
           </div>
         </div>
 
@@ -723,6 +741,7 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
         { data: qrData },
         { data: dernierSautData },
         { data: controleData },
+        { data: dernierSautDateData },
       ] = await Promise.all([
         supabase.from('profiles').select('id, nom, prenom, avatar_url, photo_profil_url, numero_licence, date_naissance, lieu_naissance, partage_carte_centre, signature_url').eq('id', userId).maybeSingle(),
         supabase.from('licences').select('*').eq('parachutiste_id', userId).order('date_expiration', { ascending: false }),
@@ -735,6 +754,7 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
         supabase.from('qr_tokens').select('token').eq('parachutiste_id', userId).order('created_at', { ascending: false }).limit(1),
         supabase.from('sauts').select('valide_par, valide_le, lieu').eq('parachutiste_id', userId).eq('statut', 'valide').order('valide_le', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('controle_documents').select('controle_le, licence_ok, medical_ok, assurance_ok, note, controle_par_nom, centre_nom').eq('licencie_id', userId).order('controle_le', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('sauts').select('date_saut').eq('parachutiste_id', userId).eq('is_tunnel', false).order('date_saut', { ascending: false }).limit(1).maybeSingle(),
       ]);
 
       if (!profileData) { setLoading(false); return; }
@@ -778,6 +798,7 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
         centre: centreInfo,
         loadedAt: new Date(),
         dernierSautValide: dernierSautData as { valide_par: string | null; valide_le: string | null; lieu: string | null } | null,
+        dernierSautDate: (dernierSautDateData as { date_saut: string } | null)?.date_saut ?? null,
         dernierControle: controleData ? {
           controle_le: (controleData as Record<string, unknown>).controle_le as string,
           licence_ok: (controleData as Record<string, unknown>).licence_ok as boolean,
