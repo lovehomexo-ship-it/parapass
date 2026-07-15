@@ -9,6 +9,7 @@ import { TYPE_MATERIEL_LABELS, TYPE_MAINTENANCE_LABELS } from '../lib/types';
 import { Plus, Trash2, CreditCard as Edit3, Check, X, Upload, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
 import { getComplianceStatus, useComplianceRules, getMaterielEcheance, type ComplianceRules } from '../lib/compliance';
 import { ComplianceBadge } from '../components/ComplianceBadge';
+import { ChargeAlaireCard } from '../components/ChargeAlaireCard';
 
 const darkInputStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'white', width: '100%', borderRadius: 8, padding: '8px 12px', fontSize: 14, outline: 'none' };
 
@@ -34,6 +35,7 @@ export function MaterielPage() {
     type: 'parachute_principal' as Materiel['type'],
     marque: '', modele: '', numero_serie: '', date_fabrication: '', date_acquisition: '',
     statut: 'actif' as Materiel['statut'], notes: '', photo_url: null as string | null,
+    taille_voile_ft2: '' as string,
   };
   const [matForm, setMatForm] = useState(emptyMat);
   const [matErrors, setMatErrors] = useState<{ marque?: string; modele?: string }>({});
@@ -83,6 +85,7 @@ export function MaterielPage() {
       date_fabrication: matForm.date_fabrication || null,
       date_acquisition: matForm.date_acquisition || null,
       notes: matForm.notes || null,
+      taille_voile_ft2: matForm.taille_voile_ft2 ? parseFloat(matForm.taille_voile_ft2) : null,
     };
     setWriteError(null);
     // .select() indispensable : sans lui, un blocage RLS renvoie error:null (écriture silencieuse)
@@ -210,6 +213,13 @@ export function MaterielPage() {
                 <label className="block text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Date acquisition</label>
                 <input type="date" style={darkInputStyle} value={matForm.date_acquisition} onChange={(e) => setMatForm({ ...matForm, date_acquisition: e.target.value })} />
               </div>
+              {matForm.type === 'parachute_principal' && (
+                <div>
+                  <label className="block text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Surface voile (ft²)</label>
+                  <input type="number" min="0" step="1" style={darkInputStyle} placeholder="ex : 170"
+                    value={matForm.taille_voile_ft2} onChange={(e) => setMatForm({ ...matForm, taille_voile_ft2: e.target.value })} />
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Notes</label>
@@ -276,10 +286,14 @@ export function MaterielPage() {
                           </div>
                         );
                       })()}
+                      {/* Charge alaire — consultatif, uniquement sur la voile principale */}
+                      {mat.type === 'parachute_principal' && (
+                        <ChargeAlaireCard userId={user?.id} tailleVoileFt2={mat.taille_voile_ft2 ?? null} />
+                      )}
                     </div>
                     <div className="flex items-center gap-1 ml-2">
                       <button
-                        onClick={() => { setEditingMateriel(mat.id); setMatForm({ type: mat.type, marque: mat.marque, modele: mat.modele, numero_serie: mat.numero_serie ?? '', date_fabrication: mat.date_fabrication ?? '', date_acquisition: mat.date_acquisition ?? '', statut: mat.statut, notes: mat.notes ?? '', photo_url: mat.photo_url }); setShowMaterielForm(true); }}
+                        onClick={() => { setEditingMateriel(mat.id); setMatForm({ type: mat.type, marque: mat.marque, modele: mat.modele, numero_serie: mat.numero_serie ?? '', date_fabrication: mat.date_fabrication ?? '', date_acquisition: mat.date_acquisition ?? '', statut: mat.statut, notes: mat.notes ?? '', photo_url: mat.photo_url, taille_voile_ft2: mat.taille_voile_ft2 != null ? String(mat.taille_voile_ft2) : '' }); setShowMaterielForm(true); }}
                         className="p-1.5 rounded transition" style={{ color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onMouseEnter={(e) => (e.currentTarget.style.color = '#FFFFFF')} onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.4)')}><Edit3 className="w-4 h-4" /></button>
                       <button onClick={() => setExpanded(isExpanded ? null : mat.id)}
                         className="p-1.5 rounded transition" style={{ color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onMouseEnter={(e) => (e.currentTarget.style.color = '#FFFFFF')} onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.4)')}>

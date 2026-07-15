@@ -214,6 +214,8 @@ export interface Materiel {
   marque: string;
   modele: string;
   numero_serie: string | null;
+  /** Surface de la voile en ft² — utilisée uniquement pour la charge alaire (voile principale). */
+  taille_voile_ft2: number | null;
   date_fabrication: string | null;
   date_acquisition: string | null;
   statut: 'actif' | 'remise' | 'vendu' | 'hors_service';

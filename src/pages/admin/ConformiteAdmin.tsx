@@ -4,7 +4,92 @@ import { supabase } from '../../lib/supabase';
 import { ArrowLeft, Check } from 'lucide-react';
 import type { ComplianceRule } from '../../lib/compliance';
 import type { CurrencyRule } from '../../lib/currency';
+import type { CanopyGuideline } from '../../lib/canopy';
 import { TYPE_BREVET_LABELS } from '../../lib/types';
+
+/** Repères de charge alaire (canopy_guidelines), par tranche de sauts. */
+function CanopyGuidelinesSection() {
+  const [rows, setRows] = useState<CanopyGuideline[]>([]);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [savedId, setSavedId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = async () => {
+    const { data, error } = await supabase
+      .from('canopy_guidelines')
+      .select('id, sauts_min, sauts_max, charge_max_recommandee, commentaire')
+      .order('sauts_min');
+    if (error) { console.error('Chargement canopy_guidelines échoué :', error); setError(error.message); return; }
+    setRows((data ?? []) as CanopyGuideline[]);
+    setDrafts(Object.fromEntries((data ?? []).map(r => [r.id, String(r.charge_max_recommandee)])));
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const save = async (id: string) => {
+    const value = parseFloat((drafts[id] ?? '').replace(',', '.'));
+    if (isNaN(value) || value <= 0 || value > 5) { setError('Charge max invalide (attendu : lb/ft², ex. 1.30).'); return; }
+    setSavingId(id);
+    setError(null);
+    const { data: written, error } = await supabase
+      .from('canopy_guidelines')
+      .update({ charge_max_recommandee: value, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select('id');
+    setSavingId(null);
+    if (error || !written || written.length === 0) {
+      console.error('Écriture canopy_guidelines échouée :', error);
+      setError(error?.message ?? 'Écriture refusée — le repère n\'a pas été modifié.');
+      return;
+    }
+    setSavedId(id);
+    setTimeout(() => setSavedId(null), 2000);
+    load();
+  };
+
+  return (
+    <div className="mt-10">
+      <h2 className="text-lg font-bold text-white mb-2">Repères de charge alaire</h2>
+      <p className="text-sm mb-5" style={{ color: 'rgba(255,255,255,0.5)' }}>
+        Charge alaire maximale recommandée (lb/ft²) par tranche de sauts. « À VÉRIFIER — recommandations fédérales / manuels constructeurs ».
+      </p>
+      {error && (
+        <div className="rounded-xl px-4 py-3 mb-4 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
+          ⚠️ {error}
+        </div>
+      )}
+      <div className="space-y-3">
+        {rows.map(row => (
+          <div key={row.id} className="rounded-xl p-4 flex items-center justify-between gap-4" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white">{row.sauts_min} – {row.sauts_max ?? '∞'} sauts</p>
+              {row.commentaire && <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>{row.commentaire}</p>}
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <input
+                type="number" min={0} step="0.05"
+                value={drafts[row.id] ?? ''}
+                onChange={e => setDrafts(d => ({ ...d, [row.id]: e.target.value }))}
+                className="w-24 rounded-lg px-3 py-2 text-sm text-white text-center outline-none"
+                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}
+                aria-label={`Charge max pour ${row.sauts_min}–${row.sauts_max ?? '∞'} sauts`}
+              />
+              <button
+                onClick={() => save(row.id)}
+                disabled={savingId === row.id}
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-white disabled:opacity-40"
+                style={{ background: savedId === row.id ? '#10B981' : '#2563EB' }}
+              >
+                {savedId === row.id ? <Check className="w-4 h-4" /> : savingId === row.id ? '…' : 'Enregistrer'}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /** Règles de reprise après inactivité (currency_rules), par niveau. */
 function CurrencyRulesSection() {
@@ -218,6 +303,8 @@ export function ConformiteAdminPage() {
         )}
 
         <CurrencyRulesSection />
+
+        <CanopyGuidelinesSection />
 
         <p className="text-xs mt-6" style={{ color: 'rgba(255,255,255,0.3)' }}>
           Note : les valeurs par défaut sont marquées « À VÉRIFIER » — confirmez-les avec la réglementation et les préconisations constructeur avant mise en production.
