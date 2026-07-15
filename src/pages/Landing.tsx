@@ -1250,9 +1250,9 @@ export function LandingPage() {
                       DERNIERS SAUTS
                     </div>
                     {[
-                      { num: 187, date: '22/06/2026', dz: 'BigAir Rochefort', alt: '4 000m', moniteur: 'Guérin J.' },
-                      { num: 186, date: '15/06/2026', dz: 'Saintes Parachutisme', alt: '3 500m', moniteur: 'Moreau L.' },
-                      { num: 185, date: '08/06/2026', dz: 'BigAir Rochefort', alt: '4 000m', moniteur: 'Leroy M.' },
+                      { num: 187, date: '22/06/2026', dz: 'BigAir Rochefort', alt: '4 000m', moniteur: 'Moniteur' },
+                      { num: 186, date: '15/06/2026', dz: 'Saintes Parachutisme', alt: '3 500m', moniteur: 'Moniteur' },
+                      { num: 185, date: '08/06/2026', dz: 'BigAir Rochefort', alt: '4 000m', moniteur: 'Moniteur' },
                     ].map((s, i) => (
                       <div key={i} className="flex items-center gap-2 px-3 py-2" style={{ borderTop: i > 0 ? '1px solid rgba(255,255,255,0.04)' : undefined }}>
                         <div className="w-6 h-5 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: '#F97316', fontSize: '8px' }}>{s.num}</div>
@@ -1460,24 +1460,24 @@ export function LandingPage() {
             {[
               {
                 quote: 'ParaPass a révolutionné la gestion de mon carnet. Mon moniteur valide mes sauts en quelques secondes.',
-                name: 'Jean-Luc Moreau',
-                meta: 'Brevet B · Centre de Saintes',
-                init: 'JL', color: '#2563EB',
+                name: 'Parachutiste bêta testeur',
+                meta: 'Brevet B · Nouvelle-Aquitaine',
+                init: '🪂', color: '#2563EB',
               },
               {
                 quote: 'En tant que DT, je vois en temps réel si mes élèves sont en règle. Fini les vérifications de dernière minute avant l\'embarquement.',
-                name: 'Johnny Guerin',
-                meta: 'Directeur Technique · BigAir Rochefort',
-                init: 'JG', color: '#F59E0B',
+                name: 'Directeur Technique',
+                meta: 'Centre agréé · Ouest de la France',
+                init: '🏫', color: '#F59E0B',
               },
               {
                 quote: 'La section progression est incroyable. Mon moniteur me note après chaque saut et je vois exactement sur quoi travailler.',
-                name: 'Thomas R.',
-                meta: 'Brevet A · Royan Atlantique',
-                init: 'TR', color: '#10B981',
+                name: 'Parachutiste bêta testeur',
+                meta: 'Brevet A · Charente-Maritime',
+                init: '🪂', color: '#10B981',
               },
             ].map((t, i) => (
-              <Reveal key={t.name} delay={i * 80}>
+              <Reveal key={i} delay={i * 80}>
                 <div className="bg-white rounded-2xl p-7 flex flex-col h-full" style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.07)', border: '1px solid #E2E8F0' }}>
                   <div className="flex gap-0.5 mb-4" aria-label="5 étoiles sur 5">
                     {[1,2,3,4,5].map(s => <span key={s} className="text-yellow-400">★</span>)}
