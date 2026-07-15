@@ -20,6 +20,7 @@ import { AdminPage } from './pages/Admin';
 import { ParachutisteViewPage } from './pages/ParachutisteView';
 import { PasseportPage } from './pages/Passeport';
 import { MaterielPage } from './pages/Materiel';
+import { BriefingTVPage } from './pages/BriefingTV';
 import { StatsRoute } from './pages/StatsRoute';
 import { TamponAdminPage } from './pages/TamponAdmin';
 import { ProfilPage } from './pages/Profil';
@@ -137,6 +138,7 @@ function App() {
                 <Route path="/materiel" element={<ProtectedRoute roles={['parachutiste', 'moniteur', 'moniteur_delegue']}><MaterielPage /></ProtectedRoute>} />
                 <Route path="/badges" element={<ProtectedRoute roles={['parachutiste', 'moniteur', 'moniteur_delegue']}><BadgesPage /></ProtectedRoute>} />
                 <Route path="/communaute" element={<ProtectedRoute><CommunautePage /></ProtectedRoute>} />
+                <Route path="/briefing/tv/:dzId" element={<ProtectedRoute><BriefingTVPage /></ProtectedRoute>} />
                 <Route path="/qr-code" element={<ProtectedRoute roles={['parachutiste', 'moniteur', 'moniteur_delegue']}><QRCodePage /></ProtectedRoute>} />
                 <Route path="/messages" element={<ProtectedRoute><ErrorBoundary><MessagesPage /></ErrorBoundary></ProtectedRoute>} />
                 <Route path="/regles-ffp" element={<ProtectedRoute><ErrorBoundary><ReglesFFPPage /></ErrorBoundary></ProtectedRoute>} />

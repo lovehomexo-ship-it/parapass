@@ -18,6 +18,7 @@ import { NATURE_SAUT_LABELS, CATEGORIE_LABELS, FONCTION_LABELS, STATUT_LABELS, B
 import { useAlertes, type MaterielEcheance } from '../lib/useAlertes';
 import { useComplianceRules, getMaterielEcheance } from '../lib/compliance';
 import { MaRepriseCard } from '../components/MaRepriseCard';
+import { BriefingDuJourCard } from '../components/BriefingDuJourCard';
 import { useBadges } from '../lib/useBadges';
 import { usePassport } from '../lib/usePassport';
 import { useDemo } from '../lib/useDemo';
@@ -687,6 +688,12 @@ export function DashboardPage() {
                   </div>
                 );
               })()}
+
+              {/* Briefing du jour de la DZ (si publié) */}
+              <BriefingDuJourCard
+                dzId={(centresLicencies.find(c => c.statut === 'actif') as { centre_id?: string } | undefined)?.centre_id}
+                userId={user?.id}
+              />
 
               {/* Carte « Ma reprise » — récence du dernier saut selon les règles paramétrées */}
               <div className="mb-3">

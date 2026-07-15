@@ -12,8 +12,9 @@ import { AddSautModal } from '../components/AddSautModal';
 import { useComplianceRules, getComplianceStatus, worstStatus, type ComplianceStatus } from '../lib/compliance';
 import { ComplianceBadge, ComplianceDot } from '../components/ComplianceBadge';
 import { useCurrencyRules, getCurrencyStatus, CURRENCY_STATUS_CONFIG } from '../lib/currency';
+import { BriefingSection } from './centre/BriefingSection';
 import {
-  Home, Users, ClipboardList, Activity, BarChart2, Calendar,
+  Home, Users, ClipboardList, Activity, BarChart2, Calendar, Megaphone,
   Settings, Shield, MessageSquare, Bell, LogOut, Menu, X,
   AlertTriangle, CheckCircle, Clock, ChevronRight, Plus,
   Search, Filter, Eye, Trash2, UserCheck, UserX, Mail,
@@ -654,6 +655,31 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
   const [conformiteMap, setConformiteMap] = useState<Record<string, ComplianceStatus>>({});
   const [dernierSautMap, setDernierSautMap] = useState<Record<string, string | null>>({});
   const [filtreConformite, setFiltreConformite] = useState<'tous' | ComplianceStatus>('tous');
+  // Briefing du jour : id de la version courante + acquittements (toutes versions du jour)
+  const [briefingDuJour, setBriefingDuJour] = useState<{ latestId: string; todayIds: string[] } | null>(null);
+  const [acksMap, setAcksMap] = useState<Record<string, string[]>>({}); // user_id → briefing_ids acquittés
+
+  useEffect(() => {
+    if (!centreId) return;
+    (async () => {
+      const today = new Date().toISOString().substring(0, 10);
+      const { data: briefs, error: bErr } = await supabase
+        .from('dz_briefings').select('id, version').eq('dz_id', centreId).eq('briefing_date', today)
+        .order('version', { ascending: false });
+      if (bErr) { console.error('Chargement briefings du jour échoué :', bErr); return; }
+      if (!briefs || briefs.length === 0) { setBriefingDuJour(null); return; }
+      setBriefingDuJour({ latestId: briefs[0].id, todayIds: briefs.map(b => b.id) });
+      const { data: acks, error: aErr } = await supabase
+        .from('briefing_acknowledgements').select('briefing_id, user_id')
+        .in('briefing_id', briefs.map(b => b.id));
+      if (aErr) { console.error('Chargement acquittements échoué :', aErr); return; }
+      const map: Record<string, string[]> = {};
+      for (const a of acks ?? []) {
+        (map[a.user_id] ??= []).push(a.briefing_id);
+      }
+      setAcksMap(map);
+    })();
+  }, [centreId]);
 
   // Conformité (licence + médical + matériel) + récence via RPC sécurisée
   useEffect(() => {
@@ -913,6 +939,7 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
                 <th className="text-left px-4 py-3 font-medium" style={{ color: 'var(--c-dim)' }}>Sauts</th>
                 <th className="text-left px-4 py-3 font-medium" style={{ color: 'var(--c-dim)' }}>Statut</th>
                 <th className="text-left px-4 py-3 font-medium" style={{ color: 'var(--c-dim)' }}>Reprise</th>
+                <th className="text-left px-4 py-3 font-medium" style={{ color: 'var(--c-dim)' }}>Briefing</th>
                 <th className="text-left px-4 py-3 font-medium" style={{ color: 'var(--c-dim)' }}>Adhésion</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -960,6 +987,23 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
                             title={dernierSautMap[l.id] ? `Dernier saut : ${new Date(dernierSautMap[l.id]!).toLocaleDateString('fr-FR')} — selon les règles paramétrées` : 'Aucun saut connu'}>
                             <span className="w-1.5 h-1.5 rounded-full" style={{ background: cfg.color }} />
                             {label}
+                          </span>
+                        );
+                      })()}
+                    </td>
+                    <td className="px-4 py-3">
+                      {(() => {
+                        if (!briefingDuJour) return <span className="text-xs" style={{ color: 'var(--c-dim)' }}>—</span>;
+                        const userAcks = acksMap[l.id] ?? [];
+                        const st = userAcks.includes(briefingDuJour.latestId)
+                          ? { label: 'Acquitté', color: '#10B981', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)' }
+                          : userAcks.length > 0
+                          ? { label: 'À relire', color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' }
+                          : { label: 'Non lu', color: '#EF4444', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)' };
+                        return (
+                          <span className="text-xs rounded-full px-2 py-0.5 inline-flex items-center gap-1.5" style={{ background: st.bg, color: st.color, border: `1px solid ${st.border}` }}>
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: st.color }} />
+                            {st.label}
                           </span>
                         );
                       })()}
@@ -3446,6 +3490,7 @@ export function CentreDashboardPage() {
     { key: 'licencies', label: 'Mes licenciés', icon: Users },
     { key: 'demandes', label: "Demandes d'adhésion", icon: ClipboardList, badge: stats.demandesAttente },
     { key: 'sauts', label: 'Activité des sauts', icon: Activity },
+    { key: 'briefing', label: 'Briefing du jour', icon: Megaphone },
     { key: 'planning', label: 'Planning DZ', icon: Calendar },
     { key: 'stats', label: 'Statistiques', icon: BarChart2 },
     { key: 'equipe', label: 'Mon équipe', icon: Shield },
@@ -3671,6 +3716,9 @@ export function CentreDashboardPage() {
           )}
           {activeSection === 'pliage' && centreId && (
             <GestionPliage centreId={centreId} />
+          )}
+          {activeSection === 'briefing' && centreId && (
+            <BriefingSection centreId={centreId} />
           )}
           {activeSection === 'planning' && centreId && (
             <PlanningCentre centreId={centreId} />
