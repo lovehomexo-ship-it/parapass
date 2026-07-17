@@ -5,7 +5,7 @@ import {
   useBriefingDuJour, useDzCircuits, dzMapPublicUrl, sensAtterrissageDerive,
   type DzCircuit, type DzSettings, type Point, type ZonePolygone,
 } from '../../lib/briefing';
-import { Upload, Megaphone, MapPin, Route, Shapes, Ban, Trash2, Undo2, AlertTriangle, Plus, Pencil, Wind as WindIcon } from 'lucide-react';
+import { Upload, Megaphone, MapPin, Route, Shapes, Ban, Trash2, Undo2, AlertTriangle, Plus, Pencil, Wind as WindIcon, ExternalLink } from 'lucide-react';
 
 type EditTool = 'aucun' | 'trace' | 'lz' | 'zone_evolution' | 'sock' | 'obstacle' | 'nofly';
 
@@ -282,6 +282,16 @@ export function BriefingSection({ centreId }: { centreId: string }) {
               <Upload className="w-3.5 h-3.5" /> {draftSettings.image_fond_path ? 'Remplacer la photo' : 'Photo satellite'}
             </button>
             <input type="file" ref={fileRef} className="hidden" accept="image/*" onChange={handleUpload} />
+            <a
+              href="https://www.geoportail.gouv.fr/carte"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs no-underline"
+              style={{ color: '#60A5FA' }}
+              title="Ouvrir Géoportail (IGN) — photographies aériennes"
+            >
+              <ExternalLink className="w-3.5 h-3.5" /> Trouver ma DZ sur Géoportail
+            </a>
 
             {/* Sélecteur du circuit à ÉDITER */}
             <span className="text-xs ml-2" style={{ color: 'var(--c-dim)' }}>Éditer :</span>
