@@ -655,29 +655,23 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
   const [conformiteMap, setConformiteMap] = useState<Record<string, ComplianceStatus>>({});
   const [dernierSautMap, setDernierSautMap] = useState<Record<string, string | null>>({});
   const [filtreConformite, setFiltreConformite] = useState<'tous' | ComplianceStatus>('tous');
-  // Briefing du jour : id de la version courante + acquittements (toutes versions du jour)
-  const [briefingDuJour, setBriefingDuJour] = useState<{ latestId: string; todayIds: string[] } | null>(null);
-  const [acksMap, setAcksMap] = useState<Record<string, string[]>>({}); // user_id → briefing_ids acquittés
+  // Briefing du jour + acquittements
+  const [briefingDuJourId, setBriefingDuJourId] = useState<string | null>(null);
+  const [acksSet, setAcksSet] = useState<Set<string>>(new Set()); // user_ids ayant acquitté
 
   useEffect(() => {
     if (!centreId) return;
     (async () => {
       const today = new Date().toISOString().substring(0, 10);
-      const { data: briefs, error: bErr } = await supabase
-        .from('dz_briefings').select('id, version').eq('dz_id', centreId).eq('briefing_date', today)
-        .order('version', { ascending: false });
-      if (bErr) { console.error('Chargement briefings du jour échoué :', bErr); return; }
-      if (!briefs || briefs.length === 0) { setBriefingDuJour(null); return; }
-      setBriefingDuJour({ latestId: briefs[0].id, todayIds: briefs.map(b => b.id) });
+      const { data: brief, error: bErr } = await supabase
+        .from('dz_briefings').select('id').eq('dz_id', centreId).eq('date_briefing', today).maybeSingle();
+      if (bErr) { console.error('Chargement briefing du jour échoué :', bErr); return; }
+      if (!brief) { setBriefingDuJourId(null); return; }
+      setBriefingDuJourId(brief.id);
       const { data: acks, error: aErr } = await supabase
-        .from('briefing_acknowledgements').select('briefing_id, user_id')
-        .in('briefing_id', briefs.map(b => b.id));
+        .from('briefing_acknowledgements').select('user_id').eq('briefing_id', brief.id);
       if (aErr) { console.error('Chargement acquittements échoué :', aErr); return; }
-      const map: Record<string, string[]> = {};
-      for (const a of acks ?? []) {
-        (map[a.user_id] ??= []).push(a.briefing_id);
-      }
-      setAcksMap(map);
+      setAcksSet(new Set((acks ?? []).map(a => a.user_id)));
     })();
   }, [centreId]);
 
@@ -993,12 +987,9 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
                     </td>
                     <td className="px-4 py-3">
                       {(() => {
-                        if (!briefingDuJour) return <span className="text-xs" style={{ color: 'var(--c-dim)' }}>—</span>;
-                        const userAcks = acksMap[l.id] ?? [];
-                        const st = userAcks.includes(briefingDuJour.latestId)
+                        if (!briefingDuJourId) return <span className="text-xs" style={{ color: 'var(--c-dim)' }}>—</span>;
+                        const st = acksSet.has(l.id)
                           ? { label: 'Acquitté', color: '#10B981', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)' }
-                          : userAcks.length > 0
-                          ? { label: 'À relire', color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' }
                           : { label: 'Non lu', color: '#EF4444', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)' };
                         return (
                           <span className="text-xs rounded-full px-2 py-0.5 inline-flex items-center gap-1.5" style={{ background: st.bg, color: st.color, border: `1px solid ${st.border}` }}>
