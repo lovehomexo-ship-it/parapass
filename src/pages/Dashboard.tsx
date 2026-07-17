@@ -18,7 +18,8 @@ import { NATURE_SAUT_LABELS, CATEGORIE_LABELS, FONCTION_LABELS, STATUT_LABELS, B
 import { useAlertes, type MaterielEcheance } from '../lib/useAlertes';
 import { useComplianceRules, getMaterielEcheance } from '../lib/compliance';
 import { MaRepriseCard } from '../components/MaRepriseCard';
-import { BriefingDuJourCard } from '../components/BriefingDuJourCard';
+import { BriefingDuJourBlock } from '../components/BriefingDuJourCard';
+import { useDzIdsMembre } from '../lib/briefing';
 import { useBadges } from '../lib/useBadges';
 import { usePassport } from '../lib/usePassport';
 import { useDemo } from '../lib/useDemo';
@@ -362,6 +363,7 @@ export function DashboardPage() {
   }, []);
 
   const { licences, certificats, qualifications, brevets, centresLicencies } = usePassport(user?.id);
+  const briefingDzIds = useDzIdsMembre(user?.id);
   const { rules: complianceRules } = useComplianceRules();
 
   // Échéances matériel (pliage secours, AAD…) pour le bandeau d'alertes
@@ -689,11 +691,11 @@ export function DashboardPage() {
                 );
               })()}
 
-              {/* Briefing du jour de la DZ (si publié) */}
-              <BriefingDuJourCard
-                dzId={(centresLicencies.find(c => c.statut === 'actif') as { centre_id?: string } | undefined)?.centre_id}
-                userId={user?.id}
-              />
+              {/* Briefing du jour : bandeau + carte pour chaque DZ active (via licencies_centres,
+                  la table de référence du module — pas centres_licencies) */}
+              {briefingDzIds.map(dzId => (
+                <BriefingDuJourBlock key={dzId} dzId={dzId} userId={user?.id} />
+              ))}
 
               {/* Carte « Ma reprise » — récence du dernier saut selon les règles paramétrées */}
               <div className="mb-3">

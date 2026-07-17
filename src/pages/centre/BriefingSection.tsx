@@ -6,6 +6,7 @@ import {
   type DzCircuit, type DzSettings, type Point, type ZonePolygone,
 } from '../../lib/briefing';
 import { Upload, Megaphone, MapPin, Route, Shapes, Ban, Trash2, Undo2, AlertTriangle, Plus, Pencil, Wind as WindIcon, ExternalLink } from 'lucide-react';
+import { BriefingSuiviDuJour, BriefingArchive } from './BriefingSuivi';
 
 type EditTool = 'aucun' | 'trace' | 'lz' | 'zone_evolution' | 'sock' | 'obstacle' | 'nofly';
 
@@ -42,6 +43,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [okMsg, setOkMsg] = useState<string | null>(null);
+  const [ongletActif, setOngletActif] = useState<'reglage' | 'suivi' | 'archive'>('reglage');
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Hydratation
@@ -271,6 +273,25 @@ export function BriefingSection({ centreId }: { centreId: string }) {
         </div>
       )}
 
+      {/* Onglets : réglage / suivi / archive */}
+      <div className="flex rounded-xl overflow-hidden w-fit" style={{ border: '1px solid var(--c-border-f)' }}>
+        {([
+          { key: 'reglage' as const, label: 'Réglage & publication' },
+          { key: 'suivi' as const, label: 'Suivi du jour' },
+          { key: 'archive' as const, label: 'Archive' },
+        ]).map(t => (
+          <button key={t.key} onClick={() => setOngletActif(t.key)}
+            className="px-4 py-2.5 text-sm font-semibold transition"
+            style={{ background: ongletActif === t.key ? '#2563EB' : 'transparent', color: ongletActif === t.key ? 'white' : 'var(--c-muted)' }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {ongletActif === 'suivi' && <BriefingSuiviDuJour centreId={centreId} />}
+      {ongletActif === 'archive' && <BriefingArchive centreId={centreId} circuits={circuits} />}
+
+      {ongletActif === 'reglage' && (
       <div className="grid lg:grid-cols-[1fr_320px] gap-5 items-start">
         {/* ── Colonne scène + édition ── */}
         <div>
@@ -482,6 +503,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }

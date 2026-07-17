@@ -135,6 +135,25 @@ export async function flushAckQueue(): Promise<number> {
 
 // ─── Hooks données ────────────────────────────────────────────────────────────
 
+/** DZ actives du licencié — depuis licencies_centres, la table de référence du
+ *  module briefing et de ses RLS (PAS centres_licencies, qui peut être incomplète). */
+export function useDzIdsMembre(userId: string | undefined): string[] {
+  const [dzIds, setDzIds] = useState<string[]>([]);
+  useEffect(() => {
+    if (!userId) return;
+    supabase
+      .from('licencies_centres')
+      .select('centre_id')
+      .eq('parachutiste_id', userId)
+      .eq('statut', 'actif')
+      .then(({ data, error }) => {
+        if (error) { console.error('Chargement DZ du membre échoué :', error); return; }
+        setDzIds([...new Set((data ?? []).map(r => r.centre_id as string))]);
+      });
+  }, [userId]);
+  return dzIds;
+}
+
 /** Briefing du jour + circuit actif + settings. Copie locale pour le hors-ligne. */
 export function useBriefingDuJour(dzId: string | undefined) {
   const [settings, setSettings] = useState<DzSettings | null>(null);
@@ -232,7 +251,18 @@ export function useBriefingAck(briefingId: string | undefined, userId: string | 
       .insert({ briefing_id: briefingId, user_id: userId, acknowledged_at: now })
       .select('acknowledged_at');
     if (error || !written || written.length === 0) {
-      // Hors ligne (ou refus) : on met en file locale et on l'affiche comme pris
+      // Double clic : la ligne existe déjà (contrainte unique) → c'est un succès
+      if (error?.code === '23505') {
+        const { data: existing } = await supabase
+          .from('briefing_acknowledgements')
+          .select('acknowledged_at')
+          .eq('briefing_id', briefingId)
+          .eq('user_id', userId)
+          .maybeSingle();
+        setAckAt(existing?.acknowledged_at ?? now);
+        return;
+      }
+      // Hors ligne : on met en file locale et on l'affiche comme pris
       if (!navigator.onLine || (error && error.message.includes('Failed to fetch'))) {
         writeAckQueue([...readAckQueue(), { briefing_id: briefingId, user_id: userId, acknowledged_at: now }]);
         setAckAt(now);
