@@ -8,8 +8,24 @@ import { BriefingScene } from './BriefingScene';
  *  lendemain sans nouveau briefing, il ne reste rien à l'écran.
  *  Fonctionne hors ligne (copie locale + file d'acquittements). */
 export function BriefingDuJourBlock({ dzId, dzNom, userId }: { dzId: string | undefined; dzNom?: string; userId: string | undefined }) {
-  const { settings, briefing, circuit, backgroundUrl, offline } = useBriefingDuJour(dzId);
+  const { settings, briefing, circuit, backgroundUrl, offline, loadError, refresh } = useBriefingDuJour(dzId);
   const { ackAt, stale, pending, saving, acknowledge, error } = useBriefingAck(briefing?.id, userId, briefing?.published_at);
+
+  // Échec de chargement SANS copie locale : on le dit au lieu de ne rien monter
+  if (loadError) {
+    return (
+      <div className="mb-3 rounded-xl px-4 py-3 flex items-center justify-between gap-3 flex-wrap"
+        style={{ background: 'rgba(148,163,184,0.1)', border: '1px solid rgba(148,163,184,0.3)' }}>
+        <span className="text-sm" style={{ color: '#CBD5E1' }}>
+          ⚠️ Briefing{dzNom ? ` — ${dzNom}` : ''} : {loadError}
+        </span>
+        <button onClick={refresh} className="text-sm font-bold px-4 rounded-lg text-white flex-shrink-0"
+          style={{ background: '#475569', minHeight: 44 }}>
+          Réessayer
+        </button>
+      </div>
+    );
+  }
 
   // Pas de briefing publié AUJOURD'HUI (et rien en cache) : rien ne s'affiche
   if (!briefing || !settings) return null;

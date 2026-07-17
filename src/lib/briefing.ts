@@ -166,6 +166,7 @@ export function useBriefingDuJour(dzId: string | undefined) {
   const [circuit, setCircuit] = useState<DzCircuit | null>(null);
   const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null); // échec réseau SANS copie locale
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -193,6 +194,7 @@ export function useBriefingDuJour(dzId: string | undefined) {
       setCircuit(parsedCircuit);
       setBackgroundUrl(bg);
       setOffline(false);
+      setLoadError(null);
 
       if (parsedSettings && parsedBriefing) {
         writeSnapshot(dzId, today, { settings: parsedSettings, briefing: parsedBriefing, circuit: parsedCircuit, backgroundUrl: bg });
@@ -208,6 +210,9 @@ export function useBriefingDuJour(dzId: string | undefined) {
         setCircuit(snap.circuit);
         setBackgroundUrl(snap.backgroundUrl);
         setOffline(true);
+      } else {
+        // Pas de copie locale : on le DIT au lieu de ne rien afficher
+        setLoadError('Impossible de charger le briefing (connexion ?). Réessayez.');
       }
     } finally {
       setLoading(false);
@@ -221,7 +226,7 @@ export function useBriefingDuJour(dzId: string | undefined) {
     return () => window.removeEventListener('online', onOnline);
   }, [load]);
 
-  return { settings, briefing, circuit, backgroundUrl, offline, loading, refresh: load };
+  return { settings, briefing, circuit, backgroundUrl, offline, loadError, loading, refresh: load };
 }
 
 /** Acquittement de l'utilisateur — avec file locale si hors ligne.
