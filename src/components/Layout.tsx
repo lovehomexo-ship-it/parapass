@@ -463,7 +463,7 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
             <span className="hidden sm:inline">En partenariat avec la FFP</span>
           </div>
           <div className="flex items-center justify-center sm:justify-end">
-            <span>RGPD · Données hébergées en France</span>
+            <span>RGPD · Données hébergées en France · v{__APP_VERSION__}</span>
           </div>
         </div>
       </footer>
