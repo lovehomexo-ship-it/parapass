@@ -63,7 +63,7 @@ export function BriefingSuiviDuJour({ centreId }: { centreId: string }) {
     const channel = supabase
       .channel(`briefing-acks-${briefing.id}`)
       .on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'briefing_acknowledgements', filter: `briefing_id=eq.${briefing.id}` },
+        { event: '*', schema: 'public', table: 'briefing_acknowledgements', filter: `briefing_id=eq.${briefing.id}` },
         () => load())
       .subscribe();
     const poll = setInterval(load, 30_000);
@@ -73,10 +73,12 @@ export function BriefingSuiviDuJour({ centreId }: { centreId: string }) {
   if (loading) return <div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>;
   if (!briefing) return <p className="text-sm py-8 text-center" style={{ color: 'var(--c-dim)' }}>Aucun briefing publié aujourd'hui.</p>;
 
-  const ackIds = new Set(acks.map(a => a.user_id));
+  // Un acquittement antérieur à la (re)publication est périmé : il ne compte pas
+  const acksValides = acks.filter(a => new Date(a.acknowledged_at) >= new Date(briefing.published_at));
+  const ackIds = new Set(acksValides.map(a => a.user_id));
   const acquittes = membres
     .filter(m => ackIds.has(m.id))
-    .map(m => ({ ...m, at: acks.find(a => a.user_id === m.id)!.acknowledged_at }))
+    .map(m => ({ ...m, at: acksValides.find(a => a.user_id === m.id)!.acknowledged_at }))
     .sort((a, b) => b.at.localeCompare(a.at));
   const nonAcquittes = membres.filter(m => !ackIds.has(m.id));
 

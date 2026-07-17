@@ -119,9 +119,10 @@ export async function flushAckQueue(): Promise<number> {
   const remaining: QueuedAck[] = [];
   let flushed = 0;
   for (const ack of queue) {
+    // onConflict SANS ignoreDuplicates : un ré-acquittement hors ligne met à jour la ligne
     const { error } = await supabase
       .from('briefing_acknowledgements')
-      .upsert({ briefing_id: ack.briefing_id, user_id: ack.user_id, acknowledged_at: ack.acknowledged_at }, { onConflict: 'briefing_id,user_id', ignoreDuplicates: true });
+      .upsert({ briefing_id: ack.briefing_id, user_id: ack.user_id, acknowledged_at: ack.acknowledged_at }, { onConflict: 'briefing_id,user_id' });
     if (error) {
       console.error('Rejeu acquittement hors-ligne échoué :', error);
       remaining.push(ack);
@@ -135,23 +136,27 @@ export async function flushAckQueue(): Promise<number> {
 
 // ─── Hooks données ────────────────────────────────────────────────────────────
 
-/** DZ actives du licencié — depuis licencies_centres, la table de référence du
- *  module briefing et de ses RLS (PAS centres_licencies, qui peut être incomplète). */
-export function useDzIdsMembre(userId: string | undefined): string[] {
-  const [dzIds, setDzIds] = useState<string[]>([]);
+/** DZ actives du licencié (id + nom) — depuis licencies_centres, la table de
+ *  référence du module briefing et de ses RLS. Un licencié peut appartenir à
+ *  plusieurs DZ : le dashboard affiche le briefing de chacune. */
+export function useDzMembre(userId: string | undefined): { id: string; nom: string }[] {
+  const [dzs, setDzs] = useState<{ id: string; nom: string }[]>([]);
   useEffect(() => {
     if (!userId) return;
     supabase
       .from('licencies_centres')
-      .select('centre_id')
+      .select('centre_id, centre:centres(nom)')
       .eq('parachutiste_id', userId)
       .eq('statut', 'actif')
       .then(({ data, error }) => {
         if (error) { console.error('Chargement DZ du membre échoué :', error); return; }
-        setDzIds([...new Set((data ?? []).map(r => r.centre_id as string))]);
+        const seen = new Set<string>();
+        setDzs((data ?? [])
+          .map((r: Record<string, unknown>) => ({ id: r.centre_id as string, nom: (r.centre as { nom?: string } | null)?.nom ?? 'DZ' }))
+          .filter(d => { if (seen.has(d.id)) return false; seen.add(d.id); return true; }));
       });
   }, [userId]);
-  return dzIds;
+  return dzs;
 }
 
 /** Briefing du jour + circuit actif + settings. Copie locale pour le hors-ligne. */
@@ -219,17 +224,20 @@ export function useBriefingDuJour(dzId: string | undefined) {
   return { settings, briefing, circuit, backgroundUrl, offline, loading, refresh: load };
 }
 
-/** Acquittement de l'utilisateur — avec file locale si hors ligne. */
-export function useBriefingAck(briefingId: string | undefined, userId: string | undefined) {
-  const [ackAt, setAckAt] = useState<string | null>(null);
+/** Acquittement de l'utilisateur — avec file locale si hors ligne.
+ *  Un acquittement ANTÉRIEUR à published_at est périmé (briefing republié) :
+ *  `stale` vaut true et `ackAt` valide redevient null tant que l'utilisateur
+ *  n'a pas ré-acquitté (upsert : la ligne unique est mise à jour). */
+export function useBriefingAck(briefingId: string | undefined, userId: string | undefined, publishedAt?: string | null) {
+  const [rawAckAt, setRawAckAt] = useState<string | null>(null);
   const [pending, setPending] = useState(false); // acquitté hors ligne, en attente de synchro
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setAckAt(null); setPending(false);
+    setRawAckAt(null); setPending(false);
     if (!briefingId || !userId) return;
     const queued = readAckQueue().find(a => a.briefing_id === briefingId && a.user_id === userId);
-    if (queued) { setAckAt(queued.acknowledged_at); setPending(true); return; }
+    if (queued) { setRawAckAt(queued.acknowledged_at); setPending(true); return; }
     supabase
       .from('briefing_acknowledgements')
       .select('acknowledged_at')
@@ -238,34 +246,28 @@ export function useBriefingAck(briefingId: string | undefined, userId: string | 
       .maybeSingle()
       .then(({ data, error }) => {
         if (error) { console.error('Chargement acquittement échoué :', error); return; }
-        setAckAt(data?.acknowledged_at ?? null);
+        setRawAckAt(data?.acknowledged_at ?? null);
       });
   }, [briefingId, userId]);
+
+  // Le test « a acquitté » devient : acknowledged_at >= published_at
+  const isStale = !!(rawAckAt && publishedAt && new Date(rawAckAt) < new Date(publishedAt));
+  const ackAt = isStale ? null : rawAckAt;
 
   const acknowledge = async () => {
     if (!briefingId || !userId) return;
     setError(null);
     const now = new Date().toISOString();
+    // Upsert : premier acquittement OU ré-acquittement après republication
     const { data: written, error } = await supabase
       .from('briefing_acknowledgements')
-      .insert({ briefing_id: briefingId, user_id: userId, acknowledged_at: now })
+      .upsert({ briefing_id: briefingId, user_id: userId, acknowledged_at: now }, { onConflict: 'briefing_id,user_id' })
       .select('acknowledged_at');
     if (error || !written || written.length === 0) {
-      // Double clic : la ligne existe déjà (contrainte unique) → c'est un succès
-      if (error?.code === '23505') {
-        const { data: existing } = await supabase
-          .from('briefing_acknowledgements')
-          .select('acknowledged_at')
-          .eq('briefing_id', briefingId)
-          .eq('user_id', userId)
-          .maybeSingle();
-        setAckAt(existing?.acknowledged_at ?? now);
-        return;
-      }
       // Hors ligne : on met en file locale et on l'affiche comme pris
       if (!navigator.onLine || (error && error.message.includes('Failed to fetch'))) {
-        writeAckQueue([...readAckQueue(), { briefing_id: briefingId, user_id: userId, acknowledged_at: now }]);
-        setAckAt(now);
+        writeAckQueue([...readAckQueue().filter(a => !(a.briefing_id === briefingId && a.user_id === userId)), { briefing_id: briefingId, user_id: userId, acknowledged_at: now }]);
+        setRawAckAt(now);
         setPending(true);
         return;
       }
@@ -273,10 +275,10 @@ export function useBriefingAck(briefingId: string | undefined, userId: string | 
       setError(error?.message ?? 'Acquittement refusé');
       return;
     }
-    setAckAt(written[0].acknowledged_at);
+    setRawAckAt(written[0].acknowledged_at);
   };
 
-  return { ackAt, pending, acknowledge, error };
+  return { ackAt, stale: isStale, pending, acknowledge, error };
 }
 
 // ─── CRUD circuits (écran DT) ─────────────────────────────────────────────────

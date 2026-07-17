@@ -7,9 +7,9 @@ import { BriefingScene } from './BriefingScene';
  *  Un briefing est périssable : rien ne s'accumule, aucune relance — le
  *  lendemain sans nouveau briefing, il ne reste rien à l'écran.
  *  Fonctionne hors ligne (copie locale + file d'acquittements). */
-export function BriefingDuJourBlock({ dzId, userId }: { dzId: string | undefined; userId: string | undefined }) {
+export function BriefingDuJourBlock({ dzId, dzNom, userId }: { dzId: string | undefined; dzNom?: string; userId: string | undefined }) {
   const { settings, briefing, circuit, backgroundUrl, offline } = useBriefingDuJour(dzId);
-  const { ackAt, pending, acknowledge, error } = useBriefingAck(briefing?.id, userId);
+  const { ackAt, stale, pending, acknowledge, error } = useBriefingAck(briefing?.id, userId, briefing?.published_at);
 
   // Pas de briefing publié AUJOURD'HUI (et rien en cache) : rien ne s'affiche
   if (!briefing || !settings) return null;
@@ -19,7 +19,8 @@ export function BriefingDuJourBlock({ dzId, userId }: { dzId: string | undefined
 
   return (
     <>
-      {/* Bandeau — informe sans jamais bloquer ; disparaît dès l'acquittement */}
+      {/* Bandeau — informe sans jamais bloquer ; disparaît dès l'acquittement.
+          Acquittement antérieur à la republication = périmé → « à relire ». */}
       {!ackAt && (
         <div
           className="mb-3 rounded-xl px-4 py-3 flex items-center justify-between gap-3 flex-wrap"
@@ -27,7 +28,10 @@ export function BriefingDuJourBlock({ dzId, userId }: { dzId: string | undefined
         >
           <div className="flex items-center gap-2 min-w-0">
             <Megaphone className="w-4 h-4 flex-shrink-0" style={{ color: '#F97316' }} />
-            <span className="text-sm font-bold" style={{ color: '#FDBA74' }}>Briefing du jour à consulter</span>
+            <span className="text-sm font-bold" style={{ color: '#FDBA74' }}>
+              {stale ? 'À relire — briefing mis à jour' : 'Briefing du jour à consulter'}
+              {dzNom ? ` — ${dzNom}` : ''}
+            </span>
           </div>
           <button
             onClick={() => document.getElementById(cardId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
@@ -44,10 +48,15 @@ export function BriefingDuJourBlock({ dzId, userId }: { dzId: string | undefined
         <div className="px-4 py-3 flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
             <Megaphone className="w-4 h-4" style={{ color: '#F97316' }} />
-            <h3 className="text-sm font-bold text-white">Briefing du jour</h3>
+            <h3 className="text-sm font-bold text-white">Briefing du jour{dzNom ? ` — ${dzNom}` : ''}</h3>
             <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.45)' }}>
               Vent {briefing.vent_direction_deg}°{briefing.vent_vitesse_kt != null ? ` · ${briefing.vent_vitesse_kt} kt` : ''}
             </span>
+            {stale && (
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(245,158,11,0.15)', color: '#FBBF24', border: '1px solid rgba(245,158,11,0.35)' }}>
+                mis à jour — à relire
+              </span>
+            )}
           </div>
           {offline && (
             <span className="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full"

@@ -664,14 +664,17 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
     (async () => {
       const today = new Date().toISOString().substring(0, 10);
       const { data: brief, error: bErr } = await supabase
-        .from('dz_briefings').select('id').eq('dz_id', centreId).eq('date_briefing', today).maybeSingle();
+        .from('dz_briefings').select('id, published_at').eq('dz_id', centreId).eq('date_briefing', today).maybeSingle();
       if (bErr) { console.error('Chargement briefing du jour échoué :', bErr); return; }
       if (!brief) { setBriefingDuJourId(null); return; }
       setBriefingDuJourId(brief.id);
       const { data: acks, error: aErr } = await supabase
-        .from('briefing_acknowledgements').select('user_id').eq('briefing_id', brief.id);
+        .from('briefing_acknowledgements').select('user_id, acknowledged_at').eq('briefing_id', brief.id);
       if (aErr) { console.error('Chargement acquittements échoué :', aErr); return; }
-      setAcksSet(new Set((acks ?? []).map(a => a.user_id)));
+      // Un acquittement antérieur à la (re)publication est périmé
+      setAcksSet(new Set((acks ?? [])
+        .filter(a => new Date(a.acknowledged_at) >= new Date(brief.published_at))
+        .map(a => a.user_id)));
     })();
   }, [centreId]);
 

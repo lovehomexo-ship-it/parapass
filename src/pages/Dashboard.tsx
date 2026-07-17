@@ -19,7 +19,7 @@ import { useAlertes, type MaterielEcheance } from '../lib/useAlertes';
 import { useComplianceRules, getMaterielEcheance } from '../lib/compliance';
 import { MaRepriseCard } from '../components/MaRepriseCard';
 import { BriefingDuJourBlock } from '../components/BriefingDuJourCard';
-import { useDzIdsMembre } from '../lib/briefing';
+import { useDzMembre } from '../lib/briefing';
 import { useBadges } from '../lib/useBadges';
 import { usePassport } from '../lib/usePassport';
 import { useDemo } from '../lib/useDemo';
@@ -363,7 +363,7 @@ export function DashboardPage() {
   }, []);
 
   const { licences, certificats, qualifications, brevets, centresLicencies } = usePassport(user?.id);
-  const briefingDzIds = useDzIdsMembre(user?.id);
+  const briefingDzs = useDzMembre(user?.id);
   const { rules: complianceRules } = useComplianceRules();
 
   // Échéances matériel (pliage secours, AAD…) pour le bandeau d'alertes
@@ -693,8 +693,8 @@ export function DashboardPage() {
 
               {/* Briefing du jour : bandeau + carte pour chaque DZ active (via licencies_centres,
                   la table de référence du module — pas centres_licencies) */}
-              {briefingDzIds.map(dzId => (
-                <BriefingDuJourBlock key={dzId} dzId={dzId} userId={user?.id} />
+              {briefingDzs.map(dz => (
+                <BriefingDuJourBlock key={dz.id} dzId={dz.id} dzNom={dz.nom} userId={user?.id} />
               ))}
 
               {/* Carte « Ma reprise » — récence du dernier saut selon les règles paramétrées */}
