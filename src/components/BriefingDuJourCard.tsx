@@ -9,7 +9,7 @@ import { BriefingScene } from './BriefingScene';
  *  Fonctionne hors ligne (copie locale + file d'acquittements). */
 export function BriefingDuJourBlock({ dzId, dzNom, userId }: { dzId: string | undefined; dzNom?: string; userId: string | undefined }) {
   const { settings, briefing, circuit, backgroundUrl, offline } = useBriefingDuJour(dzId);
-  const { ackAt, stale, pending, acknowledge, error } = useBriefingAck(briefing?.id, userId, briefing?.published_at);
+  const { ackAt, stale, pending, saving, acknowledge, error } = useBriefingAck(briefing?.id, userId, briefing?.published_at);
 
   // Pas de briefing publié AUJOURD'HUI (et rien en cache) : rien ne s'affiche
   if (!briefing || !settings) return null;
@@ -27,16 +27,17 @@ export function BriefingDuJourBlock({ dzId, dzNom, userId }: { dzId: string | un
           style={{ background: 'rgba(249,115,22,0.14)', border: '1.5px solid rgba(249,115,22,0.45)' }}
         >
           <div className="flex items-center gap-2 min-w-0">
-            <Megaphone className="w-4 h-4 flex-shrink-0" style={{ color: '#F97316' }} />
-            <span className="text-sm font-bold" style={{ color: '#FDBA74' }}>
+            <Megaphone className="w-4 h-4 flex-shrink-0" style={{ color: '#FB923C' }} />
+            {/* Contraste fort : lisible au soleil */}
+            <span className="text-sm font-extrabold" style={{ color: '#FFEDD5' }}>
               {stale ? 'À relire — briefing mis à jour' : 'Briefing du jour à consulter'}
               {dzNom ? ` — ${dzNom}` : ''}
             </span>
           </div>
           <button
             onClick={() => document.getElementById(cardId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            className="flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-lg text-white flex-shrink-0"
-            style={{ background: '#F97316', minHeight: 40 }}
+            className="flex items-center gap-1.5 text-sm font-bold px-5 rounded-lg text-white flex-shrink-0"
+            style={{ background: '#F97316', minHeight: 44 }}
           >
             Ouvrir <ChevronDown className="w-4 h-4" />
           </button>
@@ -96,10 +97,11 @@ export function BriefingDuJourBlock({ dzId, dzNom, userId }: { dzId: string | un
           ) : (
             <button
               onClick={acknowledge}
-              className="w-full py-3 rounded-xl text-sm font-bold text-white"
+              disabled={saving}
+              className="w-full py-3 rounded-xl text-sm font-bold text-white disabled:opacity-60"
               style={{ background: '#F97316', boxShadow: '0 4px 12px rgba(249,115,22,0.3)', minHeight: 48 }}
             >
-              J'ai pris connaissance du briefing
+              {saving ? 'Enregistrement…' : 'J\'ai pris connaissance du briefing'}
             </button>
           )}
         </div>

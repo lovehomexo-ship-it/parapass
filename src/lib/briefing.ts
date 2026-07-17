@@ -231,6 +231,7 @@ export function useBriefingDuJour(dzId: string | undefined) {
 export function useBriefingAck(briefingId: string | undefined, userId: string | undefined, publishedAt?: string | null) {
   const [rawAckAt, setRawAckAt] = useState<string | null>(null);
   const [pending, setPending] = useState(false); // acquitté hors ligne, en attente de synchro
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -255,30 +256,37 @@ export function useBriefingAck(briefingId: string | undefined, userId: string | 
   const ackAt = isStale ? null : rawAckAt;
 
   const acknowledge = async () => {
-    if (!briefingId || !userId) return;
+    if (!briefingId || !userId || saving) return;
     setError(null);
+    setSaving(true);
     const now = new Date().toISOString();
+    // Mise à jour OPTIMISTE : le bandeau disparaît dès le clic ; on rétablit
+    // l'état précédent avec un message clair si l'écriture échoue.
+    const previous = rawAckAt;
+    setRawAckAt(now);
     // Upsert : premier acquittement OU ré-acquittement après republication
     const { data: written, error } = await supabase
       .from('briefing_acknowledgements')
       .upsert({ briefing_id: briefingId, user_id: userId, acknowledged_at: now }, { onConflict: 'briefing_id,user_id' })
       .select('acknowledged_at');
+    setSaving(false);
     if (error || !written || written.length === 0) {
-      // Hors ligne : on met en file locale et on l'affiche comme pris
+      // Hors ligne : on met en file locale, l'affichage optimiste reste valable
       if (!navigator.onLine || (error && error.message.includes('Failed to fetch'))) {
         writeAckQueue([...readAckQueue().filter(a => !(a.briefing_id === briefingId && a.user_id === userId)), { briefing_id: briefingId, user_id: userId, acknowledged_at: now }]);
-        setRawAckAt(now);
         setPending(true);
         return;
       }
+      // Vrai échec : on annule l'optimisme et on le dit, en français
       console.error('Acquittement échoué :', error);
-      setError(error?.message ?? 'Acquittement refusé');
+      setRawAckAt(previous);
+      setError('L\'acquittement n\'a pas pu être enregistré. Vérifiez votre connexion et réessayez.');
       return;
     }
     setRawAckAt(written[0].acknowledged_at);
   };
 
-  return { ackAt, stale: isStale, pending, acknowledge, error };
+  return { ackAt, stale: isStale, pending, saving, acknowledge, error };
 }
 
 // ─── CRUD circuits (écran DT) ─────────────────────────────────────────────────

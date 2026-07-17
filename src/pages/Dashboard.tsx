@@ -666,6 +666,12 @@ export function DashboardPage() {
           {/* ─── ACCUEIL ─────────────────────────────────────────────────────── */}
           {activeTab === 'accueil' && (
             <>
+              {/* 0 — Briefing du jour : PREMIER élément visible, sans scroll
+                  (bandeau + carte pour chaque DZ active via licencies_centres) */}
+              {briefingDzs.map(dz => (
+                <BriefingDuJourBlock key={dz.id} dzId={dz.id} dzNom={dz.nom} userId={user?.id} />
+              ))}
+
               {/* 1 — Bandeau compact brevet + autorisation */}
               {statutDocs && (() => {
                 const cfg = statutDocs === 'expire'
@@ -690,12 +696,6 @@ export function DashboardPage() {
                   </div>
                 );
               })()}
-
-              {/* Briefing du jour : bandeau + carte pour chaque DZ active (via licencies_centres,
-                  la table de référence du module — pas centres_licencies) */}
-              {briefingDzs.map(dz => (
-                <BriefingDuJourBlock key={dz.id} dzId={dz.id} dzNom={dz.nom} userId={user?.id} />
-              ))}
 
               {/* Carte « Ma reprise » — récence du dernier saut selon les règles paramétrées */}
               <div className="mb-3">
