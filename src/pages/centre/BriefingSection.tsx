@@ -7,6 +7,7 @@ import {
 } from '../../lib/briefing';
 import { Upload, Megaphone, MapPin, Route, Shapes, Ban, Trash2, Undo2, AlertTriangle, Plus, Pencil, Wind as WindIcon, ExternalLink } from 'lucide-react';
 import { BriefingSuiviDuJour, BriefingArchive } from './BriefingSuivi';
+import { useMeteoAltitude, indexHeureCourante, kmhEnKt } from '../../lib/meteoAltitude';
 
 type EditTool = 'aucun' | 'trace' | 'lz' | 'zone_evolution' | 'sock' | 'obstacle' | 'nofly';
 
@@ -19,6 +20,7 @@ const inputStyle: React.CSSProperties = {
 export function BriefingSection({ centreId }: { centreId: string }) {
   const { settings: savedSettings, briefing, refresh } = useBriefingDuJour(centreId);
   const { circuits, save: saveCircuit, remove: removeCircuit, refresh: refreshCircuits } = useDzCircuits(centreId);
+  const meteo = useMeteoAltitude(centreId);
 
   // ── Réglages DZ (brouillon) ──
   const [draftSettings, setDraftSettings] = useState<DzSettings>({
@@ -582,6 +584,22 @@ export function BriefingSection({ centreId }: { centreId: string }) {
             </label>
             <input type="range" min={0} max={359} value={ventDir}
               onChange={e => setVentDir(parseInt(e.target.value, 10))} className="w-full" style={{ height: 28 }} />
+            {/* Proposition depuis la prévision — le DT confirme toujours en publiant */}
+            {(() => {
+              if (!meteo.payload) return null;
+              const i = indexHeureCourante(meteo.payload.times);
+              const dirPrev = Math.round(meteo.payload.sol.dir[i] ?? 0);
+              const ktPrev = kmhEnKt(meteo.payload.sol.speed[i] ?? 0);
+              return (
+                <button
+                  onClick={() => { setVentDir(dirPrev); setVentVitesse(String(ktPrev)); }}
+                  className="text-[11px] underline underline-offset-2 mt-1"
+                  style={{ color: '#7DD3FC', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  Utiliser le vent prévu : {dirPrev}° · {ktPrev} kt (prévision indicative — à confirmer)
+                </button>
+              );
+            })()}
           </div>
           <div>
             <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--c-text2)' }}>Vitesse (kt, optionnel)</label>

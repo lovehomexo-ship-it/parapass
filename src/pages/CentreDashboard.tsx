@@ -12,6 +12,7 @@ import { AddSautModal } from '../components/AddSautModal';
 import { useComplianceRules, getComplianceStatus, worstStatus, type ComplianceStatus } from '../lib/compliance';
 import { ComplianceBadge, ComplianceDot } from '../components/ComplianceBadge';
 import { useCurrencyRules, getCurrencyStatus, CURRENCY_STATUS_CONFIG } from '../lib/currency';
+import { MeteoAltitudeDZ } from '../components/MeteoAltitudeCard';
 import { BriefingSection } from './centre/BriefingSection';
 import {
   Home, Users, ClipboardList, Activity, BarChart2, Calendar, Megaphone,
@@ -3684,7 +3685,15 @@ export function CentreDashboardPage() {
 
         <div className="p-6">
           {activeSection === 'dashboard' && (
-            <DashboardHome centre={centre} stats={stats} onNavigate={setActiveSection} carnetsEnAttente={carnetsEnAttente} />
+            <>
+              <DashboardHome centre={centre} stats={stats} onNavigate={setActiveSection} carnetsEnAttente={carnetsEnAttente} />
+              {/* Vent en altitude — profil complet + projection journée (prévision indicative) */}
+              {centreId && (
+                <div className="mt-5">
+                  <MeteoAltitudeDZ dzId={centreId} />
+                </div>
+              )}
+            </>
           )}
           {activeSection === 'licencies' && (
             <LicenciesSection

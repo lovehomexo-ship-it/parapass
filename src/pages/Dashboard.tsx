@@ -19,6 +19,7 @@ import { useAlertes, type MaterielEcheance } from '../lib/useAlertes';
 import { useComplianceRules, getMaterielEcheance } from '../lib/compliance';
 import { MaRepriseCard } from '../components/MaRepriseCard';
 import { BriefingDuJourBlock } from '../components/BriefingDuJourCard';
+import { MeteoAltitudeCard } from '../components/MeteoAltitudeCard';
 import { useDzMembre } from '../lib/briefing';
 import { useBadges } from '../lib/useBadges';
 import { usePassport } from '../lib/usePassport';
@@ -701,6 +702,11 @@ export function DashboardPage() {
               <div className="mb-3">
                 <MaRepriseCard userId={user?.id} niveau={topBrevet} />
               </div>
+
+              {/* Vent en altitude — météo localisée de chaque DZ affichée (prévision indicative) */}
+              {briefingDzs.map(dz => (
+                <MeteoAltitudeCard key={`meteo-${dz.id}`} dzId={dz.id} dzNom={briefingDzs.length > 1 ? dz.nom : undefined} />
+              ))}
 
               {/* 2 — Layout 2 colonnes desktop : carte (gauche) + tuiles+boutons (droite) */}
               <div className="flex flex-col lg:flex-row lg:items-start lg:gap-6 mb-6">
