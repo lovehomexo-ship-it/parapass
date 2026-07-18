@@ -18,7 +18,7 @@ const inputStyle: React.CSSProperties = {
 /** Écran DT : configuration des circuits (tracés fixes) + publication du briefing du jour. */
 export function BriefingSection({ centreId }: { centreId: string }) {
   const { settings: savedSettings, briefing, refresh } = useBriefingDuJour(centreId);
-  const { circuits, save: saveCircuit, refresh: refreshCircuits } = useDzCircuits(centreId);
+  const { circuits, save: saveCircuit, remove: removeCircuit, refresh: refreshCircuits } = useDzCircuits(centreId);
 
   // ── Réglages DZ (brouillon) ──
   const [draftSettings, setDraftSettings] = useState<DzSettings>({
@@ -33,6 +33,8 @@ export function BriefingSection({ centreId }: { centreId: string }) {
 
   const [tool, setTool] = useState<EditTool>('aucun');
   const [pendingPolygon, setPendingPolygon] = useState<Point[]>([]);
+  // Objet sélectionné par tap sur la carte (surbrillance + bouton Supprimer hors carte)
+  const [selectedObject, setSelectedObject] = useState<{ kind: 'nofly' | 'obstacle' | 'evolution' | 'sock'; index: number } | null>(null);
 
   // ── Briefing du jour ──
   const [ventDir, setVentDir] = useState(270);
@@ -128,8 +130,81 @@ export function BriefingSection({ centreId }: { centreId: string }) {
     return true;
   };
 
+  // ── Sélection / suppression d'objets sur la carte ──
+
+  const pointInPolygon = (x: number, y: number, poly: Point[]): boolean => {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const [xi, yi] = poly[i];
+      const [xj, yj] = poly[j];
+      if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  };
+
+  /** Hit-test au tap (outil « aucun ») : du dessus vers le dessous —
+   *  manche à air, zone d'évolution, obstacles, zones interdites. */
+  const hitTest = (x: number, y: number): typeof selectedObject => {
+    if (draftSettings.sock_x != null && draftSettings.sock_y != null
+      && Math.hypot(draftSettings.sock_x - x, draftSettings.sock_y - y) < 5) {
+      return { kind: 'sock', index: 0 };
+    }
+    if (draftCircuit?.zone_evolution && pointInPolygon(x, y, draftCircuit.zone_evolution)) {
+      return { kind: 'evolution', index: 0 };
+    }
+    for (let i = draftSettings.obstacles.length - 1; i >= 0; i--) {
+      if (pointInPolygon(x, y, draftSettings.obstacles[i].points)) return { kind: 'obstacle', index: i };
+    }
+    for (let i = draftSettings.no_fly_zones.length - 1; i >= 0; i--) {
+      if (pointInPolygon(x, y, draftSettings.no_fly_zones[i].points)) return { kind: 'nofly', index: i };
+    }
+    return null;
+  };
+
+  /** Suppressions — état local immédiat, écriture derrière avec erreur explicite. */
+  const deleteObstacle = async (i: number) => {
+    const next = { ...draftSettings, obstacles: draftSettings.obstacles.filter((_, j) => j !== i) };
+    setDraftSettings(next);
+    await persistSettings(next);
+  };
+  const deleteNoFly = async (i: number) => {
+    const next = { ...draftSettings, no_fly_zones: draftSettings.no_fly_zones.filter((_, j) => j !== i) };
+    setDraftSettings(next);
+    await persistSettings(next);
+  };
+  const deleteSock = async () => {
+    const next = { ...draftSettings, sock_x: null, sock_y: null };
+    setDraftSettings(next);
+    await persistSettings(next);
+  };
+  const deleteZoneEvolution = async () => {
+    if (!draftCircuit) return;
+    const updated = { ...draftCircuit, zone_evolution: null };
+    setDraftCircuit(updated);
+    const err = await saveCircuit(updated); // enregistrement immédiat, pas d'état fantôme
+    if (err) setError(err);
+  };
+  const deleteSelected = async () => {
+    if (!selectedObject) return;
+    if (selectedObject.kind === 'sock') await deleteSock();
+    else if (selectedObject.kind === 'evolution') await deleteZoneEvolution();
+    else if (selectedObject.kind === 'obstacle') await deleteObstacle(selectedObject.index);
+    else await deleteNoFly(selectedObject.index);
+    setSelectedObject(null);
+  };
+  const selectedLabel = selectedObject
+    ? selectedObject.kind === 'sock' ? 'la manche à air'
+    : selectedObject.kind === 'evolution' ? 'la zone d\'évolution'
+    : selectedObject.kind === 'obstacle' ? `l'obstacle « ${draftSettings.obstacles[selectedObject.index]?.nom ?? '?'} »`
+    : `la zone « ${draftSettings.no_fly_zones[selectedObject.index]?.nom ?? '?'} »`
+    : null;
+
   // ── Interactions scène ──
   const handleCanvasTap = (x: number, y: number) => {
+    if (tool === 'aucun') {
+      setSelectedObject(hitTest(x, y));
+      return;
+    }
     if (tool === 'trace' && draftCircuit) {
       setDraftCircuit({ ...draftCircuit, trace: [...draftCircuit.trace, [x, y]] });
     } else if (tool === 'lz' && draftCircuit) {
@@ -215,8 +290,15 @@ export function BriefingSection({ centreId }: { centreId: string }) {
   };
 
   // ── Publication (upsert : une ligne par jour) ──
+  // Le circuit publié est TOUJOURS circuitActifId (cartes « Circuit qui sera
+  // publié aujourd'hui ») — jamais editCircuitId (sélecteur d'édition).
   const publish = async () => {
-    if (!circuitActifId) { setError('Sélectionnez le circuit actif du jour.'); return; }
+    if (!circuitActifId) { setError('Sélectionnez le circuit qui sera publié aujourd\'hui.'); return; }
+    const circuitPublie = circuits.find(c => c.id === circuitActifId);
+    if (!circuitPublie) { setError('Circuit introuvable — resélectionnez le circuit à publier.'); return; }
+    // Confirmation : le DT valide en connaissance de cause ce qui part réellement
+    const recap = `Vous publiez le circuit « ${circuitPublie.nom} », vent ${ventDir}°${ventVitesse.trim() ? ` · ${ventVitesse} kt` : ''}${consignes.trim() ? ', avec consignes' : ', sans consigne'}. Confirmer ?`;
+    if (!window.confirm(recap)) return;
     setSaving(true);
     setError(null);
     setOkMsg(null);
@@ -239,7 +321,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
       setError(error?.message ?? 'Publication refusée — le briefing n\'a pas été enregistré.');
       return;
     }
-    setOkMsg(`Briefing publié à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`);
+    setOkMsg(`Briefing publié à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} — circuit « ${circuitPublie.nom} ».`);
     refresh();
   };
 
@@ -320,8 +402,8 @@ export function BriefingSection({ centreId }: { centreId: string }) {
               <ExternalLink className="w-3.5 h-3.5" /> Trouver ma DZ sur Géoportail
             </a>
 
-            {/* Sélecteur du circuit à ÉDITER */}
-            <span className="text-xs ml-2" style={{ color: 'var(--c-dim)' }}>Éditer :</span>
+            {/* Sélecteur du circuit à ÉDITER (≠ du circuit publié, choisi à droite) */}
+            <span className="text-xs ml-2 font-semibold" style={{ color: 'var(--c-text2)' }}>✏️ Circuit en cours d'édition :</span>
             <select
               value={editCircuitId ?? ''}
               onChange={e => setEditCircuitId(e.target.value || null)}
@@ -383,7 +465,24 @@ export function BriefingSection({ centreId }: { centreId: string }) {
             onMovePoint={handleMovePoint}
             onRemovePoint={handleRemovePoint}
             pendingPolygon={pendingPolygon}
+            selectedObject={selectedObject}
           />
+
+          {/* Objet sélectionné au tap : suppression directe (hors carte, insensible aux superpositions) */}
+          {selectedObject && selectedLabel && (
+            <div className="flex items-center gap-2 mt-2 rounded-xl px-3 py-2"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.2)' }}>
+              <span className="text-xs text-white flex-1">Sélection : {selectedLabel}</span>
+              <button onClick={deleteSelected}
+                className="flex items-center gap-1.5 text-xs font-bold px-3 rounded-lg text-white"
+                style={{ background: '#EF4444', minHeight: 40 }}>
+                <Trash2 className="w-3.5 h-3.5" /> Supprimer
+              </button>
+              <button onClick={() => setSelectedObject(null)} className="text-xs px-2" style={{ color: 'var(--c-muted)', minHeight: 40 }}>
+                Annuler
+              </button>
+            </div>
+          )}
 
           {/* Édition circuit : altitude + enregistrement explicite */}
           {draftCircuit && (
@@ -418,27 +517,61 @@ export function BriefingSection({ centreId }: { centreId: string }) {
             </div>
           )}
 
-          {/* Zones enregistrées */}
-          {(draftSettings.no_fly_zones.length > 0 || draftSettings.obstacles.length > 0) && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {draftSettings.obstacles.map((z, i) => (
-                <span key={`o${i}`} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full" style={{ background: 'rgba(56,189,248,0.1)', color: '#7DD3FC', border: '1px solid rgba(56,189,248,0.3)' }}>
-                  {z.nom}
-                  <button onClick={() => { const next = { ...draftSettings, obstacles: draftSettings.obstacles.filter((_, j) => j !== i) }; setDraftSettings(next); persistSettings(next); }} aria-label={`Supprimer ${z.nom}`}>
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-              {draftSettings.no_fly_zones.map((z, i) => (
-                <span key={`n${i}`} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full" style={{ background: 'rgba(239,68,68,0.1)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.3)' }}>
-                  ⛔ {z.nom}
-                  <button onClick={() => { const next = { ...draftSettings, no_fly_zones: draftSettings.no_fly_zones.filter((_, j) => j !== i) }; setDraftSettings(next); persistSettings(next); }} aria-label={`Supprimer ${z.nom}`}>
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
+          {/* Objets de la carte — une pastille par objet, toutes supprimables de la
+              même manière (insensible aux superpositions sur la carte) */}
+          <div className="flex flex-wrap gap-2 mt-3">
+            {draftCircuit?.zone_evolution && (
+              <span className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full" style={{ background: 'rgba(167,139,250,0.1)', color: '#C4B5FD', border: '1px solid rgba(167,139,250,0.3)' }}>
+                Zone d'évolution ({draftCircuit.nom})
+                <button onClick={deleteZoneEvolution} aria-label="Supprimer la zone d'évolution" style={{ minWidth: 24, minHeight: 24 }}>
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {draftSettings.sock_x != null && (
+              <span className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full" style={{ background: 'rgba(226,232,240,0.08)', color: '#E2E8F0', border: '1px solid rgba(226,232,240,0.25)' }}>
+                Manche à air
+                <button onClick={deleteSock} aria-label="Supprimer la manche à air" style={{ minWidth: 24, minHeight: 24 }}>
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {draftSettings.obstacles.map((z, i) => (
+              <span key={`o${i}`} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full" style={{ background: 'rgba(56,189,248,0.1)', color: '#7DD3FC', border: '1px solid rgba(56,189,248,0.3)' }}>
+                Obstacle : {z.nom}
+                <button onClick={() => deleteObstacle(i)} aria-label={`Supprimer ${z.nom}`} style={{ minWidth: 24, minHeight: 24 }}>
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+            {draftSettings.no_fly_zones.map((z, i) => (
+              <span key={`n${i}`} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full" style={{ background: 'rgba(239,68,68,0.1)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.3)' }}>
+                ⛔ {z.nom}
+                <button onClick={() => deleteNoFly(i)} aria-label={`Supprimer ${z.nom}`} style={{ minWidth: 24, minHeight: 24 }}>
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+            {/* Circuits : coûteux à refaire → confirmation avant suppression */}
+            {circuits.map(c => (
+              <span key={c.id} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full" style={{ background: 'rgba(251,191,36,0.08)', color: '#FDE68A', border: '1px solid rgba(251,191,36,0.3)' }}>
+                Circuit : {c.nom}
+                <button
+                  onClick={async () => {
+                    if (!window.confirm(`Supprimer le circuit « ${c.nom} » et son tracé (${c.trace.length} points) ? Cette action est définitive.`)) return;
+                    const err = await removeCircuit(c.id);
+                    if (err) { setError(err); return; }
+                    if (editCircuitId === c.id) setEditCircuitId(null);
+                    if (circuitActifId === c.id) setCircuitActifId(null);
+                  }}
+                  aria-label={`Supprimer le circuit ${c.nom}`}
+                  style={{ minWidth: 24, minHeight: 24 }}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+          </div>
         </div>
 
         {/* ── Panneau de droite : le briefing du jour ── */}
@@ -456,7 +589,9 @@ export function BriefingSection({ centreId }: { centreId: string }) {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--c-text2)' }}>Circuit actif du jour</label>
+            <label className="block text-xs font-bold mb-1.5 uppercase tracking-wide" style={{ color: '#F97316' }}>
+              Circuit qui sera publié aujourd'hui
+            </label>
             <div className="flex flex-col gap-1.5">
               {circuits.filter(c => c.actif).map(c => (
                 <button key={c.id} onClick={() => setCircuitActifId(c.id)}
@@ -497,14 +632,19 @@ export function BriefingSection({ centreId }: { centreId: string }) {
               placeholder="ex : trafic planeurs au nord, séparation 5 s mini…" />
           </div>
 
-          <button onClick={publish} disabled={saving}
+          <button onClick={publish} disabled={saving || !circuitActifId}
             className="w-full py-3.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
             style={{ background: '#F97316', boxShadow: '0 4px 14px rgba(249,115,22,0.35)' }}>
-            {saving ? 'Publication…' : 'Publier le briefing'}
+            {saving
+              ? 'Publication…'
+              : circuitActif
+              ? `Publier le briefing — circuit ${circuitActif.nom}`
+              : 'Publier le briefing'}
           </button>
           {briefing && (
             <p className="text-[11px] text-center" style={{ color: 'var(--c-dim)' }}>
               Dernière publication : {new Date(briefing.published_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+              {' — '}{circuits.find(c => c.id === briefing.circuit_id)?.nom ?? 'circuit inconnu'}
             </p>
           )}
         </div>

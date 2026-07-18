@@ -19,6 +19,8 @@ export interface BriefingSceneProps {
   onRemovePoint?: (kind: 'trace' | 'zone', index: number) => void;
   /** Polygone en cours de tracé (aperçu). */
   pendingPolygon?: Point[];
+  /** Mode edit : objet sélectionné (surbrillance) — la suppression se fait via le bouton hors carte. */
+  selectedObject?: { kind: 'nofly' | 'obstacle' | 'evolution' | 'sock'; index: number } | null;
 }
 
 // viewBox par défaut si les dimensions natives de l'image sont inconnues
@@ -42,7 +44,7 @@ function Etiquette({ x, y, children, fill = '#FDE68A', fontSize = 14, anchor = '
 
 export function BriefingScene({
   settings, circuit, vent, backgroundUrl, mode,
-  onCanvasTap, onMovePoint, onRemovePoint, pendingPolygon,
+  onCanvasTap, onMovePoint, onRemovePoint, pendingPolygon, selectedObject,
 }: BriefingSceneProps) {
   const VB_W = DEFAULT_W;
   const VB_H = settings.image_fond_largeur && settings.image_fond_hauteur
@@ -160,10 +162,12 @@ export function BriefingScene({
         obstacle:  { fill: 'rgba(56,189,248,0.22)', stroke: '#38BDF8', text: '#7DD3FC', prefix: '' },
         evolution: { fill: 'rgba(167,139,250,0.20)', stroke: '#A78BFA', text: '#C4B5FD', prefix: '' },
       }[variant];
+      const isSelected = selectedObject?.kind === variant && selectedObject.index === i;
       return (
         <g key={`${variant}-${i}`}>
-          <polygon points={pts} fill={styles.fill} stroke={styles.stroke} strokeWidth="2.5"
-            strokeDasharray={variant === 'nofly' ? '8 4' : undefined} />
+          <polygon points={pts} fill={styles.fill} stroke={isSelected ? '#FFFFFF' : styles.stroke}
+            strokeWidth={isSelected ? 5 : 2.5}
+            strokeDasharray={variant === 'nofly' && !isSelected ? '8 4' : undefined} />
           <Etiquette x={cx} y={cy} fill={styles.text} fontSize={13}>
             {`${styles.prefix}${z.nom}${extraLabel ?? ''}`}
           </Etiquette>
@@ -317,6 +321,9 @@ export function BriefingScene({
       {/* Manche à air orientée selon le vent */}
       {sock && vent && (
         <g transform={`translate(${sock.x}, ${sock.y})`} pointerEvents="none">
+          {selectedObject?.kind === 'sock' && (
+            <circle r="34" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeDasharray="6 4" />
+          )}
           <line x1="0" y1="0" x2="0" y2="-26" stroke="#E2E8F0" strokeWidth="3" />
           <g transform={`translate(0,-26) rotate(${ventBlowDeg})`}>
             <path d="M -8 0 L 8 0 L 2.5 -30 L -2.5 -30 Z" fill="#F97316" stroke="#0F172A" strokeWidth="1" />

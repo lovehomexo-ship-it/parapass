@@ -386,5 +386,22 @@ export function useDzCircuits(dzId: string | undefined) {
     return null;
   };
 
-  return { circuits, save, refresh: load };
+  /** Suppression d'un circuit. Renvoie un message d'erreur, ou null si OK.
+   *  Un circuit référencé par des briefings publiés ne peut pas être supprimé
+   *  (l'archive est la preuve de diffusion) : on le désactive à la place. */
+  const remove = async (circuitId: string): Promise<string | null> => {
+    const { data: deleted, error } = await supabase
+      .from('dz_circuits').delete().eq('id', circuitId).select('id');
+    if (error || !deleted || deleted.length === 0) {
+      console.error('Suppression dz_circuits échouée :', error);
+      if (error?.code === '23503') {
+        return 'Ce circuit est référencé par des briefings publiés (archive). Décochez « Actif » pour le retirer des choix, sans casser l\'historique.';
+      }
+      return error?.message ?? 'Suppression refusée.';
+    }
+    await load();
+    return null;
+  };
+
+  return { circuits, save, remove, refresh: load };
 }
