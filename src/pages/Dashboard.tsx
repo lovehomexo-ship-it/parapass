@@ -656,11 +656,6 @@ export function DashboardPage() {
                 <MaRepriseCard userId={user?.id} niveau={topBrevet} />
               </div>
 
-              {/* Vent en altitude — météo localisée de chaque DZ affichée (prévision indicative) */}
-              {briefingDzs.map(dz => (
-                <MeteoAltitudeCard key={`meteo-${dz.id}`} dzId={dz.id} dzNom={briefingDzs.length > 1 ? dz.nom : undefined} />
-              ))}
-
               {/* 2 — Layout 2 colonnes desktop : carte (gauche) + tuiles+boutons (droite) */}
               <div className="flex flex-col lg:flex-row lg:items-start lg:gap-6 mb-6">
 
@@ -961,6 +956,11 @@ export function DashboardPage() {
                   <BriefingDuJourBlock key={`bas-${dz.id}`} dzId={dz.id} dzNom={dz.nom} userId={user?.id} position="bas" />
                 ))}
               </div>
+
+              {/* Météo — DERNIER élément du dashboard (compact, détail au clic) */}
+              {briefingDzs.map(dz => (
+                <MeteoAltitudeCard key={`meteo-${dz.id}`} dzId={dz.id} dzNom={briefingDzs.length > 1 ? dz.nom : undefined} />
+              ))}
             </>
           )}
 
