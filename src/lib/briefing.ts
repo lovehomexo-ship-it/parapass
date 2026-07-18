@@ -41,6 +41,8 @@ export interface DzBriefing {
   vent_vitesse_kt: number | null;
   consignes: string | null;
   published_at: string;
+  /** Immuable — published_at nettement postérieur = briefing republié dans la journée. */
+  created_at: string;
 }
 
 /** Compresse une image côté client avant upload : largeur max 1600 px,
