@@ -27,11 +27,16 @@ if ('serviceWorker' in navigator) {
     const banner = document.createElement('div');
     banner.id = 'pp-update-banner';
     banner.setAttribute('role', 'status');
-    banner.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:100000;display:flex;align-items:center;gap:12px;background:#0B1D3A;color:#fff;border:1.5px solid #F97316;border-radius:14px;padding:12px 16px;box-shadow:0 8px 32px rgba(0,0,0,0.5);font:600 14px system-ui,sans-serif;max-width:calc(100vw - 32px);';
-    banner.innerHTML = '<span>Nouvelle version de ParaPass disponible</span>';
+    // Cadre adaptatif (pas de taille fixe), texte qui passe à la ligne si besoin,
+    // bouton non rétrécissable au contenu centré — dimensionné pour le français.
+    banner.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:100000;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px 14px;background:#0B1D3A;color:#fff;border:1.5px solid #F97316;border-radius:14px;padding:12px 16px;box-shadow:0 8px 32px rgba(0,0,0,0.5);font:600 14px/1.4 system-ui,sans-serif;width:max-content;max-width:calc(100vw - 32px);box-sizing:border-box;';
+    const label = document.createElement('span');
+    label.textContent = 'Nouvelle version de ParaPass disponible';
+    label.style.cssText = 'flex:1 1 auto;min-width:0;text-align:center;';
+    banner.appendChild(label);
     const btn = document.createElement('button');
     btn.textContent = 'Actualiser';
-    btn.style.cssText = 'background:#F97316;color:#fff;border:none;border-radius:10px;padding:10px 18px;font:700 14px system-ui,sans-serif;cursor:pointer;min-height:44px;';
+    btn.style.cssText = 'flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;background:#F97316;color:#fff;border:none;border-radius:10px;padding:0 20px;font:700 14px/1 system-ui,sans-serif;cursor:pointer;min-height:44px;';
     btn.onclick = doReload;
     banner.appendChild(btn);
     document.body.appendChild(banner);
