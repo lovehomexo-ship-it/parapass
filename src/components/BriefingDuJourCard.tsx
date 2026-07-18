@@ -1,15 +1,67 @@
-import { Megaphone, CheckCircle, WifiOff, CloudOff, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
+import { Megaphone, CheckCircle, WifiOff, CloudOff, ChevronDown, ChevronUp } from 'lucide-react';
 import { useBriefingDuJour, useBriefingAck } from '../lib/briefing';
 import { BriefingScene } from './BriefingScene';
 
-/** Bloc « Briefing du jour » côté jumpeur : bandeau d'appel (tant que non
- *  acquitté) + carte avec scène, consignes et acquittement horodaté.
- *  Un briefing est périssable : rien ne s'accumule, aucune relance — le
- *  lendemain sans nouveau briefing, il ne reste rien à l'écran.
+/** Bloc « Briefing du jour » côté jumpeur — rendu à DEUX emplacements du
+ *  dashboard, l'état d'acquittement étant partagé entre les instances :
+ *  - position « haut » : visible tant que NON acquitté (ou à relire) —
+ *    bandeau d'appel + carte complète, premier élément de la page ;
+ *  - position « bas » : visible une fois acquitté — version compacte
+ *    repliée, consultable sans monopoliser le haut de l'écran.
+ *  La bascule est immédiate (état local partagé, pas de rechargement) ; une
+ *  republication rend l'acquittement périmé et fait remonter le bloc en haut.
+ *  Un briefing est périssable : rien ne s'accumule, aucune relance.
  *  Fonctionne hors ligne (copie locale + file d'acquittements). */
-export function BriefingDuJourBlock({ dzId, dzNom, userId }: { dzId: string | undefined; dzNom?: string; userId: string | undefined }) {
+export function BriefingDuJourBlock({ dzId, dzNom, userId, position = 'haut' }: {
+  dzId: string | undefined; dzNom?: string; userId: string | undefined; position?: 'haut' | 'bas';
+}) {
   const { settings, briefing, circuit, backgroundUrl, offline, loadError, refresh } = useBriefingDuJour(dzId);
   const { ackAt, stale, pending, saving, acknowledge, error } = useBriefingAck(briefing?.id, userId, briefing?.published_at);
+  const [deplie, setDeplie] = useState(false);
+
+  // Position basse : uniquement une fois acquitté — version compacte repliée
+  if (position === 'bas') {
+    if (!briefing || !settings || !ackAt) return null;
+    return (
+      <div className="rounded-2xl overflow-hidden mb-3" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <button
+          onClick={() => setDeplie(d => !d)}
+          className="w-full px-4 py-3 flex items-center gap-2 flex-wrap text-left"
+          style={{ minHeight: 48 }}
+        >
+          <Megaphone className="w-4 h-4 flex-shrink-0" style={{ color: 'rgba(249,115,22,0.7)' }} />
+          <span className="text-sm font-bold text-white">Briefing du jour{dzNom ? ` — ${dzNom}` : ''}</span>
+          <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: '#34D399' }}>
+            <CheckCircle className="w-3.5 h-3.5" />
+            Acquitté à {new Date(ackAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+          </span>
+          {pending && <CloudOff className="w-3.5 h-3.5" style={{ color: '#CBD5E1' }} />}
+          <span className="ml-auto flex-shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            {deplie ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </span>
+        </button>
+        {deplie && (
+          <div className="px-4 pb-4">
+            <BriefingScene
+              settings={settings}
+              circuit={circuit}
+              vent={{ direction_deg: briefing.vent_direction_deg, vitesse_kt: briefing.vent_vitesse_kt }}
+              backgroundUrl={backgroundUrl}
+              mode="view"
+            />
+            {briefing.consignes && (
+              <p className="text-sm leading-relaxed mt-3 font-medium" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                📢 {briefing.consignes}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Position haute : visible tant que non acquitté (ou à relire) ──
 
   // Échec de chargement SANS copie locale : on le dit au lieu de ne rien monter
   if (loadError) {
@@ -27,8 +79,11 @@ export function BriefingDuJourBlock({ dzId, dzNom, userId }: { dzId: string | un
     );
   }
 
-  // Pas de briefing publié AUJOURD'HUI (et rien en cache) : rien ne s'affiche
-  if (!briefing || !settings) return null;
+  // Pas de briefing publié AUJOURD'HUI (et rien en cache) : rien ne s'affiche.
+  // Une fois acquitté (confirmé), le bloc haut disparaît : l'instance basse
+  // prend le relais. Pendant l'écriture on reste monté pour afficher
+  // « Enregistrement… » puis, en cas d'échec, l'erreur et le retour du bandeau.
+  if (!briefing || !settings || (ackAt && !saving)) return null;
 
   const cardId = `briefing-card-${briefing.id}`;
   const dateFr = new Date(briefing.date_briefing).toLocaleDateString('fr-FR');

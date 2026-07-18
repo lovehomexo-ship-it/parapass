@@ -1027,6 +1027,14 @@ export function DashboardPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Briefing du jour acquitté : version compacte en bas de page,
+                  consultable sans monopoliser le haut de l'écran */}
+              <div className="mt-3">
+                {briefingDzs.map(dz => (
+                  <BriefingDuJourBlock key={`bas-${dz.id}`} dzId={dz.id} dzNom={dz.nom} userId={user?.id} position="bas" />
+                ))}
+              </div>
             </>
           )}
 

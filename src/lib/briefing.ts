@@ -266,17 +266,33 @@ export function useBriefingDuJour(dzId: string | undefined) {
  *  Un acquittement ANTÉRIEUR à published_at est périmé (briefing republié) :
  *  `stale` vaut true et `ackAt` valide redevient null tant que l'utilisateur
  *  n'a pas ré-acquitté (upsert : la ligne unique est mise à jour). */
+// État d'acquittement PARTAGÉ entre toutes les instances (le bloc briefing est
+// rendu en haut ET en bas du dashboard : l'acquittement doit basculer les deux
+// dans le même mouvement, sans rechargement).
+const ackShared = new Map<string, { at: string | null; pending: boolean; fetched: boolean }>();
+const ackSubs = new Set<() => void>();
+function setAckShared(key: string, at: string | null, pending: boolean) {
+  ackShared.set(key, { at, pending, fetched: true });
+  ackSubs.forEach(f => f());
+}
+
 export function useBriefingAck(briefingId: string | undefined, userId: string | undefined, publishedAt?: string | null) {
-  const [rawAckAt, setRawAckAt] = useState<string | null>(null);
-  const [pending, setPending] = useState(false); // acquitté hors ligne, en attente de synchro
+  const key = `${briefingId}:${userId}`;
+  const [, forceRender] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Abonnement au store partagé
   useEffect(() => {
-    setRawAckAt(null); setPending(false);
-    if (!briefingId || !userId) return;
+    const sub = () => forceRender(n => n + 1);
+    ackSubs.add(sub);
+    return () => { ackSubs.delete(sub); };
+  }, []);
+
+  useEffect(() => {
+    if (!briefingId || !userId || ackShared.get(key)?.fetched) return;
     const queued = readAckQueue().find(a => a.briefing_id === briefingId && a.user_id === userId);
-    if (queued) { setRawAckAt(queued.acknowledged_at); setPending(true); return; }
+    if (queued) { setAckShared(key, queued.acknowledged_at, true); return; }
     supabase
       .from('briefing_acknowledgements')
       .select('acknowledged_at')
@@ -285,9 +301,14 @@ export function useBriefingAck(briefingId: string | undefined, userId: string | 
       .maybeSingle()
       .then(({ data, error }) => {
         if (error) { console.error('Chargement acquittement échoué :', error); return; }
-        setRawAckAt(data?.acknowledged_at ?? null);
+        setAckShared(key, data?.acknowledged_at ?? null, false);
       });
-  }, [briefingId, userId]);
+  }, [briefingId, userId, key]);
+
+  const shared = ackShared.get(key);
+  const rawAckAt = shared?.at ?? null;
+  const pending = shared?.pending ?? false;
+  const setRawAckAt = (at: string | null, p = false) => setAckShared(key, at, p);
 
   // Le test « a acquitté » devient : acknowledged_at >= published_at
   const isStale = !!(rawAckAt && publishedAt && new Date(rawAckAt) < new Date(publishedAt));
@@ -312,7 +333,7 @@ export function useBriefingAck(briefingId: string | undefined, userId: string | 
       // Hors ligne : on met en file locale, l'affichage optimiste reste valable
       if (!navigator.onLine || (error && error.message.includes('Failed to fetch'))) {
         writeAckQueue([...readAckQueue().filter(a => !(a.briefing_id === briefingId && a.user_id === userId)), { briefing_id: briefingId, user_id: userId, acknowledged_at: now }]);
-        setPending(true);
+        setRawAckAt(now, true);
         return;
       }
       // Vrai échec : on annule l'optimisme et on le dit, en français
