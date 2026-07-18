@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Wind, ChevronDown, ChevronUp, CloudOff } from 'lucide-react';
 import {
-  useMeteoAltitude, indexHeureCourante, estimePlafond, kmhEnKt,
+  useMeteoAltitude, indexHeureCourante, estimePlafond, kmhEnKt, iconeMeteo,
   type MeteoAltitudePayload,
 } from '../lib/meteoAltitude';
 import { useComplianceRules } from '../lib/compliance';
@@ -74,7 +74,26 @@ export function MentionSource({ fetchedAt, perime }: { fetchedAt: string | null;
   );
 }
 
-/** Bloc licencié : résumé (sol, plafond, vent au largage) + profil au clic. */
+/** Résumé 3 jours (données du même appel API caché). */
+function Jours3({ payload }: { payload: MeteoAltitudePayload }) {
+  const labels = ['Aujourd\'hui', 'Demain', 'Après-demain'];
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {payload.jours.slice(0, 3).map((j, i) => (
+        <div key={j.date} className="rounded-xl p-2.5 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+          <p className="text-[10px] mb-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>{labels[i] ?? j.date}</p>
+          <p className="text-lg leading-none mb-1">{iconeMeteo(j.code)}</p>
+          <p className="text-xs font-bold text-white">{Math.round(j.tempMax)}° · {Math.round(j.ventMax)} km/h</p>
+          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.45)' }}>raf. {Math.round(j.rafalesMax)}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Bloc licencié — COMPACT : une seule ligne discrète (icône + vent sol) ;
+ *  tout le détail (tuiles, profil vertical, 3 jours) ne s'affiche qu'au clic.
+ *  La météo est proportionnelle à l'usage : le para la consulte, ne la subit pas. */
 export function MeteoAltitudeCard({ dzId, dzNom }: { dzId: string | undefined; dzNom?: string }) {
   const { payload, fetchedAt, perime, error, loading } = useMeteoAltitude(dzId);
   const { rules } = useComplianceRules();
@@ -95,55 +114,68 @@ export function MeteoAltitudeCard({ dzId, dzNom }: { dzId: string | undefined; d
   const seuilSol = rules.meteo_vent_fort_sol_kmh ?? 30;
   const seuilAlt = rules.meteo_vent_fort_altitude_kmh ?? 60;
 
+  const codeJour = payload.jours[0]?.code ?? 0;
+  const solFort = (payload.sol.speed[i] ?? 0) >= seuilSol;
+
   return (
     <div className="rounded-2xl overflow-hidden mb-3" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-      <button onClick={() => setDeplie(d => !d)} className="w-full px-4 py-3 flex items-center gap-2 flex-wrap text-left" style={{ minHeight: 48 }}>
-        <Wind className="w-4 h-4 flex-shrink-0" style={{ color: '#7DD3FC' }} />
-        <span className="text-sm font-bold text-white">Vent en altitude{dzNom ? ` — ${dzNom}` : ''}</span>
-        <span className="ml-auto flex-shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }}>
+      {/* Ligne compacte — seule visible par défaut : conditions + vent sol */}
+      <button onClick={() => setDeplie(d => !d)} className="w-full px-4 py-2.5 flex items-center gap-2 text-left" style={{ minHeight: 44 }}>
+        <span className="text-base leading-none" aria-hidden>{iconeMeteo(codeJour)}</span>
+        <span style={{ color: solFort ? '#F87171' : '#7DD3FC' }}><FlecheVent dirProvenance={payload.sol.dir[i] ?? 0} size={15} /></span>
+        <span className="text-sm font-bold" style={{ color: solFort ? '#F87171' : '#fff' }}>
+          {Math.round(payload.sol.speed[i] ?? 0)} km/h
+        </span>
+        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          {Math.round(payload.sol.dir[i] ?? 0)}°{dzNom ? ` · ${dzNom}` : ''}
+        </span>
+        <span className="text-[11px] ml-auto mr-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Météo</span>
+        <span className="flex-shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }}>
           {deplie ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </span>
       </button>
 
-      <div className="px-4 pb-3">
-        {/* Résumé : sol · plafond · largage */}
-        <div className="grid grid-cols-3 gap-2">
-          <div className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
-            <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Sol</p>
-            <div className="flex items-center gap-1.5" style={{ color: (payload.sol.speed[i] ?? 0) >= seuilSol ? '#F87171' : '#fff' }}>
-              <FlecheVent dirProvenance={payload.sol.dir[i] ?? 0} size={16} />
-              <span className="text-sm font-bold">{Math.round(payload.sol.speed[i] ?? 0)} km/h</span>
+      {/* Détail complet uniquement au clic : tuiles, profil vertical, 3 jours */}
+      {deplie && (
+        <div className="px-4 pb-3">
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
+              <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Sol</p>
+              <div className="flex items-center gap-1.5" style={{ color: solFort ? '#F87171' : '#fff' }}>
+                <FlecheVent dirProvenance={payload.sol.dir[i] ?? 0} size={16} />
+                <span className="text-sm font-bold">{Math.round(payload.sol.speed[i] ?? 0)} km/h</span>
+              </div>
+              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.45)' }}>raf. {Math.round(payload.sol.gusts[i] ?? 0)} · {Math.round(payload.sol.dir[i] ?? 0)}°</p>
             </div>
-            <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.45)' }}>raf. {Math.round(payload.sol.gusts[i] ?? 0)} · {Math.round(payload.sol.dir[i] ?? 0)}°</p>
+            <div className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
+              <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Plafond</p>
+              <p className="text-xs font-semibold text-white leading-snug">{estimePlafond(payload.nuages, i)}</p>
+              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.45)' }}>{Math.round(payload.nuages.total[i] ?? 0)} % couvert</p>
+            </div>
+            <div className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
+              <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Largage ~4 200 m</p>
+              {largage && (
+                <>
+                  <div className="flex items-center gap-1.5" style={{ color: (largage.speed[i] ?? 0) >= seuilAlt ? '#F87171' : '#fff' }}>
+                    <FlecheVent dirProvenance={largage.dir[i] ?? 0} size={16} />
+                    <span className="text-sm font-bold">{Math.round(largage.speed[i] ?? 0)} km/h</span>
+                  </div>
+                  <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.45)' }}>{kmhEnKt(largage.speed[i] ?? 0)} kt · {Math.round(largage.dir[i] ?? 0)}°</p>
+                </>
+              )}
+            </div>
           </div>
-          <div className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
-            <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Plafond</p>
-            <p className="text-xs font-semibold text-white leading-snug">{estimePlafond(payload.nuages, i)}</p>
-            <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.45)' }}>{Math.round(payload.nuages.total[i] ?? 0)} % couvert</p>
-          </div>
-          <div className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
-            <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Largage ~4 200 m</p>
-            {largage && (
-              <>
-                <div className="flex items-center gap-1.5" style={{ color: (largage.speed[i] ?? 0) >= seuilAlt ? '#F87171' : '#fff' }}>
-                  <FlecheVent dirProvenance={largage.dir[i] ?? 0} size={16} />
-                  <span className="text-sm font-bold">{Math.round(largage.speed[i] ?? 0)} km/h</span>
-                </div>
-                <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.45)' }}>{kmhEnKt(largage.speed[i] ?? 0)} kt · {Math.round(largage.dir[i] ?? 0)}°</p>
-              </>
-            )}
-          </div>
-        </div>
 
-        {/* Profil vertical complet au clic */}
-        {deplie && (
           <div className="mt-3">
             <ProfilVertical payload={payload} heure={i} seuilAltitude={seuilAlt} seuilSol={seuilSol} />
           </div>
-        )}
 
-        <MentionSource fetchedAt={fetchedAt} perime={perime} />
-      </div>
+          <p className="text-xs font-semibold uppercase tracking-wide mt-3 mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>3 prochains jours</p>
+          <Jours3 payload={payload} />
+
+          <MentionSource fetchedAt={fetchedAt} perime={perime} />
+        </div>
+      )}
     </div>
   );
 }
@@ -174,7 +206,12 @@ export function MeteoAltitudeDZ({ dzId }: { dzId: string }) {
     <div className="rounded-2xl p-4" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
       <div className="flex items-center gap-2 mb-3">
         <Wind className="w-5 h-5" style={{ color: '#7DD3FC' }} />
-        <h2 className="text-sm font-bold text-white">Vent en altitude — outil d'aide à la décision</h2>
+        <h2 className="text-sm font-bold text-white">Météo — outil d'aide à la décision</h2>
+      </div>
+
+      {/* Résumé 3 jours en haut (mêmes données, même cache) */}
+      <div className="mb-4 max-w-md">
+        <Jours3 payload={payload} />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-5">

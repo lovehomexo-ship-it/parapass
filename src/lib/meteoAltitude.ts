@@ -16,12 +16,33 @@ export const NIVEAUX_PRESSION = [
   { hPa: 500, altM: 5570 },
 ] as const;
 
+export interface MeteoJour {
+  date: string;
+  code: number; // code météo WMO
+  tempMax: number;
+  ventMax: number; // km/h
+  rafalesMax: number; // km/h
+}
+
 export interface MeteoAltitudePayload {
   source: 'Open-Meteo';
-  times: string[]; // heures locales ISO de la journée
+  times: string[]; // heures locales ISO (3 jours)
   sol: { speed: number[]; dir: number[]; gusts: number[] }; // km/h, ° (d'où vient le vent)
   nuages: { total: number[]; bas: number[]; moyens: number[]; hauts: number[] }; // %
   niveaux: { hPa: number; altM: number; speed: number[]; dir: number[] }[];
+  jours: MeteoJour[]; // résumé 3 jours (même appel API)
+}
+
+/** Icône selon le code météo WMO. */
+export function iconeMeteo(code: number): string {
+  if (code === 0) return '☀️';
+  if (code <= 2) return '🌤️';
+  if (code === 3) return '☁️';
+  if (code <= 48) return '🌫️';
+  if (code <= 67) return '🌧️';
+  if (code <= 77) return '🌨️';
+  if (code <= 82) return '🌦️';
+  return '⛈️';
 }
 
 const CACHE_MAX_AGE_MS = 60 * 60 * 1000; // 1 h — les modèles ne bougent que quelques fois/jour
@@ -30,13 +51,16 @@ async function fetchOpenMeteo(lat: number, lon: number): Promise<MeteoAltitudePa
   const niveauxVars = NIVEAUX_PRESSION
     .map(n => `windspeed_${n.hPa}hPa,winddirection_${n.hPa}hPa`)
     .join(',');
+  // UN SEUL appel : horaire (profil vertical) + quotidien (résumé 3 jours)
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
     + `&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,${niveauxVars}`
-    + `&forecast_days=1&timezone=auto`;
+    + `&daily=weather_code,temperature_2m_max,wind_speed_10m_max,wind_gusts_10m_max`
+    + `&forecast_days=3&timezone=auto`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Open-Meteo HTTP ${res.status}`);
-  const data = await res.json() as { hourly: Record<string, (number | string)[]> };
+  const data = await res.json() as { hourly: Record<string, (number | string)[]>; daily: Record<string, (number | string)[]> };
   const h = data.hourly;
+  const d = data.daily;
   return {
     source: 'Open-Meteo',
     times: h.time as string[],
@@ -56,6 +80,13 @@ async function fetchOpenMeteo(lat: number, lon: number): Promise<MeteoAltitudePa
       altM: n.altM,
       speed: h[`windspeed_${n.hPa}hPa`] as number[],
       dir: h[`winddirection_${n.hPa}hPa`] as number[],
+    })),
+    jours: (d.time as string[]).map((date, i) => ({
+      date,
+      code: (d.weather_code as number[])[i] ?? 0,
+      tempMax: (d.temperature_2m_max as number[])[i] ?? 0,
+      ventMax: (d.wind_speed_10m_max as number[])[i] ?? 0,
+      rafalesMax: (d.wind_gusts_10m_max as number[])[i] ?? 0,
     })),
   };
 }
@@ -92,8 +123,10 @@ export function useMeteoAltitude(dzId: string | undefined): MeteoAltitudeState {
       .maybeSingle();
     if (cacheErr) console.error('Lecture cache météo échouée :', cacheErr);
 
-    // Un cache sans structure attendue est ignoré (jamais de fausse donnée)
-    const cacheValide = cache && Array.isArray((cache.payload as MeteoAltitudePayload)?.times);
+    // Un cache sans structure attendue (ancien format inclus) est ignoré
+    const cacheValide = cache
+      && Array.isArray((cache.payload as MeteoAltitudePayload)?.times)
+      && Array.isArray((cache.payload as MeteoAltitudePayload)?.jours);
     const cacheAge = cacheValide ? Date.now() - new Date(cache.fetched_at).getTime() : Infinity;
     if (cacheValide && cacheAge < CACHE_MAX_AGE_MS) {
       setState({ payload: cache.payload as MeteoAltitudePayload, fetchedAt: cache.fetched_at, perime: false, error: null, loading: false });

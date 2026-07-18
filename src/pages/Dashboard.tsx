@@ -33,49 +33,6 @@ import {
 
 // ─── Weather helpers (reused from PlanningDZ) ────────────────────────────────
 
-interface DayMeteo {
-  temp: number;
-  wind_kmh: number;
-  precip_prob: number;
-  weathercode: number;
-}
-
-async function fetchThreeDayMeteo(lat: number, lon: number): Promise<DayMeteo[]> {
-  try {
-    const url = new URL('https://api.open-meteo.com/v1/forecast');
-    url.searchParams.set('latitude', String(lat));
-    url.searchParams.set('longitude', String(lon));
-    url.searchParams.set('daily', 'temperature_2m_max,windspeed_10m_max,precipitation_probability_max,weathercode');
-    url.searchParams.set('forecast_days', '3');
-    url.searchParams.set('timezone', 'Europe/Paris');
-    const res = await fetch(url.toString());
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data.daily?.weathercode ?? []).map((_: unknown, i: number) => ({
-      temp: Math.round(data.daily.temperature_2m_max[i] ?? 20),
-      wind_kmh: Math.round(data.daily.windspeed_10m_max[i] ?? 0),
-      precip_prob: data.daily.precipitation_probability_max[i] ?? 0,
-      weathercode: data.daily.weathercode[i] ?? 0,
-    }));
-  } catch {
-    return [];
-  }
-}
-
-function weatherIcon(code: number) {
-  if (code === 0) return <Sun className="w-4 h-4 text-amber-400" />;
-  if (code <= 3) return <Cloud className="w-4 h-4 text-gray-400" />;
-  if (code <= 67 || (code >= 80 && code <= 82)) return <CloudRain className="w-4 h-4 text-blue-400" />;
-  return <Cloud className="w-4 h-4 text-gray-400" />;
-}
-
-function jumpConditionBadge(wind_kmh: number, precip_prob: number) {
-  const isRain = precip_prob > 60;
-  if (wind_kmh > 30 || isRain) return { label: 'Fermé', color: '#EF4444', bg: 'rgba(239,68,68,0.15)' };
-  if (wind_kmh > 20) return { label: 'Limites', color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' };
-  return { label: 'Sautables', color: '#10B981', bg: 'rgba(16,185,129,0.15)' };
-}
-
 // ─── KPI Card helpers ──────────────────────────────────────────────────────────
 
 function monthsUntil(dateStr: string | null): number | null {
@@ -345,7 +302,6 @@ export function DashboardPage() {
   const [selectedSaut, setSelectedSaut] = useState<Saut | null>(null);
   const [centreNom, setCentreNom] = useState<string | null>(null);
   const [centrePlan, setCentrePlan] = useState<string | null>(null);
-  const [dzMeteo, setDzMeteo] = useState<DayMeteo[]>([]);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -436,9 +392,7 @@ export function DashboardPage() {
     const centre = (first as unknown as { centre?: { nom?: string; latitude?: number; longitude?: number; plan?: string } }).centre;
     if (centre?.nom) setCentreNom(centre.nom);
     if (centre?.plan) setCentrePlan(centre.plan);
-    if (centre?.latitude && centre?.longitude) {
-      fetchThreeDayMeteo(centre.latitude, centre.longitude).then(setDzMeteo);
-    }
+    // Météo : gérée par l'unique MeteoAltitudeCard (cache partagé dz_meteo_cache)
   }, [centresLicencies]);
 
   const [centresCount, setCentresCount] = useState<number | null>(null);
@@ -619,7 +573,6 @@ export function DashboardPage() {
   const topBrevet = brevets[0]?.type_brevet ?? null;
 
   // ─── DZ day labels ────────────────────────────────────────────────────────
-  const dayLabels = ['Aujourd\'hui', 'Demain', 'Après-demain'];
 
   if (!profile) return null;
 
@@ -996,41 +949,8 @@ export function DashboardPage() {
                     </div>
                   )}
 
-                  {/* 4 — Météo Ma DZ */}
-                  <div style={{ background: 'var(--c-dropdown)', border: '1px solid var(--c-border)', borderRadius: 12, padding: 16 }}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Wind className="w-3.5 h-3.5 text-blue-400" />
-                      <span className="text-xs font-bold" style={{ color: 'var(--c-text)' }}>
-                        {centreNom ? `${centreNom} — Météo` : 'Ma DZ — Météo'}
-                      </span>
-                    </div>
-                    {dzMeteo.length === 0 ? (
-                      <p style={{ color: 'var(--c-dim)', fontSize: 11 }}>
-                        {centresLicencies.length === 0
-                          ? 'Rejoignez un centre pour voir la météo'
-                          : 'Chargement météo...'}
-                      </p>
-                    ) : (
-                      <div className="space-y-2">
-                        {dzMeteo.map((day, i) => {
-                          const cond = jumpConditionBadge(day.wind_kmh, day.precip_prob);
-                          return (
-                            <div key={i} className="flex items-center gap-2" style={{ borderBottom: i < dzMeteo.length - 1 ? '1px solid var(--c-border-s)' : 'none', paddingBottom: i < dzMeteo.length - 1 ? 6 : 0 }}>
-                              <span style={{ color: 'var(--c-muted)', fontSize: 11, width: 90, flexShrink: 0 }}>{dayLabels[i]}</span>
-                              {weatherIcon(day.weathercode)}
-                              <Thermometer className="w-3 h-3" style={{ color: 'var(--c-dim)' }} />
-                              <span style={{ color: 'var(--c-text2)', fontSize: 11 }}>{day.temp}°</span>
-                              <Wind className="w-3 h-3" style={{ color: 'var(--c-dim)' }} />
-                              <span style={{ color: 'var(--c-text2)', fontSize: 11 }}>{day.wind_kmh}km/h</span>
-                              <span className="ml-auto text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: cond.bg, color: cond.color }}>
-                                {cond.label}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
+                  {/* La météo vit désormais dans l'unique carte compacte
+                      « Vent en altitude » en haut de page (détail au clic) */}
                 </div>
               </div>
 
