@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { BriefingScene } from '../../components/BriefingScene';
 import {
-  useBriefingDuJour, useDzCircuits, dzMapPublicUrl, sensAtterrissageDerive,
+  useBriefingDuJour, useDzCircuits, dzMapPublicUrl, sensAtterrissageDerive, compressImageFond,
   type DzCircuit, type DzSettings, type Point, type ZonePolygone,
 } from '../../lib/briefing';
 import { Upload, Megaphone, MapPin, Route, Shapes, Ban, Trash2, Undo2, AlertTriangle, Plus, Pencil, Wind as WindIcon, ExternalLink } from 'lucide-react';
@@ -75,18 +75,20 @@ export function BriefingSection({ centreId }: { centreId: string }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setError(null);
-    // Dimensions natives pour le ratio du viewBox
-    const dims = await new Promise<{ w: number; h: number }>((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
-      img.onerror = reject;
-      img.src = URL.createObjectURL(file);
-    }).catch(() => null);
-    const ext = file.name.split('.').pop() ?? 'jpg';
+    // Compression côté client (WebP ~1600 px, < 400 Ko) : indispensable pour
+    // que le fond charge sur mobile en réseau faible.
+    let compressed: Awaited<ReturnType<typeof compressImageFond>>;
+    try {
+      compressed = await compressImageFond(file);
+    } catch (err) {
+      console.error('Compression image de fond échouée :', err);
+      setError('Image illisible — choisissez un fichier image (JPEG, PNG…).');
+      return;
+    }
     // Nom stable : {dz_id}/fond.{ext} — le remplacement écrase, le cache est invalidé via ?v=
-    const path = `${centreId}/fond.${ext}`;
+    const path = `${centreId}/fond.${compressed.ext}`;
     const { error: upErr } = await supabase.storage.from('dz-maps')
-      .upload(path, file, { upsert: true, cacheControl: '31536000' });
+      .upload(path, compressed.blob, { upsert: true, cacheControl: '31536000', contentType: compressed.blob.type });
     if (upErr) {
       console.error('Upload image de fond échoué :', upErr);
       setError(`Upload échoué : ${upErr.message}`);
@@ -95,12 +97,16 @@ export function BriefingSection({ centreId }: { centreId: string }) {
     const next = {
       ...draftSettings,
       image_fond_path: path,
-      image_fond_largeur: dims?.w ?? draftSettings.image_fond_largeur,
-      image_fond_hauteur: dims?.h ?? draftSettings.image_fond_hauteur,
+      image_fond_largeur: compressed.width,
+      image_fond_hauteur: compressed.height,
     };
     setDraftSettings(next);
     setImgVersion(String(Date.now()));
-    await persistSettings(next);
+    const ok = await persistSettings(next);
+    if (ok) {
+      setOkMsg(`Photo compressée (${Math.round(compressed.blob.size / 1024)} Ko) et enregistrée.`);
+      setTimeout(() => setOkMsg(null), 4000);
+    }
   };
 
   const persistSettings = async (s: DzSettings): Promise<boolean> => {

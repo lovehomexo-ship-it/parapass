@@ -43,6 +43,39 @@ export interface DzBriefing {
   published_at: string;
 }
 
+/** Compresse une image côté client avant upload : largeur max 1600 px,
+ *  WebP qualité 0.8 (repli JPEG). Objectif : < 400 Ko au lieu de plusieurs Mo,
+ *  pour que le fond charge même en 3G au bord de la piste. */
+export async function compressImageFond(file: File): Promise<{ blob: Blob; ext: string; width: number; height: number }> {
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = () => reject(new Error('Image illisible'));
+    i.src = URL.createObjectURL(file);
+  });
+  const MAX_W = 1600;
+  const scale = Math.min(1, MAX_W / img.naturalWidth);
+  const width = Math.round(img.naturalWidth * scale);
+  const height = Math.round(img.naturalHeight * scale);
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+  URL.revokeObjectURL(img.src);
+
+  const toBlob = (type: string, q: number) =>
+    new Promise<Blob | null>(resolve => canvas.toBlob(resolve, type, q));
+
+  let blob = await toBlob('image/webp', 0.8);
+  let ext = 'webp';
+  if (!blob || blob.type !== 'image/webp') {
+    blob = await toBlob('image/jpeg', 0.8);
+    ext = 'jpg';
+  }
+  if (!blob) throw new Error('Compression impossible');
+  return { blob, ext, width, height };
+}
+
 /** URL publique du fond (bucket dz-maps public, cache long). `v` invalide le cache après remplacement. */
 export function dzMapPublicUrl(path: string, v?: string): string {
   const { data } = supabase.storage.from('dz-maps').getPublicUrl(path);

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { DzCircuit, DzSettings, Point } from '../lib/briefing';
 
 // ─── Scène du briefing — composant pur (aucun accès Supabase) ─────────────────
@@ -48,6 +48,20 @@ export function BriefingScene({
   const VB_H = settings.image_fond_largeur && settings.image_fond_hauteur
     ? Math.round((DEFAULT_W * settings.image_fond_hauteur) / settings.image_fond_largeur)
     : DEFAULT_H;
+
+  // Préchargement du fond : le SVG (viewBox) réserve la hauteur quoi qu'il
+  // arrive — la scène et le bouton d'acquittement ne dépendent JAMAIS de
+  // l'image. États : chargement (squelette) / chargée / échec (fond neutre).
+  const [bgState, setBgState] = useState<'loading' | 'loaded' | 'error'>('loading');
+  useEffect(() => {
+    if (!backgroundUrl) { setBgState('error'); return; }
+    setBgState('loading');
+    const img = new Image();
+    img.onload = () => setBgState('loaded');
+    img.onerror = () => setBgState('error');
+    img.src = backgroundUrl;
+    return () => { img.onload = null; img.onerror = null; };
+  }, [backgroundUrl]);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
@@ -203,12 +217,28 @@ export function BriefingScene({
         </marker>
       </defs>
 
-      {backgroundUrl ? (
+      {/* Fond : image si chargée, squelette pendant le chargement, fond neutre en échec.
+          Le circuit, les zones et les consignes restent affichés dans tous les cas. */}
+      {backgroundUrl && bgState === 'loaded' && (
         <image href={backgroundUrl} x="0" y="0" width={VB_W} height={VB_H} preserveAspectRatio="xMidYMid slice" />
-      ) : (
-        <text x={VB_W / 2} y={VB_H / 2} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="18">
-          Aucune photo satellite configurée
-        </text>
+      )}
+      {backgroundUrl && bgState === 'loading' && (
+        <g pointerEvents="none">
+          <rect x="0" y="0" width={VB_W} height={VB_H} fill="#1B2B42">
+            <animate attributeName="opacity" values="1;0.6;1" dur="1.6s" repeatCount="indefinite" />
+          </rect>
+          <text x={VB_W / 2} y={VB_H / 2} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="16">
+            Chargement du fond…
+          </text>
+        </g>
+      )}
+      {(!backgroundUrl || bgState === 'error') && (
+        <g pointerEvents="none">
+          <rect x="0" y="0" width={VB_W} height={VB_H} fill="#22324a" />
+          <text x={VB_W / 2} y={VB_H - 18} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="14">
+            {backgroundUrl ? 'fond indisponible — le briefing reste valable' : 'Aucune photo satellite configurée'}
+          </text>
+        </g>
       )}
       <rect x="0" y="0" width={VB_W} height={VB_H} fill="rgba(0,10,30,0.15)" pointerEvents="none" />
 
