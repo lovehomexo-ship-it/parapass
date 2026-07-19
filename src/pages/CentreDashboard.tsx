@@ -191,12 +191,14 @@ function AvatarCircle({
 // ─── DashboardHome ─────────────────────────────────────────────────────────────
 
 function DashboardHome({
-  centre, stats, onNavigate, carnetsEnAttente,
+  centre, stats, onNavigate, carnetsEnAttente, presencesSlot,
 }: {
   centre: Centre | null;
   stats: DashStats;
   onNavigate: (s: string) => void;
   carnetsEnAttente: number;
+  /** Bloc « Présents aujourd'hui », inséré juste sous les licences/documents expirés. */
+  presencesSlot?: React.ReactNode;
 }) {
   const [alerteExpires, setAlerteExpires] = useState(0);
   const [alerteMedical, setAlerteMedical] = useState(0);
@@ -376,6 +378,9 @@ function DashboardHome({
           )}
         </div>
       )}
+
+      {/* 3bis — Présents aujourd'hui, juste sous les licences/documents expirés */}
+      {presencesSlot}
 
       {/* 4+5 — Bottom grid: activity (left) + validités (right) */}
       <div className="flex flex-col lg:flex-row gap-3">
@@ -3692,11 +3697,13 @@ export function CentreDashboardPage() {
               {centreId && (
                 <BriefingRecapDZ centreId={centreId} onOuvrir={() => setActiveSection('briefing')} />
               )}
-              {/* Présents aujourd'hui — état des lieux opérationnel, temps réel */}
-              {centreId && (
-                <PresencesDZ dzId={centreId} />
-              )}
-              <DashboardHome centre={centre} stats={stats} onNavigate={setActiveSection} carnetsEnAttente={carnetsEnAttente} />
+              <DashboardHome
+                centre={centre}
+                stats={stats}
+                onNavigate={setActiveSection}
+                carnetsEnAttente={carnetsEnAttente}
+                presencesSlot={centreId ? <PresencesDZ dzId={centreId} /> : undefined}
+              />
               {/* Vent en altitude — profil complet + projection journée (prévision indicative) */}
               {centreId && (
                 <div className="mt-5">

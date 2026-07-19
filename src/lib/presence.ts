@@ -121,16 +121,27 @@ export function usePresencesDZ(dzId: string | undefined) {
 
   const load = useCallback(async () => {
     if (!dzId) return;
+    // Pas d'embed profiles!user_id : la FK pointe vers auth.users, PostgREST ne
+    // peut pas joindre profiles — on récupère les identités séparément.
+    // Le statut 'present' SUFFIT à afficher quelqu'un : la plage horaire est une
+    // information, jamais un filtre d'inclusion.
     const { data: presences, error } = await supabase
       .from('dz_presences')
-      .select('*, profiles!user_id(nom, prenom)')
+      .select('*')
       .eq('dz_id', dzId)
       .eq('date_presence', today())
       .eq('statut', 'present');
     if (error) { console.error('Chargement présences échoué :', error); setLoading(false); return; }
 
-    const list = (presences ?? []) as (DzPresence & { profiles: { nom: string; prenom: string } | null })[];
+    const list = (presences ?? []) as DzPresence[];
     const userIds = list.map(p => p.user_id);
+    let profilMap: Record<string, { nom: string; prenom: string }> = {};
+    if (userIds.length) {
+      const { data: profils, error: prErr } = await supabase
+        .from('profiles').select('id, nom, prenom').in('id', userIds);
+      if (prErr) console.error('Chargement profils présents échoué :', prErr);
+      profilMap = Object.fromEntries((profils ?? []).map(p => [p.id, { nom: p.nom, prenom: p.prenom }]));
+    }
 
     // Enrichissements en parallèle : brevets, voiles perso référencées,
     // acquittements du briefing du jour (lu depuis briefing_acknowledgements — jamais dupliqué)
@@ -168,8 +179,8 @@ export function usePresencesDZ(dzId: string | undefined) {
 
     setRows(list.map(p => ({
       ...p,
-      nom: p.profiles?.nom ?? '?',
-      prenom: p.profiles?.prenom ?? '',
+      nom: profilMap[p.user_id]?.nom ?? '?',
+      prenom: profilMap[p.user_id]?.prenom ?? '',
       brevet: brevetMap[p.user_id] ?? null,
       voile_perso_nom: p.voile_perso_ref ? materielMap[p.voile_perso_ref] ?? null : null,
       briefingAcquitte: ackSet.has(p.user_id),

@@ -15,6 +15,15 @@ const maintenantArrondi = () => {
   return `${String(d.getHours()).padStart(2, '0')}:${d.getMinutes() < 30 ? '30' : '00'}`;
 };
 
+/** Fin par défaut TOUJOURS cohérente : 18:00 si on est le matin, sinon
+ *  début + 2 h plafonné à 23:30 — jamais une heure déjà passée. */
+const finParDefaut = (debut: string) => {
+  const [h, m] = debut.split(':').map(Number);
+  if (h < 16) return '18:00';
+  const finH = Math.min(h + 2, 23);
+  return `${String(finH).padStart(2, '0')}:${finH === 23 ? '30' : String(m).padStart(2, '0')}`;
+};
+
 /** Check-in « Je suis présent aujourd'hui » — 15 secondes, pas un questionnaire.
  *  Fonctionne seul : voiles perso proposées si le module matériel en a,
  *  saisie libre sinon ; n° de voile de location en saisie libre (flotte DZ
@@ -29,7 +38,8 @@ export function CheckInPresence({ dzs, userId }: { dzs: { id: string; nom: strin
 
   const [ouvert, setOuvert] = useState(false);
   const [debut, setDebut] = useState(maintenantArrondi());
-  const [fin, setFin] = useState('18:00');
+  const [fin, setFin] = useState(() => finParDefaut(maintenantArrondi()));
+  const [erreurPlage, setErreurPlage] = useState<string | null>(null);
   const [materielType, setMaterielType] = useState<'perso' | 'location'>('perso');
   const [voilesPerso, setVoilesPerso] = useState<Materiel[]>([]);
   const [voilePersoRef, setVoilePersoRef] = useState<string | null>(null);
@@ -71,6 +81,12 @@ export function CheckInPresence({ dzs, userId }: { dzs: { id: string; nom: strin
 
   const valider = async () => {
     if (!dzId) return;
+    // Plage cohérente obligatoire : la fin doit être après le début
+    if (fin <= debut) {
+      setErreurPlage('L\'heure de fin doit être après l\'heure de début.');
+      return;
+    }
+    setErreurPlage(null);
     const ok = await checkIn({
       dz_id: dzId,
       heure_debut: debut,
@@ -199,6 +215,7 @@ export function CheckInPresence({ dzs, userId }: { dzs: { id: string; nom: strin
         )
       )}
 
+      {erreurPlage && <p className="text-xs" style={{ color: '#FCA5A5' }}>⚠️ {erreurPlage}</p>}
       {error && <p className="text-xs" style={{ color: '#FCA5A5' }}>⚠️ {error}</p>}
 
       <div className="flex gap-2">

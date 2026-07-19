@@ -627,9 +627,6 @@ export function DashboardPage() {
                 <BriefingDuJourBlock key={dz.id} dzId={dz.id} dzNom={dz.nom} userId={user?.id} />
               ))}
 
-              {/* Check-in : « Je suis présent aujourd'hui » — 15 s, depuis le terrain */}
-              <CheckInPresence dzs={briefingDzs} userId={user?.id} />
-
               {/* 1 — Bandeau compact brevet + autorisation */}
               {statutDocs && (() => {
                 const cfg = statutDocs === 'expire'
@@ -781,6 +778,10 @@ export function DashboardPage() {
               </div>{/* fin layout 2 colonnes */}
 
               <MonSacDuJour userId={user!.id} />
+
+              {/* Check-in présence — visible et incitatif, juste au-dessus des
+                  tuiles sécurité, sans repasser devant licence/briefing */}
+              <CheckInPresence dzs={briefingDzs} userId={user?.id} />
 
               {/* Raccourcis secondaires — grille 3 tuiles compactes */}
               {!isDemo && <ShortcutTiles userId={user!.id} />}

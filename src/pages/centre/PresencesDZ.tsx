@@ -46,6 +46,11 @@ export function PresencesDZ({ dzId }: { dzId: string }) {
               </span>
               <span className="text-xs inline-flex items-center gap-1" style={{ color: 'var(--c-text2)' }}>
                 <Clock className="w-3 h-3" /> {hhmm(p.heure_debut)} – {hhmm(p.heure_fin)}
+                {/* La fin déclarée est indicative : dépassée = signalée, jamais masquée.
+                    Seul « Je quitte » ou le retrait DT sort de la liste. */}
+                {hhmm(p.heure_fin) < new Date().toTimeString().substring(0, 5) && (
+                  <span className="text-[10px]" style={{ color: 'var(--c-dim)' }}>(fin déclarée dépassée)</span>
+                )}
               </span>
               <span className="text-xs" style={{ color: 'var(--c-text2)' }}>
                 {p.materiel_type === 'location'
