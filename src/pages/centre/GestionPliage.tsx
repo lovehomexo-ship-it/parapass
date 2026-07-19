@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { QRCodeSVG } from 'qrcode.react';
 import { X, Plus, Printer, Download, ChevronRight, Clock, Package } from 'lucide-react';
 import { CycleHelpPanel } from '../../components/CyclePliageSchema';
+import { habilitationValide } from '../../lib/pliage';
 import { QrScannerButton } from '../../components/QrScanner';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -23,11 +24,15 @@ interface Sac {
 interface PliageJour {
   id: string;
   created_at: string;
+  date_pliage: string | null;
+  type_pliage: 'habilite' | 'auto';
+  plieur_id: string | null;
   statut_paiement: string;
   montant: number | null;
   flag_qualif: boolean;
   note: string | null;
   sac: { id: string; nom_court: string | null; marque: string | null; modele: string | null } | null;
+  materiel: { marque: string; modele: string } | null;
   plieur: { id: string; nom: string; prenom: string } | null;
   parachutiste: { nom: string; prenom: string } | null;
 }
@@ -459,21 +464,45 @@ function FileDePliage({ centreId }: { centreId: string }) {
 
 function OngletPliageDuJour({ centreId }: { centreId: string }) {
   const [pliages, setPliages] = useState<PliageJour[]>([]);
+  const [habilitations, setHabilitations] = useState<{ plieur_id: string; actif: boolean; date_expiration: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = () => {
     const today = new Date().toISOString().split('T')[0];
-    supabase
-      .from('pliages')
-      .select('id, created_at, statut_paiement, montant, flag_qualif, note, sac:sacs_parachute(id, nom_court, marque, modele), plieur:profiles!pliages_plieur_id_fkey(id, nom, prenom), parachutiste:profiles!pliages_parachutiste_id_fkey(nom, prenom)')
-      .eq('centre_id', centreId)
-      .gte('created_at', today + 'T00:00:00Z')
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        setPliages((data as PliageJour[]) ?? []);
-        setLoading(false);
-      });
-  }, [centreId]);
+    Promise.all([
+      supabase
+        .from('pliages')
+        .select('id, created_at, date_pliage, type_pliage, plieur_id, statut_paiement, montant, flag_qualif, note, sac:sacs_parachute(id, nom_court, marque, modele), materiel:materiels(marque, modele), plieur:profiles!pliages_plieur_id_fkey(id, nom, prenom), parachutiste:profiles!pliages_parachutiste_id_fkey(nom, prenom)')
+        .eq('centre_id', centreId)
+        .gte('date_pliage', today + 'T00:00:00Z')
+        .order('date_pliage', { ascending: false }),
+      supabase
+        .from('plieurs_valides')
+        .select('plieur_id, actif, date_expiration')
+        .eq('centre_id', centreId),
+    ]).then(([{ data, error: pErr }, { data: habs, error: hErr }]) => {
+      if (pErr) console.error('Chargement pliages échoué :', pErr);
+      if (hErr) console.error('Chargement habilitations échoué :', hErr);
+      setPliages((data as unknown as PliageJour[]) ?? []);
+      setHabilitations(habs ?? []);
+      setLoading(false);
+    });
+  };
+  useEffect(load, [centreId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** Marquer payé (comptoir) — écriture vérifiée, jamais de succès silencieux. */
+  const marquerPaye = async (id: string) => {
+    setActionError(null);
+    const { data: written, error } = await supabase
+      .from('pliages').update({ statut_paiement: 'paye_comptoir' }).eq('id', id).select('id');
+    if (error || !written || written.length === 0) {
+      console.error('Marquage payé échoué :', error);
+      setActionError(error?.message ?? 'Le paiement n\'a pas pu être enregistré.');
+      return;
+    }
+    load();
+  };
 
   const totalJour = pliages.length;
   const aRegler = pliages.filter(p => p.statut_paiement === 'a_regler').length;
@@ -496,6 +525,12 @@ function OngletPliageDuJour({ centreId }: { centreId: string }) {
         <KpiCard label="Non attribués" val={nonAttribues} color="#94A3B8" />
       </div>
 
+      {actionError && (
+        <div className="rounded-xl px-4 py-3 mb-4 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
+          ⚠️ {actionError}
+        </div>
+      )}
+
       {flagges > 0 && (
         <div className="rounded-xl px-4 py-3 mb-4 flex items-center gap-3" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
           <span className="text-lg">⚠️</span>
@@ -517,12 +552,16 @@ function OngletPliageDuJour({ centreId }: { centreId: string }) {
         <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--c-border)' }}>
           {pliages.map((p, i) => {
             const badge = statutPaiementBadge(p.statut_paiement);
-            const heure = new Date(p.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-            const sacNom = p.sac?.nom_court || [p.sac?.marque, p.sac?.modele].filter(Boolean).join(' ') || '—';
+            const heure = new Date(p.date_pliage ?? p.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            const voileNom = p.sac
+              ? (p.sac.nom_court || [p.sac.marque, p.sac.modele].filter(Boolean).join(' '))
+              : p.materiel ? `${p.materiel.marque} ${p.materiel.modele} (voile perso)` : '—';
+            const estAuto = p.type_pliage === 'auto';
+            const habOk = estAuto || habilitationValide(p.plieur_id, habilitations);
             return (
               <div
                 key={p.id}
-                className="flex items-center gap-3 px-4 py-3"
+                className="flex items-center gap-3 px-4 py-3 flex-wrap"
                 style={{ borderTop: i > 0 ? '1px solid var(--c-border-s)' : 'none', background: 'var(--c-dropdown)' }}
               >
                 <div className="flex-shrink-0 text-center w-10">
@@ -530,18 +569,38 @@ function OngletPliageDuJour({ centreId }: { centreId: string }) {
                   {p.flag_qualif && <span className="text-[10px]" title="Qualification manquante">⚠️</span>}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate" style={{ color: 'var(--c-text)' }}>{sacNom}</p>
+                  <p className="text-sm font-semibold truncate" style={{ color: 'var(--c-text)' }}>{voileNom}</p>
                   <p className="text-xs truncate" style={{ color: 'var(--c-muted)' }}>
-                    {p.plieur ? `${p.plieur.prenom} ${p.plieur.nom}` : '—'}
-                    {p.parachutiste ? ` → ${p.parachutiste.prenom} ${p.parachutiste.nom}` : ''}
+                    {estAuto ? 'Auto-pliage déclaré' : p.plieur ? `${p.plieur.prenom} ${p.plieur.nom}` : '—'}
+                    {p.parachutiste ? `${estAuto ? ' par' : ' →'} ${p.parachutiste.prenom} ${p.parachutiste.nom}` : ''}
                   </p>
                 </div>
+                {/* Traçabilité sécurité : origine du pliage, signalée — jamais bloquée */}
+                {estAuto ? (
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                    style={{ background: 'rgba(167,139,250,0.12)', color: '#C4B5FD', border: '1px solid rgba(167,139,250,0.3)' }}>
+                    Auto-pliage
+                  </span>
+                ) : !habOk && (
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                    style={{ background: 'rgba(249,115,22,0.12)', color: '#FDBA74', border: '1px solid rgba(249,115,22,0.35)' }}
+                    title="Aucune habilitation active et non expirée dans le référentiel des plieurs">
+                    ⚠ Plieur non habilité ou habilitation expirée
+                  </span>
+                )}
                 <div className="flex-shrink-0 flex flex-col items-end gap-1">
                   <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: badge.bg, color: badge.color }}>
                     {badge.label}
                   </span>
                   {p.montant != null && <span className="text-xs" style={{ color: 'var(--c-muted)' }}>{p.montant} €</span>}
                 </div>
+                {p.statut_paiement === 'a_regler' && (
+                  <button onClick={() => marquerPaye(p.id)}
+                    className="flex-shrink-0 text-xs font-bold px-3 py-1.5 rounded-lg text-white"
+                    style={{ background: '#10B981' }}>
+                    Marquer payé
+                  </button>
+                )}
               </div>
             );
           })}

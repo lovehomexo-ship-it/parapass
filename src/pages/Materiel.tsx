@@ -10,6 +10,8 @@ import { Plus, Trash2, CreditCard as Edit3, Check, X, Upload, ExternalLink, Chev
 import { getComplianceStatus, useComplianceRules, getMaterielEcheance, type ComplianceRules } from '../lib/compliance';
 import { ComplianceBadge } from '../components/ComplianceBadge';
 import { ChargeAlaireCard } from '../components/ChargeAlaireCard';
+import { AutoPliageBlock } from '../components/AutoPliage';
+import { useDzMembre } from '../lib/briefing';
 
 const darkInputStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'white', width: '100%', borderRadius: 8, padding: '8px 12px', fontSize: 14, outline: 'none' };
 
@@ -48,6 +50,7 @@ export function MaterielPage() {
   const [maintForm, setMaintForm] = useState(emptyMaint);
   const { rules } = useComplianceRules();
   const [writeError, setWriteError] = useState<string | null>(null);
+  const mesDzs = useDzMembre(user?.id);
 
   const photoRef = useRef<HTMLInputElement>(null);
   const docRef = useRef<HTMLInputElement>(null);
@@ -288,7 +291,11 @@ export function MaterielPage() {
                       })()}
                       {/* Charge alaire — consultatif, uniquement sur la voile principale */}
                       {mat.type === 'parachute_principal' && (
-                        <ChargeAlaireCard userId={user?.id} tailleVoileFt2={mat.taille_voile_ft2 ?? null} />
+                        <>
+                          <ChargeAlaireCard userId={user?.id} tailleVoileFt2={mat.taille_voile_ft2 ?? null} />
+                          {/* État de pliage + déclaration d'auto-pliage */}
+                          <AutoPliageBlock materielId={mat.id} userId={user?.id} centreId={mesDzs[0]?.id} />
+                        </>
                       )}
                     </div>
                     <div className="flex items-center gap-1 ml-2">
