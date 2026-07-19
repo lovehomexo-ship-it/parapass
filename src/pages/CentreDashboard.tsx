@@ -14,6 +14,7 @@ import { ComplianceBadge, ComplianceDot } from '../components/ComplianceBadge';
 import { useCurrencyRules, getCurrencyStatus, CURRENCY_STATUS_CONFIG } from '../lib/currency';
 import { MeteoAltitudeDZ } from '../components/MeteoAltitudeCard';
 import { BriefingRecapDZ } from './centre/BriefingRecap';
+import { PresencesDZ } from './centre/PresencesDZ';
 import { BriefingSection } from './centre/BriefingSection';
 import {
   Home, Users, ClipboardList, Activity, BarChart2, Calendar, Megaphone,
@@ -3690,6 +3691,10 @@ export function CentreDashboardPage() {
               {/* Récap briefing du jour — l'info la plus opérationnelle du matin, en premier */}
               {centreId && (
                 <BriefingRecapDZ centreId={centreId} onOuvrir={() => setActiveSection('briefing')} />
+              )}
+              {/* Présents aujourd'hui — état des lieux opérationnel, temps réel */}
+              {centreId && (
+                <PresencesDZ dzId={centreId} />
               )}
               <DashboardHome centre={centre} stats={stats} onNavigate={setActiveSection} carnetsEnAttente={carnetsEnAttente} />
               {/* Vent en altitude — profil complet + projection journée (prévision indicative) */}

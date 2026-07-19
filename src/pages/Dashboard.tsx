@@ -20,6 +20,7 @@ import { useComplianceRules, getMaterielEcheance } from '../lib/compliance';
 import { MaRepriseCard } from '../components/MaRepriseCard';
 import { BriefingDuJourBlock } from '../components/BriefingDuJourCard';
 import { MeteoAltitudeCard } from '../components/MeteoAltitudeCard';
+import { CheckInPresence } from '../components/CheckInPresence';
 import { useDzMembre } from '../lib/briefing';
 import { useBadges } from '../lib/useBadges';
 import { usePassport } from '../lib/usePassport';
@@ -625,6 +626,9 @@ export function DashboardPage() {
               {briefingDzs.map(dz => (
                 <BriefingDuJourBlock key={dz.id} dzId={dz.id} dzNom={dz.nom} userId={user?.id} />
               ))}
+
+              {/* Check-in : « Je suis présent aujourd'hui » — 15 s, depuis le terrain */}
+              <CheckInPresence dzs={briefingDzs} userId={user?.id} />
 
               {/* 1 — Bandeau compact brevet + autorisation */}
               {statutDocs && (() => {
