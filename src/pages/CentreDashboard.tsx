@@ -17,6 +17,7 @@ import { BriefingRecapDZ } from './centre/BriefingRecap';
 import { PresencesDZ } from './centre/PresencesDZ';
 import { BriefingSection } from './centre/BriefingSection';
 import { BrevetsSection } from './centre/BrevetsSection';
+import { EncadrementSection } from './centre/EncadrementSection';
 import {
   Home, Users, ClipboardList, Activity, BarChart2, Calendar, Megaphone,
   Settings, Shield, MessageSquare, Bell, LogOut, Menu, X,
@@ -3495,6 +3496,7 @@ export function CentreDashboardPage() {
     { key: 'sauts', label: 'Activité des sauts', icon: Activity },
     { key: 'briefing', label: 'Briefing du jour', icon: Megaphone },
     { key: 'brevets', label: 'Progression brevets', icon: GraduationCap },
+    { key: 'encadrement', label: 'Encadrement du jour', icon: Shield },
     { key: 'planning', label: 'Planning DZ', icon: Calendar },
     { key: 'stats', label: 'Statistiques', icon: BarChart2 },
     { key: 'equipe', label: 'Mon équipe', icon: Shield },
@@ -3744,6 +3746,9 @@ export function CentreDashboardPage() {
           )}
           {activeSection === 'brevets' && centreId && (
             <BrevetsSection centreId={centreId} />
+          )}
+          {activeSection === 'encadrement' && centreId && (
+            <EncadrementSection centreId={centreId} />
           )}
           {activeSection === 'planning' && centreId && (
             <PlanningCentre centreId={centreId} />
