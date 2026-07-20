@@ -14,6 +14,23 @@ import { ComplianceBadge, ComplianceDot } from '../components/ComplianceBadge';
 import { useCurrencyRules, getCurrencyStatus, CURRENCY_STATUS_CONFIG } from '../lib/currency';
 import { MeteoAltitudeDZ } from '../components/MeteoAltitudeCard';
 import { BriefingRecapDZ } from './centre/BriefingRecap';
+
+// ─── Abonnement du centre — helpers PARTAGÉS par toutes les sections du fichier
+// (déclarés au niveau module : plus jamais de ReferenceError depuis une section).
+// Plans réels en base : 'essai' (trial), 'centre' (agréé), 'centre_premium'.
+// Repli sûr : sans info d'abonnement, on considère le plan inactif — pas de plantage.
+function isPlanActif(centre: { plan?: string | null; statut?: string | null } | null | undefined): boolean {
+  if (!centre?.plan) return false;
+  if (centre.statut && centre.statut !== 'actif') return false;
+  return ['centre', 'centre_premium'].includes(centre.plan);
+}
+
+function planLabel(plan: string | null | undefined): string {
+  if (plan === 'centre_premium') return 'Premium';
+  if (plan === 'centre') return 'Centre Agréé';
+  if (plan === 'essai') return 'Essai';
+  return '—';
+}
 import { PresencesDZ } from './centre/PresencesDZ';
 import { BriefingSection } from './centre/BriefingSection';
 import { BrevetsSection } from './centre/BrevetsSection';
@@ -2541,14 +2558,14 @@ function MonCentreSection({ centre, onSaved }: { centre: Centre | null; onSaved:
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <h2 className="font-semibold text-gray-900 mb-3">Plan</h2>
         <div className="flex items-center gap-3">
-          <span className={`px-3 py-1 rounded-full text-sm font-medium ${isActivePlan ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
-            {centre ? planLabel(centre.plan) : '—'}
+          <span className={`px-3 py-1 rounded-full text-sm font-medium ${isPlanActif(centre) ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+            {planLabel(centre?.plan)}
           </span>
-          {!isActivePlan && (
+          {!isPlanActif(centre) && (
             <span className="text-sm text-gray-500">Passez en Centre Agréé pour accéder à toutes les fonctionnalités</span>
           )}
         </div>
-        {!isActivePlan && (
+        {!isPlanActif(centre) && (
           <button className="mt-4 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition">
             Passer en Centre Agréé
           </button>
@@ -3481,13 +3498,7 @@ export function CentreDashboardPage() {
       .then(({ count }) => setNotifCount(count ?? 0));
   }, [profile]);
 
-  // Plans actifs : 'centre' (agréé), 'centre_premium' (premium), 'essai' (trial)
-  const isActivePlan = centre ? ['centre', 'centre_premium'].includes(centre.plan) : false;
-  const planLabel = (plan: string) => {
-    if (plan === 'centre_premium') return 'Premium';
-    if (plan === 'centre') return 'Centre Agréé';
-    return 'Essai';
-  };
+  const isActivePlan = isPlanActif(centre);
 
   const navItems = [
     { key: 'dashboard', label: 'Tableau de bord', icon: Home },

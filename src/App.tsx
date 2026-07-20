@@ -127,6 +127,9 @@ function App() {
               <ThemeProvider>
               <AlertesProvider>
               <ProfileGate>
+              {/* Boundary GLOBAL : une page qui plante affiche un message utile
+                  (et logge l'erreur) au lieu d'emporter toute l'application */}
+              <ErrorBoundary>
               <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<LoginPage />} />
@@ -172,6 +175,7 @@ function App() {
                 <Route path="/auth-redirect" element={<AuthRedirect />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
+              </ErrorBoundary>
               </ProfileGate>
               </AlertesProvider>
               </ThemeProvider>
