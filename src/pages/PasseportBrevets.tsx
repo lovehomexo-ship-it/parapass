@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { Check } from 'lucide-react';
 import type { ModuleBrevet, Brevet } from '../lib/types';
 import { MODULES_PAR_BREVET, TYPE_BREVET_LABELS } from '../lib/types';
+import { ProgressionBrevets } from '../components/ProgressionBrevets';
 
 const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#001A4D]/20 focus:border-[#001A4D]';
 
@@ -197,6 +198,11 @@ export function BrevetsModulesTab({
 
   return (
     <div className="space-y-4">
+      {/* Progression vers le prochain brevet — moteur paramétrable (référentiel FFP) */}
+      <div style={{ background: '#0B1D3A', borderRadius: 16 }}>
+        <ProgressionBrevets userId={userId} />
+      </div>
+
       <div className="bg-[#001A4D]/5 rounded-xl p-4">
         <p className="text-xs text-[#001A4D] font-semibold">Brevets FFP</p>
         <p className="text-xs text-gray-500 mt-0.5">Les modules sont validés par le Directeur Technique ou un moniteur habilité. Chaque ligne correspond à une page du carnet papier.</p>
