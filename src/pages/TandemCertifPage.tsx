@@ -28,11 +28,9 @@ export function TandemCertifPage() {
   useEffect(() => {
     if (!certifToken) { setErreur('Certificat introuvable.'); setLoading(false); return; }
     (async () => {
-      const { data: p } = await supabase
-        .from('tandem_passengers')
-        .select('prenom, nom, certif_token, booking:tandem_bookings(avec_video, moniteur:profiles!tandem_bookings_moniteur_id_fkey(nom, prenom), slot:tandem_slots(date, heure), centre:centres(nom, ville))')
-        .eq('certif_token', certifToken)
-        .maybeSingle();
+      // RPC bornée au jeton certificat : aucune lecture large des passagers
+      const { data: p, error } = await supabase.rpc('tandem_certif_get', { p_certif_token: certifToken });
+      if (error) console.error('Chargement certificat échoué :', error);
 
       if (!p) { setErreur('Certificat introuvable.'); setLoading(false); return; }
       setData(p as unknown as CertifData);

@@ -192,27 +192,18 @@ export function TandemPreparerPage() {
   useEffect(() => {
     if (!token) { setErreur('Lien invalide.'); setLoading(false); return; }
     (async () => {
-      const { data: b } = await supabase
-        .from('tandem_bookings')
-        .select('id, slot_id, offreur_nom, offreur_email, passager_nom, passager_email, avec_video, avec_photos, prix_total, montant_solde, statut, dossier_complete, centre:centres(nom, ville), slot:tandem_slots(date, heure)')
-        .eq('dossier_token', token)
-        .maybeSingle();
+      // RPC bornée au jeton : ne renvoie QUE cette réservation (jamais de lecture large)
+      const { data: dossier, error } = await supabase.rpc('tandem_dossier_get', { p_token: token });
+      if (error) console.error('Chargement dossier tandem échoué :', error);
+      const b = (dossier as { booking?: Booking } | null)?.booking ?? null;
 
       if (!b) { setErreur('Lien introuvable ou expiré.'); setLoading(false); return; }
       setBooking(b as unknown as Booking);
 
-      const { data: cfg } = await supabase
-        .from('tandem_config')
-        .select('poids_min, poids_max')
-        .eq('centre_id', (b as { centre_id?: string }).centre_id ?? '')
-        .maybeSingle();
+      const cfg = (dossier as { config?: TandemConfig } | null)?.config;
       if (cfg) setConfig(cfg as TandemConfig);
 
-      const { data: p } = await supabase
-        .from('tandem_passengers')
-        .select('*')
-        .eq('booking_id', b.id)
-        .maybeSingle();
+      const p = (dossier as { passenger?: Passenger } | null)?.passenger ?? null;
 
       if (p) {
         setPassenger(p as Passenger);
@@ -235,35 +226,32 @@ export function TandemPreparerPage() {
     })();
   }, [token]);
 
+  /** Toutes les écritures passent par la RPC bornée au jeton — erreurs affichées. */
+  async function enregistrerPassager(champs: Record<string, unknown>): Promise<boolean> {
+    const { data, error } = await supabase.rpc('tandem_passager_enregistrer', { p_token: token, p: champs });
+    if (error || !data) {
+      console.error('Enregistrement passager échoué :', error);
+      setErreur('L\'enregistrement a échoué. Réessayez.');
+      return false;
+    }
+    setPassenger(data as Passenger);
+    return true;
+  }
+
   async function saveInfos() {
     if (!booking || !infos.prenom || !infos.nom) return;
     setSaving(true);
-    if (passenger) {
-      await supabase.from('tandem_passengers').update({
-        prenom: infos.prenom.trim(),
-        nom: infos.nom.trim(),
-        date_naissance: infos.dateNaissance || null,
-        contact_urgence_nom: infos.contactUrgenceNom.trim() || null,
-        contact_urgence_tel: infos.contactUrgenceTel.trim() || null,
-        nationalite: infos.nationalite.trim() || null,
-        adresse: infos.adresse.trim() || null,
-        updated_at: new Date().toISOString(),
-      }).eq('id', passenger.id);
-    } else {
-      const { data: newP } = await supabase.from('tandem_passengers').insert({
-        booking_id: booking.id,
-        prenom: infos.prenom.trim(),
-        nom: infos.nom.trim(),
-        date_naissance: infos.dateNaissance || null,
-        contact_urgence_nom: infos.contactUrgenceNom.trim() || null,
-        contact_urgence_tel: infos.contactUrgenceTel.trim() || null,
-        nationalite: infos.nationalite.trim() || null,
-        adresse: infos.adresse.trim() || null,
-      }).select('*').single();
-      if (newP) setPassenger(newP as Passenger);
-    }
+    const ok = await enregistrerPassager({
+      prenom: infos.prenom.trim(),
+      nom: infos.nom.trim(),
+      date_naissance: infos.dateNaissance || null,
+      contact_urgence_nom: infos.contactUrgenceNom.trim() || null,
+      contact_urgence_tel: infos.contactUrgenceTel.trim() || null,
+      nationalite: infos.nationalite.trim() || null,
+      adresse: infos.adresse.trim() || null,
+    });
     setSaving(false);
-    setStep('poids');
+    if (ok) setStep('poids');
   }
 
   async function savePoids() {
@@ -271,12 +259,9 @@ export function TandemPreparerPage() {
     const poidsNum = parseInt(poids);
     if (!poidsNum || poidsNum < 1) return;
     setSaving(true);
-    const passengerId = passenger?.id;
-    if (passengerId) {
-      await supabase.from('tandem_passengers').update({ poids: poidsNum }).eq('id', passengerId);
-    }
+    const ok = await enregistrerPassager({ poids: poidsNum });
     setSaving(false);
-    setStep('decharge');
+    if (ok) setStep('decharge');
   }
 
   async function signer() {
@@ -285,17 +270,8 @@ export function TandemPreparerPage() {
     const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(signatureDataUrl + new Date().toISOString()))
       .then(b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join(''));
 
-    await supabase.from('tandem_passengers').update({
-      decharge_signee: true,
-      decharge_signe_at: new Date().toISOString(),
-      decharge_signature_hash: hash,
-      updated_at: new Date().toISOString(),
-    }).eq('id', passenger.id);
-
-    await supabase.from('tandem_bookings').update({
-      dossier_complete: true,
-      updated_at: new Date().toISOString(),
-    }).eq('id', booking!.id);
+    // La RPC signe la décharge ET complète le dossier de la réservation
+    await enregistrerPassager({ decharge_signee: true, decharge_signature_hash: hash });
 
     setSaving(false);
     setSignatureSaved(true);

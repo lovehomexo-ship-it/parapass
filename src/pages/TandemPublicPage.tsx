@@ -302,43 +302,37 @@ export function TandemPublicPage() {
     if (!selectedSlot || !centre || !config) return;
     setSubmitting(true);
 
-    const { data, error } = await supabase
-      .from('tandem_bookings')
-      .insert({
+    // RPC bornée : crée la réservation + le passager, ne renvoie QUE le jeton dossier
+    const nomComplet = form.pourAutrui ? form.passagerNom : form.offreurNom;
+    const { data, error } = await supabase.rpc('tandem_reserver', {
+      p: {
         slot_id: selectedSlot.id,
         centre_id: centre.id,
         offreur_nom: form.offreurNom.trim(),
         offreur_email: form.offreurEmail.trim(),
         offreur_tel: form.offreurTel.trim() || null,
         pour_autrui: form.pourAutrui,
-        passager_nom: form.pourAutrui ? form.passagerNom.trim() : form.offreurNom.trim(),
-        passager_email: form.pourAutrui ? form.passagerEmail.trim() : form.offreurEmail.trim(),
-        passager_tel: form.pourAutrui ? form.passagerTel.trim() || null : form.offreurTel.trim() || null,
+        passager_nom: nomComplet.trim(),
+        passager_email: (form.pourAutrui ? form.passagerEmail : form.offreurEmail).trim(),
+        passager_tel: (form.pourAutrui ? form.passagerTel : form.offreurTel).trim() || null,
         avec_video: form.avecVideo,
         avec_photos: form.avecPhotos,
         prix_total: prixTotal,
         montant_acompte: acompte,
         montant_solde: solde,
-        statut: 'confirme',
-        statut_paiement_acompte: 'non_paye',
-      })
-      .select('id, dossier_token')
-      .single();
+        passager_prenom: nomComplet.split(' ')[0] || '',
+        passager_nom_famille: nomComplet.split(' ').slice(1).join(' ') || '',
+      },
+    });
 
     setSubmitting(false);
     if (error || !data) {
+      console.error('Réservation tandem échouée :', error);
       setFormErrors({ _global: 'Une erreur est survenue. Réessayez.' });
       return;
     }
 
-    // Create initial passenger record
-    await supabase.from('tandem_passengers').insert({
-      booking_id: data.id,
-      nom: (form.pourAutrui ? form.passagerNom : form.offreurNom).split(' ').slice(1).join(' ') || '',
-      prenom: (form.pourAutrui ? form.passagerNom : form.offreurNom).split(' ')[0] || '',
-    });
-
-    setBookingId(data.id);
+    setBookingId((data as { booking_id: string }).booking_id);
     setStep('confirme');
   }
 
@@ -361,9 +355,9 @@ export function TandemPublicPage() {
     const validite = new Date();
     validite.setMonth(validite.getMonth() + (config.validite_bon_mois ?? 18));
 
-    const { data, error } = await supabase
-      .from('tandem_giftcards')
-      .insert({
+    // RPC bornée : crée le bon et ne renvoie QUE son code (aucune lecture des autres bons)
+    const { data, error } = await supabase.rpc('tandem_giftcard_creer', {
+      p: {
         centre_id: centre.id,
         formule: giftCardForm.formule,
         montant,
@@ -373,14 +367,12 @@ export function TandemPublicPage() {
         beneficiaire_email: giftCardForm.beneficiaireEmail.trim() || null,
         message: giftCardForm.message.trim() || null,
         validite_jusqu_au: isoDate(validite),
-        statut: 'actif',
-      })
-      .select('id, code')
-      .single();
+      },
+    });
 
     setSubmitting(false);
-    if (error || !data) { setFormErrors({ bon: 'Erreur. Réessayez.' }); return; }
-    setGiftCode(data.code);
+    if (error || !data) { console.error('Bon cadeau échoué :', error); setFormErrors({ bon: 'Erreur. Réessayez.' }); return; }
+    setGiftCode((data as { code: string }).code);
     setStep('confirme');
   }
 
