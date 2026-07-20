@@ -10,6 +10,7 @@ import { User, FileText, Shield, Award, Building2, CreditCard as Edit3, Plus, Tr
 import { ContactsUrgenceTab, InterdictionsTab } from './PasseportSecurite';
 import { IncidentsTab } from './PasseportIncidents';
 import { BrevetsModulesTab } from './PasseportBrevets';
+import { ProgressionBrevets } from '../components/ProgressionBrevets';
 import { PasseportCardView } from '../components/PasseportCardView';
 
 type PassportTab = 'carte' | 'licence' | 'medical' | 'brevets' | 'modules' | 'qualifications' | 'centres' | 'securite' | 'incidents';
@@ -120,7 +121,14 @@ export function PasseportPage() {
 
         {/* Brevets */}
         {tab === 'brevets' && (
-          <BrevetTab brevets={brevets} userId={user?.id} onRefresh={refresh} saving={saving} setSaving={setSaving} />
+          <>
+            {/* Progression vers le prochain brevet : épreuves, conditions calculées,
+                bouton « Je suis prêt » sur les épreuves accessibles */}
+            <div className="mb-4" style={{ background: '#0B1D3A', borderRadius: 16 }}>
+              <ProgressionBrevets userId={user?.id} />
+            </div>
+            <BrevetTab brevets={brevets} userId={user?.id} onRefresh={refresh} saving={saving} setSaving={setSaving} />
+          </>
         )}
 
         {/* Qualifications */}
