@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import {
-  useReferentielBrevets, useValidationStaff, brevetPretADelivrer,
+  useReferentielBrevets, useValidationStaff, epreuvesBrevetCompletes,
   TYPE_EPREUVE_LABELS, type Epreuve, type ProgressionEpreuve,
 } from '../../lib/brevetsProgression';
 import { GraduationCap, Check, X, Plus, Award } from 'lucide-react';
@@ -175,8 +175,9 @@ function ElevesAvancement({ centreId, referentiel, onDelivrer }: {
               if (eps.length === 0) return null;
               const validees = eps.filter(e => progressions[e.id]?.statut === 'validee').length;
               const dejaDelivre = delivres.has(`${userId}:${b.id}`);
-              const pret = !dejaDelivre && brevetPretADelivrer(b, referentiel.epreuves, progressions)
-                && (!b.brevet_prerequis_id || delivres.has(`${userId}:${b.brevet_prerequis_id}`));
+              // Côté staff : signal sur les épreuves ; les conditions calculées
+              // (sauts, âge, brevets requis) sont vérifiées par l'humain avant de délivrer
+              const pret = !dejaDelivre && epreuvesBrevetCompletes(b, referentiel.epreuves, progressions);
               return (
                 <span key={b.id} className="text-xs px-2.5 py-1.5 rounded-lg inline-flex items-center gap-2"
                   style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${pret ? 'rgba(251,191,36,0.4)' : 'var(--c-border)'}`, color: 'var(--c-text2)' }}>
@@ -266,6 +267,18 @@ function ReferentielEditor({ referentiel }: { referentiel: ReturnType<typeof use
           </button>
         ))}
       </div>
+
+      {/* Règles de prérequis du brevet (l'arbre FFP : brevets requis, seuils, âge…) */}
+      {brevetSel && referentiel.reglesDe(brevetSel).length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {referentiel.reglesDe(brevetSel).map(r => (
+            <span key={r.id} className="text-[11px] px-2.5 py-1 rounded-full" title={r.source ?? undefined}
+              style={{ background: 'rgba(167,139,250,0.1)', color: '#C4B5FD', border: '1px solid rgba(167,139,250,0.3)' }}>
+              {r.description ?? r.type_regle}
+            </span>
+          ))}
+        </div>
+      )}
 
       {eps.length === 0 ? (
         <p className="text-sm py-3" style={{ color: '#FBBF24' }}>Épreuves de ce brevet : À DÉFINIR AVEC LA FFP.</p>

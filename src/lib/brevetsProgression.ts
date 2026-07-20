@@ -2,30 +2,45 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from './supabase';
 
 // ─── Moteur de progression des brevets ────────────────────────────────────────
-// Le contenu (épreuves, prérequis, quantités) est de la DONNÉE saisie dans le
-// référentiel — RIEN n'est codé en dur. Tant que la FFP n'a pas fourni le
-// référentiel officiel, l'interface affiche « en attente de la FFP ».
-// L'appli informe et trace ; l'humain (moniteur agréé / DT) valide. Toujours.
+// La progression FFP est un ARBRE : prérequis multiples et typés (brevet_regles),
+// modules indépendants avec prérequis croisés (epreuve_prerequis), conditions
+// automatiques calculées depuis le carnet (seuils de sauts, âge, expérience
+// récente) distinctes des épreuves qualitatives validées par l'humain.
+// Tout le contenu est de la DONNÉE (référentiel FFP 2026 saisi, sourcé,
+// « à confirmer DT ») — rien n'est codé en dur.
 
 export interface BrevetRef {
   id: string;
   code: string;
   libelle: string;
   ordre: number;
-  brevet_prerequis_id: string | null;
+  brevet_prerequis_id: string | null; // hérité — remplacé par brevet_regles
   actif: boolean;
+  description: string | null;
+  source: string | null;
+}
+
+export interface BrevetRegle {
+  id: string;
+  brevet_id: string;
+  type_regle: string; // tous_brevets / au_moins_un_brevet / nombre_de_sauts / experience_recente / age / formation_initiale / …
+  params: Record<string, unknown>;
+  description: string | null;
+  source: string | null;
 }
 
 export interface Epreuve {
   id: string;
   brevet_id: string;
   libelle: string;
-  type: 'saut' | 'theorie' | 'pliage' | 'pratique';
+  type: 'saut' | 'theorie' | 'pliage' | 'pratique' | 'module' | 'pratique_sol' | 'nombre_sauts' | 'experience_recente' | 'administratif' | 'age';
   obligatoire: boolean;
   quantite_requise: number;
   ordre: number;
-  prerequis_epreuve_id: string | null;
+  prerequis_epreuve_id: string | null; // hérité — remplacé par epreuve_prerequis
+  params: { sauts_min?: number; brevets_requis?: string[] };
   description: string | null;
+  source: string | null;
 }
 
 export interface ProgressionEpreuve {
@@ -43,7 +58,10 @@ export interface ProgressionEpreuve {
 }
 
 export const TYPE_EPREUVE_LABELS: Record<Epreuve['type'], string> = {
-  saut: 'Saut (carnet)', theorie: 'Théorie (Académie/QCM)', pliage: 'Pliage (module pliage)', pratique: 'Pratique',
+  saut: 'Saut (carnet)', theorie: 'Théorie (QCM/Académie)', pliage: 'Pliage (module pliage)',
+  pratique: 'Pratique', module: 'Module indépendant', pratique_sol: 'Pratique au sol',
+  nombre_sauts: 'Seuil de sauts (calculé)', experience_recente: 'Expérience récente (calculée)',
+  administratif: 'Fiche / administratif', age: 'Condition d\'âge (calculée)',
 };
 
 // ─── Référentiel ──────────────────────────────────────────────────────────────
@@ -51,70 +69,183 @@ export const TYPE_EPREUVE_LABELS: Record<Epreuve['type'], string> = {
 export function useReferentielBrevets() {
   const [brevets, setBrevets] = useState<BrevetRef[]>([]);
   const [epreuves, setEpreuves] = useState<Epreuve[]>([]);
+  const [regles, setRegles] = useState<BrevetRegle[]>([]);
+  const [prerequisMap, setPrerequisMap] = useState<Record<string, string[]>>({}); // epreuve_id → prerequis ids
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const [{ data: b, error: bErr }, { data: e, error: eErr }] = await Promise.all([
+    const [b, e, r, pj] = await Promise.all([
       supabase.from('brevets_referentiel').select('*').eq('actif', true).order('ordre'),
       supabase.from('epreuves').select('*').order('ordre'),
+      supabase.from('brevet_regles').select('*'),
+      supabase.from('epreuve_prerequis').select('*'),
     ]);
-    if (bErr) console.error('Chargement référentiel brevets échoué :', bErr);
-    if (eErr) console.error('Chargement épreuves échoué :', eErr);
-    setBrevets((b ?? []) as BrevetRef[]);
-    setEpreuves((e ?? []) as Epreuve[]);
+    for (const { error } of [b, e, r, pj]) if (error) console.error('Chargement référentiel échoué :', error);
+    setBrevets((b.data ?? []) as BrevetRef[]);
+    setEpreuves((e.data ?? []) as Epreuve[]);
+    setRegles((r.data ?? []) as BrevetRegle[]);
+    const map: Record<string, string[]> = {};
+    for (const row of (pj.data ?? []) as { epreuve_id: string; prerequis_id: string }[]) {
+      (map[row.epreuve_id] ??= []).push(row.prerequis_id);
+    }
+    setPrerequisMap(map);
     setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
   const epreuvesDe = (brevetId: string) => epreuves.filter(e => e.brevet_id === brevetId);
-  /** Le référentiel est-il renseigné (au moins une épreuve saisie) ? */
+  const reglesDe = (brevetId: string) => regles.filter(r => r.brevet_id === brevetId);
   const renseigne = epreuves.length > 0;
 
-  return { brevets, epreuves, epreuvesDe, renseigne, loading, refresh: load };
+  return { brevets, epreuves, regles, prerequisMap, epreuvesDe, reglesDe, renseigne, loading, refresh: load };
 }
 
-// ─── Logique commune ──────────────────────────────────────────────────────────
+// ─── Contexte élève (conditions AUTOMATIQUES, calculées depuis le carnet) ─────
 
-/** Prérequis d'une épreuve remplis ? (épreuve prérequise validée) */
+export interface ContexteEleve {
+  sautsValides: number;
+  sautsDates: string[]; // dates des sauts valides/historiques (hors soufflerie)
+  age: number | null;
+  brevetsAcquis: Set<string>; // codes — délivrances du moteur + brevets déjà détenus (table brevets)
+}
+
+export function useContexteEleve(userId: string | undefined): ContexteEleve | null {
+  const [ctx, setCtx] = useState<ContexteEleve | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+    (async () => {
+      const [sauts, profil, delivres, detenus] = await Promise.all([
+        supabase.from('sauts').select('date_saut').eq('parachutiste_id', userId).eq('is_tunnel', false).in('statut', ['valide', 'historique']),
+        supabase.from('profiles').select('date_naissance').eq('id', userId).maybeSingle(),
+        supabase.from('validations_brevet').select('brevet:brevets_referentiel(code)').eq('user_id', userId),
+        supabase.from('brevets').select('type_brevet').eq('parachutiste_id', userId),
+      ]);
+      for (const { error } of [sauts, profil, delivres, detenus]) if (error) console.error('Chargement contexte élève échoué :', error);
+      const dates = (sauts.data ?? []).map(s => s.date_saut as string);
+      const naissance = profil.data?.date_naissance as string | null;
+      const age = naissance ? Math.floor((Date.now() - new Date(naissance).getTime()) / (365.25 * 86_400_000)) : null;
+      const acquis = new Set<string>();
+      for (const d of delivres.data ?? []) {
+        const code = (d.brevet as { code?: string } | null)?.code;
+        if (code) acquis.add(code);
+      }
+      for (const d of detenus.data ?? []) acquis.add(d.type_brevet as string);
+      setCtx({ sautsValides: dates.length, sautsDates: dates, age, brevetsAcquis: acquis });
+    })();
+  }, [userId]);
+
+  return ctx;
+}
+
+/** Évalue une règle de prérequis. Les règles non calculables (formation_initiale…)
+ *  sont affichées et laissées à l'appréciation humaine — jamais inventées. */
+export function evalRegle(regle: BrevetRegle, ctx: ContexteEleve): { ok: boolean | null; label: string } {
+  const p = regle.params as Record<string, unknown>;
+  switch (regle.type_regle) {
+    case 'tous_brevets': {
+      const codes = (p.codes as string[]) ?? [];
+      const ok = codes.every(c => ctx.brevetsAcquis.has(c));
+      return { ok, label: `Brevet${codes.length > 1 ? 's' : ''} ${codes.join(' + ')}` };
+    }
+    case 'au_moins_un_brevet': {
+      const codes = (p.codes as string[]) ?? [];
+      const ok = codes.some(c => ctx.brevetsAcquis.has(c));
+      return { ok, label: `Un brevet parmi ${codes.join(', ')}` };
+    }
+    case 'nombre_de_sauts': {
+      const min = (p.sauts_min as number) ?? 0;
+      return { ok: ctx.sautsValides >= min, label: `${min} sauts (${ctx.sautsValides}/${min})` };
+    }
+    case 'experience_recente': {
+      const sauts = (p.sauts as number) ?? 0;
+      const jours = (p.jours as number) ?? 365;
+      const depuis = Date.now() - jours * 86_400_000;
+      const recents = ctx.sautsDates.filter(d => new Date(d).getTime() >= depuis).length;
+      return { ok: recents >= sauts, label: `${sauts} sauts sur ${jours} j (${recents}/${sauts})` };
+    }
+    case 'age': {
+      const min = (p.age_min as number) ?? 18;
+      return { ok: ctx.age === null ? null : ctx.age >= min, label: min === 18 ? 'Être majeur' : `${min} ans minimum` };
+    }
+    default:
+      // Non calculable (ex : formation_initiale) : affiché, apprécié par l'humain
+      return { ok: null, label: regle.description ?? regle.type_regle };
+  }
+}
+
+/** Conditions du brevet remplies ? (les non-calculables ne bloquent pas — l'humain apprécie) */
+export function conditionsBrevetOk(regles: BrevetRegle[], ctx: ContexteEleve): boolean {
+  return regles.every(r => evalRegle(r, ctx).ok !== false);
+}
+
+// ─── Logique épreuves ─────────────────────────────────────────────────────────
+
+/** Prérequis d'une épreuve : TOUTES les épreuves prérequises validées + conditions params. */
 export function prerequisEpreuveOk(
   epreuve: Epreuve,
   progressions: Record<string, ProgressionEpreuve>,
-  epreuves: Epreuve[]
+  epreuves: Epreuve[],
+  prerequisMap: Record<string, string[]>,
+  ctx: ContexteEleve | null
 ): { ok: boolean; manque: string | null } {
-  if (!epreuve.prerequis_epreuve_id) return { ok: true, manque: null };
-  const prog = progressions[epreuve.prerequis_epreuve_id];
-  if (prog?.statut === 'validee') return { ok: true, manque: null };
-  const preq = epreuves.find(e => e.id === epreuve.prerequis_epreuve_id);
-  return { ok: false, manque: preq?.libelle ?? 'une épreuve prérequise' };
+  for (const preqId of prerequisMap[epreuve.id] ?? []) {
+    if (progressions[preqId]?.statut !== 'validee') {
+      const preq = epreuves.find(e => e.id === preqId);
+      return { ok: false, manque: preq?.libelle ?? 'une épreuve prérequise' };
+    }
+  }
+  if (ctx) {
+    if (epreuve.params.sauts_min && ctx.sautsValides < epreuve.params.sauts_min) {
+      return { ok: false, manque: `${epreuve.params.sauts_min} sauts (tu en as ${ctx.sautsValides})` };
+    }
+    for (const code of epreuve.params.brevets_requis ?? []) {
+      if (!ctx.brevetsAcquis.has(code)) return { ok: false, manque: `le brevet ${code}` };
+    }
+  }
+  return { ok: true, manque: null };
 }
 
-/** Toutes les épreuves OBLIGATOIRES du brevet sont-elles validées ? */
-export function brevetPretADelivrer(
+/** Toutes les épreuves OBLIGATOIRES validées (le signal « prêt à délivrer » côté épreuves). */
+export function epreuvesBrevetCompletes(
   brevet: BrevetRef,
   epreuves: Epreuve[],
   progressions: Record<string, ProgressionEpreuve>
 ): boolean {
   const obligatoires = epreuves.filter(e => e.brevet_id === brevet.id && e.obligatoire);
-  if (obligatoires.length === 0) return false; // référentiel non renseigné : rien à délivrer
+  if (obligatoires.length === 0) return false;
   return obligatoires.every(e => progressions[e.id]?.statut === 'validee');
 }
 
-/** « Il te reste … » — calculé, jamais inventé. */
-export function resteAFaire(brevet: BrevetRef, epreuves: Epreuve[], progressions: Record<string, ProgressionEpreuve>): string[] {
-  return epreuves
+/** « Il te reste … » — épreuves manquantes + conditions non remplies, calculé. */
+export function resteAFaire(
+  brevet: BrevetRef,
+  epreuves: Epreuve[],
+  regles: BrevetRegle[],
+  progressions: Record<string, ProgressionEpreuve>,
+  ctx: ContexteEleve | null
+): string[] {
+  const items = epreuves
     .filter(e => e.brevet_id === brevet.id && e.obligatoire && progressions[e.id]?.statut !== 'validee')
     .map(e => {
       const faites = progressions[e.id]?.quantite_faite ?? 0;
       return e.quantite_requise > 1 ? `${e.libelle} (${faites}/${e.quantite_requise})` : e.libelle;
     });
+  if (ctx) {
+    for (const r of regles.filter(r => r.brevet_id === brevet.id)) {
+      const ev = evalRegle(r, ctx);
+      if (ev.ok === false) items.push(ev.label);
+    }
+  }
+  return items;
 }
 
 // ─── Côté élève ───────────────────────────────────────────────────────────────
 
 export function useMaProgression(userId: string | undefined, centreId: string | undefined) {
   const [progressions, setProgressions] = useState<Record<string, ProgressionEpreuve>>({});
-  const [brevetsDelivres, setBrevetsDelivres] = useState<string[]>([]); // brevet_referentiel ids
+  const [brevetsDelivres, setBrevetsDelivres] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -206,7 +337,7 @@ export function useValidationStaff(centreId: string | undefined) {
       .from('progression_epreuves')
       .update({
         quantite_faite: nouvelleQuantite,
-        statut: complete ? 'validee' : 'a_faire', // à répétition : revient « à faire » jusqu'au compte
+        statut: complete ? 'validee' : 'a_faire',
         valide_par: moniteurId,
         valide_at: new Date().toISOString(),
         note: note.trim() || null,
