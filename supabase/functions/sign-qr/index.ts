@@ -47,15 +47,23 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    const [{ data: profile }, { data: licence }, { data: brevet }, { data: certif }, { count: totalJumps }, { count: validJumps }] =
+    const [{ data: profile }, { data: licences }, { data: brevet }, { data: certif }, { count: totalJumps }, { count: validJumps }] =
       await Promise.all([
         adminClient.from('profiles').select('nom,prenom,numero_licence,centre_id').eq('id', user.id).maybeSingle(),
-        adminClient.from('licences').select('date_expiration,statut').eq('parachutiste_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+        adminClient.from('licences').select('numero_licence,date_expiration,statut').eq('parachutiste_id', user.id),
         adminClient.from('brevets').select('type_brevet').eq('parachutiste_id', user.id).order('date_obtention', { ascending: false }).limit(1).maybeSingle(),
         adminClient.from('certificats_medicaux').select('date_expiration').eq('parachutiste_id', user.id).order('date_expiration', { ascending: false }).limit(1).maybeSingle(),
         adminClient.from('sauts').select('id', { count: 'exact', head: true }).eq('parachutiste_id', user.id).neq('source', 'soufflerie'),
         adminClient.from('sauts').select('id', { count: 'exact', head: true }).eq('parachutiste_id', user.id).neq('source', 'soufflerie').in('statut', ['valide', 'historique']),
       ]);
+
+    // Licence de référence : la ligne ACTIVE à l'échéance la plus lointaine, sinon
+    // la plus récente. Le numéro vient de la table licences — pas du champ profil (périmable).
+    const licence = (licences ?? [])
+      .sort((a, b) => {
+        if ((a.statut === 'actif') !== (b.statut === 'actif')) return a.statut === 'actif' ? -1 : 1;
+        return (b.date_expiration ?? '').localeCompare(a.date_expiration ?? '');
+      })[0] ?? null;
 
     const now = Math.floor(Date.now() / 1000);
     const exp = now + 30 * 24 * 60 * 60; // 30 days
@@ -64,7 +72,7 @@ serve(async (req) => {
       sub: user.id,
       nom: profile?.nom ?? '',
       prenom: profile?.prenom ?? '',
-      lic: profile?.numero_licence ?? '',
+      lic: licence?.numero_licence ?? profile?.numero_licence ?? '',
       brevet: brevet?.type_brevet ?? null,
       lic_exp: licence?.date_expiration ?? null,
       lic_statut: licence?.statut ?? null,

@@ -7,7 +7,7 @@ import { TYPE_BREVET_LABELS } from '../lib/types';
 import type { Profile } from '../lib/auth';
 import { verifySautHash } from '../lib/validationCrypto';
 
-type GlobalStatus = 'valide' | 'attention' | 'expire' | 'invalide';
+type GlobalStatus = 'valide' | 'attention' | 'expire' | 'invalide' | 'introuvable';
 
 interface VerifyData {
   profile: Profile;
@@ -43,10 +43,13 @@ function cleanLicenceNum(n: string | null | undefined): string {
 }
 
 function computeStatus(l: Licence | null, c: CertificatMedical | null): GlobalStatus {
-  if (!l || !c) return 'expire';
+  // Absence de données ≠ expiré : on le dit distinctement, jamais « expiré » par défaut
+  if (!l) return 'introuvable';
   const lDays = l.date_expiration ? daysDiff(l.date_expiration) : -1;
+  if (lDays < 0 || l.statut !== 'actif') return 'expire';
+  if (!c) return 'attention'; // licence valide mais certificat médical non renseigné
   const cDays = daysDiff(c.date_expiration);
-  if (lDays < 0 || cDays < 0 || l.statut !== 'actif') return 'expire';
+  if (cDays < 0) return 'expire';
   if (lDays <= 30 || cDays <= 30) return 'attention';
   return 'valide';
 }
@@ -88,64 +91,33 @@ export function VerifyPage() {
     if (!token) { setTokenInvalid(true); setLoading(false); return; }
 
     const fetchData = async () => {
-      // Try token lookup first, then fall back to direct profile_id
-      let pid: string | null = null;
+      // Une seule RPC security definer bornée au token : fonctionne pour un
+      // scanneur anonyme COMME connecté (les policies RLS anon ne couvraient
+      // pas le rôle authenticated → page vide et faux « expiré »)
+      const { data: v, error } = await supabase.rpc('verify_passeport', { p_token: token });
+      if (error) console.error('Vérification passeport échouée :', error);
 
-      const { data: qrRow } = await supabase
-        .from('qr_tokens')
-        .select('parachutiste_id')
-        .eq('token', token)
-        .maybeSingle();
-
-      if (qrRow) {
-        pid = qrRow.parachutiste_id;
-      } else {
-        // Check if token is a valid profile UUID
-        const { data: profileRow } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', token)
-          .maybeSingle();
-        if (profileRow) pid = profileRow.id;
-      }
-
-      if (!pid) { setTokenInvalid(true); setLoading(false); return; }
-
-      const [
-        { data: profile },
-        { data: licences },
-        { data: certifs },
-        { data: brevets },
-        { count: sautsValidés },
-        { count: sautsTotal },
-        { data: lastSaut },
-        { data: centreLicencie },
-        { data: sautsWithHashData },
-      ] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', pid).maybeSingle(),
-        supabase.from('licences').select('*').eq('parachutiste_id', pid).order('date_expiration', { ascending: false }),
-        supabase.from('certificats_medicaux').select('*').eq('parachutiste_id', pid).order('date_expiration', { ascending: false }),
-        supabase.from('brevets').select('*').eq('parachutiste_id', pid).order('date_obtention', { ascending: false }),
-        supabase.from('sauts').select('*', { count: 'exact', head: true }).eq('parachutiste_id', pid).eq('is_tunnel', false).in('statut', ['valide', 'historique']),
-        supabase.from('sauts').select('*', { count: 'exact', head: true }).eq('parachutiste_id', pid).eq('is_tunnel', false),
-        supabase.from('sauts').select('date_saut').eq('parachutiste_id', pid).order('date_saut', { ascending: false }).limit(1).maybeSingle(),
-        supabase.from('centres_licencies').select('centre_id, centres(nom)').eq('parachutiste_id', pid).eq('statut', 'actif').limit(1).maybeSingle(),
-        supabase.from('sauts').select('id, parachutiste_id, moniteur_id, date_saut, lieu, aeronef_immat, hauteur_m, categorie, validation_hash, validation_timestamp, valide_par, statut').eq('parachutiste_id', pid).eq('statut', 'valide').not('validation_hash', 'is', null).order('date_saut', { ascending: false }).limit(20),
-      ]);
+      if (!v) { setTokenInvalid(true); setLoading(false); return; }
 
       // Log RGPD-friendly
       supabase.from('verifications').insert({ token }).then(() => {});
 
+      const payload = v as {
+        profile: Profile; licence: Licence | null; certif: CertificatMedical | null;
+        brevet: Brevet | null; sauts_valides: number; sauts_total: number;
+        dernier_saut: string | null; centre: string | null;
+        sauts_hash: VerifyData['sautsWithHash'];
+      };
       setData({
-        profile: profile as Profile,
-        licence: licences?.[0] ?? null,
-        certif: certifs?.[0] ?? null,
-        brevet: brevets?.[0] ?? null,
-        sautsValidés: sautsValidés ?? 0,
-        sautsTotal: sautsTotal ?? 0,
-        dernierSaut: lastSaut?.date_saut ?? null,
-        centrePrincipal: (centreLicencie as { centres?: { nom?: string } } | null)?.centres?.nom ?? null,
-        sautsWithHash: (sautsWithHashData ?? []) as VerifyData['sautsWithHash'],
+        profile: payload.profile,
+        licence: payload.licence,
+        certif: payload.certif,
+        brevet: payload.brevet,
+        sautsValidés: payload.sauts_valides ?? 0,
+        sautsTotal: payload.sauts_total ?? 0,
+        dernierSaut: payload.dernier_saut,
+        centrePrincipal: payload.centre,
+        sautsWithHash: payload.sauts_hash ?? [],
       });
       setLoading(false);
     };
@@ -181,7 +153,8 @@ export function VerifyPage() {
 
   const d = data!;
   const status = computeStatus(d.licence, d.certif);
-  const licNum = cleanLicenceNum(d.licence?.numero_licence ?? d.profile?.numero_licence);
+  // le numéro vient de la LICENCE réelle — jamais du champ profil (source périmable)
+  const licNum = cleanLicenceNum(d.licence?.numero_licence);
   const tokenShort = (token ?? '').slice(0, 8).toUpperCase();
 
   return (
@@ -350,6 +323,12 @@ function StatusHeader({ status, verifiedAt }: { status: GlobalStatus; verifiedAt
       icon: <XCircle className="w-12 h-12 text-white" />,
       title: 'QR Code invalide',
       sub: '',
+    },
+    introuvable: {
+      gradient: 'linear-gradient(135deg, #475569, #64748B)',
+      icon: <AlertTriangle className="w-12 h-12 text-white" />,
+      title: 'LICENCE INTROUVABLE',
+      sub: 'Aucune licence enregistrée pour ce passeport — vérification impossible, demandez un justificatif',
     },
   };
 
