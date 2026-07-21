@@ -90,6 +90,23 @@ export const MODULES: Module[] = [
 
 export const LIVE_MODULE_IDS = MODULES.filter((m) => m.status === 'live').map((m) => m.id);
 
+// ── État des modules : règle UNIQUE ──────────────────────────────────────────
+// ligne active=true → activé ; ligne active=false → désactivé ;
+// pas de ligne → défaut du catalogue (désactivé). Même règle pour tous.
+export const MODULE_DEFAUT_ACTIF = false;
+
+export function computeActiveModules(rows: { module_id: string; active: boolean }[]): Set<string> {
+  const explicit = new Map(rows.map((r) => [r.module_id, r.active]));
+  const actifs = new Set<string>();
+  for (const id of [...LIVE_MODULE_IDS, 'studio']) {
+    const etat = explicit.has(id) ? explicit.get(id)! : MODULE_DEFAUT_ACTIF;
+    if (etat) actifs.add(id);
+  }
+  // lignes explicites hors catalogue live : même règle, pas de cas particulier
+  for (const [id, active] of explicit) if (active) actifs.add(id);
+  return actifs;
+}
+
 /** Prix total si achetés séparément */
 export const PRIX_MODULES_SEPARES = MODULES
   .filter((m) => m.status === 'live')

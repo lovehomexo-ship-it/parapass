@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { MODULES, LIVE_MODULE_IDS, PRIX_MODULES_SEPARES, STUDIO, ECONOMIE_STUDIO } from '../../data/modules';
+import { MODULES, LIVE_MODULE_IDS, PRIX_MODULES_SEPARES, ECONOMIE_STUDIO, computeActiveModules } from '../../data/modules';
 import type { Module } from '../../data/modules';
 import { Check, Loader2, Clock, Zap, Package } from 'lucide-react';
 
 interface Props {
   centreId: string;
+  /** Synchronise la navigation du dashboard dès qu'un module bascule (sans rechargement). */
+  onActiveChange?: (actifs: Set<string>) => void;
 }
 
-export function ModulesSection({ centreId }: Props) {
+export function ModulesSection({ centreId, onActiveChange }: Props) {
   const [activeModules, setActiveModules] = useState<Set<string>>(new Set());
   const [waitlist, setWaitlist] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -20,60 +22,73 @@ export function ModulesSection({ centreId }: Props) {
     setTimeout(() => setToast(null), 3500);
   };
 
+  // état local + navigation parent, toujours ensemble
+  const applyActive = (next: Set<string>) => {
+    setActiveModules(next);
+    onActiveChange?.(next);
+  };
+
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const [{ data: mods }, { data: wl }] = await Promise.all([
-        supabase.from('centre_modules').select('module_id').eq('centre_id', centreId).eq('active', true),
+      const [{ data: mods, error: e1 }, { data: wl, error: e2 }] = await Promise.all([
+        supabase.from('centre_modules').select('module_id, active').eq('centre_id', centreId),
         supabase.from('module_waitlist').select('module_id').eq('centre_id', centreId),
       ]);
-      setActiveModules(new Set((mods ?? []).map((r) => r.module_id)));
+      if (e1) { console.error('Chargement modules échoué :', e1); showToast('Impossible de charger l\'état des modules.'); }
+      if (e2) console.error('Chargement waitlist échouée :', e2);
+      // Règle unique : ligne true → activé, ligne false → désactivé, absente → défaut catalogue
+      applyActive(computeActiveModules(mods ?? []));
       setWaitlist(new Set((wl ?? []).map((r) => r.module_id)));
       setLoading(false);
     };
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [centreId]);
 
   const studioActive = activeModules.has('studio');
+  const isModuleActive = (id: string) => activeModules.has(id);
 
-  const isModuleActive = (id: string) => {
-    if (studioActive && LIVE_MODULE_IDS.includes(id)) return true;
-    return activeModules.has(id);
+  // upsert explicite (jamais de delete : l'état reste lisible en base)
+  const persist = async (ids: string[], active: boolean): Promise<boolean> => {
+    const { data, error } = await supabase
+      .from('centre_modules')
+      .upsert(ids.map((id) => ({ centre_id: centreId, module_id: id, active })), { onConflict: 'centre_id,module_id' })
+      .select();
+    if (error || !data?.length) {
+      console.error('Écriture centre_modules échouée :', error);
+      return false;
+    }
+    return true;
   };
 
-  const isIncludedInStudio = (id: string) =>
-    studioActive && LIVE_MODULE_IDS.includes(id) && !activeModules.has(id);
-
   const toggleModule = async (mod: Module) => {
-    if (mod.status === 'soon') return;
+    if (mod.status === 'soon' || saving) return;
     setSaving(mod.id);
+    const avant = new Set(activeModules);
+    const activer = !isModuleActive(mod.id);
+    // Studio = bascule globale : tous les modules live + studio, même état
+    const ids = mod.id === 'studio' ? ['studio', ...LIVE_MODULE_IDS] : [mod.id];
 
-    const currentlyActive = isModuleActive(mod.id);
+    // un module retiré individuellement → le pack Studio n'est plus complet
+    const idsAEcrire = !activer && mod.id !== 'studio' && studioActive ? [...ids, 'studio'] : ids;
 
-    if (mod.id === 'studio') {
-      if (studioActive) {
-        // Désactiver studio
-        await supabase.from('centre_modules').delete().eq('centre_id', centreId).eq('module_id', 'studio');
-        setActiveModules((s) => { const n = new Set(s); n.delete('studio'); return n; });
-        showToast('ParaPass Studio désactivé.');
-      } else {
-        // Activer studio
-        await supabase.from('centre_modules').upsert({ centre_id: centreId, module_id: 'studio', active: true }, { onConflict: 'centre_id,module_id' });
-        setActiveModules((s) => new Set([...s, 'studio']));
-        showToast('ParaPass Studio activé — tous les modules sont inclus !');
-      }
+    // optimiste : l'interface bascule tout de suite
+    const apres = new Set(avant);
+    idsAEcrire.forEach((id) => (activer ? apres.add(id) : apres.delete(id)));
+    applyActive(apres);
+
+    const ok = await persist(idsAEcrire, activer);
+    if (!ok) {
+      applyActive(avant); // retour arrière, jamais de faux succès
+      showToast('Enregistrement impossible — modification annulée. Réessayez.');
     } else {
-      if (currentlyActive && !isIncludedInStudio(mod.id)) {
-        await supabase.from('centre_modules').delete().eq('centre_id', centreId).eq('module_id', mod.id);
-        setActiveModules((s) => { const n = new Set(s); n.delete(mod.id); return n; });
-        showToast(`${mod.nom} désactivé.`);
-      } else if (!currentlyActive) {
-        await supabase.from('centre_modules').upsert({ centre_id: centreId, module_id: mod.id, active: true }, { onConflict: 'centre_id,module_id' });
-        setActiveModules((s) => new Set([...s, mod.id]));
-        showToast(`${mod.nom} activé.`);
-      }
+      showToast(
+        mod.id === 'studio'
+          ? (activer ? 'ParaPass Studio activé — tous les modules sont actifs.' : 'ParaPass Studio désactivé — tous les modules sont désactivés.')
+          : `${mod.nom} ${activer ? 'activé' : 'désactivé'}.`
+      );
     }
-
     setSaving(null);
   };
 
@@ -144,7 +159,7 @@ export function ModulesSection({ centreId }: Props) {
               key={mod.id}
               mod={mod}
               active={isModuleActive(mod.id)}
-              includedInStudio={isIncludedInStudio(mod.id)}
+              includedInStudio={studioActive && isModuleActive(mod.id)}
               saving={saving === mod.id}
               onToggle={() => toggleModule(mod)}
             />
@@ -258,24 +273,15 @@ function LiveCard({ mod, active, includedInStudio, saving, onToggle }: {
         </span>
         <button
           onClick={onToggle}
-          disabled={saving || includedInStudio}
+          disabled={saving}
           className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
           style={{
-            background: includedInStudio
-              ? 'rgba(0,0,0,0.05)'
-              : active
-                ? 'rgba(239,68,68,0.08)'
-                : 'rgba(16,185,129,0.12)',
-            color: includedInStudio
-              ? 'var(--c-dim)'
-              : active
-                ? '#EF4444'
-                : '#10B981',
-            border: `1px solid ${includedInStudio ? 'transparent' : active ? 'rgba(239,68,68,0.25)' : 'rgba(16,185,129,0.3)'}`,
-            cursor: includedInStudio ? 'default' : 'pointer',
+            background: active ? 'rgba(239,68,68,0.08)' : 'rgba(16,185,129,0.12)',
+            color: active ? '#EF4444' : '#10B981',
+            border: `1px solid ${active ? 'rgba(239,68,68,0.25)' : 'rgba(16,185,129,0.3)'}`,
           }}
         >
-          {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : includedInStudio ? '—' : active ? 'Désactiver' : 'Activer'}
+          {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : active ? 'Désactiver' : 'Activer'}
         </button>
       </div>
     </div>

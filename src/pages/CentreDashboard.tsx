@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { MODULES } from '../data/modules';
+import { MODULES, computeActiveModules } from '../data/modules';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useTheme } from '../lib/ThemeContext';
@@ -3464,13 +3464,13 @@ export function CentreDashboardPage() {
         alertes: 0,
       });
 
-      // Active modules
-      const { data: modulesData } = await supabase
+      // Active modules — règle unique du catalogue (ligne explicite, sinon défaut)
+      const { data: modulesData, error: modulesError } = await supabase
         .from('centre_modules')
-        .select('module_id')
-        .eq('centre_id', resolvedCentreId)
-        .eq('active', true);
-      setActiveModules(new Set((modulesData ?? []).map((m: { module_id: string }) => m.module_id)));
+        .select('module_id, active')
+        .eq('centre_id', resolvedCentreId);
+      if (modulesError) console.error('Chargement centre_modules échoué :', modulesError);
+      setActiveModules(computeActiveModules(modulesData ?? []));
 
       // Carnets en attente de validation
       const { count: carnetCount } = await supabase
@@ -3517,7 +3517,7 @@ export function CentreDashboardPage() {
     { key: 'relances', label: 'Relances documents', icon: MessageSquare },
     { key: 'validations', label: 'Validations carnet', icon: BookCheck, badge: carnetsEnAttente > 0 ? carnetsEnAttente : undefined },
     ...(activeModules.has('pliage') ? [{ key: 'pliage', label: 'Gestion pliage', icon: Shield }] : []),
-    { key: 'finances', label: 'Finances', icon: Euro },
+    ...(activeModules.has('finances') ? [{ key: 'finances', label: 'Finances', icon: Euro }] : []),
     ...(activeModules.has('tandem') ? [{ key: 'tandem', label: 'Module Tandem', icon: GraduationCap }] : []),
     { key: 'modules', label: 'Modules', icon: Puzzle },
   ];
@@ -3751,7 +3751,7 @@ export function CentreDashboardPage() {
           {activeSection === 'centre' && (
             <MonCentreSection centre={centre} onSaved={fetchCentreData} />
           )}
-          {activeSection === 'pliage' && centreId && (
+          {activeSection === 'pliage' && centreId && activeModules.has('pliage') && (
             <GestionPliage centreId={centreId} />
           )}
           {activeSection === 'briefing' && centreId && (
@@ -3775,13 +3775,13 @@ export function CentreDashboardPage() {
           {activeSection === 'validations' && centreId && (
             <ValidationsCarnet dzId={centreId} />
           )}
-          {activeSection === 'tandem' && centreId && (
+          {activeSection === 'tandem' && centreId && activeModules.has('tandem') && (
             <TandemSection centreId={centreId} />
           )}
           {activeSection === 'modules' && centreId && (
-            <ModulesSection centreId={centreId} />
+            <ModulesSection centreId={centreId} onActiveChange={setActiveModules} />
           )}
-          {activeSection === 'finances' && centreId && (
+          {activeSection === 'finances' && centreId && activeModules.has('finances') && (
             isActivePlan
               ? <FinancesSection dzId={centreId} />
               : (
