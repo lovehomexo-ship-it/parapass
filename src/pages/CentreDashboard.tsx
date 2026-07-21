@@ -12,6 +12,7 @@ import { AddSautModal } from '../components/AddSautModal';
 import { useComplianceRules, getComplianceStatus, worstStatus, type ComplianceStatus } from '../lib/compliance';
 import { ComplianceBadge, ComplianceDot } from '../components/ComplianceBadge';
 import { useCurrencyRules, getCurrencyStatus, CURRENCY_STATUS_CONFIG } from '../lib/currency';
+import { useEncadrement, verifierSeance } from '../lib/encadrement';
 import { MeteoAltitudeDZ } from '../components/MeteoAltitudeCard';
 import { BriefingRecapDZ } from './centre/BriefingRecap';
 
@@ -204,6 +205,123 @@ function AvatarCircle({
   return (
     <div className={`${sizeClass} rounded-full flex items-center justify-center font-bold flex-shrink-0`} style={{ background: bg, color: 'var(--c-text)' }}>
       {initials(nom, prenom)}
+    </div>
+  );
+}
+
+// ─── SousOnglets : barre horizontale scrollable sous un menu parent ────────────
+
+function SousOnglets<T extends string>({ tabs, active, onChange }: {
+  tabs: { key: T; label: string }[];
+  active: T;
+  onChange: (k: T) => void;
+}) {
+  return (
+    <div className="flex gap-1 mb-5 overflow-x-auto pb-1" style={{ borderBottom: '1px solid var(--c-border)' }}>
+      {tabs.map(t => (
+        <button
+          key={t.key}
+          onClick={() => onChange(t.key)}
+          className="px-4 text-sm font-semibold whitespace-nowrap transition rounded-t-lg"
+          style={{
+            minHeight: 44,
+            background: active === t.key ? 'var(--c-surface)' : 'transparent',
+            color: active === t.key ? 'white' : 'var(--c-muted)',
+            borderBottom: active === t.key ? '2px solid #2563EB' : '2px solid transparent',
+          }}
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─── Placeholder « à venir » pour une sous-partie pas encore construite ────────
+
+// (exporté : prêt à accueillir les sous-parties des modules à venir)
+export function SousPartieAVenir({ icone, titre, detail }: { icone: React.ReactNode; titre: string; detail: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 px-6 text-center rounded-2xl"
+      style={{ background: 'var(--c-surface)', border: '1px dashed var(--c-border-f)' }}>
+      <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4" style={{ background: 'rgba(37,99,235,0.12)' }}>
+        {icone}
+      </div>
+      <p className="font-bold text-white">{titre}</p>
+      <p className="text-sm mt-1 max-w-sm" style={{ color: 'var(--c-dim)' }}>{detail}</p>
+      <span className="mt-4 text-[11px] px-3 py-1 rounded-full font-semibold"
+        style={{ background: 'rgba(245,158,11,0.12)', color: '#FCD34D', border: '1px solid rgba(245,158,11,0.3)' }}>
+        À venir
+      </span>
+    </div>
+  );
+}
+
+// ─── Récap « En cours » du dashboard : lecture seule, renvoie aux sous-onglets ─
+
+function RecapEnCoursDZ({ centreId, onGo }: {
+  centreId: string;
+  onGo: (section: string, tab?: string) => void;
+}) {
+  const enc = useEncadrement(centreId);
+  const [relancesDues, setRelancesDues] = useState<number | null>(null);
+
+  useEffect(() => {
+    // léger : une seule RPC, la même que l'écran Relances
+    supabase.rpc('relances_apercu', { p_centre_id: centreId }).then(({ data, error }) => {
+      if (error) { console.error('Aperçu relances échoué :', error); setRelancesDues(null); return; }
+      const rows = (data as { deja_envoye: boolean }[] | null) ?? [];
+      setRelancesDues(rows.filter(r => !r.deja_envoye).length);
+    });
+  }, [centreId]);
+
+  // état global encadrement à partir des données déjà chargées par le hook
+  let manque = 0;
+  for (const s of enc.seances) {
+    manque += verifierSeance(s, enc.regles, enc.presents).filter(e => !e.satisfaite && !e.regle.a_verifier).length;
+  }
+
+  const tuile = 'rounded-xl p-4 text-left w-full transition hover:opacity-90';
+  const tuileStyle = { background: 'var(--c-surface)', border: '1px solid var(--c-border)' } as const;
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+      {/* Équipe présente — l'info du matin */}
+      <button className={tuile} style={tuileStyle} onClick={() => onGo('dashboard')}>
+        <p className="text-[11px] font-bold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Présents aujourd'hui</p>
+        <p className="text-2xl font-extrabold text-white mt-1">{enc.presents.length}</p>
+        <p className="text-xs mt-1 truncate" style={{ color: 'var(--c-dim)' }}>
+          {enc.presents.length === 0
+            ? 'Personne ne s\'est encore déclaré.'
+            : enc.presents.slice(0, 4).map(p => p.prenom).join(', ') + (enc.presents.length > 4 ? ` +${enc.presents.length - 4}` : '')}
+        </p>
+      </button>
+
+      {/* Encadrement — renvoie vers Mon équipe > Encadrement du jour */}
+      <button className={tuile} style={tuileStyle} onClick={() => onGo('equipe', 'encadrement')}>
+        <p className="text-[11px] font-bold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Encadrement</p>
+        <p className="text-2xl font-extrabold mt-1" style={{ color: enc.seances.length === 0 ? 'white' : manque === 0 ? '#34D399' : '#FBBF24' }}>
+          {enc.seances.length === 0 ? '—' : manque === 0 ? '✓' : manque}
+        </p>
+        <p className="text-xs mt-1" style={{ color: 'var(--c-dim)' }}>
+          {enc.seances.length === 0
+            ? 'Aucune séance ouverte.'
+            : manque === 0
+              ? `${enc.seances.length} séance${enc.seances.length > 1 ? 's' : ''} — encadrement réglementaire`
+              : `${manque} exigence${manque > 1 ? 's' : ''} non couverte${manque > 1 ? 's' : ''}`}
+        </p>
+      </button>
+
+      {/* Relances — renvoie vers Messages > Relances documents (masqué si module absent) */}
+      {relancesDues !== null && (
+        <button className={tuile} style={tuileStyle} onClick={() => onGo('messages', 'relances')}>
+          <p className="text-[11px] font-bold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Échéances à relancer</p>
+          <p className="text-2xl font-extrabold mt-1" style={{ color: relancesDues === 0 ? '#34D399' : '#FBBF24' }}>{relancesDues}</p>
+          <p className="text-xs mt-1" style={{ color: 'var(--c-dim)' }}>
+            {relancesDues === 0 ? 'Documents à jour selon les paliers.' : 'Licences / certificats arrivant à échéance.'}
+          </p>
+        </button>
+      )}
     </div>
   );
 }
@@ -3392,6 +3510,9 @@ export function CentreDashboardPage() {
   const [centreId, setCentreId] = useState<string | undefined>(undefined);
   const [stats, setStats] = useState<DashStats>({ totalLicencies: 0, demandesAttente: 0, sautsAujourdhui: 0, alertes: 0 });
   const [activeSection, setActiveSection] = useState<string>('dashboard');
+  // Sous-onglets : Messages = la communication, Mon équipe = les gens et leur encadrement
+  const [messagesTab, setMessagesTab] = useState<'conversations' | 'relances'>('conversations');
+  const [equipeTab, setEquipeTab] = useState<'encadrement' | 'moniteurs' | 'staff'>('encadrement');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notifCount, setNotifCount] = useState(0);
@@ -3508,13 +3629,11 @@ export function CentreDashboardPage() {
     { key: 'sauts', label: 'Activité des sauts', icon: Activity },
     { key: 'briefing', label: 'Briefing du jour', icon: Megaphone },
     { key: 'brevets', label: 'Progression brevets', icon: GraduationCap },
-    { key: 'encadrement', label: 'Encadrement du jour', icon: Shield },
     { key: 'planning', label: 'Planning DZ', icon: Calendar },
     { key: 'stats', label: 'Statistiques', icon: BarChart2 },
     { key: 'equipe', label: 'Mon équipe', icon: Shield },
     { key: 'centre', label: 'Mon centre', icon: Settings },
     { key: 'messages', label: 'Messages', icon: MessageSquare, badge: msgUnread },
-    { key: 'relances', label: 'Relances documents', icon: MessageSquare },
     { key: 'validations', label: 'Validations carnet', icon: BookCheck, badge: carnetsEnAttente > 0 ? carnetsEnAttente : undefined },
     ...(activeModules.has('pliage') ? [{ key: 'pliage', label: 'Gestion pliage', icon: Shield }] : []),
     ...(activeModules.has('finances') ? [{ key: 'finances', label: 'Finances', icon: Euro }] : []),
@@ -3714,6 +3833,17 @@ export function CentreDashboardPage() {
               {centreId && (
                 <BriefingRecapDZ centreId={centreId} onOuvrir={() => setActiveSection('briefing')} />
               )}
+              {/* En cours : présents / encadrement / relances — lecture seule, renvoie aux sous-onglets */}
+              {centreId && (
+                <RecapEnCoursDZ
+                  centreId={centreId}
+                  onGo={(section, tab) => {
+                    if (section === 'equipe' && tab) setEquipeTab(tab as 'encadrement' | 'moniteurs' | 'staff');
+                    if (section === 'messages' && tab) setMessagesTab(tab as 'conversations' | 'relances');
+                    setActiveSection(section);
+                  }}
+                />
+              )}
               <DashboardHome
                 centre={centre}
                 stats={stats}
@@ -3745,8 +3875,22 @@ export function CentreDashboardPage() {
           {activeSection === 'stats' && (
             <StatsSection centreId={centreId} />
           )}
+          {/* Mon équipe = les gens et leur encadrement : sous-onglets */}
           {activeSection === 'equipe' && (
-            <EquipeSection centreId={centreId} dtId={profile?.id} />
+            <div>
+              <SousOnglets
+                tabs={[
+                  { key: 'encadrement' as const, label: 'Encadrement du jour' },
+                  { key: 'moniteurs' as const, label: 'Moniteurs & qualifications' },
+                  { key: 'staff' as const, label: 'Staff du centre' },
+                ]}
+                active={equipeTab}
+                onChange={setEquipeTab}
+              />
+              {equipeTab === 'encadrement' && centreId && <EncadrementSection centreId={centreId} vue="jour" />}
+              {equipeTab === 'moniteurs' && centreId && <EncadrementSection centreId={centreId} vue="annuaire" />}
+              {equipeTab === 'staff' && <EquipeSection centreId={centreId} dtId={profile?.id} />}
+            </div>
           )}
           {activeSection === 'centre' && (
             <MonCentreSection centre={centre} onSaved={fetchCentreData} />
@@ -3760,17 +3904,23 @@ export function CentreDashboardPage() {
           {activeSection === 'brevets' && centreId && (
             <BrevetsSection centreId={centreId} />
           )}
-          {activeSection === 'encadrement' && centreId && (
-            <EncadrementSection centreId={centreId} />
-          )}
           {activeSection === 'planning' && centreId && (
             <PlanningCentre centreId={centreId} />
           )}
+          {/* Messages = la communication : sous-onglets */}
           {activeSection === 'messages' && profile && (
-            <MessagesSection currentUserId={profile.id} />
-          )}
-          {activeSection === 'relances' && centreId && (
-            <RelancesSection centreId={centreId} />
+            <div>
+              <SousOnglets
+                tabs={[
+                  { key: 'conversations' as const, label: 'Conversations' },
+                  { key: 'relances' as const, label: 'Relances documents' },
+                ]}
+                active={messagesTab}
+                onChange={setMessagesTab}
+              />
+              {messagesTab === 'conversations' && <MessagesSection currentUserId={profile.id} />}
+              {messagesTab === 'relances' && centreId && <RelancesSection centreId={centreId} />}
+            </div>
           )}
           {activeSection === 'validations' && centreId && (
             <ValidationsCarnet dzId={centreId} />

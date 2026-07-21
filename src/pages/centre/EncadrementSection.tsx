@@ -16,11 +16,13 @@ const inputStyle: React.CSSProperties = {
 /** « Encadrement du jour » : ai-je le droit d'ouvrir mes séances avec les gens
  *  présents ? L'outil signale (réglementaire / il manque X), le DT décide —
  *  aucune séance n'est verrouillée. Source des règles : Manuel FFP 2026 p.26-27. */
-export function EncadrementSection({ centreId }: { centreId: string }) {
+export function EncadrementSection({ centreId, vue }: { centreId: string; vue?: 'jour' | 'annuaire' }) {
   const { profile } = useAuth();
   const enc = useEncadrement(centreId);
   const { rules } = useComplianceRules();
-  const [onglet, setOnglet] = useState<'jour' | 'annuaire'>('jour');
+  // `vue` fourni = sous-onglets gérés par le parent (Mon équipe) : vue forcée, barre interne masquée
+  const [ongletLocal, setOngletLocal] = useState<'jour' | 'annuaire'>('jour');
+  const onglet = vue ?? ongletLocal;
 
   if (enc.loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>;
 
@@ -32,9 +34,11 @@ export function EncadrementSection({ centreId }: { centreId: string }) {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <ShieldCheck className="w-6 h-6" style={{ color: '#F97316' }} /> Encadrement du jour
-        </h1>
+        {!vue && (
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <ShieldCheck className="w-6 h-6" style={{ color: '#F97316' }} /> Encadrement du jour
+          </h1>
+        )}
         <p className="text-xs mt-1" style={{ color: 'var(--c-dim)' }}>
           Présents × qualifications × règles FFP (Manuel 2026 p.26-27, paramétrables). L'outil signale, il n'interdit rien — vous restez seul décideur.
         </p>
@@ -66,15 +70,17 @@ export function EncadrementSection({ centreId }: { centreId: string }) {
         </div>
       )}
 
-      <div className="flex rounded-xl overflow-hidden w-fit" style={{ border: '1px solid var(--c-border-f)' }}>
-        {([{ key: 'jour' as const, label: 'Séances du jour' }, { key: 'annuaire' as const, label: 'Annuaire moniteurs' }]).map(t => (
-          <button key={t.key} onClick={() => setOnglet(t.key)}
-            className="px-4 py-2.5 text-sm font-semibold transition"
-            style={{ background: onglet === t.key ? '#2563EB' : 'transparent', color: onglet === t.key ? 'white' : 'var(--c-muted)' }}>
-            {t.label}
-          </button>
-        ))}
-      </div>
+      {!vue && (
+        <div className="flex rounded-xl overflow-hidden w-fit" style={{ border: '1px solid var(--c-border-f)' }}>
+          {([{ key: 'jour' as const, label: 'Séances du jour' }, { key: 'annuaire' as const, label: 'Annuaire moniteurs' }]).map(t => (
+            <button key={t.key} onClick={() => setOngletLocal(t.key)}
+              className="px-4 py-2.5 text-sm font-semibold transition"
+              style={{ background: onglet === t.key ? '#2563EB' : 'transparent', color: onglet === t.key ? 'white' : 'var(--c-muted)' }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {onglet === 'jour' && (
         <>
