@@ -451,7 +451,10 @@ export function DashboardPage() {
   const sortedSauts = [...sauts].sort((a, b) => {
     const dir = sortDir === 'asc' ? 1 : -1;
     if (sortField === 'hauteur_m') return (a.hauteur_m - b.hauteur_m) * dir;
-    return (a[sortField] ?? '').localeCompare(b[sortField] ?? '') * dir;
+    const cmp = (a[sortField] ?? '').localeCompare(b[sortField] ?? '') * dir;
+    // tri par date : les sauts du même jour restent dans l'ordre du carnet
+    if (cmp === 0 && sortField === 'date_saut') return ((a.created_at ?? '').localeCompare(b.created_at ?? '')) * dir;
+    return cmp;
   });
 
   // Numérotation séquentielle uniquement sur les vrais sauts (pas soufflerie)
@@ -459,7 +462,8 @@ export function DashboardPage() {
   const sautNumeroMap = (() => {
     const byDateAsc = [...sauts]
       .filter((s) => !s.is_tunnel && s.statut !== 'declaration_honneur')
-      .sort((a, b) => a.date_saut.localeCompare(b.date_saut));
+      // même jour → départage par heure de saisie, sinon numérotation instable
+      .sort((a, b) => a.date_saut.localeCompare(b.date_saut) || (a.created_at ?? '').localeCompare(b.created_at ?? ''));
     const map: Record<string, number> = {};
     byDateAsc.forEach((s, i) => { map[s.id] = i + 1; });
     return map;
