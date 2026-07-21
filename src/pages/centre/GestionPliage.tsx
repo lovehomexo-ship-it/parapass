@@ -489,7 +489,7 @@ function OngletPliageDuJour({ centreId }: { centreId: string }) {
       setLoading(false);
     });
   };
-  useEffect(load, [centreId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(load, [centreId]);
 
   /** Marquer payé (comptoir) — écriture vérifiée, jamais de succès silencieux. */
   const marquerPaye = async (id: string) => {

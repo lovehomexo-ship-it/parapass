@@ -301,7 +301,6 @@ export function DashboardPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [activeTab, setActiveTab] = useState<DashTab>('accueil');
   const [selectedSaut, setSelectedSaut] = useState<Saut | null>(null);
-  const [centreNom, setCentreNom] = useState<string | null>(null);
   const [centrePlan, setCentrePlan] = useState<string | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -391,7 +390,6 @@ export function DashboardPage() {
     if (!centresLicencies.length) return;
     const first = centresLicencies[0];
     const centre = (first as unknown as { centre?: { nom?: string; latitude?: number; longitude?: number; plan?: string } }).centre;
-    if (centre?.nom) setCentreNom(centre.nom);
     if (centre?.plan) setCentrePlan(centre.plan);
     // Météo : gérée par l'unique MeteoAltitudeCard (cache partagé dz_meteo_cache)
   }, [centresLicencies]);

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { CentreDemoProvider, useCentreDemo, DemoBanner, useGlobalDemo } from '../../lib/DemoContext';
 import {
   Home, Users, ClipboardList, Activity, BarChart2, Calendar,
-  Settings, MessageSquare, Bell, ChevronRight, X, Zap,
+  Settings, MessageSquare, Bell, X, Zap,
   AlertTriangle, CheckCircle, Clock, ShieldCheck, ChevronLeft,
   Menu,
 } from 'lucide-react';

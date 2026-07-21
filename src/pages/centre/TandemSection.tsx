@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Plus, X, Check, Cloud, Users, ChevronLeft, ChevronRight, Download, Settings } from 'lucide-react';
+import { Plus, X, Check, Cloud, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -132,7 +132,7 @@ function KpiCard({ label, val, color }: { label: string; val: string | number; c
 
 // ─── Onglet Planning ──────────────────────────────────────────────────────────
 
-function OngletPlanning({ centreId, centreSlug, config, licencies }: { centreId: string; centreSlug: string; config: TandemConfig; licencies: Licencie[] }) {
+function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string; centreSlug: string; config?: TandemConfig; licencies: Licencie[] }) {
   const [slots, setSlots] = useState<Slot[]>([]);
   const [selectedDate, setSelectedDate] = useState(isoDate(new Date()));
   const [loading, setLoading] = useState(true);

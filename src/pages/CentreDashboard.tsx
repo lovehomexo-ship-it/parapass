@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { MODULES, computeActiveModules } from '../data/modules';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useTheme } from '../lib/ThemeContext';
 import { supabase } from '../lib/supabase';
@@ -39,7 +39,7 @@ import {
   Home, Users, ClipboardList, Activity, BarChart2, Calendar, Megaphone,
   Settings, Shield, MessageSquare, Bell, LogOut, Menu, X,
   AlertTriangle, CheckCircle, Clock, ChevronRight, Plus,
-  Search, Filter, Eye, Trash2, UserCheck, UserX, Mail,
+  Search, Filter, Eye, Trash2, UserCheck, UserX,
   Download, Upload, Hash, TrendingUp, MapPin, Send, Zap, Key, Check, Sun, Moon,
   GraduationCap, MoreVertical, UserMinus, Euro, BookCheck, Puzzle,
 } from 'lucide-react';

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import {
-  TrendingUp, Clock, CheckCircle, Plus, Pencil, Trash2, Download, X, Save,
+  TrendingUp, Plus, Pencil, Trash2, Download, X, Save,
   Users, Bell, History, Tag,
 } from 'lucide-react';
 
