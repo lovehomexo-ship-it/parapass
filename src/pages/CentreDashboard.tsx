@@ -49,6 +49,7 @@ import { GestionPliage } from './centre/GestionPliage';
 import { FinancesSection } from './centre/FinancesSection';
 import { ValidationsCarnet } from './centre/ValidationsCarnet';
 import { RelancesSection } from './centre/RelancesSection';
+import { AcademyScoresDZ, DocumentsFFPDZ } from './centre/AcademySection';
 import { ModulesSection } from './centre/ModulesSection';
 import { TandemSection } from './centre/TandemSection';
 
@@ -3513,6 +3514,7 @@ export function CentreDashboardPage() {
   // Sous-onglets : Messages = la communication, Mon équipe = les gens et leur encadrement
   const [messagesTab, setMessagesTab] = useState<'conversations' | 'relances'>('conversations');
   const [equipeTab, setEquipeTab] = useState<'encadrement' | 'moniteurs' | 'staff'>('encadrement');
+  const [academyTab, setAcademyTab] = useState<'quiz' | 'brevets' | 'documents'>('quiz');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notifCount, setNotifCount] = useState(0);
@@ -3628,7 +3630,7 @@ export function CentreDashboardPage() {
     { key: 'demandes', label: "Demandes d'adhésion", icon: ClipboardList, badge: stats.demandesAttente },
     { key: 'sauts', label: 'Activité des sauts', icon: Activity },
     { key: 'briefing', label: 'Briefing du jour', icon: Megaphone },
-    { key: 'brevets', label: 'Progression brevets', icon: GraduationCap },
+    ...(activeModules.has('academy') ? [{ key: 'academy', label: 'Academy', icon: GraduationCap }] : []),
     { key: 'planning', label: 'Planning DZ', icon: Calendar },
     { key: 'stats', label: 'Statistiques', icon: BarChart2 },
     { key: 'equipe', label: 'Mon équipe', icon: Shield },
@@ -3901,8 +3903,22 @@ export function CentreDashboardPage() {
           {activeSection === 'briefing' && centreId && (
             <BriefingSection centreId={centreId} />
           )}
-          {activeSection === 'brevets' && centreId && (
-            <BrevetsSection centreId={centreId} />
+          {/* Academy = la formation : quiz sécurité, progression brevets, documents FFP */}
+          {activeSection === 'academy' && centreId && activeModules.has('academy') && (
+            <div>
+              <SousOnglets
+                tabs={[
+                  { key: 'quiz' as const, label: 'Académie (quiz sécurité)' },
+                  { key: 'brevets' as const, label: 'Progression des brevets' },
+                  { key: 'documents' as const, label: 'Documents officiels FFP' },
+                ]}
+                active={academyTab}
+                onChange={setAcademyTab}
+              />
+              {academyTab === 'quiz' && <AcademyScoresDZ centreId={centreId} />}
+              {academyTab === 'brevets' && <BrevetsSection centreId={centreId} />}
+              {academyTab === 'documents' && <DocumentsFFPDZ centreId={centreId} dtId={profile?.id} />}
+            </div>
           )}
           {activeSection === 'planning' && centreId && (
             <PlanningCentre centreId={centreId} />

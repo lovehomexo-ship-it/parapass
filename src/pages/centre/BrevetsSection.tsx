@@ -110,6 +110,9 @@ export function BrevetsSection({ centreId }: { centreId: string }) {
 
       {/* ── Avancement des élèves + délivrance ── */}
       {onglet === 'eleves' && (
+        <MettreEnProgression centreId={centreId} referentiel={referentiel} />
+      )}
+      {onglet === 'eleves' && (
         <ElevesAvancement centreId={centreId} referentiel={referentiel}
           onDelivrer={async (userId, brevetId, numero) => {
             if (!profile) return;
@@ -121,6 +124,92 @@ export function BrevetsSection({ centreId }: { centreId: string }) {
 
       {/* ── Référentiel — c'est ici qu'entrera le contenu officiel FFP ── */}
       {onglet === 'referentiel' && <ReferentielEditor referentiel={referentiel} />}
+    </div>
+  );
+}
+
+// ─── Mettre un élève en progression : l'action de départ du parcours ──────────
+// Crée les lignes progression_epreuves (statut a_faire) depuis les épreuves du
+// brevet visé. Les lignes existantes ne sont jamais écrasées (parcours entamé).
+
+function MettreEnProgression({ centreId, referentiel }: {
+  centreId: string;
+  referentiel: ReturnType<typeof useReferentielBrevets>;
+}) {
+  const [membres, setMembres] = useState<{ id: string; nom: string }[]>([]);
+  const [selEleve, setSelEleve] = useState('');
+  const [selBrevet, setSelBrevet] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; texte: string } | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data: lics, error } = await supabase
+        .from('licencies_centres').select('parachutiste_id').eq('centre_id', centreId).eq('statut', 'actif');
+      if (error) { console.error('Chargement licenciés échoué :', error); return; }
+      const ids = (lics ?? []).map(l => l.parachutiste_id as string);
+      if (!ids.length) return;
+      const { data: profs, error: e2 } = await supabase.from('profiles').select('id, prenom, nom').in('id', ids);
+      if (e2) { console.error('Chargement profils échoué :', e2); return; }
+      setMembres(((profs ?? []).map(p => ({ id: p.id as string, nom: `${p.prenom ?? ''} ${p.nom ?? ''}`.trim() })))
+        .sort((a, b) => a.nom.localeCompare(b.nom)));
+    })();
+  }, [centreId]);
+
+  const lancer = async () => {
+    if (!selEleve || !selBrevet) return;
+    setSaving(true); setMsg(null);
+    const eps = referentiel.epreuvesDe(selBrevet);
+    if (eps.length === 0) {
+      setMsg({ ok: false, texte: 'Ce brevet n\'a aucune épreuve définie dans le référentiel.' });
+      setSaving(false);
+      return;
+    }
+    // upsert ignoreDuplicates : ne touche jamais un parcours déjà entamé
+    const { data, error } = await supabase
+      .from('progression_epreuves')
+      .upsert(
+        eps.map(e => ({ user_id: selEleve, epreuve_id: e.id, centre_id: centreId, statut: 'a_faire' })),
+        { onConflict: 'user_id,epreuve_id', ignoreDuplicates: true }
+      )
+      .select();
+    setSaving(false);
+    if (error) {
+      console.error('Mise en progression échouée :', error);
+      setMsg({ ok: false, texte: 'Mise en progression impossible. Réessayez.' });
+      return;
+    }
+    const creees = data?.length ?? 0;
+    const brevet = referentiel.brevets.find(b => b.id === selBrevet);
+    setMsg({
+      ok: true,
+      texte: creees > 0
+        ? `Parcours ${brevet?.code ?? ''} lancé : ${creees} épreuve${creees > 1 ? 's' : ''} ajoutée${creees > 1 ? 's' : ''}${creees < eps.length ? ` (${eps.length - creees} déjà en cours, conservées)` : ''}.`
+        : 'Cet élève est déjà en parcours sur toutes les épreuves de ce brevet — rien à créer.',
+    });
+  };
+
+  return (
+    <div className="rounded-xl p-4 space-y-3" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
+      <p className="text-sm font-semibold text-white">Mettre un élève en progression</p>
+      <div className="flex flex-wrap gap-2">
+        <select value={selEleve} onChange={e => setSelEleve(e.target.value)} style={{ ...inputStyle, width: 'auto', flex: 1, minWidth: 160, minHeight: 44 }}>
+          <option value="">Élève…</option>
+          {membres.map(m => <option key={m.id} value={m.id}>{m.nom}</option>)}
+        </select>
+        <select value={selBrevet} onChange={e => setSelBrevet(e.target.value)} style={{ ...inputStyle, width: 'auto', flex: 1, minWidth: 160, minHeight: 44 }}>
+          <option value="">Brevet visé…</option>
+          {referentiel.brevets.map(b => <option key={b.id} value={b.id}>{b.code} — {b.libelle}</option>)}
+        </select>
+        <button onClick={lancer} disabled={!selEleve || !selBrevet || saving}
+          className="flex items-center gap-1 text-xs font-bold px-4 rounded-lg text-white disabled:opacity-50"
+          style={{ background: '#F97316', minHeight: 44 }}>
+          <Plus className="w-3.5 h-3.5" /> {saving ? 'Création…' : 'Lancer le parcours'}
+        </button>
+      </div>
+      {msg && (
+        <p className="text-xs" style={{ color: msg.ok ? '#86EFAC' : '#FCA5A5' }}>{msg.texte}</p>
+      )}
     </div>
   );
 }

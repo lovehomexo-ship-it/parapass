@@ -41,7 +41,7 @@ begin
 
   -- ── Modules : tout actif, Studio démontrable ─────────────────────────────
   insert into centre_modules (centre_id, module_id, active)
-  select dz, m, true from unnest(array['pliage','finances','tandem','studio']) m
+  select dz, m, true from unnest(array['pliage','finances','tandem','academy','studio']) m
   on conflict (centre_id, module_id) do update set active = true;
 
   -- ── Licences & certificats : majoritairement à jour, 2 échéances proches ─

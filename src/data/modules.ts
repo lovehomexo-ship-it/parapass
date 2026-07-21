@@ -41,6 +41,14 @@ export const MODULES: Module[] = [
     prix: 19.99,
     icon: '👥',
   },
+  {
+    id: 'academy',
+    nom: 'Academy',
+    desc: 'Formation : quiz sécurité, progression des brevets, documents FFP.',
+    status: 'live',
+    prix: 29.99,
+    icon: '🎓',
+  },
   // ── PACK ──────────────────────────────────────────────────────────────────
   {
     id: 'studio',
