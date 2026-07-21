@@ -47,6 +47,7 @@ import { PlanningCentre } from './PlanningCentre';
 import { GestionPliage } from './centre/GestionPliage';
 import { FinancesSection } from './centre/FinancesSection';
 import { ValidationsCarnet } from './centre/ValidationsCarnet';
+import { RelancesSection } from './centre/RelancesSection';
 import { ModulesSection } from './centre/ModulesSection';
 import { TandemSection } from './centre/TandemSection';
 
@@ -3513,6 +3514,7 @@ export function CentreDashboardPage() {
     { key: 'equipe', label: 'Mon équipe', icon: Shield },
     { key: 'centre', label: 'Mon centre', icon: Settings },
     { key: 'messages', label: 'Messages', icon: MessageSquare, badge: msgUnread },
+    { key: 'relances', label: 'Relances documents', icon: MessageSquare },
     { key: 'validations', label: 'Validations carnet', icon: BookCheck, badge: carnetsEnAttente > 0 ? carnetsEnAttente : undefined },
     ...(activeModules.has('pliage') ? [{ key: 'pliage', label: 'Gestion pliage', icon: Shield }] : []),
     { key: 'finances', label: 'Finances', icon: Euro },
@@ -3766,6 +3768,9 @@ export function CentreDashboardPage() {
           )}
           {activeSection === 'messages' && profile && (
             <MessagesSection currentUserId={profile.id} />
+          )}
+          {activeSection === 'relances' && centreId && (
+            <RelancesSection centreId={centreId} />
           )}
           {activeSection === 'validations' && centreId && (
             <ValidationsCarnet dzId={centreId} />
