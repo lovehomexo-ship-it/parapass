@@ -290,27 +290,29 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
           )}
         </div>
 
-        {/* ── Row 4 : Assurances ── */}
+        {/* ── Row 4 : Assurances ── (une mention par ligne, pas de débordement) */}
         {licence && (
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
-            <span>Assurance indiv.&nbsp;</span>
-            <span style={{ color: licence.assurance_individuelle ? '#34D399' : '#F87171', fontWeight: 600 }}>
-              {licence.assurance_individuelle ? '✓ OUI' : '✗ NON'}
-            </span>
-            <span style={{ color: 'rgba(255,255,255,0.3)' }}>&nbsp;·&nbsp;</span>
-            <span>Resp. civile&nbsp;</span>
-            <span style={{ color: licence.assurance_rc ? '#34D399' : '#F87171', fontWeight: 600 }}>
-              {licence.assurance_rc ? '✓ OUI' : '✗ NON'}
-            </span>
+          <div className="flex flex-col gap-0.5" style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', lineHeight: 1.4 }}>
+            <div className="flex items-center justify-between gap-2">
+              <span>Assurance individuelle</span>
+              <span style={{ color: licence.assurance_individuelle ? '#34D399' : '#F87171', fontWeight: 600 }}>
+                {licence.assurance_individuelle ? 'Oui' : 'Non'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span>Responsabilité civile</span>
+              <span style={{ color: licence.assurance_rc ? '#34D399' : '#F87171', fontWeight: 600 }}>
+                {licence.assurance_rc ? 'Oui' : 'Non'}
+              </span>
+            </div>
             {licence.beneficiaire_nom && (
-              <>
-                <span style={{ color: 'rgba(255,255,255,0.3)' }}>&nbsp;·&nbsp;</span>
-                <span style={{ color: 'rgba(255,255,255,0.55)' }}>Bénéficiaire&nbsp;</span>
-                <span style={{ color: '#fff' }}>
+              <div className="flex items-start justify-between gap-2">
+                <span style={{ color: 'rgba(255,255,255,0.55)', flexShrink: 0 }}>Bénéficiaire en cas de décès</span>
+                <span style={{ color: '#fff', textAlign: 'right', wordBreak: 'break-word' }}>
                   {licence.beneficiaire_nom}
                   {licence.beneficiaire_lien ? ` (${licence.beneficiaire_lien === 'parent' ? 'Parent' : licence.beneficiaire_lien})` : ''}
                 </span>
-              </>
+              </div>
             )}
           </div>
         )}

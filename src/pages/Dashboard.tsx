@@ -629,35 +629,9 @@ export function DashboardPage() {
                 <BriefingDuJourBlock key={dz.id} dzId={dz.id} dzNom={dz.nom} userId={user?.id} />
               ))}
 
-              {/* 1 — Bandeau compact brevet + autorisation */}
-              {statutDocs && (() => {
-                const cfg = statutDocs === 'expire'
-                  ? { bg: 'rgba(239,68,68,0.12)', color: '#F87171', border: 'rgba(239,68,68,0.25)', label: '🔴 Documents à renouveler' }
-                  : statutDocs === 'expire_bientot'
-                  ? { bg: 'rgba(245,158,11,0.12)', color: '#FCD34D', border: 'rgba(245,158,11,0.25)', label: '⚠️ Documents expirent bientôt' }
-                  : { bg: 'rgba(16,185,129,0.12)', color: '#6EE7B7', border: 'rgba(16,185,129,0.25)', label: '✅ Documents à jour' };
-                return (
-                  <div
-                    className="mb-3 flex items-center justify-between gap-3 rounded-xl px-4"
-                    style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, minHeight: 44 }}
-                  >
-                    <span style={{ color: cfg.color, fontSize: 13, fontWeight: 600 }}>{cfg.label}</span>
-                    {topBrevet && (
-                      <span
-                        className="text-xs font-bold px-3 py-1 rounded-full flex-shrink-0"
-                        style={{ background: 'rgba(249,115,22,0.2)', color: '#F97316', border: '1px solid rgba(249,115,22,0.4)' }}
-                      >
-                        Brevet {topBrevet}
-                      </span>
-                    )}
-                  </div>
-                );
-              })()}
-
-              {/* Carte « Ma reprise » — récence du dernier saut selon les règles paramétrées */}
-              <div className="mb-3">
-                <MaRepriseCard userId={user?.id} niveau={topBrevet} />
-              </div>
+              {/* Note : le bandeau « Documents à jour / Brevet X » a été retiré —
+                  l'info figure sur la licence numérique (badge statut + brevet).
+                  « Ma reprise » est déplacée sous les cartes d'échéances ci-dessous. */}
 
               {/* 2 — Layout 2 colonnes desktop : carte (gauche) + tuiles+boutons (droite) */}
               <div className="flex flex-col lg:flex-row lg:items-start lg:gap-6 mb-6">
@@ -778,6 +752,13 @@ export function DashboardPage() {
 
                 </div>
               </div>{/* fin layout 2 colonnes */}
+
+              {/* Carte « Ma reprise » — récence du dernier saut selon les règles
+                  paramétrées. Placée SOUS les cartes d'échéances Licence FFP /
+                  Certificat médical, contenu et comportement inchangés. */}
+              <div className="mb-6">
+                <MaRepriseCard userId={user?.id} niveau={topBrevet} />
+              </div>
 
               <MonSacDuJour userId={user!.id} />
 
