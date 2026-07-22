@@ -11,9 +11,10 @@ import { ContactsUrgenceTab, InterdictionsTab } from './PasseportSecurite';
 import { IncidentsTab } from './PasseportIncidents';
 import { BrevetsModulesTab } from './PasseportBrevets';
 import { ProgressionBrevets } from '../components/ProgressionBrevets';
+import { CarnetPACEleve } from '../components/pac/CarnetPACEleve';
 import { PasseportCardView } from '../components/PasseportCardView';
 
-type PassportTab = 'carte' | 'licence' | 'medical' | 'brevets' | 'modules' | 'qualifications' | 'centres' | 'securite' | 'incidents';
+type PassportTab = 'carte' | 'licence' | 'medical' | 'pac' | 'brevets' | 'modules' | 'qualifications' | 'centres' | 'securite' | 'incidents';
 
 // ─── Form helpers ──────────────────────────────────────────────────────────────
 
@@ -44,6 +45,7 @@ export function PasseportPage() {
     { key: 'carte', label: 'Carte', icon: <User className="w-4 h-4" /> },
     { key: 'licence', label: 'Licence', icon: <FileText className="w-4 h-4" /> },
     { key: 'medical', label: 'Médical', icon: <Shield className="w-4 h-4" /> },
+    { key: 'pac', label: 'Carnet PAC', icon: <Award className="w-4 h-4" /> },
     { key: 'brevets', label: 'Brevets', icon: <Award className="w-4 h-4" /> },
     { key: 'modules', label: 'Modules', icon: <BookMarked className="w-4 h-4" /> },
     { key: 'qualifications', label: 'Qualif.', icon: <ChevronDown className="w-4 h-4" /> },
@@ -120,6 +122,12 @@ export function PasseportPage() {
         )}
 
         {/* Brevets */}
+        {tab === 'pac' && (
+          <div style={{ background: '#0B1D3A', borderRadius: 16, padding: 16 }}>
+            <CarnetPACEleve userId={user!.id} />
+          </div>
+        )}
+
         {tab === 'brevets' && (
           <>
             {/* Progression vers le prochain brevet : épreuves, conditions calculées,

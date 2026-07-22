@@ -52,6 +52,7 @@ import { FinancesSection } from './centre/FinancesSection';
 import { ValidationsCarnet } from './centre/ValidationsCarnet';
 import { RelancesSection } from './centre/RelancesSection';
 import { AcademyScoresDZ, DocumentsFFPDZ } from './centre/AcademySection';
+import { PacStaff } from '../components/pac/PacStaff';
 import { ModulesSection } from './centre/ModulesSection';
 import { TandemSection } from './centre/TandemSection';
 
@@ -2720,7 +2721,7 @@ export function CentreDashboardPage() {
   // Sous-onglets : Messages = la communication, Mon équipe = les gens et leur encadrement
   const [messagesTab, setMessagesTab] = useState<'conversations' | 'relances'>('conversations');
   const [equipeTab, setEquipeTab] = useState<'encadrement' | 'equipe'>('equipe');
-  const [academyTab, setAcademyTab] = useState<'quiz' | 'brevets' | 'documents'>('quiz');
+  const [academyTab, setAcademyTab] = useState<'quiz' | 'pac' | 'brevets' | 'documents'>('quiz');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notifCount, setNotifCount] = useState(0);
@@ -3114,6 +3115,7 @@ export function CentreDashboardPage() {
               <SousOnglets
                 tabs={[
                   { key: 'quiz' as const, label: 'Académie (quiz sécurité)' },
+                  { key: 'pac' as const, label: 'Carnet PAC' },
                   { key: 'brevets' as const, label: 'Progression des brevets' },
                   { key: 'documents' as const, label: 'Documents officiels FFP' },
                 ]}
@@ -3121,6 +3123,7 @@ export function CentreDashboardPage() {
                 onChange={setAcademyTab}
               />
               {academyTab === 'quiz' && <AcademyScoresDZ centreId={centreId} />}
+              {academyTab === 'pac' && <PacStaff centreId={centreId} />}
               {academyTab === 'brevets' && <BrevetsSection centreId={centreId} />}
               {academyTab === 'documents' && <DocumentsFFPDZ centreId={centreId} dtId={profile?.id} />}
             </div>
