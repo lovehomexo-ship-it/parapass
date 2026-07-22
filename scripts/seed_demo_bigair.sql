@@ -40,7 +40,7 @@ declare
   briefing uuid;
   claire constant uuid := 'd0d00001-0000-0000-0000-000000000003';   -- élève en progression Brevet A
   hugo   constant uuid := 'd0d00001-0000-0000-0000-000000000006';   -- élève déclaré prêt
-  brevet_a uuid; q record; i int;
+  brevet_a uuid; q record; i int; vig_mat uuid;
 begin
   -- présents : moniteurs de l'équipe (encadrement au vert) + élèves fictifs
   presents := array[thomas, kevin, marc, julien, camille, antoine, paul, lea,
@@ -97,6 +97,17 @@ begin
             case when i % 4 = 0 then 'LOC-0' || i end,
             'present', current_date + time '08:20' + (i * interval '6 minutes'));
   end loop;
+
+  -- ── Cas de démo « vigilance charge alaire » (côté DT) : Claire, débutante,
+  --    voile 150 ft² + poids 85 kg → charge ≈ 1,25 > repère 1,0 ─────────────
+  delete from materiels where parachutiste_id = claire and numero_serie = 'DEMO-VIG-001';
+  insert into materiels (parachutiste_id, type, marque, modele, numero_serie, statut, taille_voile_ft2)
+  values (claire, 'parachute_principal', 'Icarus', 'Safire 3', 'DEMO-VIG-001', 'actif', 150)
+  returning id into vig_mat;
+  insert into profils_prives (profile_id, poids_tout_equipe_kg) values (claire, 85)
+  on conflict (profile_id) do update set poids_tout_equipe_kg = 85;
+  update dz_presences set voile_perso_ref = vig_mat, voile_perso_libre = null
+  where dz_id = dz and date_presence = current_date and user_id = claire;
 
   -- ── Séances du jour : école & autonome au vert, tandem en manque ─────────
   delete from seances_jour where dz_id = dz and date_seance = current_date;

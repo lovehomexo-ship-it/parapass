@@ -33,6 +33,7 @@ function planLabel(plan: string | null | undefined): string {
   return '—';
 }
 import { PresencesDZ } from './centre/PresencesDZ';
+import { VigilanceVoileDZ } from '../components/VigilanceVoileDZ';
 import { BriefingSection } from './centre/BriefingSection';
 import { BrevetsSection } from './centre/BrevetsSection';
 import { EncadrementSection } from './centre/EncadrementSection';
@@ -331,7 +332,7 @@ function RecapEnCoursDZ({ centreId, onGo }: {
 // ─── DashboardHome ─────────────────────────────────────────────────────────────
 
 function DashboardHome({
-  centre, stats, onNavigate, carnetsEnAttente, presencesSlot,
+  centre, stats, onNavigate, carnetsEnAttente, presencesSlot, vigilanceSlot,
 }: {
   centre: Centre | null;
   stats: DashStats;
@@ -339,6 +340,7 @@ function DashboardHome({
   carnetsEnAttente: number;
   /** Bloc « Présents aujourd'hui », inséré juste sous les licences/documents expirés. */
   presencesSlot?: React.ReactNode;
+  vigilanceSlot?: React.ReactNode;
 }) {
   const [alerteExpires, setAlerteExpires] = useState(0);
   const [alerteMedical, setAlerteMedical] = useState(0);
@@ -518,6 +520,9 @@ function DashboardHome({
           )}
         </div>
       )}
+
+      {/* 3ter — Vigilance charge alaire (discret, DT uniquement) */}
+      {vigilanceSlot}
 
       {/* 3bis — Présents aujourd'hui, juste sous les licences/documents expirés */}
       {presencesSlot}
@@ -3053,6 +3058,7 @@ export function CentreDashboardPage() {
                 onNavigate={setActiveSection}
                 carnetsEnAttente={carnetsEnAttente}
                 presencesSlot={centreId ? <PresencesDZ dzId={centreId} /> : undefined}
+                vigilanceSlot={centreId ? <VigilanceVoileDZ centreId={centreId} /> : undefined}
               />
               {/* Vent en altitude — profil complet + projection journée (prévision indicative) */}
               {centreId && (
