@@ -85,6 +85,7 @@ export function ProfilPage() {
   const [signatureSaving, setSignatureSaving] = useState(false);
   const [signatureSaved, setSignatureSaved] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoConverting, setPhotoConverting] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [cropFile, setCropFile] = useState<File | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -246,18 +247,38 @@ export function ProfilPage() {
     setTimeout(() => setSavedPrivacy(false), 3000);
   };
 
-  // 1) Choix du fichier : valide le type, pré-décode (HEIC → message clair),
+  // 1) Choix du fichier : convertit le HEIC iPhone en JPEG, pré-décode,
   //    puis ouvre l'éditeur de recadrage. Rien n'est encore envoyé.
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!user || !e.target.files?.[0] || blockIfDemo()) return;
-    const file = e.target.files[0];
+    let file = e.target.files[0];
     e.target.value = ''; // permet de re-choisir le même fichier
     setPhotoError(null);
 
-    if (!file.type.startsWith('image/')) {
+    // HEIC/HEIF (photos iPhone) : détecté par MIME ou extension (le MIME est
+    // parfois vide selon le sélecteur). Détecté AVANT le garde image/* car un
+    // HEIC sans MIME ne passerait pas ce garde.
+    const nom = file.name.toLowerCase();
+    const estHeic = /image\/hei[cf]/.test(file.type) || /\.hei[cf]$/.test(nom);
+    if (estHeic) {
+      setPhotoConverting(true);
+      try {
+        const heic2any = (await import('heic2any')).default;
+        const out = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.9 });
+        const jpeg = Array.isArray(out) ? out[0] : out;
+        file = new File([jpeg], 'photo.jpg', { type: 'image/jpeg' });
+      } catch (err) {
+        console.error('Conversion HEIC échouée :', err);
+        setPhotoError("Ce format de photo n'est pas pris en charge. Essayez une autre photo.");
+        return;
+      } finally {
+        setPhotoConverting(false);
+      }
+    } else if (!file.type.startsWith('image/')) {
       setPhotoError('Fichier non supporté. Choisissez une image (JPG, PNG, WEBP…).');
       return;
     }
+
     // Vérifie que le navigateur sait décoder l'image avant d'ouvrir l'éditeur
     const decodable = await new Promise<boolean>((resolve) => {
       const img = new Image();
@@ -267,7 +288,7 @@ export function ProfilPage() {
       img.src = url;
     });
     if (!decodable) {
-      setPhotoError("Ce format d'image n'a pas pu être lu (HEIC non pris en charge ici). Exportez-la en JPG ou PNG, puis réessayez.");
+      setPhotoError("Ce format de photo n'est pas pris en charge. Essayez une autre photo.");
       return;
     }
     setCropFile(file);
@@ -440,19 +461,22 @@ export function ProfilPage() {
                 ) : (
                   <span className="text-xs text-gray-400 text-center px-1">Photo d'identité</span>
                 )}
-                <label className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition cursor-pointer rounded-lg">
-                  {photoUploading ? (
+                <label className={`absolute inset-0 flex items-center justify-center bg-black/40 transition cursor-pointer rounded-lg ${photoConverting || photoUploading ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                  {photoConverting || photoUploading ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <Camera className="w-6 h-6 text-white" />
                   )}
-                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoSelect} disabled={photoUploading} />
+                  <input type="file" accept="image/*,.heic,.heif" className="hidden" onChange={handlePhotoSelect} disabled={photoConverting || photoUploading} />
                 </label>
               </div>
               <label className="mt-2 flex items-center gap-1 text-xs text-blue-600 cursor-pointer hover:underline">
                 <Upload className="w-3 h-3" /> Modifier
-                <input type="file" accept="image/*" className="hidden" onChange={handlePhotoSelect} disabled={photoUploading} />
+                <input type="file" accept="image/*,.heic,.heif" className="hidden" onChange={handlePhotoSelect} disabled={photoConverting || photoUploading} />
               </label>
+              {photoConverting && (
+                <p className="mt-1 text-[11px] text-blue-600 max-w-[6rem] leading-tight">Conversion de la photo…</p>
+              )}
               {photoError && (
                 <p className="mt-1 text-[11px] text-red-600 max-w-[6rem] leading-tight">{photoError}</p>
               )}
