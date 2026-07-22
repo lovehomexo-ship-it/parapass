@@ -4,6 +4,7 @@ import { useDemo } from '../lib/useDemo';
 import { supabase } from '../lib/supabase';
 import { Layout } from '../components/Layout';
 import { Check, Upload, Globe, Users, Lock, Eye, Building2, Key, CheckCircle, AlertTriangle, Camera, PenLine, Trash2 } from 'lucide-react';
+import { PhotoCropModal } from '../components/PhotoCropModal';
 
 const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#001A4D]/20 focus:border-[#001A4D]';
 const selectCls = inputCls;
@@ -85,6 +86,7 @@ export function ProfilPage() {
   const [signatureSaved, setSignatureSaved] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const [cropFile, setCropFile] = useState<File | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawingRef = useRef(false);
 
@@ -244,35 +246,44 @@ export function ProfilPage() {
     setTimeout(() => setSavedPrivacy(false), 3000);
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 1) Choix du fichier : valide le type, pré-décode (HEIC → message clair),
+  //    puis ouvre l'éditeur de recadrage. Rien n'est encore envoyé.
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!user || !e.target.files?.[0] || blockIfDemo()) return;
     const file = e.target.files[0];
-    // reset input pour permettre de re-choisir le même fichier après une erreur
-    e.target.value = '';
+    e.target.value = ''; // permet de re-choisir le même fichier
     setPhotoError(null);
 
     if (!file.type.startsWith('image/')) {
       setPhotoError('Fichier non supporté. Choisissez une image (JPG, PNG, WEBP…).');
       return;
     }
+    // Vérifie que le navigateur sait décoder l'image avant d'ouvrir l'éditeur
+    const decodable = await new Promise<boolean>((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => { URL.revokeObjectURL(url); resolve(true); };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(false); };
+      img.src = url;
+    });
+    if (!decodable) {
+      setPhotoError("Ce format d'image n'a pas pu être lu (HEIC non pris en charge ici). Exportez-la en JPG ou PNG, puis réessayez.");
+      return;
+    }
+    setCropFile(file);
+  };
 
+  // 2) Validation de l'éditeur : envoie l'image RECADRÉE (blob canvas), enregistre l'URL.
+  const uploadCroppedPhoto = async (cropped: Blob) => {
+    if (!user) return;
     setPhotoUploading(true);
+    setPhotoError(null);
     try {
-      // Redimensionne + recompresse en JPEG (le canvas ne décode pas le HEIC hors Safari
-      // → resizeImageSquare rejette et on affiche un message clair)
-      let resized: Blob;
-      try {
-        resized = await resizeImageSquare(file, 512);
-      } catch {
-        setPhotoError("Ce format d'image n'a pas pu être lu (HEIC non pris en charge ici). Exportez-la en JPG ou PNG, puis réessayez.");
-        return;
-      }
-
       // Source de vérité unique = avatar_url. Chemin borné au dossier de l'utilisateur.
       const fileName = `${user.id}/avatar.jpg`;
       const { error: upErr } = await supabase.storage
         .from('profile-photos')
-        .upload(fileName, resized, { upsert: true, contentType: 'image/jpeg' });
+        .upload(fileName, cropped, { upsert: true, contentType: 'image/jpeg' });
       if (upErr) {
         console.error('Upload photo échoué :', upErr);
         setPhotoError("L'envoi de la photo a échoué. Vérifiez votre connexion et réessayez.");
@@ -296,29 +307,11 @@ export function ProfilPage() {
       // mise à jour immédiate : formulaire local + profil global (avatar, licence)
       set({ photo_identite_url: bust });
       await refreshProfile();
+      setCropFile(null); // ferme l'éditeur seulement en cas de succès
     } finally {
       setPhotoUploading(false);
     }
   };
-
-  function resizeImageSquare(file: File, size: number): Promise<Blob> {
-    return new Promise((resolve, reject) => {
-      const canvas = document.createElement('canvas');
-      canvas.width = size; canvas.height = size;
-      const ctx = canvas.getContext('2d')!;
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.onload = () => {
-        const s = Math.min(img.width, img.height);
-        const x = (img.width - s) / 2;
-        const y = (img.height - s) / 2;
-        ctx.drawImage(img, x, y, s, s, 0, 0, size, size);
-        canvas.toBlob((b) => { URL.revokeObjectURL(url); b ? resolve(b) : reject(new Error('encode')); }, 'image/jpeg', 0.85);
-      };
-      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('decode')); };
-      img.src = url;
-    });
-  }
 
   const saveSignature = useCallback(async () => {
     if (!user || !canvasRef.current || blockIfDemo()) return;
@@ -453,12 +446,12 @@ export function ProfilPage() {
                   ) : (
                     <Camera className="w-6 h-6 text-white" />
                   )}
-                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={photoUploading} />
+                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoSelect} disabled={photoUploading} />
                 </label>
               </div>
               <label className="mt-2 flex items-center gap-1 text-xs text-blue-600 cursor-pointer hover:underline">
                 <Upload className="w-3 h-3" /> Modifier
-                <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={photoUploading} />
+                <input type="file" accept="image/*" className="hidden" onChange={handlePhotoSelect} disabled={photoUploading} />
               </label>
               {photoError && (
                 <p className="mt-1 text-[11px] text-red-600 max-w-[6rem] leading-tight">{photoError}</p>
@@ -782,6 +775,16 @@ export function ProfilPage() {
           )}
         </div>
       </div>
+
+      {/* Éditeur de recadrage — entre le choix de la photo et l'enregistrement */}
+      {cropFile && (
+        <PhotoCropModal
+          file={cropFile}
+          saving={photoUploading}
+          onCancel={() => { if (!photoUploading) setCropFile(null); }}
+          onValidate={uploadCroppedPhoto}
+        />
+      )}
     </Layout>
   );
 }
