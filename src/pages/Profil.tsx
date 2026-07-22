@@ -307,7 +307,19 @@ export function ProfilPage() {
         .upload(fileName, cropped, { upsert: true, contentType: 'image/jpeg' });
       if (upErr) {
         console.error('Upload photo échoué :', upErr);
-        setPhotoError("L'envoi de la photo a échoué. Vérifiez votre connexion et réessayez.");
+        // messages distincts selon la vraie cause (jamais « connexion » en fourre-tout)
+        const detail = upErr as { message?: string; statusCode?: string | number };
+        const code = String(detail.statusCode ?? '');
+        const msg = (detail.message ?? '').toLowerCase();
+        if (code === '403' || msg.includes('row-level') || msg.includes('security') || msg.includes('unauthorized')) {
+          setPhotoError("Vous n'êtes pas autorisé à enregistrer cette photo. Reconnectez-vous et réessayez.");
+        } else if (code === '413' || msg.includes('exceeded') || msg.includes('too large')) {
+          setPhotoError('La photo est trop lourde. Essayez une autre photo.');
+        } else if (code === '415' || code === '400' || msg.includes('mime') || msg.includes('content type')) {
+          setPhotoError("Ce format de photo n'est pas pris en charge. Essayez une autre photo.");
+        } else {
+          setPhotoError("L'envoi a échoué. Vérifiez votre connexion et réessayez.");
+        }
         return;
       }
 
