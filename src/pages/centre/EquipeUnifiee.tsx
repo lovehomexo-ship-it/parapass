@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useComplianceRules } from '../../lib/compliance';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
@@ -10,10 +10,15 @@ import { Shield, Package, CheckSquare, Plus, X, AlertTriangle } from 'lucide-rea
 // (plieurs_valides). Réorganisation d'affichage : aucune donnée supprimée.
 
 interface Qualif { id: string; qualification_code: string; numero: string | null; date_obtention: string | null; date_expiration: string | null; actif: boolean; }
-interface Delegation { id: string; date_delegation: string | null; date_expiration: string | null; actif: boolean; }
+interface Delegation { id: string; moniteur_id: string; date_delegation: string | null; date_expiration: string | null; actif: boolean; }
 interface Plieur { id: string; numero_qualif: string | null; date_habilitation: string | null; date_expiration: string | null; actif: boolean; }
 interface Profil { id: string; nom: string; prenom: string; avatar_url: string | null; numero_licence: string | null; role: string | null; }
-interface Membre extends Profil { qualifs: Qualif[]; delegation: Delegation | null; plieur: Plieur | null; }
+// Une carte = une PERSONNE (regroupée par nom). `ids` = tous les comptes homonymes
+// réunis ; les actions ciblent l'id exact porté par chaque qualif/délégation.
+interface Membre extends Profil {
+  ids: string[]; nbComptes: number; licencesAutres: string[];
+  qualifs: Qualif[]; delegations: Delegation[]; plieur: Plieur | null;
+}
 
 type Etat = 'valide' | 'bientot' | 'expire' | 'permanent' | 'inactif';
 
@@ -97,31 +102,46 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
       profils = Object.fromEntries((pr ?? []).map(x => [x.id as string, x as Profil]));
     }
 
-    // dropdown « ajouter » = membres actifs du centre
-    setMembresCentre(licIds.map(id => ({ id, nom: `${profils[id]?.prenom ?? ''} ${profils[id]?.nom ?? ''}`.trim() || '—' })).sort((a, b) => a.nom.localeCompare(b.nom)));
+    // dropdown « ajouter » = membres actifs, dédupliqués par NOM (un choix par personne)
+    const dropdownParNom = new Map<string, { id: string; nom: string }>();
+    for (const id of licIds) {
+      const nom = `${profils[id]?.prenom ?? ''} ${profils[id]?.nom ?? ''}`.trim() || '—';
+      const cle = nom.toLowerCase();
+      // privilégie le compte à licence FFP réelle comme cible d'ajout
+      const prio = (profils[id]?.numero_licence ?? '').toUpperCase().startsWith('FFP');
+      if (!dropdownParNom.has(cle) || prio) dropdownParNom.set(cle, { id, nom });
+    }
+    setMembresCentre([...dropdownParNom.values()].sort((a, b) => a.nom.localeCompare(b.nom)));
 
-    // une carte par personne ayant une casquette
-    const cartes: Membre[] = [...ids].map(id => ({
-      id,
-      nom: profils[id]?.nom ?? '?', prenom: profils[id]?.prenom ?? '',
-      avatar_url: profils[id]?.avatar_url ?? null, numero_licence: profils[id]?.numero_licence ?? null, role: profils[id]?.role ?? null,
-      qualifs: quals.filter(x => x.user_id === id).sort((a, b) => a.qualification_code.localeCompare(b.qualification_code)),
-      delegation: delegs.find(x => x.moniteur_id === id) ?? null,
-      plieur: plieurs.find(x => x.plieur_id === id) ?? null,
-    })).sort((a, b) => (a.nom + a.prenom).localeCompare(b.nom + b.prenom));
+    // ── UNE CARTE = UNE PERSONNE, regroupée par NOM (comptes homonymes réunis) ──
+    const parNom = new Map<string, string[]>();
+    for (const id of ids) {
+      const cle = `${profils[id]?.prenom ?? ''} ${profils[id]?.nom ?? ''}`.toLowerCase().trim() || id;
+      (parNom.get(cle) ?? parNom.set(cle, []).get(cle)!).push(id);
+    }
+    const cartes: Membre[] = [...parNom.values()].map(groupeIds => {
+      // compte représentatif : licence FFP réelle en priorité, sinon avatar, sinon 1er
+      const repId = groupeIds.find(i => (profils[i]?.numero_licence ?? '').toUpperCase().startsWith('FFP'))
+        ?? groupeIds.find(i => profils[i]?.avatar_url) ?? groupeIds[0];
+      const rep = profils[repId];
+      const licencesAutres = groupeIds.filter(i => i !== repId).map(i => profils[i]?.numero_licence).filter((x): x is string => !!x);
+      return {
+        id: repId, ids: groupeIds, nbComptes: groupeIds.length, licencesAutres,
+        nom: rep?.nom ?? '?', prenom: rep?.prenom ?? '',
+        avatar_url: groupeIds.map(i => profils[i]?.avatar_url).find(Boolean) ?? null,
+        numero_licence: rep?.numero_licence ?? null,
+        role: groupeIds.map(i => profils[i]?.role).find(r => r === 'admin_centre') ?? rep?.role ?? null,
+        qualifs: quals.filter(x => groupeIds.includes(x.user_id)).sort((a, b) => a.qualification_code.localeCompare(b.qualification_code)),
+        delegations: delegs.filter(x => groupeIds.includes(x.moniteur_id)),
+        plieur: plieurs.find(x => groupeIds.includes(x.plieur_id)) ?? null,
+      };
+    }).sort((a, b) => (a.nom + a.prenom).localeCompare(b.nom + b.prenom));
 
     setMembres(cartes);
     setLoading(false);
   }, [centreId]);
 
   useEffect(() => { load(); }, [load]);
-
-  // doublons de NOM (user_id différents) → signalés, jamais fusionnés
-  const nomsMultiples = useMemo(() => {
-    const c = new Map<string, number>();
-    membres.forEach(m => { const k = `${m.prenom} ${m.nom}`.toLowerCase().trim(); c.set(k, (c.get(k) ?? 0) + 1); });
-    return c;
-  }, [membres]);
 
   // ── Actions (mise à jour optimiste via reload) ──
   const ajouterQualif = async () => {
@@ -151,23 +171,27 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
     load();
   };
 
-  // révocation délégation : même logique sûre que « Mes licenciés »
+  // révocation délégation : même logique sûre que « Mes licenciés ».
+  // Carte regroupée → révoque la délégation de CHAQUE compte homonyme.
   const revoquerDelegation = async (m: Membre) => {
     if (!confirm(`Révoquer la délégation de validation de ${m.prenom} ${m.nom} ?\n\nIl ne pourra plus valider de sauts. Son carnet reste intact.`)) return;
     setError(null);
-    const { error: e1 } = await supabase.from('delegations_validation')
-      .update({ actif: false, date_expiration: new Date().toISOString() }).eq('moniteur_id', m.id).eq('centre_id', centreId);
-    if (e1) { console.error('Révocation échouée :', e1); setError('Révocation impossible.'); return; }
-    // rétrograder le rôle seulement s'il n'a plus aucune délégation active ailleurs
-    const { data: autres } = await supabase.from('delegations_validation').select('id').eq('moniteur_id', m.id).eq('actif', true);
-    if (!autres?.length) await supabase.from('profiles').update({ role: 'parachutiste' }).eq('id', m.id);
+    const uids = [...new Set(m.delegations.map(d => d.moniteur_id))];
+    for (const uid of uids) {
+      const { error: e1 } = await supabase.from('delegations_validation')
+        .update({ actif: false, date_expiration: new Date().toISOString() }).eq('moniteur_id', uid).eq('centre_id', centreId);
+      if (e1) { console.error('Révocation échouée :', e1); setError('Révocation impossible.'); return; }
+      // rétrograder le rôle seulement s'il n'a plus aucune délégation active ailleurs
+      const { data: autres } = await supabase.from('delegations_validation').select('id').eq('moniteur_id', uid).eq('actif', true);
+      if (!autres?.length) await supabase.from('profiles').update({ role: 'parachutiste' }).eq('id', uid);
+    }
     load();
   };
 
   const membresFiltres = membres.filter(m => {
     if (filtre === 'moniteurs') return m.qualifs.some(q => q.actif);
     if (filtre === 'plieurs') return !!m.plieur;
-    if (filtre === 'delegues') return !!m.delegation;
+    if (filtre === 'delegues') return m.delegations.length > 0;
     return true;
   });
 
@@ -252,7 +276,6 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {membresFiltres.map(m => {
             const estMoniteur = m.qualifs.some(q => q.actif);
-            const doublon = (nomsMultiples.get(`${m.prenom} ${m.nom}`.toLowerCase().trim()) ?? 0) > 1;
             return (
               <div key={m.id} className="rounded-2xl p-4" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
                 {/* Identité + rôles */}
@@ -264,10 +287,14 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
                     <div className="flex flex-wrap gap-1.5 mt-1.5">
                       {m.role === 'admin_centre' && <RolePill icon={<Shield className="w-3 h-3" />} label="DT" color="#8B5CF6" />}
                       {estMoniteur && <RolePill icon={<Shield className="w-3 h-3" />} label="Moniteur" color="#2563EB" />}
-                      {m.delegation && <RolePill icon={<CheckSquare className="w-3 h-3" />} label="Validation" color="#10B981" />}
+                      {m.delegations.length > 0 && <RolePill icon={<CheckSquare className="w-3 h-3" />} label="Validation" color="#10B981" />}
                       {m.plieur && <RolePill icon={<Package className="w-3 h-3" />} label="Plieur" color="#F97316" />}
                     </div>
-                    {doublon && <p className="text-[10px] mt-1" style={{ color: '#FCD34D' }}>⚠️ Doublon possible — même nom, comptes distincts à réconcilier</p>}
+                    {m.nbComptes > 1 && (
+                      <p className="text-[10px] mt-1" style={{ color: '#FCD34D' }}>
+                        ⚠️ {m.nbComptes} comptes réunis{m.licencesAutres.length > 0 ? ` (aussi ${m.licencesAutres.join(', ')})` : ''} — à fusionner
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -299,18 +326,24 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
                   </div>
                 )}
 
-                {/* Délégation */}
-                {m.delegation && (
-                  <div className="mt-3 rounded-xl px-3 py-2 flex flex-wrap items-center gap-2" style={{ background: COULEURS[etatDate(m.delegation.date_expiration, true, seuil)].bg, border: `1px solid ${COULEURS[etatDate(m.delegation.date_expiration, true, seuil)].bd}` }}>
-                    <CheckSquare className="w-4 h-4 flex-shrink-0" style={{ color: '#34D399' }} />
-                    <span className="text-xs" style={{ color: 'var(--c-text2)' }}>
-                      Peut valider les sauts{m.delegation.date_delegation && ` · depuis le ${fmt(m.delegation.date_delegation)}`}{m.delegation.date_expiration && ` · exp. ${fmt(m.delegation.date_expiration)}`}
-                    </span>
-                    <button onClick={() => revoquerDelegation(m)} className="ml-auto text-xs font-semibold px-3 rounded-lg" style={{ background: 'rgba(239,68,68,0.12)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.3)', minHeight: 40 }}>
-                      Révoquer
-                    </button>
-                  </div>
-                )}
+                {/* Délégation — une seule ligne même si plusieurs comptes réunis */}
+                {m.delegations.length > 0 && (() => {
+                  // représentante : la plus récemment accordée ; état = expiration la plus lointaine
+                  const rep = [...m.delegations].sort((a, b) => (b.date_delegation ?? '').localeCompare(a.date_delegation ?? ''))[0];
+                  const expLoin = m.delegations.map(d => d.date_expiration).sort((a, b) => (b ?? '9').localeCompare(a ?? '9'))[0] ?? null;
+                  const e = etatDate(expLoin, true, seuil);
+                  return (
+                    <div className="mt-3 rounded-xl px-3 py-2 flex flex-wrap items-center gap-2" style={{ background: COULEURS[e].bg, border: `1px solid ${COULEURS[e].bd}` }}>
+                      <CheckSquare className="w-4 h-4 flex-shrink-0" style={{ color: '#34D399' }} />
+                      <span className="text-xs" style={{ color: 'var(--c-text2)' }}>
+                        Peut valider les sauts{rep.date_delegation && ` · depuis le ${fmt(rep.date_delegation)}`}{expLoin && ` · exp. ${fmt(expLoin)}`}
+                      </span>
+                      <button onClick={() => revoquerDelegation(m)} className="ml-auto text-xs font-semibold px-3 rounded-lg" style={{ background: 'rgba(239,68,68,0.12)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.3)', minHeight: 40 }}>
+                        Révoquer
+                      </button>
+                    </div>
+                  );
+                })()}
 
                 {/* Plieur */}
                 {m.plieur && (
