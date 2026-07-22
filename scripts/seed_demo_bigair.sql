@@ -19,13 +19,19 @@ declare
   dt constant uuid := '00a08887-084d-44d5-b7c5-b7d57a7f2319';       -- BigAir Admin (publie)
   thomas constant uuid := 'f0822f3b-54a1-45d8-a273-9b6cdd5e1e39';   -- BEES1 + DSS valides
   kevin  constant uuid := 'a73d3889-18b4-441e-bda5-20ca0cd9942e';   -- BEES1 expirée (démontre « ne compte pas »)
-  nicolas constant uuid := 'd0d00001-0000-0000-0000-000000000010';  -- 3e moniteur (BEES1 seedée ici)
-  -- comptes fictifs dont on peut rafraîchir les documents
+  -- équipe de démo (voir scripts/seed_team_bigair.sql) présente pour l'encadrement
+  marc constant uuid := 'de111111-0000-0000-0000-000000000101';     -- BEES1 + DSS
+  julien constant uuid := 'de111111-0000-0000-0000-000000000102';   -- BEES1
+  camille constant uuid := 'de111111-0000-0000-0000-000000000103';  -- DEJEPS
+  antoine constant uuid := 'de111111-0000-0000-0000-000000000104';  -- brevet C (tandem/autonome)
+  paul constant uuid := 'de111111-0000-0000-0000-000000000106';     -- plieur
+  lea constant uuid := 'de111111-0000-0000-0000-000000000107';      -- plieur
+  -- comptes fictifs (élèves) dont on rafraîchit les documents
   fictifs constant uuid[] := array[
     'd0d00001-0000-0000-0000-000000000003','d0d00001-0000-0000-0000-000000000004',
     'd0d00001-0000-0000-0000-000000000005','d0d00001-0000-0000-0000-000000000006',
     'd0d00001-0000-0000-0000-000000000007','d0d00001-0000-0000-0000-000000000008',
-    'd0d00001-0000-0000-0000-000000000009','d0d00001-0000-0000-0000-000000000010',
+    'd0d00001-0000-0000-0000-000000000009',
     '11111111-1111-1111-1111-111111111101','11111111-1111-1111-1111-111111111102',
     '11111111-1111-1111-1111-111111111104']::uuid[];
   -- présents du jour (~12, moniteurs inclus pour la cohérence encadrement)
@@ -36,12 +42,10 @@ declare
   hugo   constant uuid := 'd0d00001-0000-0000-0000-000000000006';   -- élève déclaré prêt
   brevet_a uuid; q record; i int;
 begin
-  presents := array[thomas, kevin, nicolas,
+  -- présents : moniteurs de l'équipe (encadrement au vert) + élèves fictifs
+  presents := array[thomas, kevin, marc, julien, camille, antoine, paul, lea,
     'd0d00001-0000-0000-0000-000000000003','d0d00001-0000-0000-0000-000000000004',
-    'd0d00001-0000-0000-0000-000000000005','d0d00001-0000-0000-0000-000000000006',
-    'd0d00001-0000-0000-0000-000000000007','d0d00001-0000-0000-0000-000000000008',
-    'd0d00001-0000-0000-0000-000000000009','11111111-1111-1111-1111-111111111102',
-    '11111111-1111-1111-1111-111111111104']::uuid[];
+    'd0d00001-0000-0000-0000-000000000006','d0d00001-0000-0000-0000-000000000009']::uuid[];
 
   -- ── Documents des comptes fictifs : majorité à jour, 2 échéances proches ─
   -- (jamais les comptes réels)
@@ -64,11 +68,7 @@ begin
   update profiles p set numero_licence = l.numero_licence
   from licences l where l.parachutiste_id = p.id and p.id = any(fictifs) and l.statut = 'actif';
 
-  -- ── 3e moniteur qualifié : Nicolas GIRARD (BEES1 valide) ─────────────────
-  insert into moniteurs_qualifications (user_id, centre_id, qualification_code, numero, date_obtention, date_expiration, actif)
-  select nicolas, dz, 'BEES1', 'DEMO-BEES1-NG', current_date - 800, current_date + 380, true
-  where not exists (select 1 from moniteurs_qualifications
-                    where user_id = nicolas and centre_id = dz and qualification_code = 'BEES1');
+  -- (l'équipe de moniteurs est gérée par scripts/seed_team_bigair.sql)
 
   -- ── Briefing du jour publié (archive des jours passés conservée) ─────────
   select id into circuit from dz_circuits where dz_id = dz and sens = 'main_gauche' and actif limit 1;
