@@ -14,6 +14,32 @@ import { DemoBanner, useGlobalDemo } from '../lib/DemoContext';
 import { useTheme } from '../lib/ThemeContext';
 import { DemoGate, getDemoAllowedRoutes } from './DemoGate';
 
+// Avatar : photo de profil (avatar_url = source de vérité) si présente,
+// sinon cercle orange avec initiales. Repli propre si l'image casse.
+function AvatarBadge({ url, initials, px }: { url?: string | null; initials: string; px: number }) {
+  const [broken, setBroken] = useState(false);
+  const common = { width: px, height: px } as const;
+  if (url && !broken) {
+    return (
+      <img
+        src={url}
+        alt={initials}
+        onError={() => setBroken(true)}
+        className="rounded-full object-cover flex-shrink-0"
+        style={{ ...common, border: '2px solid rgba(249,115,22,0.5)' }}
+      />
+    );
+  }
+  return (
+    <div
+      className="rounded-full flex items-center justify-center font-bold text-white flex-shrink-0"
+      style={{ ...common, background: '#F97316', border: '2px solid rgba(249,115,22,0.5)', fontSize: px >= 40 ? 14 : 12 }}
+    >
+      {initials}
+    </div>
+  );
+}
+
 export function Layout({ children, noPadding = false }: { children: React.ReactNode; noPadding?: boolean }) {
   const { user, profile, signOut, delegation, sautsEnAttente, isDemo, isDemoAccount } = useAuth();
   const navigate = useNavigate();
@@ -224,12 +250,7 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
                     onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--c-hover)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
-                    <div
-                      className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                      style={{ background: '#F97316', border: '2px solid rgba(249,115,22,0.5)' }}
-                    >
-                      {initials}
-                    </div>
+                    <AvatarBadge url={profile?.avatar_url} initials={initials} px={34} />
                     <ChevronDown className="w-3 h-3" style={{ color: 'var(--c-muted)' }} />
                   </button>
 
@@ -311,12 +332,7 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
                     />
                   )}
                 </div>
-                <div
-                  className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-xs font-bold text-white"
-                  style={{ background: '#F97316', border: '2px solid rgba(249,115,22,0.5)' }}
-                >
-                  {initials}
-                </div>
+                <AvatarBadge url={profile?.avatar_url} initials={initials} px={34} />
                 <button
                   onClick={() => setDrawerOpen(true)}
                   className="w-9 h-9 flex items-center justify-center rounded-lg ml-0.5"
@@ -357,12 +373,7 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
               style={{ borderBottom: '1px solid var(--c-border)', background: 'var(--c-surface)' }}
             >
               <div className="flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-                  style={{ background: '#F97316', border: '2px solid rgba(249,115,22,0.4)' }}
-                >
-                  {initials}
-                </div>
+                <AvatarBadge url={profile?.avatar_url} initials={initials} px={40} />
                 <div>
                   <p className="text-sm font-semibold" style={{ color: 'var(--c-text)' }}>{profile?.prenom} {profile?.nom}</p>
                   <p className="text-xs capitalize" style={{ color: 'var(--c-muted)' }}>

@@ -77,13 +77,14 @@ function DelegationSection() {
 }
 
 export function ProfilPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const { blockIfDemo } = useDemo();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [signatureSaving, setSignatureSaving] = useState(false);
   const [signatureSaved, setSignatureSaved] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawingRef = useRef(false);
 
@@ -246,36 +247,76 @@ export function ProfilPage() {
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!user || !e.target.files?.[0] || blockIfDemo()) return;
     const file = e.target.files[0];
+    // reset input pour permettre de re-choisir le même fichier après une erreur
+    e.target.value = '';
+    setPhotoError(null);
+
+    if (!file.type.startsWith('image/')) {
+      setPhotoError('Fichier non supporté. Choisissez une image (JPG, PNG, WEBP…).');
+      return;
+    }
+
     setPhotoUploading(true);
     try {
-      const resized = await resizeImageSquare(file, 400);
-      const fileName = `photo-${user.id}.jpg`;
-      const { error } = await supabase.storage.from('profile-photos').upload(fileName, resized, { upsert: true, contentType: 'image/jpeg' });
-      if (!error) {
-        const { data: { publicUrl } } = supabase.storage.from('profile-photos').getPublicUrl(fileName);
-        const bust = `${publicUrl}?t=${Date.now()}`;
-        set({ photo_identite_url: bust });
-        await supabase.from('profiles').update({ photo_identite_url: bust, avatar_url: bust }).eq('id', user.id);
+      // Redimensionne + recompresse en JPEG (le canvas ne décode pas le HEIC hors Safari
+      // → resizeImageSquare rejette et on affiche un message clair)
+      let resized: Blob;
+      try {
+        resized = await resizeImageSquare(file, 512);
+      } catch {
+        setPhotoError("Ce format d'image n'a pas pu être lu (HEIC non pris en charge ici). Exportez-la en JPG ou PNG, puis réessayez.");
+        return;
       }
+
+      // Source de vérité unique = avatar_url. Chemin borné au dossier de l'utilisateur.
+      const fileName = `${user.id}/avatar.jpg`;
+      const { error: upErr } = await supabase.storage
+        .from('profile-photos')
+        .upload(fileName, resized, { upsert: true, contentType: 'image/jpeg' });
+      if (upErr) {
+        console.error('Upload photo échoué :', upErr);
+        setPhotoError("L'envoi de la photo a échoué. Vérifiez votre connexion et réessayez.");
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase.storage.from('profile-photos').getPublicUrl(fileName);
+      const bust = `${publicUrl}?t=${Date.now()}`; // casse le cache après remplacement
+
+      const { error: dbErr } = await supabase.from('profiles')
+        // les 3 colonnes reflètent la même valeur (readers historiques inchangés)
+        .update({ avatar_url: bust, photo_profil_url: bust, photo_identite_url: bust })
+        .eq('id', user.id)
+        .select();
+      if (dbErr) {
+        console.error('Enregistrement URL photo échoué :', dbErr);
+        setPhotoError('La photo a été envoyée mais son enregistrement a échoué. Réessayez.');
+        return;
+      }
+
+      // mise à jour immédiate : formulaire local + profil global (avatar, licence)
+      set({ photo_identite_url: bust });
+      await refreshProfile();
     } finally {
       setPhotoUploading(false);
     }
   };
 
   function resizeImageSquare(file: File, size: number): Promise<Blob> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const canvas = document.createElement('canvas');
       canvas.width = size; canvas.height = size;
       const ctx = canvas.getContext('2d')!;
       const img = new Image();
+      const url = URL.createObjectURL(file);
       img.onload = () => {
         const s = Math.min(img.width, img.height);
         const x = (img.width - s) / 2;
         const y = (img.height - s) / 2;
         ctx.drawImage(img, x, y, s, s, 0, 0, size, size);
-        canvas.toBlob((b) => resolve(b!), 'image/jpeg', 0.85);
+        canvas.toBlob((b) => { URL.revokeObjectURL(url); b ? resolve(b) : reject(new Error('encode')); }, 'image/jpeg', 0.85);
       };
-      img.src = URL.createObjectURL(file);
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('decode')); };
+      img.src = url;
     });
   }
 
@@ -397,7 +438,12 @@ export function ProfilPage() {
             <div className="flex-shrink-0">
               <div className="relative w-24 h-28 rounded-lg border-2 border-dashed border-gray-300 overflow-hidden bg-gray-50 flex items-center justify-center group">
                 {form.photo_identite_url ? (
-                  <img src={form.photo_identite_url} alt="Photo" className="w-full h-full object-cover" />
+                  <img
+                    src={form.photo_identite_url}
+                    alt="Photo"
+                    className="w-full h-full object-cover"
+                    onError={() => set({ photo_identite_url: '' })}
+                  />
                 ) : (
                   <span className="text-xs text-gray-400 text-center px-1">Photo d'identité</span>
                 )}
@@ -414,6 +460,9 @@ export function ProfilPage() {
                 <Upload className="w-3 h-3" /> Modifier
                 <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={photoUploading} />
               </label>
+              {photoError && (
+                <p className="mt-1 text-[11px] text-red-600 max-w-[6rem] leading-tight">{photoError}</p>
+              )}
             </div>
 
             <div className="flex-1 grid grid-cols-2 gap-3">
