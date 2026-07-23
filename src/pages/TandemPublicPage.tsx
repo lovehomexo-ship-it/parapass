@@ -470,7 +470,7 @@ export function TandemPublicPage() {
         <div className="max-w-3xl mx-auto px-4 py-8">
           <div className="flex items-center gap-4 mb-6">
             {centre?.logo_url ? (
-              <img src={centre.logo_url} alt={centre.nom} className="w-12 h-12 rounded-full object-cover" />
+              <img src={centre.logo_url} alt={centre.nom} className="w-12 h-12 rounded-full object-contain" style={{ background: "rgba(255,255,255,0.06)" }} />
             ) : (
               <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center font-black text-lg">
                 {centre?.nom.slice(0, 2).toUpperCase()}

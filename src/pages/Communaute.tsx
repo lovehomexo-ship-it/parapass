@@ -234,7 +234,7 @@ function CentreCard({ centre, onRejoindre, joinLoading }: {
       {/* Logo / initiales */}
       <div className="w-14 h-14 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center font-bold text-lg text-white" style={{ background: '#1E3A5F' }}>
         {centre.logo_url
-          ? <img src={centre.logo_url} alt={centre.nom} className="w-full h-full object-cover" />
+          ? <img src={centre.logo_url} alt={centre.nom} className="w-full h-full object-contain" />
           : getCentreInitials(centre.nom)
         }
       </div>
