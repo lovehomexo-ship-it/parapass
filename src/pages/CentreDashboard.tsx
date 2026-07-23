@@ -3035,6 +3035,26 @@ export function CentreDashboardPage() {
           </div>
         </div>
 
+        {/* Bandeau centre — tout en haut du dashboard (desktop ; le mobile l'a
+            déjà dans sa barre du haut) */}
+        <div className="hidden lg:flex items-center gap-3 px-6 py-3 sticky top-0 z-10" style={{ background: 'var(--c-nav)', borderBottom: '1px solid var(--c-border)' }}>
+          {centre.logo_url ? (
+            <img src={centre.logo_url} alt={centre.nom} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+          ) : (
+            <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white flex-shrink-0" style={{ background: 'var(--c-hover)' }}>
+              {centre.nom.slice(0, 2).toUpperCase()}
+            </div>
+          )}
+          <span className="font-bold text-white" style={{ fontSize: 15 }}>{centre.nom}</span>
+          <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{
+            background: isPlanActif(centre) ? 'rgba(37,99,235,0.2)' : 'rgba(249,115,22,0.2)',
+            color: isPlanActif(centre) ? '#60A5FA' : '#F97316',
+            border: `1px solid ${isPlanActif(centre) ? 'rgba(37,99,235,0.3)' : 'rgba(249,115,22,0.3)'}`,
+          }}>
+            {planLabel(centre.plan)}
+          </span>
+        </div>
+
         <div className="p-6">
           {activeSection === 'dashboard' && (
             <>
