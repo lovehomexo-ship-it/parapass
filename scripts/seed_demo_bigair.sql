@@ -84,6 +84,14 @@ begin
   select briefing, presents[g], current_date + time '08:10' + (g * interval '7 minutes')
   from generate_series(1, 8) g;
 
+  -- ── Archive : 2 briefings des jours précédents (pour que l'archive ne soit
+  --    jamais vide, même sur une journée fraîche) — dates relatives ──────────
+  delete from dz_briefings where dz_id = dz and date_briefing in (current_date - 1, current_date - 2);
+  insert into dz_briefings (dz_id, date_briefing, vent_direction_deg, vent_vitesse_kt, consignes, circuit_id, published_at, published_by, created_at)
+  values
+    (dz, current_date - 1, 240, 9,  'Vent de sud-ouest 9 kt. Circuit main gauche. Rassemblement en finale, attention au trafic.',        circuit, (current_date - 1) + time '07:55', dt, (current_date - 1) + time '07:50'),
+    (dz, current_date - 2, 300, 14, 'Vent de nord-ouest 14 kt, rafales. Ouverture haute conseillée pour les élèves. Circuit main gauche.', circuit, (current_date - 2) + time '08:05', dt, (current_date - 2) + time '08:00');
+
   -- ── Présences du jour : arrivées échelonnées, matériel varié ─────────────
   delete from dz_presences where dz_id = dz and date_presence = current_date;
   for i in 1..array_length(presents,1) loop
@@ -100,10 +108,14 @@ begin
 
   -- ── Cas de démo « vigilance charge alaire » (côté DT) : Claire, débutante,
   --    voile 150 ft² + poids 85 kg → charge ≈ 1,25 > repère 1,0 ─────────────
-  delete from materiels where parachutiste_id = claire and numero_serie = 'DEMO-VIG-001';
-  insert into materiels (parachutiste_id, type, marque, modele, numero_serie, statut, taille_voile_ft2)
-  values (claire, 'parachute_principal', 'Icarus', 'Safire 3', 'DEMO-VIG-001', 'actif', 150)
-  returning id into vig_mat;
+  -- find-or-create : la voile peut être référencée par une présence d'un jour
+  -- précédent (FK), on la réutilise au lieu de la supprimer → idempotent.
+  select id into vig_mat from materiels where parachutiste_id = claire and numero_serie = 'DEMO-VIG-001' limit 1;
+  if vig_mat is null then
+    insert into materiels (parachutiste_id, type, marque, modele, numero_serie, statut, taille_voile_ft2)
+    values (claire, 'parachute_principal', 'Icarus', 'Safire 3', 'DEMO-VIG-001', 'actif', 150)
+    returning id into vig_mat;
+  end if;
   insert into profils_prives (profile_id, poids_tout_equipe_kg) values (claire, 85)
   on conflict (profile_id) do update set poids_tout_equipe_kg = 85;
   update dz_presences set voile_perso_ref = vig_mat, voile_perso_libre = null
