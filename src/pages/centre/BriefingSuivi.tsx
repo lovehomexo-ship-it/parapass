@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { formatHeureParis, formatDateTimeParis } from '../../lib/datetime';
 import { supabase } from '../../lib/supabase';
 import type { DzBriefing, DzCircuit } from '../../lib/briefing';
 import { CheckCircle, Clock, Download, ChevronDown, ChevronUp } from 'lucide-react';
@@ -31,7 +32,7 @@ async function fetchAcks(briefingIds: string[]): Promise<Record<string, Ack[]>> 
   return map;
 }
 
-const heure = (iso: string) => new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+const heure = (iso: string) => formatHeureParis(iso);
 
 // ─── Suivi du jour, en direct ─────────────────────────────────────────────────
 
@@ -166,7 +167,7 @@ export function BriefingArchive({ centreId, circuits }: { centreId: string; circ
       ['Circuit', circuit?.nom ?? '—'].map(esc).join(';'),
       ['Vent', `${b.vent_direction_deg}°${b.vent_vitesse_kt != null ? ` ${b.vent_vitesse_kt} kt` : ''}`].map(esc).join(';'),
       ['Consignes', b.consignes ?? ''].map(esc).join(';'),
-      ['Publié à', new Date(b.published_at).toLocaleString('fr-FR')].map(esc).join(';'),
+      ['Publié à', formatDateTimeParis(b.published_at)].map(esc).join(';'),
       '',
       ['Licencié', 'Acquitté le'].map(esc).join(';'),
       ...acks.map(a => [nomMembre(a.user_id), new Date(a.acknowledged_at).toLocaleString('fr-FR')].map(esc).join(';')),

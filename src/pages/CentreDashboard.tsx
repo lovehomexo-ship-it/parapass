@@ -9,8 +9,9 @@ import { sendMessage, useConversationMessages, getOrCreateConversation, useConve
 import type { Message } from '../lib/useMessages';
 import { PasseportCardView } from '../components/PasseportCardView';
 import { AddSautModal } from '../components/AddSautModal';
-import { useComplianceRules, getComplianceStatus, worstStatus, type ComplianceStatus } from '../lib/compliance';
+import { useComplianceRules, licenceStatus, type ComplianceStatus } from '../lib/compliance';
 import { ComplianceBadge, ComplianceDot } from '../components/ComplianceBadge';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useCurrencyRules, getCurrencyStatus, CURRENCY_STATUS_CONFIG } from '../lib/currency';
 import { useEncadrement, verifierSeance } from '../lib/encadrement';
 import { MeteoAltitudeDZ } from '../components/MeteoAltitudeCard';
@@ -791,12 +792,14 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
       const map: Record<string, ComplianceStatus> = {};
       const sautMap: Record<string, string | null> = {};
       for (const row of (data ?? []) as Array<{ parachutiste_id: string; licence_expiration: string | null; certificat_expiration: string | null; materiel_echeance: string | null; dernier_saut: string | null }>) {
-        map[row.parachutiste_id] = worstStatus([
-          getComplianceStatus(row.licence_expiration, complianceRules),
-          getComplianceStatus(row.certificat_expiration, complianceRules),
-          // Pas de matériel renseigné = pas bloquant côté vue centre : on ignore l'inconnu matériel
-          row.materiel_echeance ? getComplianceStatus(row.materiel_echeance, complianceRules) : 'ok',
-        ]);
+        // Badge/filtre/segments = statut LICENCE fédérale UNIQUEMENT (décision
+        // produit). licence_expiration = max(date_expiration) des licences actives ;
+        // médical & matériel sont suivis par leurs propres indicateurs (compteur
+        // médical du dashboard, vigilance matériel, détail de la fiche).
+        map[row.parachutiste_id] = licenceStatus(
+          { statut: 'actif', date_expiration: row.licence_expiration },
+          complianceRules
+        );
         sautMap[row.parachutiste_id] = row.dernier_saut;
       }
       setConformiteMap(map);
@@ -963,7 +966,10 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
           { key: 'expire' as const, label: 'Expiré' },
           { key: 'bientot' as const, label: 'Bientôt' },
           { key: 'ok' as const, label: 'À jour' },
+          { key: 'inconnu' as const, label: 'Non renseigné' },
         ]).map(f => {
+          // Chaque licencié tombe dans exactement un segment (inconnu compris) :
+          // expire + bientot + ok + inconnu === effectif total (« Tous »).
           const count = f.key === 'tous' ? licencies.length : licencies.filter(l => (conformiteMap[l.id] ?? 'inconnu') === f.key).length;
           const active = filtreConformite === f.key;
           const color = f.key === 'expire' ? '#EF4444' : f.key === 'bientot' ? '#F59E0B' : f.key === 'ok' ? '#10B981' : '#60A5FA';
@@ -2168,11 +2174,11 @@ function LicencieDrawer({
       const row = ((data ?? []) as Array<{ parachutiste_id: string; licence_expiration: string | null; certificat_expiration: string | null; materiel_echeance: string | null }>)
         .find(r => r.parachutiste_id === licencie.id);
       if (!row) { setDrawerConformite('inconnu'); return; }
-      setDrawerConformite(worstStatus([
-        getComplianceStatus(row.licence_expiration, drawerRules),
-        getComplianceStatus(row.certificat_expiration, drawerRules),
-        row.materiel_echeance ? getComplianceStatus(row.materiel_echeance, drawerRules) : 'ok',
-      ]));
+      // Entête de fiche = même source que le badge/filtre : statut LICENCE seul.
+      setDrawerConformite(licenceStatus(
+        { statut: 'actif', date_expiration: row.licence_expiration },
+        drawerRules
+      ));
     });
   }, [licencie, centreId, drawerRules]);
 
@@ -3021,11 +3027,13 @@ export function CentreDashboardPage() {
             </>
           )}
           {activeSection === 'licencies' && (
-            <LicenciesSection
-              centreId={centreId}
-              onOpenDrawer={(l) => { setDrawerInitialTab('carte'); setDrawerLicencie(l); }}
-              onOpenMessages={(l) => { setDrawerInitialTab('messages'); setDrawerLicencie(l); }}
-            />
+            <ErrorBoundary>
+              <LicenciesSection
+                centreId={centreId}
+                onOpenDrawer={(l) => { setDrawerInitialTab('carte'); setDrawerLicencie(l); }}
+                onOpenMessages={(l) => { setDrawerInitialTab('messages'); setDrawerLicencie(l); }}
+              />
+            </ErrorBoundary>
           )}
           {activeSection === 'demandes' && (
             <DemandesSection centreId={centreId} onAccepted={fetchCentreData} />
@@ -3080,7 +3088,9 @@ export function CentreDashboardPage() {
             </div>
           )}
           {activeSection === 'planning' && centreId && (
-            <PlanningCentre centreId={centreId} />
+            <ErrorBoundary>
+              <PlanningCentre centreId={centreId} />
+            </ErrorBoundary>
           )}
           {/* Messages = la communication : sous-onglets */}
           {activeSection === 'messages' && profile && (

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { formatHeureParis } from '../../lib/datetime';
 import { supabase } from '../../lib/supabase';
 import { useBriefingDuJour, sensAtterrissageDerive } from '../../lib/briefing';
 import { BriefingScene } from '../../components/BriefingScene';
@@ -79,7 +80,7 @@ export function BriefingRecapDZ({ centreId, onOuvrir }: { centreId: string; onOu
     );
   }
 
-  const heurePub = new Date(briefing.published_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const heurePub = formatHeureParis(briefing.published_at);
   // published_at nettement après created_at (> 60 s) = republication dans la journée
   const republie = new Date(briefing.published_at).getTime() - new Date(briefing.created_at).getTime() > 60_000;
   const sensDerive = circuit ? sensAtterrissageDerive(circuit.trace) : null;

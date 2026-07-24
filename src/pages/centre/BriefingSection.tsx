@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { formatHeureParis } from '../../lib/datetime';
 import { BriefingScene } from '../../components/BriefingScene';
 import {
   useBriefingDuJour, useDzCircuits, dzMapPublicUrl, sensAtterrissageDerive, compressImageFond,
@@ -323,7 +324,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
       setError(error?.message ?? 'Publication refusée — le briefing n\'a pas été enregistré.');
       return;
     }
-    setOkMsg(`Briefing publié à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} — circuit « ${circuitPublie.nom} ».`);
+    setOkMsg(`Briefing publié à ${formatHeureParis(new Date())} — circuit « ${circuitPublie.nom} ».`);
     refresh();
   };
 
@@ -661,7 +662,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
           </button>
           {briefing && (
             <p className="text-[11px] text-center" style={{ color: 'var(--c-dim)' }}>
-              Dernière publication : {new Date(briefing.published_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+              Dernière publication : {formatHeureParis(briefing.published_at)}
               {' — '}{circuits.find(c => c.id === briefing.circuit_id)?.nom ?? 'circuit inconnu'}
             </p>
           )}

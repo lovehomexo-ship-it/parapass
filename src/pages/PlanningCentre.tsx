@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { ymdLocal } from '../lib/datetime';
 import {
   ChevronLeft, ChevronRight, Plus, X, Check, Users, Clock,
   Send, Plane, BarChart2, Download, ChevronDown,
@@ -51,7 +52,7 @@ function ModalCreneau({
   date: string;
   creneau: Creneau | null;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (saved: Creneau) => void;
 }) {
   const [statut, setStatut] = useState<Creneau['statut']>(creneau?.statut ?? 'ouvert');
   const [heureDebut, setHeureDebut] = useState(creneau?.heure_debut?.slice(0, 5) ?? '09:00');
@@ -65,12 +66,14 @@ function ModalCreneau({
   const [offrePromo, setOffrePromo] = useState(creneau?.offre_promo ?? '');
   const [notifier, setNotifier] = useState(creneau?.notifier_licencies ?? true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const toggleType = (t: string) =>
     setTypesSauts(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
 
   const handleSave = async () => {
     setSaving(true);
+    setError(null);
     const payload = {
       centre_id: centreId,
       date,
@@ -90,14 +93,19 @@ function ModalCreneau({
       notifier_licencies: notifier,
     };
 
-    let error;
-    if (creneau) {
-      ({ error } = await supabase.from('creneaux_dz').update(payload).eq('id', creneau.id));
-    } else {
-      ({ error } = await supabase.from('creneaux_dz').insert(payload));
+    const { data: saved, error: saveError } = creneau
+      ? await supabase.from('creneaux_dz').update(payload).eq('id', creneau.id).select().single()
+      : await supabase.from('creneaux_dz').insert(payload).select().single();
+
+    if (saveError || !saved) {
+      // Gestion d'erreur explicite : jamais de fermeture silencieuse.
+      console.error('Enregistrement du créneau échoué :', saveError);
+      setError(saveError?.message ?? "L'enregistrement a échoué. Réessayez.");
+      setSaving(false);
+      return;
     }
 
-    if (!error && notifier && statut === 'ouvert' && !creneau) {
+    if (notifier && statut === 'ouvert' && !creneau) {
       // Envoyer notif aux licenciés actifs
       const { data: licencies } = await supabase
         .from('licencies_centres')
@@ -115,12 +123,15 @@ function ModalCreneau({
           data: { centre_id: centreId, date },
           lue: false,
         }));
-        await supabase.from('notifications').insert(notifs);
+        const { error: notifError } = await supabase.from('notifications').insert(notifs);
+        // Non bloquant : le créneau est déjà persisté ; on trace sans masquer.
+        if (notifError) console.error('Envoi des notifications échoué :', notifError);
       }
     }
 
     setSaving(false);
-    if (!error) { onSaved(); onClose(); }
+    onSaved(saved as Creneau);
+    onClose();
   };
 
   const dateFormatted = new Date(date).toLocaleDateString('fr-FR', {
@@ -278,6 +289,14 @@ function ModalCreneau({
             </div>
           )}
         </div>
+
+        {/* Erreur explicite */}
+        {error && (
+          <div role="alert" className="mx-6 mb-1 px-4 py-2.5 rounded-xl text-sm font-medium"
+            style={{ background: '#FEE2E2', color: '#991B1B', border: '1px solid #FCA5A5' }}>
+            {error}
+          </div>
+        )}
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
@@ -448,8 +467,8 @@ export function PlanningCentre({ centreId }: { centreId: string }) {
   const month = currentMonth.getMonth();
 
   const loadCreneaux = useCallback(async () => {
-    const from = new Date(year, month, 1).toISOString().split('T')[0];
-    const to = new Date(year, month + 1, 0).toISOString().split('T')[0];
+    const from = ymdLocal(new Date(year, month, 1));
+    const to = ymdLocal(new Date(year, month + 1, 0));
     const { data } = await supabase
       .from('creneaux_dz')
       .select('*')
@@ -473,7 +492,7 @@ export function PlanningCentre({ centreId }: { centreId: string }) {
   while (days.length % 7 !== 0) days.push(new Date(year, month + 1, days.length - lastDay.getDate() - startOffset + 1));
 
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  const getForDate = (d: Date) => creneaux.find(c => c.date === d.toISOString().split('T')[0]) ?? null;
+  const getForDate = (d: Date) => creneaux.find(c => c.date === ymdLocal(d)) ?? null;
 
   // Stats
   const joursOuverts = creneaux.filter(c => c.statut === 'ouvert').length;
@@ -483,7 +502,7 @@ export function PlanningCentre({ centreId }: { centreId: string }) {
     : 0;
 
   // Today's créneau
-  const todayKey = today.toISOString().split('T')[0];
+  const todayKey = ymdLocal(today);
   const creneauAuj = creneaux.find(c => c.date === todayKey && c.statut === 'ouvert');
   const inscritsAuj = creneauAuj ? creneauAuj.nb_places_total - creneauAuj.nb_places_restantes : 0;
 
@@ -574,7 +593,7 @@ export function PlanningCentre({ centreId }: { centreId: string }) {
                 onClick={() => {
                   if (!isCurrentMonth) return;
                   if (c) setEditCreneau(c);
-                  else setModalDate(d.toISOString().split('T')[0]);
+                  else setModalDate(ymdLocal(d));
                 }}
                 className="aspect-square rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all relative overflow-hidden group"
                 style={{
@@ -663,7 +682,18 @@ export function PlanningCentre({ centreId }: { centreId: string }) {
           date={editCreneau?.date ?? modalDate!}
           creneau={editCreneau}
           onClose={() => { setModalDate(null); setEditCreneau(null); }}
-          onSaved={() => { loadCreneaux(); setModalDate(null); setEditCreneau(null); }}
+          onSaved={(saved) => {
+            // MAJ immédiate de l'état local, sans rechargement réseau : les
+            // compteurs (jours ouverts…) en dérivent et se rafraîchissent seuls.
+            setCreneaux(prev => {
+              const next = prev.some(c => c.id === saved.id)
+                ? prev.map(c => (c.id === saved.id ? saved : c))
+                : [...prev, saved];
+              return next.sort((a, b) => a.date.localeCompare(b.date));
+            });
+            setModalDate(null);
+            setEditCreneau(null);
+          }}
         />
       )}
       {listeCreneau && (

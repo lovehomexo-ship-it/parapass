@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Megaphone, CheckCircle, WifiOff, CloudOff, ChevronDown, ChevronUp } from 'lucide-react';
 import { useBriefingDuJour, useBriefingAck } from '../lib/briefing';
+import { formatHeureParis } from '../lib/datetime';
 import { BriefingScene } from './BriefingScene';
 
 /** Bloc « Briefing du jour » côté jumpeur — rendu à DEUX emplacements du
@@ -34,7 +35,7 @@ export function BriefingDuJourBlock({ dzId, dzNom, userId, position = 'haut' }: 
           <span className="text-sm font-bold text-white">Briefing du jour{dzNom ? ` — ${dzNom}` : ''}</span>
           <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: '#34D399' }}>
             <CheckCircle className="w-3.5 h-3.5" />
-            Acquitté à {new Date(ackAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+            Acquitté à {formatHeureParis(ackAt)}
           </span>
           {pending && <CloudOff className="w-3.5 h-3.5" style={{ color: '#CBD5E1' }} />}
           <span className="ml-auto flex-shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }}>
@@ -158,7 +159,7 @@ export function BriefingDuJourBlock({ dzId, dzNom, userId, position = 'haut' }: 
           {ackAt ? (
             <div className="flex items-center gap-2 text-sm font-semibold flex-wrap" style={{ color: '#34D399' }}>
               <CheckCircle className="w-4 h-4" />
-              Acquitté à {new Date(ackAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+              Acquitté à {formatHeureParis(ackAt)}
               {pending && (
                 <span className="flex items-center gap-1 text-[11px] font-medium" style={{ color: '#CBD5E1' }}>
                   <CloudOff className="w-3 h-3" /> sera synchronisé à la reconnexion

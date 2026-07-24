@@ -5,6 +5,7 @@ import {
   type MeteoAltitudePayload,
 } from '../lib/meteoAltitude';
 import { useComplianceRules } from '../lib/compliance';
+import { formatHeureParis } from '../lib/datetime';
 
 // Flèche de vent : même convention que la manche à air du briefing — elle est
 // orientée dans le sens où le vent SOUFFLE ; le chiffre indique d'où il vient.
@@ -64,7 +65,7 @@ export function ProfilVertical({ payload, heure, seuilAltitude, seuilSol }: {
 }
 
 export function MentionSource({ fetchedAt, perime }: { fetchedAt: string | null; perime: boolean }) {
-  const heure = fetchedAt ? new Date(fetchedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—';
+  const heure = fetchedAt ? formatHeureParis(fetchedAt) : '—';
   return (
     <p className="text-[10px] mt-2 flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
       {perime && <CloudOff className="w-3 h-3" style={{ color: '#FBBF24' }} />}

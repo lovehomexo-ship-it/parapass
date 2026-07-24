@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useBriefingDuJour } from '../lib/briefing';
+import { formatHeureParis } from '../lib/datetime';
 import { BriefingScene } from '../components/BriefingScene';
 
 /** Mode TV plein écran pour l'écran de la DZ (rechargement manuel suffisant). */
@@ -28,7 +29,7 @@ export function BriefingTVPage() {
     );
   }
 
-  const heurePub = new Date(briefing.published_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const heurePub = formatHeureParis(briefing.published_at);
 
   return (
     <div className="min-h-screen flex flex-col px-8 py-6" style={{ background: '#020617' }}>

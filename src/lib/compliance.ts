@@ -67,6 +67,68 @@ export function getMaterielEcheance(
   return d.toISOString().substring(0, 10);
 }
 
+// ─── Statut LICENCE fédérale (source unique fiche / badge / filtre / dashboard) ──
+
+export interface LicenceInfo {
+  statut?: string | null;
+  date_expiration?: string | null;
+}
+
+/** Nombre de jours calendaires (heure locale) d'aujourd'hui à `date`.
+ *  Minuit-à-minuit : insensible à l'heure courante (une échéance « aujourd'hui »
+ *  vaut 0, pas -1 en milieu de journée). */
+export function daysUntilCalendar(date: string | Date | null | undefined): number | null {
+  if (!date) return null;
+  let exp: Date;
+  if (date instanceof Date) {
+    exp = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  } else {
+    // 'YYYY-MM-DD' (colonne date) → minuit LOCAL, pas UTC.
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(date);
+    exp = m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(date);
+  }
+  if (isNaN(exp.getTime())) return null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  exp.setHours(0, 0, 0, 0);
+  return Math.round((exp.getTime() - today.getTime()) / 86_400_000);
+}
+
+/** Statut d'une licence fédérale à partir de ses DATES RÉELLES et du statut
+ *  fédéral — jamais mélangé avec matériel/médical (voir worstStatus pour ça).
+ *  'inconnu' si pas de licence/date ; 'expire' si date passée OU statut fédéral
+ *  ≠ 'actif' ; 'bientot' sous le seuil d'alerte ; 'ok' sinon. */
+export function licenceStatus(
+  licence: LicenceInfo | null | undefined,
+  rules: ComplianceRules = DEFAULT_RULES
+): ComplianceStatus {
+  if (!licence || !licence.date_expiration) return 'inconnu';
+  // Statut fédéral non actif (suspendu, résilié…) : licence non valide.
+  if (licence.statut != null && licence.statut !== 'actif') return 'expire';
+  // Comparaison par JOUR CALENDAIRE (comme la RPC get_licences_expirees :
+  // date_expiration < today) : une licence expirant aujourd'hui reste valable.
+  const days = daysUntilCalendar(licence.date_expiration);
+  if (days === null) return 'inconnu';
+  if (days < 0) return 'expire';
+  if (days <= (rules.alerte_j30 ?? DEFAULT_RULES.alerte_j30)) return 'bientot';
+  return 'ok';
+}
+
+export interface LicenceSegments {
+  ok: number; bientot: number; expire: number; inconnu: number; total: number;
+}
+
+/** Répartit TOUT l'effectif en segments licence à partir de licenceStatus.
+ *  Garantit ok + bientot + expire + inconnu === total (Prompt E). Le dashboard
+ *  et le filtre doivent tous deux dériver leurs compteurs d'ici. */
+export function segmentsLicencies(
+  licencies: Array<{ licence: LicenceInfo | null | undefined }>,
+  rules: ComplianceRules = DEFAULT_RULES
+): LicenceSegments {
+  const seg: LicenceSegments = { ok: 0, bientot: 0, expire: 0, inconnu: 0, total: licencies.length };
+  for (const l of licencies) seg[licenceStatus(l.licence, rules)]++;
+  return seg;
+}
+
 const SEVERITY: Record<ComplianceStatus, number> = { expire: 3, bientot: 2, inconnu: 1, ok: 0 };
 
 /** Le pire statut d'une liste ('expire' > 'bientot' > 'inconnu' > 'ok'). */
