@@ -6,7 +6,7 @@ import {
   DRILL_CATEGORIES, DRILL_TIMER_SEC, DRILL_PROP_COLORS,
   type DrillScenario, type DrillResult,
 } from '../lib/drill';
-import { ArrowLeft, Clock, CheckCircle, XCircle, Flame, Zap } from 'lucide-react';
+import { ArrowLeft, Flame } from 'lucide-react';
 
 // ─── Sélection déterministe du scénario du jour ────────────────────────────────
 

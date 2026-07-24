@@ -157,7 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = useCallback(async () => {
     if (!user) return;
     await fetchProfile(user.id, user.email);
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user]);  
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session: s } }) => {

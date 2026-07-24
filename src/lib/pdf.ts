@@ -46,7 +46,7 @@ function row(doc: jsPDF, label: string, value: string, x: number, y: number, w: 
   return y + 5.5;
 }
 
-function addFooter(doc: jsPDF, pageNum: number, totalPages: number, qrTokenUrl?: string) {
+function addFooter(doc: jsPDF, pageNum: number, totalPages: number) {
   const pw = doc.internal.pageSize.getWidth();
   const ph = doc.internal.pageSize.getHeight();
   doc.setFillColor(11, 29, 58);
@@ -214,7 +214,7 @@ function addRecapPage(
   if (signatureDataUrl) {
     try {
       doc.addImage(signatureDataUrl, 'PNG', margin + halfW + 6, y + 7, halfW - 8, stampZoneH - 12);
-    } catch (_) { /* skip if image fails */ }
+    } catch { /* skip if image fails */ }
   }
   doc.setLineDash([]);
   y += stampZoneH + 3;

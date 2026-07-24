@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ParaPassLogo } from '../components/ParaPassLogo';
-import { ChevronDown, AlertTriangle, Clock, CheckCircle, X, ArrowLeft } from 'lucide-react';
+import { ChevronDown, AlertTriangle, CheckCircle, ArrowLeft } from 'lucide-react';
 import { CycleHelpButton } from '../components/CyclePliageSchema';
 
 // ─── Types ────────────────────────────────────────────────────────────────────

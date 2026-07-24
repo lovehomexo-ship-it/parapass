@@ -1,12 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useDemo } from '../lib/useDemo';
-import { loadStripe } from '@stripe/stripe-js';
 import { CreditCard, Clock, CheckCircle, Receipt, TrendingDown } from 'lucide-react';
 
-const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
-  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string)
-  : null;
 
 interface Transaction {
   id: string;

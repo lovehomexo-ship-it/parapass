@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import {
-  ChevronLeft, ChevronRight, Calendar, Clock, Wind, Thermometer,
-  Users, Check, X, HelpCircle, MessageSquare, RefreshCw, MapPin,
+  ChevronLeft, ChevronRight, Calendar, Clock, Thermometer,
+  Users, X, MessageSquare, RefreshCw, MapPin,
   Plane,
 } from 'lucide-react';
 

@@ -568,7 +568,7 @@ export function CommunautePage() {
     const { data: followRows } = await supabase.from('follows').select('id, follower_id, following_id, statut, created_at').eq('follower_id', user.id).eq('statut', 'accepted').order('created_at', { ascending: false });
     if (!followRows) { setAbonnementsLoading(false); return; }
     const ids = followRows.map((r) => r.following_id);
-    let profileMap: Record<string, ProfilPublic> = {};
+    const profileMap: Record<string, ProfilPublic> = {};
     if (ids.length > 0) {
       const { data: profiles } = await supabase.from('profils_publics').select('*').in('id', ids);
       if (profiles) for (const p of profiles) profileMap[p.id] = p as ProfilPublic;
@@ -585,7 +585,7 @@ export function CommunautePage() {
     if (!followRows) { setAbonnesLoading(false); return; }
     setPendingCount(followRows.filter((r) => r.statut === 'pending').length);
     const ids = followRows.map((r) => r.follower_id);
-    let profileMap: Record<string, ProfilPublic> = {};
+    const profileMap: Record<string, ProfilPublic> = {};
     if (ids.length > 0) {
       const { data: profiles } = await supabase.from('profils_publics').select('*').in('id', ids);
       if (profiles) for (const p of profiles) profileMap[p.id] = p as ProfilPublic;

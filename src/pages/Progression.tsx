@@ -97,7 +97,7 @@ const TECH_ELEMENTS = [
 ];
 
 function techStatus(key: string, jumps: JumpProg[]): { status: 'maitrise' | 'en_cours' | 'non' | 'unevaluated'; pct: number } {
-  const vals = jumps.slice(0, 10).map((d) => (d as any)[key]).filter(Boolean);
+  const vals = jumps.slice(0, 10).map((d) => (d as Record<string, unknown>)[key]).filter(Boolean);
   if (!vals.length) return { status: 'unevaluated', pct: 0 };
   const m = vals.filter((v: string) => v === 'maitrise').length;
   const e = vals.filter((v: string) => v === 'en_cours').length;
@@ -109,7 +109,6 @@ function techStatus(key: string, jumps: JumpProg[]): { status: 'maitrise' | 'en_
 }
 
 const STATUS_COLORS = { maitrise: '#10B981', en_cours: '#F59E0B', non: '#EF4444', unevaluated: 'rgba(255,255,255,0.15)' };
-const STATUS_LABELS = { maitrise: 'Maîtrisé', en_cours: 'En cours', non: 'Non maîtrisé', unevaluated: 'Non évalué' };
 
 // ─── Mini sparkline (inline SVG) ─────────────────────────────────────────────
 
@@ -236,7 +235,7 @@ export function ProgressionPage() {
   const last20 = evaluatedJumps.slice(0, 20);
   const techAvg = TECH_ELEMENTS.map(({ key }) => {
     const vals = last20.map((d) => {
-      const v = (d as any)[key];
+      const v = (d as Record<string, unknown>)[key];
       if (v === 'maitrise') return 5;
       if (v === 'en_cours') return 3;
       if (v === 'non') return 1;

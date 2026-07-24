@@ -187,7 +187,7 @@ export function TandemPreparerPage() {
   });
   const [poids, setPoids] = useState('');
   const [signatureDataUrl, setSignatureDataUrl] = useState('');
-  const [signatureSaved, setSignatureSaved] = useState(false);
+  const [, setSignatureSaved] = useState(false);
 
   useEffect(() => {
     if (!token) { setErreur('Lien invalide.'); setLoading(false); return; }

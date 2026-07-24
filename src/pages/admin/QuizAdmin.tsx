@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { Layout } from '../../components/Layout';
@@ -196,7 +195,6 @@ function QuestionForm({ initial, onSave, onCancel }: {
 
 export function QuizAdminPage() {
   const { profile } = useAuth();
-  const navigate = useNavigate();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);

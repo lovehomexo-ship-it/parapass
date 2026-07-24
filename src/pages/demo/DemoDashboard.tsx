@@ -323,14 +323,9 @@ function DemoDashboardInner() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<DashTab>('accueil');
   const [selectedSaut, setSelectedSaut] = useState<Saut | null>(null);
-  const [toastVisible, setToastVisible] = useState(false);
+  const [toastVisible] = useState(false);
   const [conversionTitle, setConversionTitle] = useState('');
   const [showConversion, setShowConversion] = useState(false);
-
-  const showToast = () => {
-    setToastVisible(true);
-    setTimeout(() => setToastVisible(false), 3000);
-  };
 
   const showConversionModal = (title: string) => {
     setConversionTitle(title);

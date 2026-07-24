@@ -88,7 +88,7 @@ export function VerifyOfflinePage() {
       if (data.exp < now) { setStatus('expired'); return; }
 
       setStatus(isOnline ? 'valid' : 'valid-offline');
-    } catch (e) {
+    } catch {
       setError('Erreur lors de la vérification.');
       setStatus('invalid');
     }

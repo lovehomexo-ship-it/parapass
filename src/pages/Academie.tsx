@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { Layout } from '../components/Layout';
 import { getGrade, getProgressToNextGrade, THEMES, QUIZ_BADGES, RARETE_COLORS } from '../lib/quiz';
-import { BookOpen, Trophy, Flame, Zap, ChevronRight, Star, Award, Lock } from 'lucide-react';
+import { Flame, ChevronRight } from 'lucide-react';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 

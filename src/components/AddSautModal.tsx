@@ -34,8 +34,6 @@ const darkInputErr: React.CSSProperties = {
   ...darkInput,
   borderColor: 'rgba(239,68,68,0.6)',
 };
-const inputCls = '';
-const inputErrCls = '';
 const labelCls = 'block text-sm font-medium mb-1' as const;
 
 // ─── Notation ternaire ────────────────────────────────────────────────────────
@@ -130,49 +128,6 @@ function ProgTernaireSelector({ label, value, onChange, tooltip }: {
               title={opt.label}
             >
               {opt.short}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ─── Notation étoiles 1-5 ────────────────────────────────────────────────────
-const STAR_COLORS = ['', '#EF4444', '#F59E0B', '#EAB308', '#84CC16', '#10B981'];
-const STAR_LABELS = ['', 'À travailler', 'En progression', 'Correct', 'Bien', 'Excellent'];
-
-function StarSelector({ label, icon, value, onChange, labels: customLabels }: {
-  label: string;
-  icon: string;
-  value: number | null;
-  onChange: (v: number | null) => void;
-  labels?: string[];
-}) {
-  const displayLabels = customLabels || STAR_LABELS;
-  return (
-    <div className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.05)' }}>
-      <div className="flex items-center gap-1.5 mb-2">
-        <span className="text-base">{icon}</span>
-        <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.7)' }}>{label}</span>
-        {value && (
-          <span className="ml-auto text-xs font-medium" style={{ color: STAR_COLORS[value] }}>
-            {displayLabels[value]}
-          </span>
-        )}
-      </div>
-      <div className="flex gap-1.5">
-        {[1, 2, 3, 4, 5].map((n) => {
-          const selected = value === n;
-          return (
-            <button
-              key={n}
-              type="button"
-              onClick={() => onChange(selected ? null : n)}
-              style={selected ? { background: STAR_COLORS[n], color: '#fff', borderColor: 'transparent' } : { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.12)' }}
-              className="flex-1 h-9 rounded-lg text-xs font-bold transition-all"
-            >
-              {n}
             </button>
           );
         })}
@@ -619,9 +574,6 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
   const isMoniteur = profile?.role === 'moniteur' || profile?.role === 'admin';
   // PAC/A brevetés → blocs position corps remplis par moniteur (lecture seule)
   // B+ → masqués complètement car non pertinents pour autonomes
-  const isPACOuA = ['PAC', 'A'].includes(userBrevet ?? '');
-  const isBPlus = ['B', 'BPA', 'C', 'D', 'B1', 'B2', 'B3', 'Bi4', 'B4', 'Bi5', 'B5', 'VH', 'WS1', 'WS2', 'WS3'].includes(userBrevet ?? '');
-  const showPositionCorps = isMoniteur || isPACOuA || (!isBPlus && !isPACOuA);
   const moniteurProfile = profile as (typeof profile & { numero_brevet_moniteur?: string; type_brevet_moniteur?: string; moniteur_valide_par_dt?: boolean }) | null;
 
   // Fermeture par Escape
@@ -844,14 +796,6 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
 
   const posValues = [form.position_tete, form.position_bassin, form.position_jambes, form.position_bras].filter(Boolean) as number[];
   const posGlobale = posValues.length > 0 ? Math.round(posValues.reduce((a, b) => a + b, 0) / posValues.length) : null;
-
-  const getPositionLabel = (score: number | null): { label: string; color: string } => {
-    if (score === null) return { label: '', color: '' };
-    if (score < 2) return { label: 'À travailler', color: '#EF4444' };
-    if (score < 3) return { label: 'En progression', color: '#F59E0B' };
-    if (score < 4) return { label: 'Correcte', color: '#003082' };
-    return { label: 'Excellente', color: '#10B981' };
-  };
 
   const doInsert = async (validateDirectly: boolean) => {
     if (blockIfDemo()) return;

@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
-import { QrScannerButton, QrScanner } from '../components/QrScanner';
+import { QrScanner } from '../components/QrScanner';
 import { ParachuteIcon, ParachuteDropIcon } from '../components/ParachuteIcon';
 import { PlanningDZ } from './PlanningDZ';
 import { Layout } from '../components/Layout';
@@ -27,9 +27,9 @@ import { usePassport } from '../lib/usePassport';
 import { useDemo } from '../lib/useDemo';
 import { PasseportCardView } from '../components/PasseportCardView';
 import {
-  Plus, FileDown, QrCode, Calendar, TrendingUp,
+  Plus, FileDown, QrCode, TrendingUp,
   ChevronDown, ChevronUp, Trash2, X, ShieldCheck, Hash,
-  Pencil, Lock, Award, ChevronRight, Wind, Thermometer, Cloud, Sun, CloudRain, Camera, Wallet, Flame,
+  Pencil, Lock, Award, ChevronRight, Camera, Wallet, Flame,
 } from 'lucide-react';
 
 // ─── Weather helpers (reused from PlanningDZ) ────────────────────────────────
@@ -1732,7 +1732,6 @@ function ProgressionCard({ userId }: { userId: string | null }) {
     const vals = [d.note_tete, d.note_bassin, d.note_jambes, d.note_bras].filter((v): v is number => v !== null);
     return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
   }));
-  const atterrissageAvg = avg(data.map((d) => d.note_atterrissage));
   const mentalAvg = avg(data.map((d) => d.note_mental));
 
   const precisions = data.map((d) => d.precision_metres).filter((v): v is number => v !== null);

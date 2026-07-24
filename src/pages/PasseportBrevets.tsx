@@ -108,11 +108,12 @@ function BrevetSection({
   onRefresh: () => void;
 }) {
   const def = MODULES_PAR_BREVET[typeBrevet];
-  if (!def) return null;
-
+  // Les hooks doivent être appelés inconditionnellement : on calcule l'état
+  // AVANT tout early-return pour garantir un ordre d'appel stable.
   const brevetFinal = brevets.find((b) => b.type_brevet === typeBrevet);
   const modulesDuBrevet = modules.filter((m) => m.type_brevet === typeBrevet);
   const [open, setOpen] = useState(brevetFinal !== undefined);
+  if (!def) return null;
 
   const validated = (code: string) => modulesDuBrevet.find((m) => m.code_module === code) ?? null;
 

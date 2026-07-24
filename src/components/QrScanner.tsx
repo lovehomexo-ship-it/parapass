@@ -63,7 +63,7 @@ export function QrScanner({ onClose }: QrScannerProps) {
       onClose();
       navigate(route);
     }, 300);
-  }, [found, navigate, onClose]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [found, navigate, onClose]);  
 
   const stopStream = () => {
     cancelAnimationFrame(rafRef.current);

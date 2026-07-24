@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DemoProvider, DemoBanner, useDemo } from '../lib/DemoContext';
 import { BadgesGrid } from './Badges';
-import { ParachuteIcon, ParachuteDropIcon } from '../components/ParachuteIcon';
+import { ParachuteDropIcon } from '../components/ParachuteIcon';
 import { AlertsPanel, CritiqueBanner } from '../components/AlertsPanel';
 import type { Saut, NotationTernaire, Materiel, Maintenance } from '../lib/types';
 import { NATURE_SAUT_LABELS, CATEGORIE_LABELS, FONCTION_LABELS, TYPE_MATERIEL_LABELS, TYPE_MAINTENANCE_LABELS } from '../lib/types';

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { getGrade, PROPOSITION_COLORS, diffLabel, type QuizQuestion, type QuizResult } from '../lib/quiz';
-import { ArrowLeft, ChevronRight, Clock, Zap, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Clock, CheckCircle, XCircle } from 'lucide-react';
 
 // ─── Durée timer par question (secondes) ────────────────────────────────────────
 
@@ -255,7 +255,6 @@ export function AcademieQuizPage() {
   }, [user, submitting, questions, currentIdx, mode, sessionId]);
 
   const next = useCallback(() => {
-    const xpThisQ = result?.xp_gagnes ?? 0;
     const isLast = currentIdx >= questions.length - 1;
 
     if (isLast) {

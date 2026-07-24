@@ -7,7 +7,7 @@ import { NATURE_SAUT_LABELS, CATEGORIE_LABELS } from '../lib/types';
 import { hashSautData } from '../lib/validationCrypto';
 import {
   CheckCircle, XCircle, Clock, ShieldCheck, AlertTriangle, Key,
-  ChevronRight, Hash, Eye,
+  Hash,
 } from 'lucide-react';
 import { ParachuteIcon } from '../components/ParachuteIcon';
 
@@ -117,7 +117,7 @@ function RefusModal({ saut, onConfirm, onCancel }: {
 
 // ─── Validation 3-step Modal ───────────────────────────────────────────────────
 
-function ValidationModal({ saut, moniteurNom, moniteurBrevet, dtNom, delegationId, onDone, onCancel }: {
+function ValidationModal({ saut, moniteurNom, moniteurBrevet, dtNom, onDone, onCancel }: {
   saut: SautPending;
   moniteurNom: string;
   moniteurBrevet: string;

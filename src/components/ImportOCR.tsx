@@ -176,30 +176,6 @@ function classifyFetchError(err: unknown): string {
   return err.message || 'Analyse impossible. Réessayez.';
 }
 
-const OCR_PROMPT = `Tu es un expert en lecture de carnets de sauts parachutisme français (format FFP).
-Analyse TOUTES les pages fournies et extrais ABSOLUMENT TOUS les sauts visibles dans les tableaux.
-
-Pour chaque ligne de saut retourne un objet JSON avec ces champs exacts :
-- numero : numéro du saut (string, ex: "142")
-- date : DD/MM/YYYY (ex: "15/06/2024"), "" si illisible
-- lieu : DZ ou centre (ex: "BigAir Rochefort"), "" si illisible
-- aeronef : immatriculation ou type avion (ex: "F-HABC"), "" si illisible
-- hauteur : altitude de largage en mètres, NOMBRE SEUL (ex: "4000"), "4000" si illisible
-- hauteur_ouverture : altitude ouverture (ex: "1500"), "1500" si illisible
-- voilure : voilure principale (ex: "PD-270"), "" si illisible
-- programme : programme du saut (ex: "PAC 3", "Solo", "VRW"), "" si absent
-- nature : un seul parmi "entrainement" | "competition" | "manifestation" | "travail_aerien"
-- nom_moniteur : nom du moniteur signataire, "" si absent
-- observations : observations si lisibles, "" sinon
-- confiance : entier 0-100 représentant la qualité de lecture de cette ligne
-
-Règles importantes :
-1. Inclus TOUTES les lignes visibles, même partiellement lisibles (confiance peut être faible)
-2. Ne saute AUCUNE ligne du tableau, même si certains champs sont vides
-3. Si une ligne est presque illisible, inclus-la avec confiance ≤ 30 et les champs lisibles
-
-Retourne UNIQUEMENT un tableau JSON valide, sans aucun texte avant ou après, sans markdown.
-Format : [{"numero":"1","date":"20/05/2024","lieu":"BigAir","aeronef":"Pilatus","hauteur":"4000","hauteur_ouverture":"1500","voilure":"PD-270","programme":"PAC 1","nature":"entrainement","nom_moniteur":"MARTIN Paul","observations":"","confiance":90}, ...]`;
 
 async function scanToutesPhotos(photos: PhotoItem[]): Promise<SautExtrait[]> {
   // Compress every image before encoding — prevents "Load failed" on large phone photos

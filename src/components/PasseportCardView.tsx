@@ -1,8 +1,7 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { supabase } from '../lib/supabase';
 import { ParachuteIcon } from './ParachuteIcon';
-import { TamponDZ } from './TamponDZ';
 import type { TamponConfig } from './TamponDZ';
 import { TYPE_BREVET_LABELS } from '../lib/types';
 import type { Licence, Brevet, CertificatMedical, CentreLicencie, Qualification } from '../lib/types';
@@ -101,38 +100,10 @@ function StatusPill({ status, days }: { status: ValidityStatus; days: number | n
   );
 }
 
-// ─── Cachet SVG officiel ────────────────────────────────────────────────────────
-
-function CachetSVG({ nomCentre, nomDT, couleur = '#1D4ED8' }: { nomCentre: string; nomDT: string; couleur?: string }) {
-  const cleanNom = nomCentre.toUpperCase().slice(0, 30);
-  const cleanDT = nomDT.toUpperCase().slice(0, 24);
-  return (
-    <svg width="160" height="80" viewBox="0 0 160 80" style={{ overflow: 'visible' }}>
-      <ellipse cx="80" cy="40" rx="75" ry="35" fill="none" stroke={couleur} strokeWidth="2" />
-      <ellipse cx="80" cy="40" rx="70" ry="30" fill="none" stroke={couleur} strokeWidth="1" />
-      <path id="arc-haut-cachet" d="M 15,40 A 65,30 0 0,1 145,40" fill="none" />
-      <text fontSize="9" fill={couleur} fontWeight="bold" fontFamily="sans-serif">
-        <textPath href="#arc-haut-cachet" startOffset="50%" textAnchor="middle">
-          {cleanNom}
-        </textPath>
-      </text>
-      <text x="80" y="37" textAnchor="middle" fontSize="7" fill={couleur} fontWeight="bold" fontFamily="sans-serif">
-        DIRECTEUR TECHNIQUE
-      </text>
-      <path id="arc-bas-cachet" d="M 15,40 A 65,30 0 0,0 145,40" fill="none" />
-      <text fontSize="8" fill={couleur} fontFamily="sans-serif">
-        <textPath href="#arc-bas-cachet" startOffset="50%" textAnchor="middle">
-          {cleanDT}
-        </textPath>
-      </text>
-    </svg>
-  );
-}
-
 // ─── Recto card ─────────────────────────────────────────────────────────────────
 
 function CardRecto({ data, id }: { data: PasseportData; id: string }) {
-  const { profile, licences, brevets, certificats, centresLicencies, sautsCount, validSautsCount, qrToken } = data;
+  const { profile, licences, brevets, certificats, centresLicencies, sautsCount, validSautsCount } = data;
   const now = new Date();
   const licence = licences[0];
   const certif = certificats[0];
@@ -345,9 +316,8 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
 // ─── Verso card ─────────────────────────────────────────────────────────────────
 
 function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isOwner: boolean }) {
-  const { profile, licences, centresLicencies, qrToken, dernierControle } = data;
+  const { profile, licences, qrToken, dernierControle } = data;
   const licence = licences[0];
-  const activeLicencie = centresLicencies.find(c => c.statut === 'actif');
 
   const numeroLicence = licence?.numero_licence || profile.numero_licence || null;
 

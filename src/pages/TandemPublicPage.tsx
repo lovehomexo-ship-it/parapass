@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ParaPassLogo } from '../components/ParaPassLogo';
-import { ChevronLeft, ChevronRight, Video, Camera, Gift, Check, X, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Video, Camera, Gift, Check, AlertCircle } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -211,7 +211,7 @@ export function TandemPublicPage() {
     message: '',
   });
   const [submitting, setSubmitting] = useState(false);
-  const [bookingId, setBookingId] = useState<string | null>(null);
+  const [, setBookingId] = useState<string | null>(null);
   const [giftCode, setGiftCode] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
