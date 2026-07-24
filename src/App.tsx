@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import { MaintenancePage } from './pages/MaintenancePage';
 import { AdminSecretPage } from './pages/AdminSecret';
 import { AuthProvider, useAuth } from './lib/auth';
+import { Layout } from './components/Layout';
 import { AlertesProvider } from './lib/AlertesContext';
 import { GlobalDemoProvider, DemoToastProvider } from './lib/DemoContext';
 import { ThemeProvider } from './lib/ThemeContext';
@@ -60,6 +61,40 @@ function AuthRedirect() {
   if (profile?.role === 'admin_centre') return <Navigate to="/centre/dashboard" replace />;
   if (profile?.role === 'admin') return <Navigate to="/admin" replace />;
   return <Navigate to="/dashboard" replace />;
+}
+
+// ─── 404 applicatif ───────────────────────────────────────────────────────────
+// Une route inconnue EN SESSION ne doit jamais renvoyer la landing publique
+// (« Se connecter »), qui donne l'impression d'être déconnecté. On garde la
+// session et la navigation, et on propose un retour vers une route valide.
+
+function NotFoundInApp() {
+  const location = useLocation();
+  return (
+    <div className="flex flex-col items-center justify-center text-center px-6 py-20">
+      <div className="text-6xl font-black" style={{ color: 'var(--c-text, #001A4D)' }}>404</div>
+      <h1 className="mt-3 text-xl font-bold" style={{ color: 'var(--c-text, #0F172A)' }}>Page introuvable</h1>
+      <p className="mt-2 text-sm max-w-sm" style={{ color: 'var(--c-dim, #64748B)' }}>
+        L'adresse <code className="px-1 py-0.5 rounded bg-black/10 break-all">{location.pathname}</code> n'existe pas. Votre session reste active.
+      </p>
+      <Link to="/dashboard" replace className="mt-6 px-5 py-2.5 rounded-xl text-sm font-bold text-white"
+        style={{ background: 'linear-gradient(135deg, #001A4D, #1E3A5F)' }}>
+        Retour au tableau de bord
+      </Link>
+    </div>
+  );
+}
+
+function NotFoundPage() {
+  const { user, profile, loading } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#001A4D]" /></div>;
+  // Déconnecté : la landing publique est légitime.
+  if (!user) return <Navigate to="/" replace />;
+  // Admins : renvoyés vers LEUR tableau de bord (session conservée, jamais la landing).
+  if (profile?.role === 'admin_centre') return <Navigate to="/centre/dashboard" replace />;
+  if (profile?.role === 'admin') return <Navigate to="/admin" replace />;
+  // Parachutiste / moniteur : 404 applicatif avec la navigation principale (Layout).
+  return <Layout><NotFoundInApp /></Layout>;
 }
 
 // ─── ProfileGate ──────────────────────────────────────────────────────────────
@@ -173,7 +208,7 @@ function App() {
                 <Route path="/verify/:token" element={<VerifyPage />} />
                 <Route path="/v" element={<VerifyOfflinePage />} />
                 <Route path="/auth-redirect" element={<AuthRedirect />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
               </ErrorBoundary>
               </ProfileGate>

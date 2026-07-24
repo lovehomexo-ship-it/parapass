@@ -24,6 +24,8 @@ import { CheckInPresence } from '../components/CheckInPresence';
 import { useDzMembre } from '../lib/briefing';
 import { useBadges } from '../lib/useBadges';
 import { usePassport } from '../lib/usePassport';
+import { countMasteredElements } from '../lib/progression';
+import { formatDateTimeParis } from '../lib/datetime';
 import { useDemo } from '../lib/useDemo';
 import { PasseportCardView } from '../components/PasseportCardView';
 import {
@@ -599,12 +601,15 @@ export function DashboardPage() {
 
       {/* Sub-nav */}
       <div style={{ background: 'var(--c-nav)', borderBottom: '1px solid var(--c-border-s)' }} className="sticky top-14 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex">
+        {/* Défilement horizontal DÉDIÉ à la barre (pas de scroll de page) : à
+            320/375/414 px les onglets restent lisibles et cliquables, sans
+            chevauchement. */}
+        <div className="max-w-7xl mx-auto flex overflow-x-auto scrollbar-hide">
           {subTabs.map((t) => (
             <button
               key={t.key}
               onClick={() => setActiveTab(t.key)}
-              className={`px-4 py-3 text-sm border-b-2 transition-colors whitespace-nowrap font-medium ${
+              className={`flex-shrink-0 px-3 sm:px-4 py-3 text-sm border-b-2 transition-colors whitespace-nowrap font-medium ${
                 activeTab === t.key
                   ? 'border-[#F97316] font-semibold'
                   : 'border-transparent'
@@ -1571,10 +1576,20 @@ function SautDetailModal({ saut, onClose }: { saut: Saut; onClose: () => void })
           )}
 
           {saut.source !== 'soufflerie' && (
-          <div className="pt-1">
+          <div className="pt-1 space-y-0.5">
             {statutBadge(saut)}
-            {saut.valide_par && <p style={{ color: 'rgba(255,255,255,0.35)' }} className="text-xs mt-1">Signé par : {saut.valide_par}</p>}
-            {saut.valide_le && <p style={{ color: 'rgba(255,255,255,0.35)' }} className="text-xs">Le : {new Date(saut.valide_le).toLocaleDateString('fr-FR')}</p>}
+            {/* Moniteur DÉCLARÉ au log — distinct du validateur, jamais écrasé. */}
+            {saut.moniteur_nom_libre && (
+              <p style={{ color: 'rgba(255,255,255,0.5)' }} className="text-xs mt-1">
+                Moniteur déclaré : {saut.moniteur_nom_libre}
+              </p>
+            )}
+            {/* Trace de validation — identique côté DT et côté parachutiste. */}
+            {saut.valide_par && (
+              <p style={{ color: 'rgba(255,255,255,0.35)' }} className="text-xs">
+                Validé par {saut.valide_par}{saut.valide_le ? ` le ${formatDateTimeParis(saut.valide_le)}` : ''}
+              </p>
+            )}
           </div>
           )}
         </div>
@@ -1737,11 +1752,9 @@ function ProgressionCard({ userId }: { userId: string | null }) {
   const precisions = data.map((d) => d.precision_metres).filter((v): v is number => v !== null);
   const precisionAvg = precisions.length ? Math.round(precisions.reduce((a, b) => a + b, 0) / precisions.length) : null;
 
-  const TECH_FIELDS = ['sortie_avion','retour_face_sol','vigilance_altitude','ouverture','separation','trajectoire','declenchement','pilotage_voile','circuit_atterro','precision_atterro','gestion_urgences'] as const;
-  const maitrisesTotal = data.flatMap((d) => TECH_FIELDS.map((f) => d[f as keyof JumpProgSummary])).filter((v) => v === 'maitrise').length;
-  const evalTotal = data.flatMap((d) => TECH_FIELDS.map((f) => d[f as keyof JumpProgSummary])).filter((v) => v !== null).length;
-  const techMaîtrisePct = evalTotal > 0 ? maitrisesTotal / evalTotal : 0;
-  const techScore = Math.round(techMaîtrisePct * 11);
+  // Source unique (progression.ts) : nombre d'éléments techniques maîtrisés —
+  // même calcul que la page /progression (sinon 8/11 vs 11/11).
+  const { mastered: techScore, total: techTotal } = countMasteredElements(data as unknown as Record<string, unknown>[]);
 
   const atterrissageDebout = data.filter((d) => (d.note_atterrissage ?? 0) >= 4).length;
 
@@ -1782,10 +1795,10 @@ function ProgressionCard({ userId }: { userId: string | null }) {
     },
     {
       label: 'Éléments maîtrisés',
-      value: `${techScore} / 11`,
+      value: `${techScore} / ${techTotal}`,
       color: '#003082',
       sub: null,
-      bar: techScore / 11 * 100,
+      bar: techScore / techTotal * 100,
       barColor: '#003082',
     },
     {

@@ -10,6 +10,7 @@ import { useAuth } from '../lib/auth';
 import { Layout } from '../components/Layout';
 import { Link, useNavigate } from 'react-router-dom';
 import { ParachuteIcon } from '../components/ParachuteIcon';
+import { TECH_ELEMENTS, techStatus, countMasteredElements } from '../lib/progression';
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, BarElement,
@@ -80,32 +81,6 @@ function scoreColor(v: number): string {
   if (v < 3) return '#F59E0B';
   if (v < 4) return '#3B82F6';
   return '#10B981';
-}
-
-const TECH_ELEMENTS = [
-  { key: 'sortie_avion', label: 'Sortie avion' },
-  { key: 'retour_face_sol', label: 'Retour face sol' },
-  { key: 'vigilance_altitude', label: 'Vigilance altitude' },
-  { key: 'ouverture', label: 'Ouverture' },
-  { key: 'separation', label: 'Séparation' },
-  { key: 'trajectoire', label: 'Trajectoire' },
-  { key: 'declenchement', label: 'Déclenchement' },
-  { key: 'pilotage_voile', label: 'Pilotage voile' },
-  { key: 'circuit_atterro', label: 'Circuit atterro' },
-  { key: 'precision_atterro', label: 'Précision atterro' },
-  { key: 'gestion_urgences', label: 'Gestion urgences' },
-];
-
-function techStatus(key: string, jumps: JumpProg[]): { status: 'maitrise' | 'en_cours' | 'non' | 'unevaluated'; pct: number } {
-  const vals = jumps.slice(0, 10).map((d) => (d as Record<string, unknown>)[key]).filter(Boolean);
-  if (!vals.length) return { status: 'unevaluated', pct: 0 };
-  const m = vals.filter((v: string) => v === 'maitrise').length;
-  const e = vals.filter((v: string) => v === 'en_cours').length;
-  const n = vals.filter((v: string) => v === 'non').length;
-  const total = m + e + n;
-  if (m >= e && m >= n) return { status: 'maitrise', pct: (m / total) * 100 };
-  if (e >= n) return { status: 'en_cours', pct: (e / total) * 100 };
-  return { status: 'non', pct: (n / total) * 100 };
 }
 
 const STATUS_COLORS = { maitrise: '#10B981', en_cours: '#F59E0B', non: '#EF4444', unevaluated: 'rgba(255,255,255,0.15)' };
@@ -210,6 +185,8 @@ export function ProgressionPage() {
   }, [progData]);
 
   const evaluatedJumps = useMemo(() => progData.filter((d) => d.note_globale !== null), [progData]);
+  // Vue « enregistrements » pour les helpers partagés (progression.ts).
+  const evalRecords = evaluatedJumps as unknown as Record<string, unknown>[];
   const totalSauts = allSauts.length;
   const totalEvalued = evaluatedJumps.length;
   const evalRate = totalSauts > 0 ? (totalEvalued / totalSauts) * 100 : 0;
@@ -622,12 +599,12 @@ export function ProgressionPage() {
                         <div className="flex justify-between mb-1">
                           <span className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>Éléments techniques maîtrisés</span>
                           <span className="text-xs font-bold text-white">
-                            {TECH_ELEMENTS.filter(({ key }) => techStatus(key, evaluatedJumps).status === 'maitrise').length}/{TECH_ELEMENTS.length}
+                            {countMasteredElements(evalRecords).mastered}/{countMasteredElements(evalRecords).total}
                           </span>
                         </div>
                         <div className="space-y-1.5 mt-2">
                           {TECH_ELEMENTS.map(({ key, label }) => {
-                            const { status } = techStatus(key, evaluatedJumps);
+                            const { status } = techStatus(key, evalRecords);
                             const color = STATUS_COLORS[status];
                             const icon = status === 'maitrise' ? '✓' : status === 'en_cours' ? '~' : status === 'non' ? '✗' : '·';
                             return (
@@ -654,7 +631,7 @@ export function ProgressionPage() {
                         </div>
                       )}
 
-                      {TECH_ELEMENTS.every(({ key }) => techStatus(key, evaluatedJumps).status === 'unevaluated') && (
+                      {TECH_ELEMENTS.every(({ key }) => techStatus(key, evalRecords).status === 'unevaluated') && (
                         <p className="text-xs text-center py-4" style={{ color: 'rgba(255,255,255,0.3)' }}>
                           Aucun élément technique évalué pour l'instant
                         </p>

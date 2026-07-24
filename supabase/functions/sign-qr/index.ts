@@ -53,8 +53,10 @@ serve(async (req) => {
         adminClient.from('licences').select('numero_licence,date_expiration,statut').eq('parachutiste_id', user.id),
         adminClient.from('brevets').select('type_brevet').eq('parachutiste_id', user.id).order('date_obtention', { ascending: false }).limit(1).maybeSingle(),
         adminClient.from('certificats_medicaux').select('date_expiration').eq('parachutiste_id', user.id).order('date_expiration', { ascending: false }).limit(1).maybeSingle(),
-        adminClient.from('sauts').select('id', { count: 'exact', head: true }).eq('parachutiste_id', user.id).neq('source', 'soufflerie'),
-        adminClient.from('sauts').select('id', { count: 'exact', head: true }).eq('parachutiste_id', user.id).neq('source', 'soufflerie').in('statut', ['valide', 'historique']),
+        // Définition canonique (Prompt F) : hors soufflerie = is_tunnel = false,
+        // valid = statut IN ('valide','historique') — identique à get_jump_counts.
+        adminClient.from('sauts').select('id', { count: 'exact', head: true }).eq('parachutiste_id', user.id).eq('is_tunnel', false),
+        adminClient.from('sauts').select('id', { count: 'exact', head: true }).eq('parachutiste_id', user.id).eq('is_tunnel', false).in('statut', ['valide', 'historique']),
       ]);
 
     // Licence de référence : la ligne ACTIVE à l'échéance la plus lointaine, sinon

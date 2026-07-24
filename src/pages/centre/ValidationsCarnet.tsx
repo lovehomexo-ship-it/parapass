@@ -349,7 +349,7 @@ function ParaCard({ para, dzId, onDone }: { para: ParaEnAttente; dzId: string; o
   );
 }
 
-export function ValidationsCarnet({ dzId }: { dzId: string }) {
+export function ValidationsCarnet({ dzId, onNavigate }: { dzId: string; onNavigate?: (s: string) => void }) {
   const [paras, setParas] = useState<ParaEnAttente[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'en_attente' | 'valide' | 'refuse' | 'tous'>('en_attente');
@@ -436,9 +436,14 @@ export function ValidationsCarnet({ dzId }: { dzId: string }) {
   return (
     <div className="p-6 space-y-6 max-w-2xl">
       <div>
-        <h2 className="text-xl font-bold" style={{ color: 'var(--c-text)' }}>Validations carnet</h2>
+        <h2 className="text-xl font-bold" style={{ color: 'var(--c-text)' }}>Attestation de carnet</h2>
         <p className="text-sm mt-1" style={{ color: 'var(--c-dim)' }}>
-          Validez les carnets parachutistes de vos licenciés actifs.
+          Attestation globale du carnet (tampon + signature) de vos licenciés actifs.
+          {onNavigate && (
+            <> Pour valider un saut individuel en attente, voir{' '}
+              <button onClick={() => onNavigate('sauts')} className="font-semibold text-blue-500 hover:underline">Sauts à valider</button>.
+            </>
+          )}
         </p>
       </div>
 

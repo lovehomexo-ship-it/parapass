@@ -175,7 +175,10 @@ export function VerifyOfflinePage() {
 
             <div className="border-t border-gray-100 pt-3">
               <p className="text-xs text-gray-400">
-                QR émis le {new Date(payload.iat * 1000).toLocaleDateString('fr-FR')} — valide jusqu'au {new Date(payload.exp * 1000).toLocaleDateString('fr-FR')}
+                Nombre de sauts arrêté à l'émission du QR, le {new Date(payload.iat * 1000).toLocaleDateString('fr-FR')} (non garanti en temps réel).
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                QR valide jusqu'au {new Date(payload.exp * 1000).toLocaleDateString('fr-FR')}.
               </p>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
 import { MODULES, computeActiveModules } from '../data/modules';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
@@ -12,6 +12,7 @@ import { AddSautModal } from '../components/AddSautModal';
 import { useComplianceRules, licenceStatus, type ComplianceStatus } from '../lib/compliance';
 import { ComplianceBadge, ComplianceDot } from '../components/ComplianceBadge';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { formatDateTimeParis } from '../lib/datetime';
 import { useCurrencyRules, getCurrencyStatus, CURRENCY_STATUS_CONFIG } from '../lib/currency';
 import { useEncadrement, verifierSeance } from '../lib/encadrement';
 import { MeteoAltitudeDZ } from '../components/MeteoAltitudeCard';
@@ -98,6 +99,9 @@ interface SautSummary {
   categorie: string;
   statut: 'en_attente' | 'valide' | 'refuse';
   is_tunnel: boolean;
+  valide_par?: string | null;
+  valide_le?: string | null;
+  moniteur_nom_libre?: string | null;
   parachutiste_nom?: string;
   parachutiste_prenom?: string;
 }
@@ -838,11 +842,14 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
 
       const ids = deduped.map(l => l.id);
       if (ids.length > 0) {
+        // Total canonique (hors soufflerie, tous statuts) — même définition que
+        // le carnet du parachutiste (useJumpCounts), pour un chiffre identique
+        // sur toutes les vues (Prompt F).
         const { data: sautsData } = await supabase
           .from('sauts')
           .select('parachutiste_id')
           .in('parachutiste_id', ids)
-          .eq('statut', 'valide');
+          .eq('is_tunnel', false);
         const counts: Record<string, number> = {};
         (sautsData ?? []).forEach((s: { parachutiste_id: string }) => {
           counts[s.parachutiste_id] = (counts[s.parachutiste_id] ?? 0) + 1;
@@ -1262,9 +1269,10 @@ function DemandesSection({ centreId, onAccepted }: { centreId: string | undefine
 
 // ─── SautsSection ──────────────────────────────────────────────────────────────
 
-function SautsSection({ centreId }: { centreId: string | undefined }) {
+function SautsSection({ centreId, onNavigate }: { centreId: string | undefined; onNavigate?: (s: string) => void }) {
   const { profile: adminProfile } = useAuth();
   const [tab, setTab] = useState<'attente' | 'today' | 'historique'>('attente');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [sauts, setSauts] = useState<SautSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -1286,7 +1294,7 @@ function SautsSection({ centreId }: { centreId: string | undefined }) {
     const today = new Date().toISOString().split('T')[0];
     let query = supabase
       .from('sauts')
-      .select('id, parachutiste_id, date_saut, lieu, hauteur_m, categorie, statut, is_tunnel')
+      .select('id, parachutiste_id, date_saut, lieu, hauteur_m, categorie, statut, is_tunnel, valide_par, valide_le, moniteur_nom_libre')
       .in('parachutiste_id', ids);
 
     if (tab === 'attente') query = query.eq('statut', 'en_attente');
@@ -1340,7 +1348,7 @@ function SautsSection({ centreId }: { centreId: string | undefined }) {
   };
 
   const tabs = [
-    { key: 'attente', label: 'En attente' },
+    { key: 'attente', label: 'Sauts à valider' },
     { key: 'today', label: "Aujourd'hui" },
     { key: 'historique', label: 'Historique' },
   ] as const;
@@ -1348,7 +1356,17 @@ function SautsSection({ centreId }: { centreId: string | undefined }) {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-bold text-gray-900">Activité des sauts</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Activité des sauts</h1>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Validation des sauts individuels (onglet « Sauts à valider »).
+            {onNavigate && (
+              <> Pour attester un carnet complet, voir{' '}
+                <button onClick={() => onNavigate('validations')} className="font-semibold text-blue-600 hover:underline">Attestation de carnet</button>.
+              </>
+            )}
+          </p>
+        </div>
         {tab === 'historique' && (
           <button onClick={exportCSV} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition">
             <Download className="w-4 h-4" /> Exporter CSV
@@ -1388,7 +1406,11 @@ function SautsSection({ centreId }: { centreId: string | undefined }) {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {sauts.map(s => (
-                <tr key={s.id} className="hover:bg-gray-50 transition">
+                <Fragment key={s.id}>
+                <tr
+                  className="hover:bg-gray-50 transition cursor-pointer"
+                  onClick={() => setExpandedId(id => id === s.id ? null : s.id)}
+                >
                   <td className="px-4 py-3 font-medium text-gray-900">{s.parachutiste_prenom} {s.parachutiste_nom}</td>
                   <td className="px-4 py-3 text-gray-600">{fr(s.date_saut)}</td>
                   <td className="px-4 py-3 text-gray-600">{s.lieu}</td>
@@ -1401,12 +1423,27 @@ function SautsSection({ centreId }: { centreId: string | undefined }) {
                   </td>
                   {tab === 'attente' && (
                     <td className="px-4 py-3">
-                      <button onClick={() => handleValider(s.id)} className="px-3 py-1.5 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg text-xs flex items-center gap-1 transition">
+                      <button onClick={(e) => { e.stopPropagation(); handleValider(s.id); }} className="px-3 py-1.5 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg text-xs flex items-center gap-1 transition">
                         <CheckCircle className="w-3 h-3" /> Valider
                       </button>
                     </td>
                   )}
                 </tr>
+                {expandedId === s.id && (
+                  <tr className="bg-gray-50/60">
+                    <td colSpan={tab === 'attente' ? 7 : 6} className="px-4 py-3">
+                      <div className="text-xs text-gray-600 space-y-1">
+                        {/* Moniteur DÉCLARÉ au log — distinct du validateur, non modifiable. */}
+                        <div>Moniteur déclaré : <span className="font-medium text-gray-900">{s.moniteur_nom_libre || '—'}</span></div>
+                        {/* Trace de validation — identique côté parachutiste. */}
+                        {s.statut === 'valide' && (
+                          <div>Validé par <span className="font-medium text-gray-900">{s.valide_par || '—'}</span>{s.valide_le ? ` le ${formatDateTimeParis(s.valide_le)}` : ''}</div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               ))}
             </tbody>
           </table>
@@ -2800,7 +2837,7 @@ export function CentreDashboardPage() {
     { key: 'equipe', label: 'Mon équipe', icon: Shield },
     { key: 'centre', label: 'Mon centre', icon: Settings },
     { key: 'messages', label: 'Messages', icon: MessageSquare, badge: msgUnread },
-    { key: 'validations', label: 'Validations carnet', icon: BookCheck, badge: carnetsEnAttente > 0 ? carnetsEnAttente : undefined },
+    { key: 'validations', label: 'Attestation de carnet', icon: BookCheck, badge: carnetsEnAttente > 0 ? carnetsEnAttente : undefined },
     ...(activeModules.has('pliage') ? [{ key: 'pliage', label: 'Gestion pliage', icon: Shield }] : []),
     ...(activeModules.has('finances') ? [{ key: 'finances', label: 'Finances', icon: Euro }] : []),
     ...(activeModules.has('tandem') ? [{ key: 'tandem', label: 'Module Tandem', icon: GraduationCap }] : []),
@@ -3039,7 +3076,7 @@ export function CentreDashboardPage() {
             <DemandesSection centreId={centreId} onAccepted={fetchCentreData} />
           )}
           {activeSection === 'sauts' && (
-            <SautsSection centreId={centreId} />
+            <SautsSection centreId={centreId} onNavigate={setActiveSection} />
           )}
           {activeSection === 'stats' && (
             <StatsSection centreId={centreId} />
@@ -3108,7 +3145,7 @@ export function CentreDashboardPage() {
             </div>
           )}
           {activeSection === 'validations' && centreId && (
-            <ValidationsCarnet dzId={centreId} />
+            <ValidationsCarnet dzId={centreId} onNavigate={setActiveSection} />
           )}
           {activeSection === 'tandem' && centreId && activeModules.has('tandem') && (
             <TandemSection centreId={centreId} />

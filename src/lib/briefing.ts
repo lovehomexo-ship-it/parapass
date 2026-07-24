@@ -261,6 +261,21 @@ export function useBriefingDuJour(dzId: string | undefined) {
     return () => window.removeEventListener('online', onOnline);
   }, [load]);
 
+  // Realtime sur dz_briefings : une (re)publication met à jour published_at ;
+  // toutes les vues doivent le voir pour que le compteur d'acquittements reparte
+  // de 0 (les acks < nouveau published_at ne comptent plus). Sans cet abonnement,
+  // le composant garde un published_at périmé et recompte les anciens acks.
+  useEffect(() => {
+    if (!dzId) return;
+    const channel = supabase
+      .channel(`dz-briefings-${dzId}`)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'dz_briefings', filter: `dz_id=eq.${dzId}` },
+        () => { load(); })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [dzId, load]);
+
   return { settings, briefing, circuit, backgroundUrl, offline, loadError, loading, refresh: load };
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { useJumpCounts } from '../lib/useJumpCount';
@@ -77,6 +77,19 @@ export function QRCodePage() {
     supabase.from('certificats_medicaux').select('*').eq('parachutiste_id', user.id).order('date_expiration', { ascending: false }).limit(1).maybeSingle()
       .then(({ data }) => setCertif(data as CertificatMedical | null));
   }, [user, loadSignedQr]);
+
+  // Régénération automatique quand le carnet change (nouveau saut / validation) :
+  // useJumpCounts est temps réel, donc dès que le total bouge on ré-émet un QR à
+  // jour — le token ne présente plus un total périmé (Prompt G).
+  const countsKey = `${totalSauts}:${validSauts}`;
+  const prevCountsKey = useRef<string | null>(null);
+  useEffect(() => {
+    if (!user) return;
+    if (prevCountsKey.current !== null && prevCountsKey.current !== countsKey) {
+      loadSignedQr(true);
+    }
+    prevCountsKey.current = countsKey;
+  }, [countsKey, user, loadSignedQr]);
 
   const regenerateQr = () => {
     if (!user) return;
