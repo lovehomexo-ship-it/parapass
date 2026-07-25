@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { QR_PUBLIC_KEY_JWK } from '../lib/qrPublicKey';
+import { verdictControle } from '../lib/verdictControle';
 
 type VerifyStatus = 'loading' | 'valid' | 'valid-offline' | 'expired' | 'invalid';
 
@@ -46,6 +47,7 @@ export function VerifyOfflinePage() {
   const [payload, setPayload] = useState<QRPayload | null>(null);
   const [error, setError] = useState<string>('');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [presentation, setPresentation] = useState(false); // mode plein écran de contrôle
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -110,9 +112,46 @@ export function VerifyOfflinePage() {
 
   const cfg = statusConfig[status];
 
+  // Verdict binaire de contrôle (Prompt S) — signature vérifiée hors-ligne.
+  const signatureOk = status === 'valid' || status === 'valid-offline' || status === 'expired';
+  const qrExpire = status === 'expired';
+  const verdict = verdictControle(payload, signatureOk, qrExpire);
+  const enRegle = status !== 'loading' && verdict.enRegle;
+  const verdictBg = status === 'loading' ? '#334155' : enRegle ? '#15803D' : '#B91C1C';
+  const verdictLabel = status === 'loading' ? 'Vérification…' : enRegle ? 'EN RÈGLE' : 'À VÉRIFIER';
+
+  // Mode plein écran : verdict géant, fort contraste, lisible à un mètre.
+  if (presentation && status !== 'loading') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-center px-6" style={{ background: verdictBg }}>
+        <p className="uppercase tracking-widest text-white/70 text-sm font-bold mb-4">Contrôle ParaPass</p>
+        <p className="font-black text-white leading-none" style={{ fontSize: 'clamp(48px, 18vw, 140px)' }}>{verdictLabel}</p>
+        <p className="text-white/90 text-lg font-semibold mt-4">{verdict.motif}</p>
+        {payload && <p className="text-white text-2xl font-bold mt-6">{payload.prenom} {payload.nom}</p>}
+        {payload?.lic && <p className="text-white/80 text-base mt-1">Licence FFP : {payload.lic}</p>}
+        <button onClick={() => setPresentation(false)}
+          className="mt-10 px-6 py-3 rounded-xl text-base font-bold bg-white/20 text-white active:bg-white/30">
+          Quitter le plein écran
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#001A4D] flex flex-col items-center justify-start pt-8 px-4 pb-8">
       <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-10 w-auto mb-6" />
+
+      {/* Verdict binaire très visible, avant le détail (Prompt S). */}
+      {status !== 'loading' && (
+        <div className="w-full max-w-sm rounded-2xl mb-4 px-6 py-5 text-center shadow-xl" style={{ background: verdictBg }}>
+          <p className="font-black text-white leading-none" style={{ fontSize: 'clamp(34px, 12vw, 56px)' }}>{verdictLabel}</p>
+          <p className="text-white/90 text-sm font-semibold mt-2">{verdict.motif}</p>
+          <button onClick={() => setPresentation(true)}
+            className="mt-4 px-5 py-2.5 rounded-xl text-sm font-bold bg-white/20 text-white active:bg-white/30">
+            Plein écran
+          </button>
+        </div>
+      )}
 
       <div className="w-full max-w-sm bg-white rounded-2xl overflow-hidden shadow-xl">
         {/* Status banner */}
