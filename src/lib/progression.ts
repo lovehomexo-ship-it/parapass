@@ -43,6 +43,18 @@ export function techStatus(
 }
 
 /**
+ * Sauts « à évaluer » (Prompt R) : vrais sauts (hors soufflerie) sans évaluation
+ * saisie (aucune ligne jump_progression avec une note globale). Sert au compteur
+ * de la page progression et à l'invitation post-validation.
+ */
+export function countSautsAEvaluer(
+  sauts: ReadonlyArray<{ id: string; is_tunnel?: boolean | null; statut?: string | null }>,
+  evaluatedJumpIds: ReadonlySet<string>
+): number {
+  return sauts.filter(s => s.is_tunnel !== true && !evaluatedJumpIds.has(s.id)).length;
+}
+
+/**
  * Nombre d'éléments techniques (sur `TECH_ELEMENTS.length`) actuellement
  * maîtrisés. Source unique pour le widget dashboard et la page détail.
  */

@@ -387,6 +387,25 @@ export function DashboardPage() {
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
+  // Sauts déjà évalués (Prompt R) — pour inviter à évaluer les sauts validés qui
+  // ne le sont pas encore. Temps réel : l'invite disparaît dès l'évaluation saisie.
+  const [evaluatedIds, setEvaluatedIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      const { data, error } = await supabase
+        .from('jump_progression').select('jump_id').eq('user_id', user.id).not('note_globale', 'is', null);
+      if (error) { console.error('Chargement évaluations échoué :', error); return; }
+      setEvaluatedIds(new Set((data ?? []).map((d: { jump_id: string }) => d.jump_id)));
+    };
+    load();
+    const ch = supabase
+      .channel(`eval-rt-${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'jump_progression', filter: `user_id=eq.${user.id}` }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [user]);
+
   // Load first centre name + weather
   useEffect(() => {
     if (!centresLicencies.length) return;
@@ -442,6 +461,8 @@ export function DashboardPage() {
 
   const vraisSauts = sauts.filter((s) => !s.is_tunnel);
   const totalSauts = vraisSauts.length;
+  // Sauts validés pas encore évalués (Prompt R) — invite à évaluer, le plus récent d'abord.
+  const sautsAEvaluer = vraisSauts.filter((s) => s.statut === 'valide' && !evaluatedIds.has(s.id));
   const validSauts = vraisSauts.filter((s) => s.statut === 'valide' || s.statut === 'historique').length;
 
   const sautsCetteAnnee = vraisSauts.filter((s) => new Date(s.date_saut).getFullYear() === new Date().getFullYear()).length;
@@ -628,6 +649,28 @@ export function DashboardPage() {
           {/* ─── ACCUEIL ─────────────────────────────────────────────────────── */}
           {activeTab === 'accueil' && (
             <>
+              {/* Invite à évaluer un saut validé (Prompt R) — apparaît dès qu'un
+                  saut est validé et pas encore évalué ; rien n'est noté auto. */}
+              {sautsAEvaluer.length > 0 && (
+                <div className="rounded-2xl p-4 mb-3 flex items-center gap-3 flex-wrap"
+                  style={{ background: 'rgba(249,115,22,0.14)', border: '1.5px solid rgba(249,115,22,0.45)' }}>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-extrabold" style={{ color: '#FFEDD5' }}>
+                      {sautsAEvaluer.length} saut{sautsAEvaluer.length > 1 ? 's' : ''} validé{sautsAEvaluer.length > 1 ? 's' : ''} à évaluer
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                      Évalue ton saut pour faire progresser ta courbe et tes éléments maîtrisés.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { if (!blockIfDemo()) { setSautAEditer(sautsAEvaluer[0]); setModalOpen(true); } }}
+                    className="px-4 py-2.5 rounded-xl text-sm font-bold text-white flex-shrink-0"
+                    style={{ background: '#F97316' }}>
+                    Évaluer ce saut →
+                  </button>
+                </div>
+              )}
+
               {/* 0 — Briefing du jour : PREMIER élément visible, sans scroll
                   (bandeau + carte pour chaque DZ active via licencies_centres) */}
               {briefingDzs.map(dz => (

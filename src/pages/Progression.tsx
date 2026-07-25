@@ -10,7 +10,7 @@ import { useAuth } from '../lib/auth';
 import { Layout } from '../components/Layout';
 import { Link, useNavigate } from 'react-router-dom';
 import { ParachuteIcon } from '../components/ParachuteIcon';
-import { TECH_ELEMENTS, techStatus, countMasteredElements } from '../lib/progression';
+import { TECH_ELEMENTS, techStatus, countMasteredElements, countSautsAEvaluer } from '../lib/progression';
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, BarElement,
@@ -145,6 +145,19 @@ export function ProgressionPage() {
   const [loading, setLoading] = useState(true);
   const [histFilter, setHistFilter] = useState<'all' | 'evaluated' | 'unevaluated' | 'year'>('all');
   const [expandedAdvice, setExpandedAdvice] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  // Temps réel : une évaluation saisie (ou un saut validé) met à jour les
+  // compteurs immédiatement, sans rechargement manuel (Prompt R).
+  useEffect(() => {
+    if (!user) return;
+    const ch = supabase
+      .channel(`progression-rt-${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'jump_progression', filter: `user_id=eq.${user.id}` }, () => setReloadKey(k => k + 1))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sauts', filter: `parachutiste_id=eq.${user.id}` }, () => setReloadKey(k => k + 1))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -176,7 +189,7 @@ export function ProgressionPage() {
       setAllSauts((sautsData as SautRow[]) ?? []);
       setLoading(false);
     })();
-  }, [user]);
+  }, [user, reloadKey]);
 
   const progById = useMemo(() => {
     const map: Record<string, JumpProg> = {};
@@ -190,6 +203,10 @@ export function ProgressionPage() {
   const totalSauts = allSauts.length;
   const totalEvalued = evaluatedJumps.length;
   const evalRate = totalSauts > 0 ? (totalEvalued / totalSauts) * 100 : 0;
+
+  // Sauts restant à évaluer (Prompt R) — source unique côté progression.
+  const evaluatedIds = useMemo(() => new Set(evaluatedJumps.map((d) => d.jump_id)), [evaluatedJumps]);
+  const nbAEvaluer = useMemo(() => countSautsAEvaluer(allSauts, evaluatedIds), [allSauts, evaluatedIds]);
 
   // Trend: compare last 5 vs previous 5
   const last5 = evaluatedJumps.slice(0, 5).map((d) => d.note_globale!);
@@ -442,6 +459,26 @@ export function ProgressionPage() {
     <Layout>
       <div style={{ background: '#001A4D', minHeight: '100vh' }} className="p-4 md:p-8">
         <div className="max-w-6xl mx-auto space-y-8">
+
+          {/* Sauts à évaluer (Prompt R) — invite claire + effet attendu. */}
+          {nbAEvaluer > 0 && (
+            <div className="rounded-2xl p-4 flex items-center gap-3 flex-wrap"
+              style={{ background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.35)' }}>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-white">
+                  {nbAEvaluer} saut{nbAEvaluer > 1 ? 's' : ''} à évaluer
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                  Évaluer un saut alimente ta courbe et tes éléments maîtrisés. Rien n'est noté automatiquement — c'est toi qui saisis tes scores.
+                </p>
+              </div>
+              <button onClick={() => navigate('/dashboard')}
+                className="px-4 py-2.5 rounded-xl text-sm font-bold text-white flex-shrink-0"
+                style={{ background: '#F97316' }}>
+                Évaluer mes sauts →
+              </button>
+            </div>
+          )}
 
           {/* ── HEADER ────────────────────────────────────────────────────── */}
           <div>

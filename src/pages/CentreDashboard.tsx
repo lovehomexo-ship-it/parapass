@@ -14,6 +14,7 @@ import { ComplianceBadge, ComplianceDot } from '../components/ComplianceBadge';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { formatDateTimeParis } from '../lib/datetime';
 import { DecisionDuJour } from '../components/DecisionDuJour';
+import { sautsToCSV } from '../lib/sautsExport';
 import { useCurrencyRules, getCurrencyStatus, CURRENCY_STATUS_CONFIG } from '../lib/currency';
 import { useEncadrement, verifierSeance } from '../lib/encadrement';
 import { MeteoAltitudeDZ } from '../components/MeteoAltitudeCard';
@@ -1277,6 +1278,7 @@ function SautsSection({ centreId, onNavigate }: { centreId: string | undefined; 
   const { profile: adminProfile } = useAuth();
   const [tab, setTab] = useState<'attente' | 'today' | 'historique'>('attente');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [sauts, setSauts] = useState<SautSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -1327,22 +1329,56 @@ function SautsSection({ centreId, onNavigate }: { centreId: string | undefined; 
 
   useEffect(() => { fetchSauts(); }, [fetchSauts]);
 
+  const validateurNom = adminProfile ? `${adminProfile.prenom} ${adminProfile.nom}` : 'Admin Centre';
+
+  // Valide UN saut → passe au suivant (retrait de la file), MAJ locale immédiate.
   const handleValider = async (sautId: string) => {
-    const validateur = adminProfile ? `${adminProfile.prenom} ${adminProfile.nom}` : 'Admin Centre';
+    setActionError(null);
     const { error } = await supabase.from('sauts').update({
-      statut: 'valide',
-      valide_le: new Date().toISOString(),
-      valide_par: validateur,
+      statut: 'valide', valide_le: new Date().toISOString(), valide_par: validateurNom,
     }).eq('id', sautId);
-    if (!error) setSauts(prev => prev.filter(s => s.id !== sautId));
+    if (error) { console.error('Validation échouée :', error); setActionError('Validation impossible. Réessayez.'); return; }
+    setSauts(prev => prev.filter(s => s.id !== sautId));
+  };
+
+  // Refuse UN saut — ne valide rien d'autre (Prompt Q).
+  const handleRefuser = async (sautId: string) => {
+    setActionError(null);
+    const { error } = await supabase.from('sauts').update({
+      statut: 'refuse', valide_le: new Date().toISOString(), valide_par: validateurNom,
+    }).eq('id', sautId);
+    if (error) { console.error('Refus échoué :', error); setActionError('Refus impossible. Réessayez.'); return; }
+    setSauts(prev => prev.filter(s => s.id !== sautId));
+  };
+
+  // Lot : valide les sauts en attente d'AUJOURD'HUI des PRÉSENTS du jour. Chaque
+  // saut reste tracé individuellement (validateur + horodatage). Confirmation DT.
+  const [batching, setBatching] = useState(false);
+  const handleBatchPresents = async () => {
+    if (!centreId) return;
+    setActionError(null);
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: pres, error: presErr } = await supabase
+      .from('dz_presences').select('user_id').eq('dz_id', centreId).eq('date_presence', today).eq('statut', 'present');
+    if (presErr) { console.error('Chargement présents échoué :', presErr); setActionError('Impossible de charger les présents.'); return; }
+    const presentIds = new Set((pres ?? []).map((p: { user_id: string }) => p.user_id));
+    const cibles = sauts.filter(s => s.statut === 'en_attente' && s.date_saut === today && presentIds.has(s.parachutiste_id));
+    if (cibles.length === 0) { setActionError('Aucun saut en attente aujourd\'hui pour les présents.'); return; }
+    if (!confirm(`Valider ${cibles.length} saut(s) en attente d'aujourd'hui des présents ? Chacun sera tracé à votre nom.`)) return;
+    setBatching(true);
+    const nowIso = new Date().toISOString();
+    const ids = cibles.map(s => s.id);
+    const { error } = await supabase.from('sauts').update({
+      statut: 'valide', valide_le: nowIso, valide_par: validateurNom,
+    }).in('id', ids);
+    setBatching(false);
+    if (error) { console.error('Validation groupée échouée :', error); setActionError('Validation groupée impossible.'); return; }
+    setSauts(prev => prev.filter(s => !ids.includes(s.id)));
   };
 
   const exportCSV = () => {
-    const header = 'id,parachutiste_id,date_saut,lieu,hauteur_m,categorie,statut,nom,prenom\n';
-    const rows = sauts.map(s =>
-      `${s.id},${s.parachutiste_id},${s.date_saut},${s.lieu},${s.hauteur_m},${s.categorie},${s.statut},${s.parachutiste_nom ?? ''},${s.parachutiste_prenom ?? ''}`
-    ).join('\n');
-    const blob = new Blob([header + rows], { type: 'text/csv' });
+    // Export avec traçabilité (validateur + horodatage) — Prompt Q.
+    const blob = new Blob([sautsToCSV(sauts)], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -1371,12 +1407,25 @@ function SautsSection({ centreId, onNavigate }: { centreId: string | undefined; 
             )}
           </p>
         </div>
-        {tab === 'historique' && (
+        <div className="flex items-center gap-2 flex-wrap">
+          {tab === 'attente' && sauts.some(s => s.statut === 'en_attente') && (
+            <button onClick={handleBatchPresents} disabled={batching}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white disabled:opacity-50 transition"
+              style={{ background: '#10B981' }}>
+              <CheckCircle className="w-4 h-4" /> {batching ? 'Validation…' : 'Valider la séance (présents du jour)'}
+            </button>
+          )}
           <button onClick={exportCSV} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition">
             <Download className="w-4 h-4" /> Exporter CSV
           </button>
-        )}
+        </div>
       </div>
+
+      {actionError && (
+        <div role="alert" className="px-4 py-2.5 rounded-xl text-sm font-medium bg-red-50 text-red-700 border border-red-200">
+          {actionError}
+        </div>
+      )}
 
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
         {tabs.map(t => (
@@ -1421,15 +1470,26 @@ function SautsSection({ centreId, onNavigate }: { centreId: string | undefined; 
                   <td className="px-4 py-3 text-gray-600">{s.is_tunnel ? '—' : `${s.hauteur_m}m`}</td>
                   <td className="px-4 py-3 text-gray-600">{s.is_tunnel ? 'Soufflerie' : s.categorie}</td>
                   <td className="px-4 py-3">
-                    {s.statut === 'valide' && <span className="text-xs bg-green-100 text-green-700 rounded-full px-2 py-0.5">Validé</span>}
+                    {s.statut === 'valide' && (
+                      <span className="text-xs bg-green-100 text-green-700 rounded-full px-2 py-0.5">Validé</span>
+                    )}
                     {s.statut === 'en_attente' && <span className="text-xs bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">En attente</span>}
                     {s.statut === 'refuse' && <span className="text-xs bg-red-100 text-red-600 rounded-full px-2 py-0.5">Refusé</span>}
+                    {/* Trace inline (validateur + horodatage) — visible dans la liste (Prompt Q). */}
+                    {(s.statut === 'valide' || s.statut === 'refuse') && s.valide_par && (
+                      <div className="text-[11px] text-gray-400 mt-0.5">{s.valide_par}{s.valide_le ? ` · ${formatDateTimeParis(s.valide_le)}` : ''}</div>
+                    )}
                   </td>
                   {tab === 'attente' && (
                     <td className="px-4 py-3">
-                      <button onClick={(e) => { e.stopPropagation(); handleValider(s.id); }} className="px-3 py-1.5 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg text-xs flex items-center gap-1 transition">
-                        <CheckCircle className="w-3 h-3" /> Valider
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button onClick={(e) => { e.stopPropagation(); handleValider(s.id); }} className="px-3 py-1.5 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg text-xs flex items-center gap-1 transition">
+                          <CheckCircle className="w-3 h-3" /> Valider
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); handleRefuser(s.id); }} className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs flex items-center gap-1 transition">
+                          <X className="w-3 h-3" /> Refuser
+                        </button>
+                      </div>
                     </td>
                   )}
                 </tr>

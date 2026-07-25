@@ -1,5 +1,27 @@
 import { describe, it, expect } from 'vitest';
-import { countMasteredElements, techStatus, TECH_ELEMENTS } from './progression';
+import { countMasteredElements, countSautsAEvaluer, techStatus, TECH_ELEMENTS } from './progression';
+
+describe('countSautsAEvaluer', () => {
+  const sauts = [
+    { id: 'a', is_tunnel: false, statut: 'valide' },
+    { id: 'b', is_tunnel: false, statut: 'valide' },
+    { id: 'c', is_tunnel: true, statut: 'valide' },   // soufflerie → jamais compté
+    { id: 'd', is_tunnel: false, statut: 'en_attente' },
+  ];
+
+  it('compte les vrais sauts sans évaluation, hors soufflerie', () => {
+    // a évalué → reste b et d à évaluer (c exclu)
+    expect(countSautsAEvaluer(sauts, new Set(['a']))).toBe(2);
+  });
+
+  it('un saut non évalué n’est jamais compté comme évalué', () => {
+    expect(countSautsAEvaluer(sauts, new Set())).toBe(3);
+  });
+
+  it('tout évalué ⇒ 0', () => {
+    expect(countSautsAEvaluer(sauts, new Set(['a', 'b', 'd']))).toBe(0);
+  });
+});
 
 // Un saut « tout maîtrisé » sur les 11 éléments.
 function jumpAllMastered(): Record<string, string> {
