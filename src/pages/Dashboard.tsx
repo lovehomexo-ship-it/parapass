@@ -21,6 +21,7 @@ import { MaRepriseCard } from '../components/MaRepriseCard';
 import { BriefingDuJourBlock } from '../components/BriefingDuJourCard';
 import { MeteoAltitudeCard } from '../components/MeteoAltitudeCard';
 import { CheckInPresence } from '../components/CheckInPresence';
+import { ShareCardModal } from '../components/ShareCardModal';
 import { useDzMembre } from '../lib/briefing';
 import { useBadges } from '../lib/useBadges';
 import { usePassport } from '../lib/usePassport';
@@ -31,7 +32,7 @@ import { PasseportCardView } from '../components/PasseportCardView';
 import {
   Plus, FileDown, QrCode, TrendingUp,
   ChevronDown, ChevronUp, Trash2, X, ShieldCheck, Hash,
-  Pencil, Lock, Award, ChevronRight, Camera, Wallet, Flame,
+  Pencil, Lock, Award, ChevronRight, Camera, Wallet, Flame, Share2,
 } from 'lucide-react';
 
 // ─── Weather helpers (reused from PlanningDZ) ────────────────────────────────
@@ -299,6 +300,9 @@ export function DashboardPage() {
   const [showOCR, setShowOCR] = useState(false);
   const [showDeclaration, setShowDeclaration] = useState(false);
   const [sautAEditer, setSautAEditer] = useState<Saut | null>(null);
+  const [centreNom, setCentreNom] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);   // écran de partage (V2)
+  const [proposeShare, setProposeShare] = useState(false); // invite « à chaud » après un saut
   const [sortField, setSortField] = useState<'date_saut' | 'lieu' | 'hauteur_m'>('date_saut');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [activeTab, setActiveTab] = useState<DashTab>('accueil');
@@ -418,6 +422,7 @@ export function DashboardPage() {
     const first = centresLicencies[0];
     const centre = (first as unknown as { centre?: { nom?: string; latitude?: number; longitude?: number; plan?: string } }).centre;
     if (centre?.plan) setCentrePlan(centre.plan);
+    if (centre?.nom) setCentreNom(centre.nom);
     // Météo : gérée par l'unique MeteoAltitudeCard (cache partagé dz_meteo_cache)
   }, [centresLicencies]);
 
@@ -469,6 +474,9 @@ export function DashboardPage() {
   const totalSauts = vraisSauts.length;
   // Sauts validés pas encore évalués (Prompt R) — invite à évaluer, le plus récent d'abord.
   const sautsAEvaluer = vraisSauts.filter((s) => s.statut === 'valide' && !evaluatedIds.has(s.id));
+  // Sauts enregistrés aujourd'hui (variante de la carte de partage — V2).
+  const todayYmd = new Date().toISOString().slice(0, 10);
+  const sautsAujourdhui = vraisSauts.filter((s) => s.date_saut === todayYmd).length;
   const validSauts = vraisSauts.filter((s) => s.statut === 'valide' || s.statut === 'historique').length;
 
   const sautsCetteAnnee = vraisSauts.filter((s) => new Date(s.date_saut).getFullYear() === new Date().getFullYear()).length;
@@ -677,6 +685,21 @@ export function DashboardPage() {
                 </div>
               )}
 
+              {/* Entrée « à chaud » (V2) : proposer de partager sa journée. */}
+              {proposeShare && (
+                <div className="rounded-2xl p-4 mb-3 flex items-center gap-3 flex-wrap"
+                  style={{ background: 'linear-gradient(135deg, rgba(249,115,22,0.18), rgba(234,88,12,0.12))', border: '1.5px solid rgba(249,115,22,0.45)' }}>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-extrabold" style={{ color: '#FFEDD5' }}>Beau saut ! 🪂</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>Partage ta journée avec une carte ParaPass.</p>
+                  </div>
+                  <button onClick={() => { setProposeShare(false); setShareOpen(true); }}
+                    className="px-4 py-2.5 rounded-xl text-sm font-bold text-white flex-shrink-0"
+                    style={{ background: '#F97316' }}>Partager ma journée →</button>
+                  <button onClick={() => setProposeShare(false)} className="text-xs px-2 py-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Plus tard</button>
+                </div>
+              )}
+
               {/* 0 — Briefing du jour : PREMIER élément visible, sans scroll
                   (bandeau + carte pour chaque DZ active via licencies_centres) */}
               {briefingDzs.map(dz => (
@@ -809,6 +832,15 @@ export function DashboardPage() {
                         <FileDown className="w-4 h-4" /> Exporter PDF
                       </button>
                     </div>
+                    {/* Entrée « à froid » (V2) : partage permanent de la progression. */}
+                    <button
+                      onClick={() => { if (!blockIfDemo()) setShareOpen(true); }}
+                      disabled={isDemo}
+                      className="mt-2 w-full flex items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+                      style={{ height: 44, background: 'rgba(249,115,22,0.14)', border: '1px solid rgba(249,115,22,0.4)', color: '#F97316' }}
+                    >
+                      <Share2 className="w-4 h-4" /> Partager ma progression
+                    </button>
                   </div>
 
                 </div>
@@ -1179,10 +1211,24 @@ export function DashboardPage() {
             setSauts((s) => s.map((sa) => sa.id === saut.id ? saut : sa));
           } else {
             setSauts((s) => [saut, ...s]);
+            // Entrée « à chaud » (V2) : proposer de partager sa journée après un vrai saut.
+            if (!saut.is_tunnel) setProposeShare(true);
           }
         }}
         sautAEditer={sautAEditer}
       />
+
+      {/* Écran de partage (V2) — même composant pour les deux entrées. */}
+      {shareOpen && user && (
+        <ShareCardModal
+          userId={user.id}
+          prenom={profile?.prenom ?? 'Moi'}
+          centre={centreNom}
+          sautsDuJour={sautsAujourdhui}
+          nouveauBadge={newBadge}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
 
       {showOCR && user && (
         <ImportOCR
