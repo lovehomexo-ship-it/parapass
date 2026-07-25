@@ -319,7 +319,13 @@ export function DashboardPage() {
       // Clean up URL without triggering a re-render loop
       navigate('/dashboard', { replace: true });
     }
-  }, []);
+    // Ancre check-in (barre d'actions mobile, Prompt U) : bascule sur l'accueil
+    // et fait défiler vers la carte de présence.
+    if (window.location.hash === '#checkin') {
+      setActiveTab('accueil');
+      requestAnimationFrame(() => document.getElementById('checkin')?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+    }
+  }, [searchParams]);
 
   const { licences, certificats, qualifications, brevets, centresLicencies } = usePassport(user?.id);
   const briefingDzs = useDzMembre(user?.id);
@@ -819,7 +825,7 @@ export function DashboardPage() {
 
               {/* Check-in présence — visible et incitatif, juste au-dessus des
                   tuiles sécurité, sans repasser devant licence/briefing */}
-              <CheckInPresence dzs={briefingDzs} userId={user?.id} />
+              <div id="checkin" className="scroll-mt-20"><CheckInPresence dzs={briefingDzs} userId={user?.id} /></div>
 
               {/* Raccourcis secondaires — grille 3 tuiles compactes */}
               {!isDemo && <ShortcutTiles userId={user!.id} />}

@@ -3,7 +3,7 @@ import { useAuth, isDelegationActive } from '../lib/auth';
 import {
   Menu, X, LogOut, BookOpen, Bell, MessageSquare,
   Settings, User, Award, ChevronDown, CheckCircle, AlertTriangle,
-  Sun, Moon, QrCode,
+  Sun, Moon, QrCode, MapPin, Plus,
 } from 'lucide-react';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNotifications } from '../lib/useNotifications';
@@ -44,6 +44,7 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
   const { user, profile, signOut, delegation, sautsEnAttente, isDemo, isDemoAccount } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const isPratiquant = profile?.role === 'parachutiste' || profile?.role === 'moniteur' || profile?.role === 'moniteur_delegue';
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -456,9 +457,31 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
       )}
 
       {/* ── Content ─────────────────────────────────────────────────────────── */}
-      <main className={noPadding ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'}>
+      {/* pb-24 mobile : réserve la place de la barre d'actions rapides. */}
+      <main className={`${noPadding ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'} ${isPratiquant ? 'pb-24 md:pb-6' : ''}`}>
         <DemoGate>{children}</DemoGate>
       </main>
+
+      {/* ── Barre d'actions rapides mobile (Prompt U) — usage terrain, une main.
+             Grandes cibles, atteignables en 1 tap depuis l'accueil. Desktop : masquée. */}
+      {isPratiquant && !isDemo && (
+        <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 flex items-stretch"
+          style={{ background: 'var(--c-nav)', borderTop: '1px solid var(--c-border-s)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          {[
+            { key: 'presence', label: 'Présence', icon: <MapPin className="w-6 h-6" />, onClick: () => navigate('/dashboard#checkin') },
+            { key: 'saut', label: 'Saut', icon: <Plus className="w-7 h-7" />, onClick: () => navigate('/dashboard?action=add-jump') },
+            { key: 'qr', label: 'QR', icon: <QrCode className="w-6 h-6" />, onClick: () => navigate('/qr-code') },
+          ].map((a) => (
+            <button key={a.key} onClick={a.onClick}
+              className="flex-1 flex flex-col items-center justify-center gap-1 active:opacity-70"
+              style={{ minHeight: 64, color: 'var(--c-text)' }}
+              aria-label={a.label}>
+              {a.icon}
+              <span className="text-[11px] font-semibold">{a.label}</span>
+            </button>
+          ))}
+        </nav>
+      )}
 
       {/* ── Footer ──────────────────────────────────────────────────────────── */}
       <footer style={{ background: 'var(--c-nav)', borderTop: '1px solid var(--c-border-s)', padding: '16px 24px' }}>
