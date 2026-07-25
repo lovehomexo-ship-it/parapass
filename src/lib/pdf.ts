@@ -6,6 +6,20 @@ import { NATURE_SAUT_LABELS, CATEGORIE_LABELS, FONCTION_LABELS, TYPE_BREVET_LABE
 const fr = (d: string | null | undefined) =>
   d ? new Date(d).toLocaleDateString('fr-FR') : '—';
 
+/** Totaux de l'export : source unique (Prompt T) si fournie, sinon repli tableau.
+ *  Garantit que le PDF affiche exactement les chiffres de l'app. */
+export function resolveTotals(
+  sauts: Pick<Saut, 'is_tunnel' | 'statut'>[],
+  counts?: { total: number; valid: number },
+): { total: number; valid: number } {
+  if (counts) return counts;
+  const vrais = sauts.filter((s) => !s.is_tunnel);
+  return {
+    total: vrais.length,
+    valid: vrais.filter((s) => s.statut === 'valide' || s.statut === 'historique').length,
+  };
+}
+
 const LIEN_LABELS: Record<string, string> = {
   conjoint: 'Conjoint(e)', enfant: 'Enfant', parent: 'Parent',
   frere_soeur: 'Frère / Sœur', autre: 'Autre',
@@ -224,7 +238,7 @@ function addRecapPage(
 
 // ─── Page 2: Jump log (landscape) ─────────────────────────────────────────────
 
-function addJumpLog(doc: jsPDF, profile: Profile, sauts: Saut[], pageNum: number, totalPages: number) {
+function addJumpLog(doc: jsPDF, profile: Profile, sauts: Saut[], pageNum: number, totalPages: number, counts?: { total: number; valid: number }) {
   const margin = 12;
   const pageWidth = doc.internal.pageSize.getWidth();
   let y = margin;
@@ -289,7 +303,7 @@ function addJumpLog(doc: jsPDF, profile: Profile, sauts: Saut[], pageNum: number
       CATEGORIE_LABELS[saut.categorie] || saut.categorie,
       `${saut.hauteur_m}m`,
       FONCTION_LABELS[saut.fonction] || saut.fonction,
-      `${saut.observations || ''}${saut.valide_par ? ` — Visa: ${saut.valide_par}` : ''}`,
+      `${saut.observations || ''}${saut.valide_par ? ` — Visa: ${saut.valide_par}${saut.valide_le ? ` le ${new Date(saut.valide_le).toLocaleDateString('fr-FR')}` : ''}` : ''}`,
     ].forEach((cell, j) => {
       doc.text(String(cell), x + 1, y + 4.5, { maxWidth: cols[j].w - 2 });
       x += cols[j].w;
@@ -297,11 +311,11 @@ function addJumpLog(doc: jsPDF, profile: Profile, sauts: Saut[], pageNum: number
     y += rowH;
   });
 
-  // Totals
+  // Totals — total & validé viennent de la SOURCE UNIQUE (Prompt N/T) si fournis,
+  // pour garantir l'égalité exacte avec l'app ; sinon repli sur le tableau.
   y += 5;
   const vrais = sauts.filter((s) => !s.is_tunnel);
-  const totalSauts = vrais.length;
-  const validSauts = vrais.filter((s) => s.statut === 'valide' || s.statut === 'historique').length;
+  const { total: totalSauts, valid: validSauts } = resolveTotals(sauts, counts);
   const totalOA = vrais.filter((s) => s.categorie === 'OA').length;
   const totalOC = vrais.filter((s) => s.categorie === 'OC').length;
   const totalOR = vrais.filter((s) => ['OR30', 'OR60', 'OR60plus'].includes(s.categorie)).length;
@@ -319,10 +333,10 @@ function addJumpLog(doc: jsPDF, profile: Profile, sauts: Saut[], pageNum: number
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-export function generatePDF(profile: Profile, sauts: Saut[]) {
-  // Simple jump log only (from dashboard)
+export function generatePDF(profile: Profile, sauts: Saut[], counts?: { total: number; valid: number }) {
+  // Simple jump log only (from dashboard). `counts` = source unique (Prompt T).
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-  addJumpLog(doc, profile, sauts, 1, 1);
+  addJumpLog(doc, profile, sauts, 1, 1, counts);
   doc.save(`ParaPass_${profile.nom}_${profile.prenom}_carnet.pdf`);
 }
 

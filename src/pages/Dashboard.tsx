@@ -782,7 +782,14 @@ export function DashboardPage() {
                         <QrCode className="w-4 h-4" /> Mon QR Code
                       </button>
                       <button
-                        onClick={() => { if (!blockIfDemo()) generatePDF(profile, sauts); }}
+                        onClick={async () => {
+                          if (blockIfDemo() || !user) return;
+                          // Totaux depuis la source unique (Prompt T) ; repli tableau si indisponible.
+                          const { data, error } = await supabase.rpc('get_regulatory_snapshot', { p_user_id: user.id }).maybeSingle();
+                          if (error) console.error('Snapshot export échoué :', error);
+                          const c = data as { total: number; valid: number } | null;
+                          generatePDF(profile, sauts, c ? { total: c.total, valid: c.valid } : undefined);
+                        }}
                         disabled={sauts.length === 0 || isDemo}
                         title={isDemo ? 'Non disponible en mode démo' : undefined}
                         className="flex items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 flex-1"
