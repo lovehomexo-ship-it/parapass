@@ -1,10 +1,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from './supabase';
 import type { Saut, Licence, CertificatMedical, Qualification, Alerte } from './types';
-import { DEFAULT_RULES, type ComplianceRules } from './compliance';
+import { DEFAULT_RULES, daysUntilCalendar, type ComplianceRules } from './compliance';
 
+// Jours calendaires (minuit-à-minuit) : une échéance « aujourd'hui » vaut 0,
+// jamais -1 en milieu de journée — même règle que la source unique (statut_echeance).
 function daysBetween(a: Date, b: Date) {
-  return Math.floor((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+  const da = new Date(a.getFullYear(), a.getMonth(), a.getDate());
+  const db = new Date(b.getFullYear(), b.getMonth(), b.getDate());
+  return Math.round((db.getTime() - da.getTime()) / 86_400_000);
 }
 
 /** Échéance matériel à surveiller (calculée côté page depuis materiels + maintenances). */
@@ -56,7 +60,8 @@ export function computeAlertes(
   for (const lic of licences) {
     if (!lic.date_expiration) continue;
     const exp = new Date(lic.date_expiration);
-    const days = daysBetween(now, exp);
+    // Même calcul que la source unique (statut_echeance/licenceStatus).
+    const days = daysUntilCalendar(lic.date_expiration) ?? 0;
     if (days < 0) {
       alertes.push({
         parachutiste_id: userId,
@@ -67,7 +72,7 @@ export function computeAlertes(
         urgence: 'critique',
         lue: false,
       });
-    } else if (days < 30) {
+    } else if (days <= rules.alerte_j30) {
       alertes.push({
         parachutiste_id: userId,
         type: 'licence_expire',
@@ -93,7 +98,7 @@ export function computeAlertes(
   // ─── Certificats médicaux ─────────────────────────────────────────────────────
   for (const cert of certificats) {
     const exp = new Date(cert.date_expiration);
-    const days = daysBetween(now, exp);
+    const days = daysUntilCalendar(cert.date_expiration) ?? 0;
     if (days < 0) {
       alertes.push({
         parachutiste_id: userId,
@@ -104,7 +109,7 @@ export function computeAlertes(
         urgence: 'critique',
         lue: false,
       });
-    } else if (days < 30) {
+    } else if (days <= rules.alerte_j30) {
       alertes.push({
         parachutiste_id: userId,
         type: 'certificat_medical',

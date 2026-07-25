@@ -33,8 +33,9 @@ export function useJumpCounts(userId: string | undefined): JumpCounts {
 
     const load = async () => {
       const [countsRes, { data: last }, { data: lastValide }] = await Promise.all([
-        // total & valid via la RPC unique (mêmes chiffres propriétaire ET DT).
-        supabase.rpc('get_jump_counts', { p_user_id: userId }).maybeSingle(),
+        // total & valid via la source unique de vérité (get_regulatory_snapshot) :
+        // mêmes chiffres pour le propriétaire, le DT et le QR.
+        supabase.rpc('get_regulatory_snapshot', { p_user_id: userId }).maybeSingle(),
         // Saut le plus récent toutes sources confondues (statut inclus pour la mention « non validé »)
         supabase.from('sauts').select('date_saut, statut')
           .eq('parachutiste_id', userId).eq('is_tunnel', false)
@@ -47,7 +48,7 @@ export function useJumpCounts(userId: string | undefined): JumpCounts {
       if (cancelled) return;
       if (countsRes.error) {
         // Erreur explicite : on trace, on garde les compteurs à 0 (pas de silence).
-        console.error('get_jump_counts échoué :', countsRes.error);
+        console.error('get_regulatory_snapshot échoué :', countsRes.error);
       }
       const c = countsRes.data as { total: number; valid: number } | null;
       setCounts({

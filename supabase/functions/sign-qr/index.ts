@@ -47,17 +47,20 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    const [{ data: profile }, { data: licences }, { data: brevet }, { data: certif }, { count: totalJumps }, { count: validJumps }] =
+    const [{ data: profile }, { data: licences }, { data: brevet }, { data: certif }, { data: snapshot, error: snapErr }] =
       await Promise.all([
         adminClient.from('profiles').select('nom,prenom,numero_licence,centre_id').eq('id', user.id).maybeSingle(),
         adminClient.from('licences').select('numero_licence,date_expiration,statut').eq('parachutiste_id', user.id),
         adminClient.from('brevets').select('type_brevet').eq('parachutiste_id', user.id).order('date_obtention', { ascending: false }).limit(1).maybeSingle(),
         adminClient.from('certificats_medicaux').select('date_expiration').eq('parachutiste_id', user.id).order('date_expiration', { ascending: false }).limit(1).maybeSingle(),
-        // Définition canonique (Prompt F) : hors soufflerie = is_tunnel = false,
-        // valid = statut IN ('valide','historique') — identique à get_jump_counts.
-        adminClient.from('sauts').select('id', { count: 'exact', head: true }).eq('parachutiste_id', user.id).eq('is_tunnel', false),
-        adminClient.from('sauts').select('id', { count: 'exact', head: true }).eq('parachutiste_id', user.id).eq('is_tunnel', false).in('statut', ['valide', 'historique']),
+        // Source unique de vérité (Prompt N) : total & validé du QR proviennent de
+        // la MÊME RPC que le reste de l'app. Appel via le client user (JWT) pour
+        // passer la garde d'accès de get_regulatory_snapshot.
+        supabase.rpc('get_regulatory_snapshot', { p_user_id: user.id }).maybeSingle(),
       ]);
+    if (snapErr) console.error('get_regulatory_snapshot (sign-qr) échoué :', snapErr);
+    const totalJumps = (snapshot as { total?: number } | null)?.total ?? 0;
+    const validJumps = (snapshot as { valid?: number } | null)?.valid ?? 0;
 
     // Licence de référence : la ligne ACTIVE à l'échéance la plus lointaine, sinon
     // la plus récente. Le numéro vient de la table licences — pas du champ profil (périmable).

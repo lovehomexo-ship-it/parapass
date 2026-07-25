@@ -762,7 +762,7 @@ export function DashboardPage() {
                   paramétrées. Placée SOUS les cartes d'échéances Licence FFP /
                   Certificat médical, contenu et comportement inchangés. */}
               <div className="mb-6">
-                <MaRepriseCard userId={user?.id} niveau={topBrevet} />
+                <MaRepriseCard userId={user?.id} niveau={topBrevet} onPlanifierReprise={() => setActiveTab('planning')} />
               </div>
 
               <MonSacDuJour userId={user!.id} />

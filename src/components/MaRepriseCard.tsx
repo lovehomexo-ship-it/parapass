@@ -8,7 +8,7 @@ import { TYPE_BREVET_LABELS } from '../lib/types';
 
 /** Carte « Ma reprise » : récence du dernier saut vs règles paramétrées par niveau.
  *  Signale seulement — la décision reste au moniteur / à la DZ. */
-export function MaRepriseCard({ userId, niveau }: { userId: string | undefined; niveau: string | null | undefined }) {
+export function MaRepriseCard({ userId, niveau, onPlanifierReprise }: { userId: string | undefined; niveau: string | null | undefined; onPlanifierReprise?: () => void }) {
   const { lastJumpDate, lastJumpIsUnvalidated } = useJumpCounts(userId);
   const { rules } = useCurrencyRules();
 
@@ -53,6 +53,17 @@ export function MaRepriseCard({ userId, niveau }: { userId: string | undefined; 
         <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
           Seuils pour {niveauLabel} : conseillé {rule.seuil_conseille_jours} j · reprise {rule.seuil_obligatoire_jours} j — selon les règles paramétrées{status === 'reprise_obligatoire' ? ' (*)' : ''}.
         </p>
+      )}
+      {/* Action suggérée (Prompt P) : raccourci vers le planning DZ. Aucune
+          inscription automatique — le parachutiste choisit et confirme son créneau. */}
+      {(status === 'reprise_conseillee' || status === 'reprise_obligatoire') && onPlanifierReprise && (
+        <button
+          onClick={onPlanifierReprise}
+          className="mt-3 w-full py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
+          style={{ background: cfg.color }}
+        >
+          Planifier un saut de reprise →
+        </button>
       )}
     </div>
   );

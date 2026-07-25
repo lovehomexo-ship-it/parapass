@@ -1,6 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { BellRing, Send, CheckCircle2, Eye, AlertTriangle } from 'lucide-react';
+import { BellRing, Send, CheckCircle2, Eye, AlertTriangle, PenLine } from 'lucide-react';
+import { useAuth } from '../../lib/auth';
+import { RelanceDraftModal } from '../../components/RelanceDraftModal';
+
+/** Brouillon de relance pré-rédigé (éditable avant envoi — Prompt P). */
+function buildRelanceText(items: { type_document: 'licence' | 'medical'; echeance_date: string; jours_restants: number }[], prenom: string): string {
+  const parts = items.map(it => {
+    const doc = it.type_document === 'licence' ? 'votre licence FFP' : 'votre certificat médical';
+    const d = new Date(it.echeance_date).toLocaleDateString('fr-FR');
+    return it.jours_restants < 0 ? `${doc} a expiré le ${d}` : `${doc} arrive à échéance le ${d}`;
+  });
+  return `Bonjour ${prenom || ''},\n\nNous vous signalons que ${parts.join(' et ')}. Merci de procéder au renouvellement nécessaire avant votre prochain saut ; sans document à jour, vous ne pourrez pas sauter.\n\nN'hésitez pas à nous contacter pour toute question.\n\nSportivement,\nVotre centre`;
+}
 
 // ─── Relances documents (licence / certificat médical) ───────────────────────
 // Détection côté serveur (relances_apercu), envoi via la messagerie interne.
@@ -66,6 +78,8 @@ export function RelancesSection({ centreId }: { centreId: string }) {
   const [erreur, setErreur] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [sendingFor, setSendingFor] = useState<string | null>(null);
+  const { user } = useAuth();
+  const [draft, setDraft] = useState<{ uid: string; nom: string; text: string } | null>(null);
 
   const load = useCallback(async () => {
     setErreur(null);
@@ -254,6 +268,14 @@ export function RelancesSection({ centreId }: { centreId: string }) {
                         {lu ? 'Relancé · lu' : 'Relancé · non lu'}
                       </span>
                     )}
+                    {/* Action suggérée : brouillon éditable, envoyé par le DT (Prompt P). */}
+                    <button
+                      onClick={() => setDraft({ uid, nom: qui, text: buildRelanceText(items, items[0]?.prenom ?? qui.split(' ')[0]) })}
+                      className="px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5"
+                      style={{ background: 'var(--c-hover)', color: 'var(--c-text)', minHeight: 40, border: '1px solid var(--c-border-s)' }}
+                    >
+                      <PenLine className="w-3.5 h-3.5" /> Préparer une relance
+                    </button>
                     <button
                       onClick={() => relancer(uid, qui)}
                       disabled={sendingFor === uid}
@@ -304,6 +326,17 @@ export function RelancesSection({ centreId }: { centreId: string }) {
           </div>
         )}
       </div>
+
+      {draft && user && (
+        <RelanceDraftModal
+          dtId={user.id}
+          destinataireId={draft.uid}
+          destinataireNom={draft.nom}
+          initialText={draft.text}
+          onClose={() => setDraft(null)}
+          onSent={() => { setDraft(null); setInfo(`Relance envoyée à ${draft.nom} dans sa messagerie.`); load(); }}
+        />
+      )}
     </div>
   );
 }

@@ -13,6 +13,7 @@ import { useComplianceRules, licenceStatus, type ComplianceStatus } from '../lib
 import { ComplianceBadge, ComplianceDot } from '../components/ComplianceBadge';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { formatDateTimeParis } from '../lib/datetime';
+import { DecisionDuJour } from '../components/DecisionDuJour';
 import { useCurrencyRules, getCurrencyStatus, CURRENCY_STATUS_CONFIG } from '../lib/currency';
 import { useEncadrement, verifierSeance } from '../lib/encadrement';
 import { MeteoAltitudeDZ } from '../components/MeteoAltitudeCard';
@@ -435,6 +436,9 @@ function DashboardHome({
           {sautsThisMonth > 0 && <p className="text-[10px] mt-0.5 whitespace-nowrap" style={{ color: 'var(--c-dim)' }}>+{sautsThisMonth} sauts/mois</p>}
         </div>
       </div>
+
+      {/* ── DÉCISION DU JOUR — synthèse actionnable en tête ── */}
+      <DecisionDuJour centreId={centre?.id} />
 
       {/* ── 2 · AUJOURD'HUI — l'opérationnel du jour ── */}
       <ZoneTitre>Aujourd'hui</ZoneTitre>
