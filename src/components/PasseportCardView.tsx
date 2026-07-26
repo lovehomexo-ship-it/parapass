@@ -7,7 +7,7 @@ import { TYPE_BREVET_LABELS } from '../lib/types';
 import type { Licence, Brevet, CertificatMedical, CentreLicencie, Qualification } from '../lib/types';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCurrencyRules, getCurrencyStatus, CURRENCY_STATUS_CONFIG } from '../lib/currency';
-import { User, RefreshCw, Maximize2, X, AlertTriangle, CheckCircle, Clock, Shield, Eye, Download, RotateCcw } from 'lucide-react';
+import { User, RefreshCw, Maximize2, X, AlertTriangle, CheckCircle, Clock, Shield, Eye, Download, RotateCcw, Check, ShieldCheck, ShieldX } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
@@ -100,6 +100,23 @@ function StatusPill({ status, days }: { status: ValidityStatus; days: number | n
   );
 }
 
+// Hauteur mini PARTAGÉE recto/verso → dimensions strictement identiques, le
+// retournement ne change pas la taille de la carte.
+const CARD_MIN_HEIGHT = 384;
+
+// Badge Oui/Non rattaché à son libellé (statut clair, jamais une valeur orpheline).
+function OuiNonBadge({ ok }: { ok: boolean }) {
+  return ok ? (
+    <span className="inline-flex items-center gap-0.5" style={{ fontSize: 10, fontWeight: 700, color: '#6EE7B7', background: 'rgba(16,185,129,0.16)', border: '1px solid rgba(16,185,129,0.3)', padding: '1px 7px', borderRadius: 20 }}>
+      <Check className="w-3 h-3" /> Oui
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-0.5" style={{ fontSize: 10, fontWeight: 700, color: '#FCA5A5', background: 'rgba(239,68,68,0.16)', border: '1px solid rgba(239,68,68,0.3)', padding: '1px 7px', borderRadius: 20 }}>
+      <X className="w-3 h-3" /> Non
+    </span>
+  );
+}
+
 // ─── Recto card ─────────────────────────────────────────────────────────────────
 
 function CardRecto({ data, id }: { data: PasseportData; id: string }) {
@@ -131,38 +148,40 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
   // Condensed info line parts
   const infoParts: string[] = [];
   const rectoNumero = licence?.numero_licence || profile.numero_licence;
+  // Ligne réglementaire allégée : n° FFP + club/centre. Le brevet est désormais
+  // un badge héros ; on ne le répète pas ici (évite le débordement sur 2 lignes).
   if (rectoNumero) infoParts.push(`FFP–${rectoNumero.replace(/^FFP[-–]/i, '')}`);
   if (licence?.code_club) infoParts.push(`Code Club ${licence.code_club}`);
-  if (brevetPrincipal) infoParts.push(TYPE_BREVET_LABELS[brevetPrincipal.type_brevet] || `Brevet ${brevetPrincipal.type_brevet}`);
   if (licence?.nom_club) infoParts.push(licence.nom_club);
-  if (centre) infoParts.push(centre.nom);
+  else if (centre) infoParts.push(centre.nom);
 
   return (
     <div
       id={id}
-      className="relative rounded-xl overflow-hidden select-none"
+      className="relative rounded-xl overflow-hidden select-none flex flex-col"
       style={{
+        minHeight: CARD_MIN_HEIGHT,
         background: 'linear-gradient(135deg, #001A4D 0%, #0f1a30 60%, #1E3A5F 100%)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+        boxShadow: '0 10px 34px rgba(0,0,0,0.45)',
+        border: '1px solid rgba(255,255,255,0.14)',
       }}
     >
-      {/* Filigrane */}
-      <div className="absolute inset-0 flex items-center justify-end opacity-[0.06] pointer-events-none pr-3">
-        <ParachuteIcon className="w-48 h-48 text-white" />
+      {/* Reflet « matière » en haut de carte */}
+      <div className="absolute inset-x-0 top-0 pointer-events-none" style={{ height: 90, background: 'linear-gradient(180deg, rgba(255,255,255,0.08), transparent)' }} />
+      {/* Filigrane voile — signature visuelle, en bas à GAUCHE (le QR est à droite) */}
+      <div className="absolute pointer-events-none" style={{ left: -22, bottom: -22, opacity: 0.07, transform: 'rotate(-8deg)' }}>
+        <ParachuteIcon className="w-44 h-44 text-white" />
       </div>
       {/* Bande orange FFP */}
       <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: '#F97316' }} />
 
-      <div className="relative flex flex-col gap-2" style={{ padding: '14px 14px 12px' }}>
+      <div className="relative flex-1 flex flex-col gap-2" style={{ padding: '14px 14px 12px' }}>
 
         {/* ── Row 1 : Header ── */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-7 w-auto flex-shrink-0" />
-            <div>
-              <div style={{ fontSize: 10, color: 'rgba(147,197,253,0.9)', letterSpacing: '0.04em' }}>Licence numérique</div>
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: '#F97316' }}>LICENCE NUMÉRIQUE</div>
-            </div>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', color: '#F97316' }}>Licence numérique FFP</div>
           </div>
           <div className="flex items-center gap-1.5">
             {/* Pastille reprise (récence) — discrète, à côté du statut documents */}
@@ -229,57 +248,59 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
           </div>
         </div>
 
-        {/* ── Row 3 : Data grid ── */}
-        <div
-          className="grid gap-x-3"
-          style={{ gridTemplateColumns: licenceExp && certifExp ? '1fr 1fr 1fr' : licenceExp || certifExp ? '1fr 1fr' : '1fr' }}
-        >
+        {/* ── Row 3 : HÉROS — sauts totaux (fierté) + brevet mis en avant ── */}
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Sauts au total</div>
+            {sautsCount > 0 ? (
+              <>
+                <div style={{ fontSize: 44, fontWeight: 900, color: '#fff', lineHeight: 0.95, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>{sautsCount}</div>
+                {validSautsCount < sautsCount && (
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)' }}>dont {validSautsCount} validés</div>
+                )}
+              </>
+            ) : (
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', fontStyle: 'italic', marginTop: 2 }}>Aucun saut enregistré</div>
+            )}
+          </div>
+          {brevetPrincipal && (
+            <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.03em', background: 'rgba(249,115,22,0.18)', color: '#FDBA74', border: '1px solid rgba(249,115,22,0.4)', padding: '5px 12px', borderRadius: 20, whiteSpace: 'nowrap' }}>
+              {TYPE_BREVET_LABELS[brevetPrincipal.type_brevet] || `Brevet ${brevetPrincipal.type_brevet}`}
+            </span>
+          )}
+        </div>
+
+        {/* Validités — reléguées en secondaire, sur une ligne lisible */}
+        <div className="flex flex-wrap gap-x-4 gap-y-0.5" style={{ fontSize: 11 }}>
           {licenceExp && (
             <div>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Validité licence</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: licenceExp < now ? '#F87171' : '#fff', fontFamily: 'monospace', lineHeight: 1.3 }}>
-                {licenceExp.toLocaleDateString('fr-FR')}
-              </div>
+              <span style={{ color: 'rgba(255,255,255,0.45)' }}>Licence&nbsp;</span>
+              <span style={{ fontFamily: 'monospace', fontWeight: 600, color: licenceExp < now ? '#F87171' : '#fff' }}>{licenceExp.toLocaleDateString('fr-FR')}</span>
             </div>
           )}
           {certifExp && (
             <div>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Cert. méd.</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: certifExp < now ? '#F87171' : '#fff', fontFamily: 'monospace', lineHeight: 1.3 }}>
-                {certifExp.toLocaleDateString('fr-FR')}
-              </div>
-            </div>
-          )}
-          {sautsCount > 0 && (
-            <div>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Sauts totaux</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', lineHeight: 1.3 }}>{sautsCount}</div>
-              {validSautsCount < sautsCount && (
-                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', lineHeight: 1.3 }}>dont {validSautsCount} validés</div>
-              )}
+              <span style={{ color: 'rgba(255,255,255,0.45)' }}>Médical&nbsp;</span>
+              <span style={{ fontFamily: 'monospace', fontWeight: 600, color: certifExp < now ? '#F87171' : '#fff' }}>{certifExp.toLocaleDateString('fr-FR')}</span>
             </div>
           )}
         </div>
 
         {/* ── Row 4 : Assurances ── (une mention par ligne, pas de débordement) */}
+        {/* Assurances & bénéficiaire — chaque valeur en BADGE rattaché à son
+            libellé (plus de « Oui » orphelin flottant à droite). */}
         {licence && (
-          <div className="flex flex-col gap-0.5" style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', lineHeight: 1.4 }}>
-            <div className="flex items-center justify-between gap-2">
-              <span>Assurance individuelle</span>
-              <span style={{ color: licence.assurance_individuelle ? '#34D399' : '#F87171', fontWeight: 600 }}>
-                {licence.assurance_individuelle ? 'Oui' : 'Non'}
-              </span>
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <span>Responsabilité civile</span>
-              <span style={{ color: licence.assurance_rc ? '#34D399' : '#F87171', fontWeight: 600 }}>
-                {licence.assurance_rc ? 'Oui' : 'Non'}
-              </span>
+          <div className="flex flex-col gap-1.5" style={{ fontSize: 11 }}>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span style={{ color: 'rgba(255,255,255,0.6)' }}>Assurance individuelle</span>
+              <OuiNonBadge ok={licence.assurance_individuelle} />
+              <span style={{ color: 'rgba(255,255,255,0.6)', marginLeft: 4 }}>Resp. civile</span>
+              <OuiNonBadge ok={licence.assurance_rc} />
             </div>
             {licence.beneficiaire_nom && (
-              <div className="flex items-start justify-between gap-2">
-                <span style={{ color: 'rgba(255,255,255,0.55)', flexShrink: 0 }}>Bénéficiaire en cas de décès</span>
-                <span style={{ color: '#fff', textAlign: 'right', wordBreak: 'break-word' }}>
+              <div style={{ color: 'rgba(255,255,255,0.6)' }}>
+                Bénéficiaire :{' '}
+                <span style={{ color: '#fff', fontWeight: 600 }}>
                   {licence.beneficiaire_nom}
                   {licence.beneficiaire_lien ? ` (${licence.beneficiaire_lien === 'parent' ? 'Parent' : licence.beneficiaire_lien})` : ''}
                 </span>
@@ -288,14 +309,14 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
           </div>
         )}
 
-        {/* ── Row 5 : Badge assurance + QR ── */}
-        <div className="flex items-end justify-between gap-3">
+        {/* ── Row 5 : Badge assurance harmonisé + QR ── */}
+        <div className="flex items-end justify-between gap-3 mt-auto">
           <div className="flex items-center gap-1.5 flex-wrap">
             {licence && (
               (licence.assurance_individuelle && licence.assurance_rc) ? (
-                <span style={{ fontSize: 10, background: 'rgba(16,185,129,0.18)', color: '#6EE7B7', border: '1px solid rgba(16,185,129,0.3)', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>✓ Assuré</span>
+                <span className="inline-flex items-center gap-1" style={{ fontSize: 10, background: 'rgba(16,185,129,0.18)', color: '#6EE7B7', border: '1px solid rgba(16,185,129,0.3)', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}><ShieldCheck className="w-3 h-3" /> Assuré</span>
               ) : (
-                <span style={{ fontSize: 10, background: 'rgba(239,68,68,0.18)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.3)', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>✗ Non assuré</span>
+                <span className="inline-flex items-center gap-1" style={{ fontSize: 10, background: 'rgba(239,68,68,0.18)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.3)', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}><ShieldX className="w-3 h-3" /> Non assuré</span>
               )
             )}
           </div>
@@ -324,21 +345,26 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
   return (
     <div
       id={id}
-      className="relative rounded-xl overflow-hidden select-none"
+      className="relative rounded-xl overflow-hidden select-none flex flex-col"
       style={{
+        minHeight: CARD_MIN_HEIGHT,
         background: 'linear-gradient(135deg, #001A4D 0%, #0d1f3e 55%, #1a3060 100%)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+        boxShadow: '0 10px 34px rgba(0,0,0,0.45)',
+        border: '1px solid rgba(255,255,255,0.14)',
       }}
     >
+      {/* Reflet « matière » */}
+      <div className="absolute inset-x-0 top-0 pointer-events-none" style={{ height: 90, background: 'linear-gradient(180deg, rgba(255,255,255,0.08), transparent)' }} />
       {/* Top accent stripe — FFP orange */}
       <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: '#F97316' }} />
 
-      {/* Background watermark */}
-      <div className="absolute inset-0 flex items-center justify-end opacity-[0.04] pointer-events-none pr-2">
-        <ParachuteIcon className="w-48 h-48 text-white" />
+      {/* Filigrane voile — signature visuelle, en bas à gauche */}
+      <div className="absolute pointer-events-none" style={{ left: -22, bottom: -22, opacity: 0.06, transform: 'rotate(-8deg)' }}>
+        <ParachuteIcon className="w-44 h-44 text-white" />
       </div>
 
-      <div className="relative flex flex-col gap-2" style={{ padding: '12px 14px 10px' }}>
+      {/* flex-1 + justify-between : le contenu occupe TOUTE la hauteur, aucun vide. */}
+      <div className="relative flex-1 flex flex-col justify-between gap-2" style={{ padding: '12px 14px 10px' }}>
 
         {/* ── Row 1 : Header ── */}
         <div className="flex items-start justify-between gap-3">
@@ -346,7 +372,7 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
             <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '0.04em', color: '#fff', lineHeight: 1.1, textTransform: 'uppercase' }}>
               {profile.nom} <span style={{ fontWeight: 400, fontSize: 13, textTransform: 'none', letterSpacing: 0 }}>{profile.prenom}</span>
             </div>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: '#F97316', marginTop: 2 }}>LICENCE NUMÉRIQUE</div>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: '#F97316', marginTop: 2 }}>Licence numérique FFP</div>
             <div style={{ fontSize: 8, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>
               Fédération Française de Parachutisme
             </div>
@@ -424,8 +450,8 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
         <div className="flex flex-col gap-1" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 6 }}>
           <div className="flex items-center justify-between">
             {dernierControle ? (
-              <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', background: 'rgba(16,185,129,0.12)', color: '#34D399', border: '1px solid rgba(16,185,129,0.22)', padding: '2px 7px', borderRadius: 20 }}>
-                ✓ Documents contrôlés
+              <span className="inline-flex items-center gap-1" style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', background: 'rgba(16,185,129,0.12)', color: '#34D399', border: '1px solid rgba(16,185,129,0.22)', padding: '2px 7px', borderRadius: 20 }}>
+                <Check className="w-2.5 h-2.5" /> Documents contrôlés
               </span>
             ) : (
               <span style={{ fontSize: 8, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.28)', border: '1px solid rgba(255,255,255,0.1)', padding: '2px 7px', borderRadius: 20 }}>
