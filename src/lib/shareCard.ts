@@ -214,7 +214,7 @@ export async function generateShareCard(
   // Signature ParaPass discrète + CTA
   ctx.fillStyle = 'rgba(255,255,255,0.55)';
   ctx.font = '700 34px Inter, sans-serif';
-  ctx.fillText('ParaPass · mon carnet de sauts', cx, contentBottom - 20);
+  ctx.fillText('ParaPass.fr · mon carnet de sauts', cx, contentBottom - 20);
 
   return await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(b => b ? resolve(b) : reject(new Error('Génération de l’image échouée.')), 'image/png');
