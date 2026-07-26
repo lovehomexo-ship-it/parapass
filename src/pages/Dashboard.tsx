@@ -338,13 +338,25 @@ export function DashboardPage() {
       // Clean up URL without triggering a re-render loop
       navigate('/dashboard', { replace: true });
     }
-    // Ancre check-in (barre d'actions mobile, Prompt U) : bascule sur l'accueil
-    // et fait défiler vers la carte de présence.
-    if (window.location.hash === '#checkin') {
-      setActiveTab('accueil');
-      requestAnimationFrame(() => document.getElementById('checkin')?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
-    }
   }, [searchParams]);
+
+  // Ancre #checkin (bouton « Présence » de la barre mobile). Le hash ne change
+  // pas les searchParams : on écoute donc hashchange (+ au montage) pour que le
+  // check-in s'ouvre de façon fiable, même si on est DÉJÀ sur le dashboard.
+  const [checkinSignal, setCheckinSignal] = useState(0);
+  useEffect(() => {
+    const ouvrirCheckin = () => {
+      if (window.location.hash !== '#checkin') return;
+      setActiveTab('accueil');
+      setCheckinSignal((n) => n + 1); // déplie la carte de présence
+      requestAnimationFrame(() =>
+        document.getElementById('checkin')?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
+      );
+    };
+    ouvrirCheckin(); // au montage (arrivée depuis un autre écran)
+    window.addEventListener('hashchange', ouvrirCheckin);
+    return () => window.removeEventListener('hashchange', ouvrirCheckin);
+  }, []);
 
   const { licences, certificats, qualifications, brevets, centresLicencies } = usePassport(user?.id);
   const briefingDzs = useDzMembre(user?.id);
@@ -678,28 +690,6 @@ export function DashboardPage() {
           {/* ─── ACCUEIL ─────────────────────────────────────────────────────── */}
           {activeTab === 'accueil' && (
             <>
-              {/* Invite à évaluer un saut validé (Prompt R) — apparaît dès qu'un
-                  saut est validé et pas encore évalué ; rien n'est noté auto. */}
-              {sautsAEvaluer.length > 0 && (
-                <div className="rounded-2xl p-4 mb-3 flex items-center gap-3 flex-wrap"
-                  style={{ background: 'rgba(249,115,22,0.14)', border: '1.5px solid rgba(249,115,22,0.45)' }}>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-extrabold" style={{ color: '#FFEDD5' }}>
-                      {sautsAEvaluer.length} saut{sautsAEvaluer.length > 1 ? 's' : ''} validé{sautsAEvaluer.length > 1 ? 's' : ''} à évaluer
-                    </p>
-                    <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                      Évalue ton saut pour faire progresser ta courbe et tes éléments maîtrisés.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => { if (!blockIfDemo()) { setSautAEditer(sautsAEvaluer[0]); setModalOpen(true); } }}
-                    className="px-4 py-2.5 rounded-xl text-sm font-bold text-white flex-shrink-0"
-                    style={{ background: '#F97316' }}>
-                    Évaluer ce saut →
-                  </button>
-                </div>
-              )}
-
               {/* Entrée « à chaud » (V2) : proposer de partager sa journée. */}
               {proposeShare && (
                 <div className="rounded-2xl p-4 mb-3 flex items-center gap-3 flex-wrap"
@@ -866,7 +856,7 @@ export function DashboardPage() {
               <div className="space-y-3">
                 <MaRepriseCard userId={user?.id} niveau={topBrevet} onPlanifierReprise={() => setActiveTab('planning')} />
                 <MonSacDuJour userId={user!.id} />
-                <div id="checkin" className="scroll-mt-20"><CheckInPresence dzs={briefingDzs} userId={user?.id} /></div>
+                <div id="checkin" className="scroll-mt-20"><CheckInPresence dzs={briefingDzs} userId={user?.id} openSignal={checkinSignal} /></div>
                 {/* Météo INTÉGRÉE à la zone du jour, même traitement de carte
                     (fini le bandeau orphelin en pied de page). */}
                 {briefingDzs.map(dz => (
@@ -939,6 +929,29 @@ export function DashboardPage() {
 
               {!aDejaImporte && !isDemo && (
                 <BanniereOCR onClic={() => setShowOCR(true)} />
+              )}
+
+              {/* Invite à évaluer un saut validé (Prompt R) — placée JUSTE AU-DESSUS
+                  de « Ma progression » : c'est là que l'évaluation produit son effet
+                  (courbe + éléments maîtrisés). Nombre issu de la source unique. */}
+              {sautsAEvaluer.length > 0 && (
+                <div className="rounded-2xl p-4 mb-3 flex items-center gap-3 flex-wrap"
+                  style={{ background: 'rgba(249,115,22,0.14)', border: '1.5px solid rgba(249,115,22,0.45)' }}>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-extrabold" style={{ color: '#FFEDD5' }}>
+                      {sautsAEvaluer.length} saut{sautsAEvaluer.length > 1 ? 's' : ''} validé{sautsAEvaluer.length > 1 ? 's' : ''} à évaluer
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                      Évalue ton saut pour faire progresser ta courbe et tes éléments maîtrisés.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { if (!blockIfDemo()) { setSautAEditer(sautsAEvaluer[0]); setModalOpen(true); } }}
+                    className="px-4 py-2.5 rounded-xl text-sm font-bold text-white flex-shrink-0"
+                    style={{ background: '#F97316' }}>
+                    Évaluer ce saut →
+                  </button>
+                </div>
               )}
 
               {/* ═══ ZONE — Ma progression ═══ */}

@@ -15,6 +15,7 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { formatDateTimeParis } from '../lib/datetime';
 import { DecisionDuJour } from '../components/DecisionDuJour';
 import { sautsToCSV } from '../lib/sautsExport';
+import { DemoJourneeDZ } from '../components/DemoJourneeDZ';
 import { useCurrencyRules, getCurrencyStatus, CURRENCY_STATUS_CONFIG } from '../lib/currency';
 import { useEncadrement, verifierSeance } from '../lib/encadrement';
 import { MeteoAltitudeDZ } from '../components/MeteoAltitudeCard';
@@ -3139,6 +3140,12 @@ export function CentreDashboardPage() {
                   />
                 );
               })()}
+              {/* Outil de démo PROVISOIRE — DZ uniquement (isolé, retirable). */}
+              {centreId && profile?.role === 'admin_centre' && (
+                <div className="mt-6">
+                  <DemoJourneeDZ centreId={centreId} onDone={fetchCentreData} />
+                </div>
+              )}
               {/* Météo — toujours en dernier (prévision indicative) */}
               {centreId && (
                 <div className="mt-6">

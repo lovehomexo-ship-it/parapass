@@ -28,7 +28,7 @@ const finParDefaut = (debut: string) => {
  *  Fonctionne seul : voiles perso proposées si le module matériel en a,
  *  saisie libre sinon ; n° de voile de location en saisie libre (flotte DZ
  *  enregistrée plus tard → voile_location_ref deviendra une référence). */
-export function CheckInPresence({ dzs, userId }: { dzs: { id: string; nom: string }[]; userId: string | undefined }) {
+export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string; nom: string }[]; userId: string | undefined; openSignal?: number }) {
   const [dzId, setDzId] = useState<string | null>(null);
   useEffect(() => { if (!dzId && dzs.length > 0) setDzId(dzs[0].id); }, [dzs, dzId]);
 
@@ -37,6 +37,8 @@ export function CheckInPresence({ dzs, userId }: { dzs: { id: string; nom: strin
   const { ackAt } = useBriefingAck(briefing?.id, userId, briefing?.published_at);
 
   const [ouvert, setOuvert] = useState(false);
+  // Ouverture pilotée de l'extérieur (bouton « Présence » de la barre mobile).
+  useEffect(() => { if (openSignal) setOuvert(true); }, [openSignal]);
   const [debut, setDebut] = useState(maintenantArrondi());
   const [fin, setFin] = useState(() => finParDefaut(maintenantArrondi()));
   const [erreurPlage, setErreurPlage] = useState<string | null>(null);
