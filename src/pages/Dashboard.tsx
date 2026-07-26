@@ -931,11 +931,16 @@ export function DashboardPage() {
                 <BanniereOCR onClic={() => setShowOCR(true)} />
               )}
 
-              {/* Invite à évaluer un saut validé (Prompt R) — placée JUSTE AU-DESSUS
-                  de « Ma progression » : c'est là que l'évaluation produit son effet
-                  (courbe + éléments maîtrisés). Nombre issu de la source unique. */}
+              {/* ═══ ZONE — Ma progression ═══ */}
+              <ZoneTitre icon={<BarChart3 className="w-3.5 h-3.5" />}>Ma progression</ZoneTitre>
+              <ProgressionCard userId={user?.id ?? null} />
+
+              {/* Invite à évaluer un saut validé (Prompt R) — placée ENTRE « Ma
+                  progression » et « Mon activité » : elle fait le lien entre la
+                  courbe (ce que l'évaluation alimente) et l'activité récente d'où
+                  proviennent les sauts à évaluer. Nombre issu de la source unique. */}
               {sautsAEvaluer.length > 0 && (
-                <div className="rounded-2xl p-4 mb-3 flex items-center gap-3 flex-wrap"
+                <div className="rounded-2xl p-4 mt-3 flex items-center gap-3 flex-wrap"
                   style={{ background: 'rgba(249,115,22,0.14)', border: '1.5px solid rgba(249,115,22,0.45)' }}>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-extrabold" style={{ color: '#FFEDD5' }}>
@@ -953,10 +958,6 @@ export function DashboardPage() {
                   </button>
                 </div>
               )}
-
-              {/* ═══ ZONE — Ma progression ═══ */}
-              <ZoneTitre icon={<BarChart3 className="w-3.5 h-3.5" />}>Ma progression</ZoneTitre>
-              <ProgressionCard userId={user?.id ?? null} />
 
               {/* ═══ ZONE — Mon activité (derniers sauts + badges) ═══ */}
               <ZoneTitre icon={<Activity className="w-3.5 h-3.5" />}>Mon activité</ZoneTitre>
