@@ -891,11 +891,14 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
       let data: Saut | null = null;
 
       if (isEditMode && sautAEditer) {
+        // Update ciblé sur l'id seul. On NE remet PAS de filtre statut≠valide :
+        // combiné à .select() (return=representation), PostgREST relit la ligne
+        // APRÈS l'update — devenue « valide », elle ne satisfait plus le filtre,
+        // 0 ligne renvoyée → HTTP 406. Le filtrage par id suffit et reste RLS-safe.
         const { data: updated, error: updateError } = await supabase
           .from('sauts')
           .update(payload)
           .eq('id', sautAEditer.id)
-          .neq('statut', 'valide')
           .select()
           .single();
         if (updateError) throw updateError;
@@ -1007,13 +1010,21 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
       onClose();
       resetForm();
     } catch (err) {
-      console.error('AddSautModal error:', err);
-      const pgErr = err as { code?: string; message?: string };
+      // Gestion explicite : on déballe l'objet PostgREST au lieu de logger « Object ».
+      const pgErr = err as { code?: string; message?: string; details?: string; hint?: string; status?: number };
+      console.error('AddSautModal error:', {
+        code: pgErr?.code,
+        status: pgErr?.status,
+        message: pgErr?.message,
+        details: pgErr?.details,
+        hint: pgErr?.hint,
+      });
       if (pgErr?.code === '23502' && pgErr?.message?.includes('aeronef_immat')) {
         setFieldErrors((e) => ({ ...e, aeronef_immat: "Immatriculation de l'aéronef obligatoire" }));
         setError("Veuillez renseigner l'immatriculation de l'aéronef.");
       } else {
-        setError(isEditMode ? 'Erreur lors de la modification du saut.' : "Erreur lors de l'ajout du saut.");
+        const base = isEditMode ? 'Erreur lors de la modification du saut.' : "Erreur lors de l'ajout du saut.";
+        setError(pgErr?.message ? `${base} (${pgErr.message})` : base);
       }
     } finally {
       setLoading(false);
