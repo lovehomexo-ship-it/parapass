@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { useDemo } from '../lib/useDemo';
-import { X, ChevronDown, ChevronUp, AlertTriangle, Check, Search, Info } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, AlertTriangle, Check, Search, Info, Star, Wind, Target, Pencil } from 'lucide-react';
 import { NATURE_SAUT_LABELS, CATEGORIE_LABELS, FONCTION_LABELS } from '../lib/types';
 import type { Saut, NotationTernaire } from '../lib/types';
 import { ReAuthModal } from './ReAuthModal';
@@ -1101,7 +1101,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
           {showNoteToast && (
             <div className="mx-5 mt-3 rounded-lg px-3 py-2 text-sm flex items-center gap-2"
               style={{background:'rgba(245,158,11,0.15)', border:'1px solid rgba(245,158,11,0.3)', color:'#FCD34D'}}>
-              ⭐ Évalue ton saut pour suivre ta progression !
+              <Star className="w-4 h-4 flex-shrink-0" /> Évalue ton saut pour suivre ta progression !
             </div>
           )}
 
@@ -1208,7 +1208,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
             {/* ── CHAMPS SOUFFLERIE ── */}
             {isTunnel && (
               <div className="space-y-3 rounded-xl p-4" style={{ background: 'rgba(96,165,250,0.06)', border: '1px solid rgba(96,165,250,0.2)' }}>
-                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#60A5FA' }}>🌬️ Session soufflerie</p>
+                <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest" style={{ color: '#60A5FA' }}><Wind className="w-3.5 h-3.5" /> Session soufflerie</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>Temps de vol (min) <span style={{ color: '#F87171' }}>*</span></label>
@@ -1374,7 +1374,25 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
             )}
             </>}
 
-            {/* ── Auto-évaluation de mon saut — masqué pour soufflerie ── */}
+            {/* ── NOTE GLOBALE (obligatoire) — TOUJOURS VISIBLE, hors accordéon :
+                   elle conditionne la validation, elle ne doit jamais être cachée. ── */}
+            {!isTunnel && (
+              <div id="note-globale-field" className="rounded-xl p-4 scroll-mt-4"
+                style={{ background: 'rgba(249,115,22,0.06)', border: `1px solid ${form.note_globale ? 'rgba(249,115,22,0.25)' : 'rgba(249,115,22,0.5)'}` }}>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest" style={{ color: '#FB923C' }}>
+                    <Star className="w-3.5 h-3.5" /> Note globale
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(249,115,22,0.2)', color: '#FB923C', border: '1px solid rgba(249,115,22,0.35)' }}>
+                    Obligatoire *
+                  </span>
+                </div>
+                <GlobalRating value={form.note_globale} onChange={(v) => update('note_globale', v)} />
+                <p className="text-[11px] mt-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Requise pour valider · alimente Ma Progression</p>
+              </div>
+            )}
+
+            {/* ── Auto-évaluation de mon saut (optionnelle) — masqué pour soufflerie ── */}
             {!isTunnel &&
             <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.12)' }}>
               <button type="button" onClick={() => setShowObs((o) => !o)}
@@ -1393,7 +1411,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                   {/* ── SECTION 1 : CHUTE LIBRE ── */}
                   <div className="p-4 space-y-4">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#60A5FA' }}>🪂 Chute libre</span>
+                      <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest" style={{ color: '#60A5FA' }}><Wind className="w-3.5 h-3.5" /> Chute libre</span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(96,165,250,0.12)', color: 'rgba(96,165,250,0.7)' }}>→ Profil Chute libre</span>
                       <span className="text-[10px] ml-auto" style={{ color: 'rgba(255,255,255,0.25)' }}>optionnel</span>
                     </div>
@@ -1436,7 +1454,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                   {/* ── SECTION 2 : VOILE & ATTERRISSAGE ── */}
                   <div className="p-4 space-y-4">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#34D399' }}>🎯 Voile & Atterrissage</span>
+                      <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest" style={{ color: '#34D399' }}><Target className="w-3.5 h-3.5" /> Voile & Atterrissage</span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(52,211,153,0.12)', color: 'rgba(52,211,153,0.7)' }}>→ Voile & Atterrissage</span>
                       <span className="text-[10px] ml-auto" style={{ color: 'rgba(255,255,255,0.25)' }}>optionnel</span>
                     </div>
@@ -1549,17 +1567,6 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                     </div>
                   </div>
 
-                  {/* ── SECTION 4 : NOTE GLOBALE (obligatoire) ── */}
-                  <div className="p-4" style={{ background: 'rgba(249,115,22,0.04)' }}>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#FB923C' }}>⭐ Note globale</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(249,115,22,0.2)', color: '#FB923C', border: '1px solid rgba(249,115,22,0.35)' }}>
-                        Obligatoire *
-                      </span>
-                    </div>
-                    <GlobalRating value={form.note_globale} onChange={(v) => update('note_globale', v)} />
-                  </div>
-
                 </div>
               )}
             </div>}
@@ -1569,7 +1576,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
               <div className="rounded-xl overflow-hidden" style={{ border: '2px solid rgba(245,158,11,0.4)' }}>
                 <div className="flex items-center gap-2 px-4 py-3" style={{ background: 'rgba(245,158,11,0.12)', borderBottom: '1px solid rgba(245,158,11,0.2)' }}>
                   <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-xs font-bold">✍</span>
+                    <Pencil className="w-3 h-3 text-white" />
                   </div>
                   <p className="text-sm font-bold text-amber-400">Validation moniteur</p>
                 </div>
@@ -1651,9 +1658,9 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                   {loading
                     ? (isEditMode ? 'Modification...' : 'Ajout...')
                     : isTunnel
-                    ? (isEditMode ? 'Modifier la session' : '🌬️ Enregistrer la session')
+                    ? (isEditMode ? 'Modifier la session' : 'Enregistrer la session')
                     : !form.note_globale
-                    ? '★ Note globale obligatoire'
+                    ? 'Note globale requise'
                     : isMoniteur
                     ? (isEditMode ? 'Modifier (sans signer)' : 'Ajouter (sans signer)')
                     : moniteurSelectionne?.id === ENVOI_TOUS_ID
@@ -1663,6 +1670,15 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                     : 'Sélectionnez un moniteur'}
                 </button>
               </div>
+              {/* Message explicite du champ manquant + accès direct (un clic → le champ). */}
+              {!isTunnel && !form.note_globale && (
+                <button type="button"
+                  onClick={() => document.getElementById('note-globale-field')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                  className="mt-2 w-full flex items-center justify-center gap-1.5 text-xs font-semibold"
+                  style={{ color: '#FB923C' }}>
+                  <Star className="w-3.5 h-3.5" /> Renseignez la note globale pour valider — y aller ↑
+                </button>
+              )}
               {!isMoniteur && !moniteurSelectionne && (
                 <p className="text-center text-xs mt-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
                   Un moniteur breveté doit valider chaque saut pour qu'il soit enregistré dans votre carnet.
