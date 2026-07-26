@@ -8,6 +8,16 @@ import type { Materiel } from '../lib/types';
 const inputStyle: React.CSSProperties = {
   background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
   color: 'white', borderRadius: 8, padding: '10px 12px', fontSize: 14, outline: 'none', width: '100%',
+  boxSizing: 'border-box',
+};
+
+// Champs <input type="time"> : la hauteur intrinsèque varie selon le navigateur
+// (icône horloge, segments HH:MM du picker natif) → « De » et « À » se
+// désalignaient au focus/édition/mobile. On fige donc hauteur + box-sizing pour
+// une taille strictement identique en toutes circonstances, tout en gardant
+// minWidth:0 pour que la grille ne se déforme pas sur petit écran.
+const timeInputStyle: React.CSSProperties = {
+  ...inputStyle, height: 44, minWidth: 0, lineHeight: '1.2',
 };
 
 const maintenantArrondi = () => {
@@ -160,11 +170,11 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.6)' }}>De</label>
-          <input type="time" value={debut} onChange={e => setDebut(e.target.value)} style={inputStyle} />
+          <input type="time" value={debut} onChange={e => setDebut(e.target.value)} style={timeInputStyle} />
         </div>
         <div>
           <label className="block text-xs font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.6)' }}>À</label>
-          <input type="time" value={fin} onChange={e => setFin(e.target.value)} style={inputStyle} />
+          <input type="time" value={fin} onChange={e => setFin(e.target.value)} style={timeInputStyle} />
         </div>
       </div>
 

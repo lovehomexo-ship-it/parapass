@@ -33,7 +33,7 @@ import {
   Plus, FileDown, QrCode, TrendingUp,
   ChevronDown, ChevronUp, Trash2, X, ShieldCheck, Hash,
   Pencil, Lock, Award, ChevronRight, Camera, Wallet, Flame, Share2,
-  Target, GraduationCap, ScanLine, Wind, CheckCircle2, Clock, Activity, BarChart3, Backpack,
+  Target, GraduationCap, ScanLine, Wind, CheckCircle2, Clock, Activity, BarChart3, Backpack, Brain,
 } from 'lucide-react';
 
 // ─── Weather helpers (reused from PlanningDZ) ────────────────────────────────
@@ -1951,8 +1951,10 @@ function ProgressionCard({ userId }: { userId: string | null }) {
       label: 'Mental',
       value: mentalAvg !== null ? `${mentalAvg.toFixed(1)} / 5` : '—',
       color: noteColor(mentalAvg),
-      sub: '🧠',
-      subColor: 'var(--c-dim)',
+      // Icône vectorielle (nette, indépendante de l'OS) à la couleur d'accent
+      // du Mental — remplace l'emoji système 🧠.
+      sub: <Brain className="w-3.5 h-3.5" strokeWidth={2} />,
+      subColor: noteColor(mentalAvg),
     },
   ];
 

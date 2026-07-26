@@ -161,6 +161,7 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
       className="relative rounded-xl overflow-hidden select-none flex flex-col"
       style={{
         minHeight: CARD_MIN_HEIGHT,
+        height: '100%', // remplit la cellule du grid-stack (= hauteur de la face la plus haute)
         background: 'linear-gradient(135deg, #001A4D 0%, #0f1a30 60%, #1E3A5F 100%)',
         boxShadow: '0 10px 34px rgba(0,0,0,0.45)',
         border: '1px solid rgba(255,255,255,0.14)',
@@ -348,6 +349,7 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
       className="relative rounded-xl overflow-hidden select-none flex flex-col"
       style={{
         minHeight: CARD_MIN_HEIGHT,
+        height: '100%', // aligne le verso sur la hauteur du recto (fin du vide en bas)
         background: 'linear-gradient(135deg, #001A4D 0%, #0d1f3e 55%, #1a3060 100%)',
         boxShadow: '0 10px 34px rgba(0,0,0,0.45)',
         border: '1px solid rgba(255,255,255,0.14)',
