@@ -468,7 +468,19 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
         <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 flex items-stretch"
           style={{ background: 'var(--c-nav)', borderTop: '1px solid var(--c-border-s)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
           {[
-            { key: 'presence', label: 'Présence', icon: <MapPin className="w-6 h-6" />, onClick: () => navigate('/dashboard#checkin') },
+            { key: 'presence', label: 'Présence', icon: <MapPin className="w-6 h-6" />, onClick: () => {
+              // Déjà sur le dashboard : React Router (pushState) ne déclenche PAS
+              // l'événement natif `hashchange` que le dashboard écoute, et le
+              // composant ne se remonte pas → le check-in ne s'ouvrirait jamais.
+              // On force donc un hashchange nous-mêmes (ou on le rejoue si le
+              // hash vaut déjà #checkin, pour rouvrir à chaque appui).
+              if (window.location.pathname === '/dashboard') {
+                if (window.location.hash !== '#checkin') window.location.hash = 'checkin';
+                else window.dispatchEvent(new HashChangeEvent('hashchange'));
+              } else {
+                navigate('/dashboard#checkin');
+              }
+            } },
             { key: 'saut', label: 'Saut', icon: <Plus className="w-7 h-7" />, onClick: () => navigate('/dashboard?action=add-jump') },
             { key: 'qr', label: 'QR', icon: <QrCode className="w-6 h-6" />, onClick: () => navigate('/qr-code') },
           ].map((a) => (
