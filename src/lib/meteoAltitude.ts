@@ -34,17 +34,6 @@ export interface MeteoAltitudePayload {
 }
 
 /** Icône selon le code météo WMO. */
-export function iconeMeteo(code: number): string {
-  if (code === 0) return '☀️';
-  if (code <= 2) return '🌤️';
-  if (code === 3) return '☁️';
-  if (code <= 48) return '🌫️';
-  if (code <= 67) return '🌧️';
-  if (code <= 77) return '🌨️';
-  if (code <= 82) return '🌦️';
-  return '⛈️';
-}
-
 const CACHE_MAX_AGE_MS = 60 * 60 * 1000; // 1 h — les modèles ne bougent que quelques fois/jour
 
 async function fetchOpenMeteo(lat: number, lon: number): Promise<MeteoAltitudePayload> {

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ComponentType } from 'react';
+import { CheckCircle2, AlertTriangle, XOctagon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { ErrorBoundary } from './ErrorBoundary';
 import { useMeteoAltitude, indexHeureCourante, kmhEnKt } from '../lib/meteoAltitude';
@@ -8,10 +9,11 @@ import {
   type MeteoSeuils, type MeteoLevel, type PresentDecision,
 } from '../lib/decision';
 
-const LEVEL_UI: Record<MeteoLevel, { emoji: string; label: string; color: string; bg: string; border: string }> = {
-  vert:   { emoji: '🟢', label: 'Feu vert',  color: '#10B981', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.35)' },
-  orange: { emoji: '🟠', label: 'Vigilance', color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.35)' },
-  rouge:  { emoji: '🔴', label: 'Défavorable', color: '#EF4444', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.35)' },
+// Icônes vectorielles (famille unique) — plus d'emojis système 🟢🟠🔴.
+const LEVEL_UI: Record<MeteoLevel, { Icon: ComponentType<{ className?: string }>; label: string; color: string; bg: string; border: string }> = {
+  vert:   { Icon: CheckCircle2,  label: 'Feu vert',    color: '#10B981', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.35)' },
+  orange: { Icon: AlertTriangle, label: 'Vigilance',   color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.35)' },
+  rouge:  { Icon: XOctagon,      label: 'Défavorable', color: '#EF4444', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.35)' },
 };
 
 function DecisionInner({ centreId }: { centreId: string }) {
@@ -70,7 +72,7 @@ function DecisionInner({ centreId }: { centreId: string }) {
           ) : verdict && ui ? (
             <>
               <div className="text-base font-extrabold mt-0.5 flex items-center gap-1.5" style={{ color: ui.color }}>
-                <span>{ui.emoji}</span> {ui.label}
+                <ui.Icon className="w-4 h-4" /> {ui.label}
               </div>
               <div className="text-xs mt-0.5" style={{ color: 'var(--c-text2)' }}>{verdict.reason}</div>
             </>
@@ -94,7 +96,7 @@ function DecisionInner({ centreId }: { centreId: string }) {
         <div className="rounded-xl p-3" style={{ background: 'var(--c-hover)', border: '1px solid var(--c-border-s)' }}>
           <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>À vérifier</div>
           {readiness.bloquesDetail.length === 0 ? (
-            <div className="text-sm mt-1" style={{ color: 'var(--c-muted)' }}>—</div>
+            <div className="text-sm mt-1 font-medium" style={{ color: '#34D399' }}>Rien à vérifier</div>
           ) : (
             <ul className="mt-1 space-y-0.5">
               {readiness.bloquesDetail.slice(0, 3).map((b, i) => (

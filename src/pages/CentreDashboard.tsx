@@ -49,6 +49,7 @@ import {
   Search, Filter, Eye, Trash2, UserCheck, UserX,
   Download, Upload, Hash, TrendingUp, MapPin, Send, Zap, Sun, Moon,
   GraduationCap, MoreVertical, UserMinus, Euro, BookCheck, Puzzle,
+  Palette, CalendarOff, CheckCircle2,
 } from 'lucide-react';
 import { PlanningCentre } from './PlanningCentre';
 import { GestionPliage } from './centre/GestionPliage';
@@ -283,8 +284,13 @@ function TuileEncadrementDZ({ centreId, onGo }: { centreId: string; onGo: (secti
   return (
     <button className={tuileRecap} style={tuileRecapStyle} onClick={() => onGo('equipe', 'encadrement')}>
       <p className="text-[11px] font-bold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Encadrement des séances</p>
-      <p className="text-2xl font-extrabold mt-1" style={{ color: enc.seances.length === 0 ? 'white' : manque === 0 ? '#34D399' : '#FBBF24' }}>
-        {enc.seances.length === 0 ? '—' : manque === 0 ? '✓' : manque}
+      {/* État vide illustré (pas de tiret orphelin) ; ✓ vectoriel quand conforme. */}
+      <p className="text-2xl font-extrabold mt-1 flex items-center" style={{ color: enc.seances.length === 0 ? 'var(--c-dim)' : manque === 0 ? '#34D399' : '#FBBF24', minHeight: 32 }}>
+        {enc.seances.length === 0
+          ? <CalendarOff className="w-6 h-6" />
+          : manque === 0
+            ? <CheckCircle2 className="w-7 h-7" />
+            : manque}
       </p>
       <p className="text-xs mt-1" style={{ color: 'var(--c-dim)' }}>
         {enc.seances.length === 0
@@ -447,11 +453,28 @@ function DashboardHome({
       {presencesSlot}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {encadrementSlot}
-        <CentreKpiCard accent="#10B981" label="Sauts aujourd'hui" value={stats.sautsAujourdhui} sub="Sur le terrain" />
+        <CentreKpiCard accent="var(--c-border-f)" label="Sauts aujourd'hui" value={stats.sautsAujourdhui} sub="Sur le terrain" />
       </div>
 
       {/* ── 3 · À TRAITER — les actions en attente ── */}
       <ZoneTitre>À traiter</ZoneTitre>
+
+      {/* Carnets à valider — chiffre ACTIONNABLE DOMINANT (priorité métier du DT),
+          au-dessus des alertes ponctuelles à faible volume. Orange = actionnable. */}
+      <button onClick={() => onNavigate('validations')}
+        className="w-full rounded-2xl p-4 flex items-center gap-4 text-left transition"
+        style={{ background: carnetsEnAttente > 0 ? 'rgba(249,115,22,0.12)' : 'var(--c-surface)', border: `1px solid ${carnetsEnAttente > 0 ? 'rgba(249,115,22,0.4)' : 'var(--c-border)'}` }}>
+        <span className="flex-shrink-0" style={{ color: carnetsEnAttente > 0 ? '#F97316' : 'var(--c-muted)' }}>
+          <BookCheck className="w-8 h-8" />
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="text-3xl font-extrabold leading-none" style={{ color: carnetsEnAttente > 0 ? '#F97316' : 'var(--c-text)' }}>{carnetsEnAttente}</div>
+          <div className="text-sm font-semibold mt-1" style={{ color: 'var(--c-text)' }}>Carnets à valider</div>
+        </div>
+        {carnetsEnAttente > 0 && <span className="text-sm font-bold flex-shrink-0" style={{ color: '#F97316' }}>Valider →</span>}
+      </button>
+
+      {/* Alertes ponctuelles (faible volume) — SOUS le chiffre dominant. */}
       {(alerteExpires > 0 || alerteMedical > 0 || !centre?.logo_url) && (
         <div className="space-y-2">
           {alerteExpires > 0 && (
@@ -467,7 +490,7 @@ function DashboardHome({
           {!centre?.logo_url && (
             <button onClick={() => onNavigate('centre')} className="w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl transition"
               style={{ background: 'rgba(249,115,22,0.07)', border: '1px solid rgba(249,115,22,0.2)' }}>
-              <span className="text-lg flex-shrink-0">🎨</span>
+              <span className="flex-shrink-0" style={{ color: '#F97316' }}><Palette className="w-5 h-5" /></span>
               <div className="flex-1 min-w-0">
                 <span className="text-sm font-medium" style={{ color: '#F97316' }}>Ajoutez votre logo officiel</span>
                 <span className="text-xs ml-2" style={{ color: 'rgba(249,115,22,0.7)' }}>Il apparaîtra sur les carnets de vos licenciés → Mon centre</span>
@@ -478,14 +501,11 @@ function DashboardHome({
         </div>
       )}
       {vigilanceSlot}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <CentreKpiCard accent={carnetsEnAttente > 0 ? '#8B5CF6' : 'var(--c-border-f)'} label="Carnets à valider"
-          value={<span style={{ color: carnetsEnAttente > 0 ? '#8B5CF6' : 'var(--c-text)' }}>{carnetsEnAttente}</span>}
-          sub="En attente" onClick={() => onNavigate('validations')} />
-        <CentreKpiCard accent={stats.demandesAttente > 0 ? '#F97316' : 'var(--c-border-f)'} label="Demandes d'adhésion"
-          value={<span style={{ color: stats.demandesAttente > 0 ? '#F97316' : 'var(--c-text)' }}>{stats.demandesAttente}</span>}
-          sub="En attente" onClick={() => onNavigate('demandes')} />
-      </div>
+
+      {/* Demandes d'adhésion — secondaire (chiffre informatif). */}
+      <CentreKpiCard accent={stats.demandesAttente > 0 ? '#F97316' : 'var(--c-border-f)'} label="Demandes d'adhésion"
+        value={<span style={{ color: stats.demandesAttente > 0 ? '#F97316' : 'var(--c-text)' }}>{stats.demandesAttente}</span>}
+        sub="En attente" onClick={() => onNavigate('demandes')} />
       {relancesSlot}
 
       {/* ── 4 · PILOTAGE — le fond, consultable ── */}
@@ -2115,11 +2135,11 @@ function StatsSection({ centreId }: { centreId: string | undefined }) {
 // ─── LicencieDrawer ────────────────────────────────────────────────────────────
 
 const MESSAGES_RAPIDES = [
-  { label: '⚠️ Licence expire', text: 'Bonjour, votre licence FFP expire bientôt. Pensez à la renouveler avant votre prochain saut.' },
-  { label: '🏥 Certificat médical', text: 'Bonjour, votre certificat médical est expiré ou arrive à échéance. Un certificat valide est obligatoire pour sauter.' },
-  { label: '✓ Saut validé', text: 'Votre saut a été validé. Bon saut et à bientôt sur la DZ !' },
-  { label: '📅 Stage PAC', text: 'Un stage PAC est disponible prochainement dans notre centre. Êtes-vous intéressé(e) ?' },
-  { label: '👋 Bienvenue', text: "Bienvenue dans notre centre ! N'hésitez pas à nous contacter pour toute question." },
+  { label: 'Licence expire', text: 'Bonjour, votre licence FFP expire bientôt. Pensez à la renouveler avant votre prochain saut.' },
+  { label: 'Certificat médical', text: 'Bonjour, votre certificat médical est expiré ou arrive à échéance. Un certificat valide est obligatoire pour sauter.' },
+  { label: 'Saut validé', text: 'Votre saut a été validé. Bon saut et à bientôt sur la DZ !' },
+  { label: 'Stage PAC', text: 'Un stage PAC est disponible prochainement dans notre centre. Êtes-vous intéressé(e) ?' },
+  { label: 'Bienvenue', text: "Bienvenue dans notre centre ! N'hésitez pas à nous contacter pour toute question." },
 ];
 
 function ChatMessages({

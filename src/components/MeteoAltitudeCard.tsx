@@ -1,11 +1,29 @@
-import { useState } from 'react';
-import { Wind, ChevronDown, ChevronUp, CloudOff } from 'lucide-react';
+import { useState, type CSSProperties } from 'react';
 import {
-  useMeteoAltitude, indexHeureCourante, estimePlafond, kmhEnKt, iconeMeteo,
+  Wind, ChevronDown, ChevronUp, CloudOff, AlertTriangle,
+  Sun, CloudSun, Cloud, CloudFog, CloudRain, CloudSnow, CloudDrizzle, CloudLightning,
+} from 'lucide-react';
+import {
+  useMeteoAltitude, indexHeureCourante, estimePlafond, kmhEnKt,
   type MeteoAltitudePayload,
 } from '../lib/meteoAltitude';
 import { useComplianceRules } from '../lib/compliance';
 import { formatHeureParis } from '../lib/datetime';
+
+// Icône météo VECTORIELLE (famille unique Lucide) — remplace les emojis système
+// (☀️ ⛅ 🌧️…) pour tenir la discipline visuelle partagée avec le dashboard.
+function IconeMeteo({ code, className, style }: { code: number; className?: string; style?: CSSProperties }) {
+  const C =
+    code === 0 ? Sun :
+    code <= 2 ? CloudSun :
+    code === 3 ? Cloud :
+    code <= 48 ? CloudFog :
+    code <= 67 ? CloudRain :
+    code <= 77 ? CloudSnow :
+    code <= 82 ? CloudDrizzle :
+    CloudLightning;
+  return <C className={className ?? 'w-4 h-4'} style={style} aria-hidden />;
+}
 
 // Flèche de vent : même convention que la manche à air du briefing — elle est
 // orientée dans le sens où le vent SOUFFLE ; le chiffre indique d'où il vient.
@@ -83,7 +101,7 @@ function Jours3({ payload }: { payload: MeteoAltitudePayload }) {
       {payload.jours.slice(0, 3).map((j, i) => (
         <div key={j.date} className="rounded-xl p-2.5 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <p className="text-[10px] mb-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>{labels[i] ?? j.date}</p>
-          <p className="text-lg leading-none mb-1">{iconeMeteo(j.code)}</p>
+          <div className="flex justify-center mb-1"><IconeMeteo code={j.code} className="w-5 h-5" style={{ color: '#7DD3FC' }} /></div>
           <p className="text-xs font-bold text-white">{Math.round(j.tempMax)}° · {Math.round(j.ventMax)} km/h</p>
           <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.45)' }}>raf. {Math.round(j.rafalesMax)}</p>
         </div>
@@ -104,7 +122,7 @@ export function MeteoAltitudeCard({ dzId, dzNom }: { dzId: string | undefined; d
   if (error && !payload) {
     return (
       <div className="rounded-2xl px-4 py-3 mb-3 text-xs" style={{ background: 'rgba(148,163,184,0.08)', border: '1px solid rgba(148,163,184,0.25)', color: '#CBD5E1' }}>
-        🌬️ Vent en altitude{dzNom ? ` — ${dzNom}` : ''} : {error}
+        <Wind className="w-3.5 h-3.5 inline mr-1" style={{ color: '#7DD3FC' }} /> Vent en altitude{dzNom ? ` — ${dzNom}` : ''} : {error}
       </div>
     );
   }
@@ -119,10 +137,10 @@ export function MeteoAltitudeCard({ dzId, dzNom }: { dzId: string | undefined; d
   const solFort = (payload.sol.speed[i] ?? 0) >= seuilSol;
 
   return (
-    <div className="rounded-2xl overflow-hidden mb-3" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+    <div className="rounded-2xl overflow-hidden mb-3" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
       {/* Ligne compacte — seule visible par défaut : conditions + vent sol */}
       <button onClick={() => setDeplie(d => !d)} className="w-full px-4 py-2.5 flex items-center gap-2 text-left" style={{ minHeight: 44 }}>
-        <span className="text-base leading-none" aria-hidden>{iconeMeteo(codeJour)}</span>
+        <IconeMeteo code={codeJour} className="w-4 h-4" style={{ color: solFort ? '#F87171' : '#7DD3FC' }} />
         <span style={{ color: solFort ? '#F87171' : '#7DD3FC' }}><FlecheVent dirProvenance={payload.sol.dir[i] ?? 0} size={15} /></span>
         <span className="text-sm font-bold" style={{ color: solFort ? '#F87171' : '#fff' }}>
           {Math.round(payload.sol.speed[i] ?? 0)} km/h
@@ -190,7 +208,7 @@ export function MeteoAltitudeDZ({ dzId }: { dzId: string }) {
   if (error && !payload) {
     return (
       <div className="rounded-2xl px-4 py-3 text-sm" style={{ background: 'rgba(148,163,184,0.08)', border: '1px solid rgba(148,163,184,0.25)', color: '#CBD5E1' }}>
-        🌬️ Vent en altitude : {error}
+        <Wind className="w-3.5 h-3.5 inline mr-1" style={{ color: '#7DD3FC' }} /> Vent en altitude : {error}
       </div>
     );
   }
@@ -236,9 +254,14 @@ export function MeteoAltitudeDZ({ dzId }: { dzId: string }) {
                 </tr>
               </thead>
               <tbody>
-                {heuresProj.map(idx => (
-                  <tr key={idx} style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                    <td className="py-1.5 pr-2 font-mono" style={{ color: 'var(--c-text2)' }}>{payload.times[idx].substring(11, 16)}</td>
+                {heuresProj.map(idx => {
+                  // Créneau à risque = vent sol OU largage au-delà du seuil → surligné.
+                  const risque = (payload.sol.speed[idx] ?? 0) >= seuilSol || (largage && (largage.speed[idx] ?? 0) >= seuilAlt);
+                  return (
+                  <tr key={idx} style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: risque ? 'rgba(248,113,113,0.10)' : 'transparent' }}>
+                    <td className="py-1.5 pr-2 font-mono" style={{ color: risque ? '#F87171' : 'var(--c-text2)' }}>
+                      {risque && <AlertTriangle className="w-3 h-3 inline mr-1" />}{payload.times[idx].substring(11, 16)}
+                    </td>
                     <td className="py-1.5 pr-2">
                       <span className="inline-flex items-center gap-1" style={{ color: (payload.sol.speed[idx] ?? 0) >= seuilSol ? '#F87171' : '#fff' }}>
                         <FlecheVent dirProvenance={payload.sol.dir[idx] ?? 0} size={13} />
@@ -255,7 +278,8 @@ export function MeteoAltitudeDZ({ dzId }: { dzId: string }) {
                       )}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
