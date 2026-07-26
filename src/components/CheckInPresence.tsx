@@ -132,9 +132,9 @@ export function CheckInPresence({ dzs, userId }: { dzs: { id: string; nom: strin
   if (!ouvert) {
     return (
       <button onClick={() => setOuvert(true)}
-        className="w-full rounded-2xl px-4 py-3 mb-3 flex items-center justify-center gap-2 text-sm font-bold text-white"
-        style={{ background: '#2563EB', boxShadow: '0 4px 14px rgba(37,99,235,0.35)', minHeight: 48 }}>
-        <MapPin className="w-4 h-4" /> Je suis présent aujourd'hui
+        className="w-full rounded-2xl px-4 py-3 flex items-center justify-center gap-2 text-sm font-semibold"
+        style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)', minHeight: 48 }}>
+        <MapPin className="w-4 h-4" style={{ color: '#60A5FA' }} /> Je suis présent aujourd'hui
       </button>
     );
   }

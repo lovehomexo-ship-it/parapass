@@ -33,6 +33,7 @@ import {
   Plus, FileDown, QrCode, TrendingUp,
   ChevronDown, ChevronUp, Trash2, X, ShieldCheck, Hash,
   Pencil, Lock, Award, ChevronRight, Camera, Wallet, Flame, Share2,
+  Target, GraduationCap, ScanLine, Wind, CheckCircle2, Clock, Activity, BarChart3, Backpack,
 } from 'lucide-react';
 
 // ─── Weather helpers (reused from PlanningDZ) ────────────────────────────────
@@ -51,6 +52,18 @@ function expiryBarColor(months: number | null): string {
   if (months < 0) return '#EF4444';
   if (months < 3) return '#F59E0B';
   return '#10B981';
+}
+
+// Titre de zone du dashboard — matérialise les 3 grandes sections
+// (Aujourd'hui / Ma progression / Mon activité). Le vrai regroupement vient de
+// l'espacement ; ce titre discret ne fait que le confirmer.
+function ZoneTitre({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 mt-8 mb-3 first:mt-0">
+      <span style={{ color: 'var(--c-muted)' }}>{icon}</span>
+      <h2 className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--c-muted)', letterSpacing: '0.14em' }}>{children}</h2>
+    </div>
+  );
 }
 
 interface KpiCardProps {
@@ -121,10 +134,12 @@ function ShortcutTiles({ userId }: { userId: string }) {
   const tiles = [
     {
       key: 'reflexe',
-      icon: reflexeDone ? '✅' : '🎯',
+      icon: reflexeDone
+        ? <CheckCircle2 className="w-5 h-5" style={{ color: '#34D399' }} />
+        : <Target className="w-5 h-5" style={{ color: '#FCA5A5' }} />,
       label: 'Réflexe du jour',
       badge: reflexeLoading ? null : reflexeDone
-        ? <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.15)', color: '#34D399' }}>✓ fait</span>
+        ? <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.15)', color: '#34D399' }}>Fait</span>
         : <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(239,68,68,0.12)', color: '#FCA5A5' }}>à faire</span>,
       streak: streak > 0 ? streak : null,
       bg: reflexeDone ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.07)',
@@ -133,7 +148,7 @@ function ShortcutTiles({ userId }: { userId: string }) {
     },
     {
       key: 'academie',
-      icon: '🎓',
+      icon: <GraduationCap className="w-5 h-5" style={{ color: '#A78BFA' }} />,
       label: 'Académie',
       badge: <span className="text-[10px]" style={{ color: '#A78BFA' }}>Quiz · XP</span>,
       streak: null,
@@ -143,7 +158,7 @@ function ShortcutTiles({ userId }: { userId: string }) {
     },
     {
       key: 'scanner',
-      icon: '🎒',
+      icon: <ScanLine className="w-5 h-5" style={{ color: 'var(--c-muted)' }} />,
       label: 'Scanner un sac',
       badge: <span className="text-[10px]" style={{ color: 'var(--c-dim)' }}>QR code</span>,
       streak: null,
@@ -163,7 +178,7 @@ function ShortcutTiles({ userId }: { userId: string }) {
             className="flex flex-col items-center gap-1 rounded-xl py-3 px-2 text-center transition-opacity active:opacity-70"
             style={{ background: t.bg, border: t.border, cursor: 'pointer' }}
           >
-            <span className="text-xl leading-none">{t.icon}</span>
+            <span className="leading-none">{t.icon}</span>
             <span className="text-[11px] font-semibold leading-tight" style={{ color: 'var(--c-text)' }}>
               {t.label}
             </span>
@@ -229,7 +244,7 @@ function MonSacDuJour({ userId }: { userId: string }) {
       <a href={`/sac/${sac_id}`}
         className="flex items-center gap-3 px-4 py-3 no-underline"
         style={{ textDecoration: 'none' }}>
-        <span className="text-2xl flex-shrink-0">🎒</span>
+        <span className="flex-shrink-0" style={{ color: '#F97316' }}><Backpack className="w-6 h-6" /></span>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold" style={{ color: 'var(--c-text)' }}>{nom}</p>
           <p className="text-xs" style={{ color: etatCfg.color }}>{etatCfg.label}</p>
@@ -621,8 +636,8 @@ export function DashboardPage() {
   const subTabs: { key: DashTab; label: string }[] = [
     { key: 'accueil', label: 'Vue d\'ensemble' },
     { key: 'carnet', label: 'Mon Carnet' },
-    { key: 'planning', label: '📅 Ma DZ' },
-    ...(hasFinances ? [{ key: 'compte' as DashTab, label: '💳 Mon compte' }] : []),
+    { key: 'planning', label: 'Ma DZ' },
+    ...(hasFinances ? [{ key: 'compte' as DashTab, label: 'Mon compte' }] : []),
   ];
 
   return (
@@ -690,7 +705,7 @@ export function DashboardPage() {
                 <div className="rounded-2xl p-4 mb-3 flex items-center gap-3 flex-wrap"
                   style={{ background: 'linear-gradient(135deg, rgba(249,115,22,0.18), rgba(234,88,12,0.12))', border: '1.5px solid rgba(249,115,22,0.45)' }}>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-extrabold" style={{ color: '#FFEDD5' }}>Beau saut ! 🪂</p>
+                    <p className="text-sm font-extrabold" style={{ color: '#FFEDD5' }}>Beau saut !</p>
                     <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>Partage ta journée avec une carte ParaPass.</p>
                   </div>
                   <button onClick={() => { setProposeShare(false); setShareOpen(true); }}
@@ -846,21 +861,18 @@ export function DashboardPage() {
                 </div>
               </div>{/* fin layout 2 colonnes */}
 
-              {/* Carte « Ma reprise » — récence du dernier saut selon les règles
-                  paramétrées. Placée SOUS les cartes d'échéances Licence FFP /
-                  Certificat médical, contenu et comportement inchangés. */}
-              <div className="mb-6">
+              {/* ═══ ZONE — Aujourd'hui (reprise, sac, présence, météo) ═══ */}
+              <ZoneTitre icon={<Clock className="w-3.5 h-3.5" />}>Aujourd'hui</ZoneTitre>
+              <div className="space-y-3">
                 <MaRepriseCard userId={user?.id} niveau={topBrevet} onPlanifierReprise={() => setActiveTab('planning')} />
+                <MonSacDuJour userId={user!.id} />
+                <div id="checkin" className="scroll-mt-20"><CheckInPresence dzs={briefingDzs} userId={user?.id} /></div>
+                {/* Météo INTÉGRÉE à la zone du jour, même traitement de carte
+                    (fini le bandeau orphelin en pied de page). */}
+                {briefingDzs.map(dz => (
+                  <MeteoAltitudeCard key={`meteo-${dz.id}`} dzId={dz.id} dzNom={briefingDzs.length > 1 ? dz.nom : undefined} />
+                ))}
               </div>
-
-              <MonSacDuJour userId={user!.id} />
-
-              {/* Check-in présence — visible et incitatif, juste au-dessus des
-                  tuiles sécurité, sans repasser devant licence/briefing */}
-              <div id="checkin" className="scroll-mt-20"><CheckInPresence dzs={briefingDzs} userId={user?.id} /></div>
-
-              {/* Raccourcis secondaires — grille 3 tuiles compactes */}
-              {!isDemo && <ShortcutTiles userId={user!.id} />}
 
               {(profile.type_pratiquant === 'professionnel' || !!(profile.preferences as Record<string, unknown> | null | undefined)?.suivi_dgac) && (() => {
                 const now = new Date();
@@ -925,15 +937,17 @@ export function DashboardPage() {
               )}
 
 
-              {/* Ma Progression card */}
               {!aDejaImporte && !isDemo && (
                 <BanniereOCR onClic={() => setShowOCR(true)} />
               )}
 
-              {/* Ma Progression card */}
+              {/* ═══ ZONE — Ma progression ═══ */}
+              <ZoneTitre icon={<BarChart3 className="w-3.5 h-3.5" />}>Ma progression</ZoneTitre>
               <ProgressionCard userId={user?.id ?? null} />
 
-              {/* 3+5 — Bottom grid: sauts table (2/3) + right column (1/3) */}              <div className="flex flex-col md:flex-row gap-3">
+              {/* ═══ ZONE — Mon activité (derniers sauts + badges) ═══ */}
+              <ZoneTitre icon={<Activity className="w-3.5 h-3.5" />}>Mon activité</ZoneTitre>
+              <div className="flex flex-col md:flex-row gap-3">
 
                 {/* Left — Derniers sauts (2/3) */}
                 <div style={{ flex: 2, background: 'var(--c-dropdown)', border: '1px solid var(--c-border)', borderRadius: 12, overflow: 'hidden', minWidth: 0 }}>
@@ -965,10 +979,10 @@ export function DashboardPage() {
                           <div
                             className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm"
                             style={saut.source === 'soufflerie'
-                              ? { background: 'rgba(96,165,250,0.15)', color: '#60A5FA', fontSize: 16 }
+                              ? { background: 'rgba(96,165,250,0.15)', color: '#60A5FA' }
                               : { background: 'rgba(249,115,22,0.15)', color: '#F97316' }}
                           >
-                            {saut.source === 'soufflerie' ? '🌬️' : (sautNumeroMap[saut.id] ?? '—')}
+                            {saut.source === 'soufflerie' ? <Wind className="w-4 h-4" /> : (sautNumeroMap[saut.id] ?? '—')}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold truncate" style={{ color: 'var(--c-text)' }}>{saut.lieu}</p>
@@ -1030,18 +1044,21 @@ export function DashboardPage() {
                 </div>
               </div>
 
+              {/* Raccourcis secondaires — dé-emphasés, en fin de page. */}
+              {!isDemo && (
+                <>
+                  <ZoneTitre icon={<ScanLine className="w-3.5 h-3.5" />}>Raccourcis</ZoneTitre>
+                  <ShortcutTiles userId={user!.id} />
+                </>
+              )}
+
               {/* Briefing du jour acquitté : version compacte en bas de page,
-                  consultable sans monopoliser le haut de l'écran */}
-              <div className="mt-3">
+                  consultable sans monopoliser le haut de l'écran. */}
+              <div className="mt-4">
                 {briefingDzs.map(dz => (
                   <BriefingDuJourBlock key={`bas-${dz.id}`} dzId={dz.id} dzNom={dz.nom} userId={user?.id} position="bas" />
                 ))}
               </div>
-
-              {/* Météo — DERNIER élément du dashboard (compact, détail au clic) */}
-              {briefingDzs.map(dz => (
-                <MeteoAltitudeCard key={`meteo-${dz.id}`} dzId={dz.id} dzNom={briefingDzs.length > 1 ? dz.nom : undefined} />
-              ))}
             </>
           )}
 
@@ -1367,15 +1384,21 @@ function CompactBadgeCard({ def, earned, locked, sauts }: { def: BadgeDefinition
   const rs = RARETE_STYLES[def.rarete] ?? RARETE_STYLES.commun;
   return (
     <div
-      className="flex flex-col items-center gap-1 p-2 rounded-lg"
+      className="relative flex flex-col items-center gap-1 p-2 rounded-lg"
       style={{
-        background: earned && !locked ? rs.glow : 'rgba(255,255,255,0.04)',
-        border: `0.5px solid ${earned && !locked ? rs.border : 'rgba(255,255,255,0.06)'}`,
-        opacity: locked ? 0.4 : 1,
+        background: earned && !locked ? rs.glow : 'rgba(255,255,255,0.03)',
+        border: `0.5px solid ${earned && !locked ? rs.border : 'rgba(255,255,255,0.08)'}`,
+        opacity: locked ? 0.7 : 1,
       }}
+      title={def.nom}
     >
-      <span className="text-xl" style={{ filter: locked ? 'grayscale(1)' : 'none' }}>{def.icone}</span>
-      <span className="text-[9px] font-semibold text-white/70 text-center leading-tight line-clamp-1">{def.nom}</span>
+      {/* Badge verrouillé : cadenas explicite + icône dégrisée, distinct d'un badge obtenu. */}
+      {locked && (
+        <span className="absolute top-1 right-1"><Lock className="w-3 h-3" style={{ color: '#64748B' }} /></span>
+      )}
+      <span className="text-xl" style={{ filter: locked ? 'grayscale(1)' : 'none', opacity: locked ? 0.5 : 1 }}>{def.icone}</span>
+      {/* Titre jamais tronqué à un seul caractère : 2 lignes + tooltip. */}
+      <span className="text-[9px] font-semibold text-white/70 text-center leading-tight line-clamp-2">{def.nom}</span>
       <span className="text-[9px] font-medium" style={{ color: locked ? '#64748B' : rs.labelColor }}>
         {locked && sauts !== undefined ? `${sauts} restants` : rs.label}
       </span>
@@ -1951,7 +1974,12 @@ function ProgressionCard({ userId }: { userId: string | null }) {
         {kpis.map((kpi) => (
           <div key={kpi.label} className="rounded-lg p-4" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
             <p className="text-[10px] uppercase tracking-wider mb-2 font-medium" style={{ color: 'var(--c-muted)', letterSpacing: '0.5px' }}>{kpi.label}</p>
-            <p className="text-xl font-bold leading-tight" style={{ color: kpi.color }}>{kpi.value}</p>
+            {kpi.value === '—' ? (
+              // État vide explicite et élégant, plutôt qu'un tiret orphelin.
+              <p className="text-sm italic leading-tight" style={{ color: 'var(--c-dim)' }}>Pas encore évalué</p>
+            ) : (
+              <p className="text-xl font-bold leading-tight" style={{ color: kpi.color }}>{kpi.value}</p>
+            )}
             {'bar' in kpi && kpi.bar !== undefined && (
               <div style={{ height: 6, background: 'var(--c-hover)', borderRadius: 3, margin: '8px 0 4px', overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${kpi.bar}%`, background: kpi.barColor, borderRadius: 3 }} />
@@ -1976,7 +2004,7 @@ function BadgeNotif({ newBadge, onDismiss }: { newBadge: string | null; onDismis
       <button onClick={onDismiss} className="absolute top-2 right-2 text-white/40 hover:text-white/60">
         <ChevronDown className="w-4 h-4" />
       </button>
-      <div className="text-2xl mb-2">🎖️</div>
+      <Award className="w-6 h-6 mb-2" style={{ color: '#F97316' }} />
       <div className="font-bold text-white text-sm">Nouveau badge débloqué !</div>
       <div className="text-orange-500 font-semibold mt-0.5">{newBadge}</div>
       <button onClick={onDismiss} className="mt-3 text-xs text-white/40 hover:text-white/60">Fermer</button>
