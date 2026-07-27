@@ -11,8 +11,7 @@ export interface Module {
   // pliage   → price_XXXXXXXXXXXXXXXXXXXXXXXX
   // finances → price_XXXXXXXXXXXXXXXXXXXXXXXX
   // tandem   → price_XXXXXXXXXXXXXXXXXXXXXXXX
-  // studio   → price_XXXXXXXXXXXXXXXXXXXXXXXX (pack)
-  icon: string; // emoji
+  // studio   → price_XXXXXXXXXXXXXXXXXXXXXXXX (pack) // emoji
 }
 
 export const MODULES: Module[] = [
@@ -23,7 +22,6 @@ export const MODULES: Module[] = [
     desc: 'Gestion du pliage DT053, QR codes sacs, suivi des plieurs.',
     status: 'live',
     prix: 29.99,
-    icon: '🪂',
   },
   {
     id: 'finances',
@@ -31,7 +29,6 @@ export const MODULES: Module[] = [
     desc: 'Comptabilité DZ, encaissements, exports.',
     status: 'live',
     prix: 19.99,
-    icon: '💶',
   },
   {
     id: 'tandem',
@@ -39,7 +36,6 @@ export const MODULES: Module[] = [
     desc: 'Réservations et marketplace tandem.',
     status: 'live',
     prix: 19.99,
-    icon: '👥',
   },
   {
     id: 'academy',
@@ -47,7 +43,6 @@ export const MODULES: Module[] = [
     desc: 'Formation : quiz sécurité, progression des brevets, documents FFP.',
     status: 'live',
     prix: 29.99,
-    icon: '🎓',
   },
   // ── PACK ──────────────────────────────────────────────────────────────────
   {
@@ -56,7 +51,6 @@ export const MODULES: Module[] = [
     desc: 'Tous les modules, présents et à venir. Le plus avantageux.',
     status: 'pack',
     prix: 49.99,
-    icon: '⭐',
   },
   // ── ROADMAP ───────────────────────────────────────────────────────────────
   {
@@ -64,35 +58,30 @@ export const MODULES: Module[] = [
     nom: 'ParaPass Matériel',
     desc: 'Suivi matériel, cycles de pliage secours, échéances DAA/Cypres, contrôles harnais.',
     status: 'soon',
-    icon: '🔧',
   },
   {
     id: 'manifest',
     nom: 'ParaPass Manifest',
     desc: 'Rotations avion, gestion des slots, optimisation des chargements.',
     status: 'soon',
-    icon: '✈️',
   },
   {
     id: 'boutique',
     nom: 'ParaPass Boutique',
     desc: 'Pro-shop, location de matériel, ventes.',
     status: 'soon',
-    icon: '🛒',
   },
   {
     id: 'securite',
     nom: 'ParaPass Sécurité',
     desc: 'Déclaration et suivi des incidents, remontée FFP, statistiques sécurité.',
     status: 'soon',
-    icon: '🛡️',
   },
   {
     id: 'evenements',
     nom: 'ParaPass Événements',
     desc: 'Gestion des boogies et compétitions, inscriptions.',
     status: 'soon',
-    icon: '🏆',
   },
 ];
 

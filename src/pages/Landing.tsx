@@ -5,20 +5,8 @@ import { Shield, Check, ArrowRight, Camera, Flame, Zap, Clock,
   CreditCard, Smartphone, ClipboardList, TrendingUp, GraduationCap, CheckCircle2,
   Backpack, CalendarDays, BarChart3, Wrench, Users, Euro, Star, Sparkles, Building2, AlertTriangle } from 'lucide-react';
 import { ParachuteGlyph } from '../design/BadgeIcon';
-import type { ComponentType, CSSProperties } from 'react';
+import { ModuleIcon } from '../design/academieIcons';
 
-// Emojis marketing → famille vectorielle unique (rendu identique tous OS).
-const LANDING_ICONS: Record<string, ComponentType<{ className?: string; style?: CSSProperties }>> = {
-  '📷': Camera, '🧠': Brain, '✏️': Pencil, '🆘': Siren, '📜': Scroll, '🪂': ParachuteGlyph,
-  '🌬️': Wind, '🎯': Target, '🛬': PlaneLanding, '🎖️': Medal, '🏅': Award, '🪪': CreditCard,
-  '📱': Smartphone, '📋': ClipboardList, '📈': TrendingUp, '🎓': GraduationCap, '✅': CheckCircle2,
-  '🎒': Backpack, '📅': CalendarDays, '📊': BarChart3, '🔧': Wrench, '👥': Users, '💶': Euro,
-  '⭐': Star, '✨': Sparkles, '⚡': Zap, '🔴': Zap, '🏫': Building2, '⚠': AlertTriangle, '⚠️': AlertTriangle,
-};
-function EmojiIcon({ e, className, style }: { e: string; className?: string; style?: CSSProperties }) {
-  const I = LANDING_ICONS[e] ?? Sparkles;
-  return <I className={className ?? 'w-6 h-6'} style={style} aria-hidden />;
-}
 import { ParaPassLogo } from '../components/ParaPassLogo';
 import { ParachuteIcon, ParachuteDropIcon } from '../components/ParachuteIcon';
 import { QRCodeSVG } from 'qrcode.react';
@@ -298,10 +286,10 @@ function DemoPassportCard({ compact = false }: { compact?: boolean }) {
 // ─── Section OCR — Import IA carnet papier ────────────────────────────────────
 
 const OCR_STEPS = [
-  { num: '01', icon: '📷', titre: 'Photographiez vos pages', desc: 'Prenez en photo toutes les pages de votre carnet en une fois. L\'IA s\'adapte à toutes les écritures.' },
-  { num: '02', icon: '🧠', titre: 'L\'IA analyse tout', desc: 'Dates, lieux, hauteurs, noms de moniteurs et programmes de saut — même en écriture cursive manuscrite.' },
-  { num: '03', icon: '✏️', titre: 'Vous validez en 2 minutes', desc: 'Chaque saut extrait s\'affiche dans un formulaire éditable. Corrigez si besoin, cochez, importez.' },
-  { num: '04', icon: '✅', titre: 'Votre historique est numérisé', desc: 'Les sauts importés reçoivent le statut "Historique · Déclaré sur l\'honneur" — archivés et horodatés.' },
+  { num: '01', icon: Camera, titre: 'Photographiez vos pages', desc: 'Prenez en photo toutes les pages de votre carnet en une fois. L\'IA s\'adapte à toutes les écritures.' },
+  { num: '02', icon: Brain, titre: 'L\'IA analyse tout', desc: 'Dates, lieux, hauteurs, noms de moniteurs et programmes de saut — même en écriture cursive manuscrite.' },
+  { num: '03', icon: Pencil, titre: 'Vous validez en 2 minutes', desc: 'Chaque saut extrait s\'affiche dans un formulaire éditable. Corrigez si besoin, cochez, importez.' },
+  { num: '04', icon: CheckCircle2, titre: 'Votre historique est numérisé', desc: 'Les sauts importés reçoivent le statut "Historique · Déclaré sur l\'honneur" — archivés et horodatés.' },
 ];
 
 const OCR_FEATURES = [
@@ -342,7 +330,7 @@ function SectionOCR() {
                 )}
                 <div className="relative flex-shrink-0">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl" style={{ background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.3)' }}>
-                    <EmojiIcon e={step.icon} className="w-6 h-6" />
+                    <step.icon className="w-6 h-6" />
                   </div>
                 </div>
                 <div className="pb-8">
@@ -449,7 +437,7 @@ function SectionModules() {
             <div className="absolute -top-3.5 left-6 px-3 py-1 rounded-full text-[11px] font-bold text-white" style={{ background: '#F97316' }}>
               Le plus avantageux
             </div>
-            <div className="text-4xl flex-shrink-0 mt-2 sm:mt-0"><EmojiIcon e={STUDIO.icon} className="w-8 h-8" /></div>
+            <div className="text-4xl flex-shrink-0 mt-2 sm:mt-0"><STUDIO.icon className="w-8 h-8" /></div>
             <div className="flex-1 min-w-0">
               <p className="font-bold text-lg" style={{ color: '#001A4D' }}>{STUDIO.nom}</p>
               <p className="text-sm mt-1 leading-relaxed" style={{ color: '#64748B' }}>{STUDIO.desc}</p>
@@ -483,7 +471,7 @@ function SectionModules() {
             {liveModules.map((mod) => (
               <div key={mod.id} className="rounded-xl p-5 flex flex-col gap-3 bg-white" style={{ border: '1.5px solid #E2E8F0', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                 <div className="flex items-start justify-between">
-                  <span className="text-2xl"><EmojiIcon e={mod.icon} className="w-6 h-6" /></span>
+                  <ModuleIcon id={mod.id} label={mod.nom} className="w-6 h-6" />
                   <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
                     style={{ background: 'rgba(16,185,129,0.1)', color: '#10B981', border: '1px solid rgba(16,185,129,0.25)' }}>
                     Disponible
@@ -523,7 +511,7 @@ function SectionModules() {
                 {soonModules.map((mod) => (
                   <div key={mod.id} className="rounded-xl p-3.5 flex flex-col gap-2" style={{ border: '1.5px solid #E2E8F0', background: '#F8FAFC', opacity: 0.85 }}>
                     <div className="flex items-center gap-2">
-                      <span className="text-lg" style={{ filter: 'grayscale(0.6)' }}><EmojiIcon e={mod.icon} className="w-6 h-6" /></span>
+                      <span style={{ filter: 'grayscale(0.6)' }}><ModuleIcon id={mod.id} label={mod.nom} className="w-6 h-6" /></span>
                       <p className="font-semibold text-sm flex-1 truncate" style={{ color: '#334155' }}>{mod.nom}</p>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: '#F1F5F9', color: '#64748B', border: '1px solid #E2E8F0' }}>
                         Bientôt
@@ -579,12 +567,12 @@ function SectionModules() {
 // ─── Section Académie ─────────────────────────────────────────────────────────
 
 const ACADEMIE_THEMES = [
-  { icon: '🆘', label: 'Sécurité & urgences', color: '#EF4444' },
-  { icon: '📜', label: 'Réglementation', color: '#3B82F6' },
-  { icon: '🪂', label: 'Matériel', color: '#F97316' },
-  { icon: '🌬️', label: 'Météo & aérologie', color: '#0EA5E9' },
-  { icon: '🎯', label: 'Pilotage sous voile', color: '#10B981' },
-  { icon: '🛬', label: 'Procédures DZ', color: '#8B5CF6' },
+  { icon: Siren, label: 'Sécurité & urgences', color: '#EF4444' },
+  { icon: Scroll, label: 'Réglementation', color: '#3B82F6' },
+  { icon: ParachuteGlyph, label: 'Matériel', color: '#F97316' },
+  { icon: Wind, label: 'Météo & aérologie', color: '#0EA5E9' },
+  { icon: Target, label: 'Pilotage sous voile', color: '#10B981' },
+  { icon: PlaneLanding, label: 'Procédures DZ', color: '#8B5CF6' },
 ];
 
 function SectionAcademie() {
@@ -617,7 +605,7 @@ function SectionAcademie() {
                     style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${t.color}30` }}
                   >
                     <div className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl mb-3" style={{ background: `${t.color}18`, border: `1px solid ${t.color}35` }}>
-                      <EmojiIcon e={t.icon} className="w-5 h-5" />
+                      <t.icon className="w-5 h-5" />
                     </div>
                     <p className="text-sm font-semibold text-white leading-snug">{t.label}</p>
                   </div>
@@ -627,11 +615,11 @@ function SectionAcademie() {
             <div className="flex flex-wrap gap-3 mt-6">
               {[
                 { icon: <Zap className="w-3.5 h-3.5" />, label: 'Système d\'XP', color: '#FBBF24' },
-                { icon: '🎖️', label: 'Grades à débloquer', color: '#A78BFA' },
-                { icon: '🏅', label: '11 badges Académie', color: '#34D399' },
+                { icon: Medal, label: 'Grades à débloquer', color: '#A78BFA' },
+                { icon: Award, label: '11 badges Académie', color: '#34D399' },
               ].map(chip => (
                 <span key={chip.label} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.06)', color: chip.color, border: '1px solid rgba(255,255,255,0.1)' }}>
-                  <EmojiIcon e={chip.icon} className="w-4 h-4" /> {chip.label}
+                  <chip.icon className="w-4 h-4" /> {chip.label}
                 </span>
               ))}
             </div>
@@ -722,7 +710,7 @@ function SectionReflexe() {
                 ].map(f => (
                   <li key={f.title} className="flex items-start gap-3.5">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: f.bg }}>
-                      <EmojiIcon e={f.icon} className="w-5 h-5" />
+                      <f.icon className="w-5 h-5" />
                     </div>
                     <div>
                       <p className="text-[15px] font-semibold mb-0.5" style={{ color: '#0F172A' }}>{f.title}</p>
@@ -1006,21 +994,21 @@ export function LandingPage() {
             {[
               {
                 step: '01',
-                icon: '🪪',
+                icon: CreditCard,
                 bg: '#EFF6FF',
                 title: 'Créez votre profil',
                 desc: 'Licence FFP, brevets, certificat médical, qualifs : tout au même endroit, en 5 minutes. Fini les documents éparpillés.',
               },
               {
                 step: '02',
-                icon: '🪂',
+                icon: ParachuteGlyph,
                 bg: '#FFFBEB',
                 title: 'Enregistrez vos sauts',
                 desc: 'Chaque saut s\'ajoute en quelques secondes, validé par votre moniteur d\'une signature horodatée. Un carnet qui grandit avec vous, sécurisé et horodaté.',
               },
               {
                 step: '03',
-                icon: '📱',
+                icon: Smartphone,
                 bg: '#F0FDF4',
                 title: 'Toujours prêt',
                 desc: 'Votre carte licence toujours à jour, dans votre poche. Au renouvellement comme à l\'accueil d\'une nouvelle DZ : un QR code, vérifié en 3 secondes.',
@@ -1039,7 +1027,7 @@ export function LandingPage() {
                   {item.step}
                 </div>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 text-2xl" style={{ background: item.bg }}>
-                  <EmojiIcon e={item.icon} className="w-6 h-6" />
+                  <item.icon className="w-6 h-6" />
                 </div>
                 <h3 className="text-base font-semibold mb-2" style={{ color: '#001A4D' }}>{item.title}</h3>
                 <p className="text-sm leading-relaxed" style={{ color: '#64748B' }}>{item.desc}</p>
@@ -1078,14 +1066,14 @@ export function LandingPage() {
                   <h3 className="text-2xl font-bold text-white mb-5">Tout votre parachutisme, en poche</h3>
                   <ul className="space-y-3 mb-8 flex-1">
                     {[
-                      { icon: '🪪', text: 'Carte numérique avec QR de vérification, même hors connexion' },
-                      { icon: '📋', text: 'Passeport complet : licence, médical, brevets — avec alertes d\'expiration' },
-                      { icon: '📈', text: 'Progression notée par votre moniteur sur 6 dimensions' },
-                      { icon: '🎓', text: 'Académie + Réflexe du jour : la théorie et les bons réflexes, chaque jour' },
-                      { icon: '🏅', text: '57 badges, stats, suivi matériel et communauté' },
+                      { icon: CreditCard, text: 'Carte numérique avec QR de vérification, même hors connexion' },
+                      { icon: ClipboardList, text: 'Passeport complet : licence, médical, brevets — avec alertes d\'expiration' },
+                      { icon: TrendingUp, text: 'Progression notée par votre moniteur sur 6 dimensions' },
+                      { icon: GraduationCap, text: 'Académie + Réflexe du jour : la théorie et les bons réflexes, chaque jour' },
+                      { icon: Award, text: '57 badges, stats, suivi matériel et communauté' },
                     ].map(f => (
                       <li key={f.text} className="flex items-start gap-3">
-                        <span className="text-base w-5 flex-shrink-0"><EmojiIcon e={f.icon} className="w-5 h-5" /></span>
+                        <span className="text-base w-5 flex-shrink-0"><f.icon className="w-5 h-5" /></span>
                         <span className="text-sm" style={{ color: 'rgba(255,255,255,0.80)' }}>{f.text}</span>
                       </li>
                     ))}
@@ -1117,14 +1105,14 @@ export function LandingPage() {
                   <h3 className="text-2xl font-bold mb-5" style={{ color: '#001A4D' }}>Pilotez votre dropzone en temps réel</h3>
                   <ul className="space-y-3 mb-8 flex-1">
                     {[
-                      { icon: '📋', text: 'Conformité de tous vos licenciés en un coup d\'œil' },
-                      { icon: '✅', text: 'Validation des sauts par vos moniteurs — signature horodatée' },
-                      { icon: '🎒', text: 'Modules Pliage (DT053, QR sacs) et Tandem (résas, bons cadeaux)' },
-                      { icon: '📅', text: 'Planning DZ avec météo intégrée' },
-                      { icon: '📊', text: 'Statistiques, finances et rapports de sauts' },
+                      { icon: ClipboardList, text: 'Conformité de tous vos licenciés en un coup d\'œil' },
+                      { icon: CheckCircle2, text: 'Validation des sauts par vos moniteurs — signature horodatée' },
+                      { icon: Backpack, text: 'Modules Pliage (DT053, QR sacs) et Tandem (résas, bons cadeaux)' },
+                      { icon: CalendarDays, text: 'Planning DZ avec météo intégrée' },
+                      { icon: BarChart3, text: 'Statistiques, finances et rapports de sauts' },
                     ].map(f => (
                       <li key={f.text} className="flex items-start gap-3">
-                        <span className="text-base w-5 flex-shrink-0"><EmojiIcon e={f.icon} className="w-5 h-5" /></span>
+                        <span className="text-base w-5 flex-shrink-0"><f.icon className="w-5 h-5" /></span>
                         <span className="text-sm" style={{ color: '#374151' }}>{f.text}</span>
                       </li>
                     ))}
@@ -1292,14 +1280,14 @@ export function LandingPage() {
           {/* Rangée features complémentaires */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12">
             {[
-              { icon: '📊', title: 'Mes Stats', desc: 'Sauts par mois, altitudes, dropzones, paliers' },
-              { icon: '🔧', title: 'Suivi Matériel', desc: 'Voile, secours, AAD, altimètre — alertes de révision' },
-              { icon: '🏅', title: '57 badges', desc: 'Du commun au légendaire, chaque jalon compte' },
-              { icon: '👥', title: 'Communauté', desc: 'Abonnements, messagerie et centres' },
+              { icon: BarChart3, title: 'Mes Stats', desc: 'Sauts par mois, altitudes, dropzones, paliers' },
+              { icon: Wrench, title: 'Suivi Matériel', desc: 'Voile, secours, AAD, altimètre — alertes de révision' },
+              { icon: Award, title: '57 badges', desc: 'Du commun au légendaire, chaque jalon compte' },
+              { icon: Users, title: 'Communauté', desc: 'Abonnements, messagerie et centres' },
             ].map((f, i) => (
               <Reveal key={f.title} delay={i * 60}>
                 <div className="rounded-xl p-5 h-full" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div className="text-2xl mb-2"><EmojiIcon e={f.icon} className="w-5 h-5" /></div>
+                  <div className="text-2xl mb-2"><f.icon className="w-5 h-5" /></div>
                   <p className="text-sm font-semibold text-white mb-1">{f.title}</p>
                   <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>{f.desc}</p>
                 </div>
@@ -1445,14 +1433,14 @@ export function LandingPage() {
           {/* Modules en cartes */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12">
             {[
-              { icon: '🎒', title: 'Module Pliage', desc: 'DT053, QR codes sacs, suivi plieurs et habilitations' },
-              { icon: '🪂', title: 'Module Tandem', desc: 'Planning, réservations, bons cadeaux, page publique' },
-              { icon: '💶', title: 'Module Finances', desc: 'Suivi des encaissements et rapports' },
-              { icon: '📅', title: 'Planning DZ', desc: 'Journées de saut avec météo intégrée' },
+              { icon: Backpack, title: 'Module Pliage', desc: 'DT053, QR codes sacs, suivi plieurs et habilitations' },
+              { icon: ParachuteGlyph, title: 'Module Tandem', desc: 'Planning, réservations, bons cadeaux, page publique' },
+              { icon: Euro, title: 'Module Finances', desc: 'Suivi des encaissements et rapports' },
+              { icon: CalendarDays, title: 'Planning DZ', desc: 'Journées de saut avec météo intégrée' },
             ].map((m, i) => (
               <Reveal key={m.title} delay={i * 60}>
                 <div className="rounded-xl p-5 bg-white h-full" style={{ border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-                  <div className="text-2xl mb-2"><EmojiIcon e={m.icon} className="w-6 h-6" /></div>
+                  <div className="text-2xl mb-2"><m.icon className="w-6 h-6" /></div>
                   <p className="text-sm font-semibold mb-1" style={{ color: '#001A4D' }}>{m.title}</p>
                   <p className="text-xs leading-relaxed" style={{ color: '#64748B' }}>{m.desc}</p>
                 </div>
@@ -1480,19 +1468,19 @@ export function LandingPage() {
                 quote: 'ParaPass a révolutionné la gestion de mon carnet. Mon moniteur valide mes sauts en quelques secondes.',
                 name: 'Parachutiste bêta testeur',
                 meta: 'Brevet B · Nouvelle-Aquitaine',
-                init: '🪂', color: '#2563EB',
+                init: ParachuteGlyph, color: '#2563EB',
               },
               {
                 quote: 'En tant que DT, je vois en temps réel si mes élèves sont en règle. Fini les vérifications de dernière minute avant l\'embarquement.',
                 name: 'Directeur Technique',
                 meta: 'Centre agréé · Ouest de la France',
-                init: '🏫', color: '#F59E0B',
+                init: Building2, color: '#F59E0B',
               },
               {
                 quote: 'La section progression est incroyable. Mon moniteur me note après chaque saut et je vois exactement sur quoi travailler.',
                 name: 'Parachutiste bêta testeur',
                 meta: 'Brevet A · Charente-Maritime',
-                init: '🪂', color: '#10B981',
+                init: ParachuteGlyph, color: '#10B981',
               },
             ].map((t, i) => (
               <Reveal key={i} delay={i * 80}>
@@ -1502,7 +1490,7 @@ export function LandingPage() {
                   </div>
                   <blockquote className="text-sm leading-relaxed flex-1 mb-5" style={{ color: '#374151' }}>"{t.quote}"</blockquote>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: t.color }}><EmojiIcon e={t.init} className="w-5 h-5" style={{ color: '#fff' }} /></div>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: t.color }}><t.init className="w-5 h-5" style={{ color: '#fff' }} /></div>
                     <div>
                       <div className="text-sm font-semibold" style={{ color: '#0F172A' }}>{t.name}</div>
                       <div className="text-xs" style={{ color: '#64748B' }}>{t.meta}</div>

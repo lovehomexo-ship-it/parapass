@@ -383,7 +383,6 @@ export interface BadgeDefinition {
   type: string;
   nom: string;
   description: string;
-  icone: string;
   categorie: 'volume' | 'discipline' | 'temporel' | 'figures_vr' | 'figures_freefly' | 'figures_tracking' | 'figures_belly' | 'disciplines_speciales' | 'equipement';
   couleur: string;
   rarete: 'commun' | 'rare' | 'epique' | 'legendaire';
@@ -391,78 +390,78 @@ export interface BadgeDefinition {
 
 export const BADGES: BadgeDefinition[] = [
   // ── Volume ──────────────────────────────────────────────────────────────────
-  { type: 'premier_saut', nom: 'Premier saut', description: '1 saut', icone: '🪂', categorie: 'volume', couleur: '#64748B', rarete: 'commun' },
-  { type: 'decollage', nom: 'Décollage', description: '10 sauts', icone: '🚀', categorie: 'volume', couleur: '#64748B', rarete: 'commun' },
-  { type: 'en_route', nom: 'En route', description: '25 sauts', icone: '🛫', categorie: 'volume', couleur: '#64748B', rarete: 'commun' },
-  { type: 'confirme', nom: 'Confirmé', description: '50 sauts', icone: '⭐', categorie: 'volume', couleur: '#16A34A', rarete: 'rare' },
-  { type: 'centenaire', nom: 'Centenaire', description: '100 sauts', icone: '💯', categorie: 'volume', couleur: '#16A34A', rarete: 'rare' },
-  { type: 'veteran', nom: 'Vétéran', description: '200 sauts', icone: '🏅', categorie: 'volume', couleur: '#2563EB', rarete: 'epique' },
-  { type: 'expert', nom: 'Expert', description: '300 sauts', icone: '🥈', categorie: 'volume', couleur: '#2563EB', rarete: 'epique' },
-  { type: 'maitre', nom: 'Maître', description: '500 sauts', icone: '🥇', categorie: 'volume', couleur: '#7C3AED', rarete: 'epique' },
-  { type: 'legende', nom: 'Légende', description: '1 000 sauts', icone: '🏆', categorie: 'volume', couleur: '#D97706', rarete: 'legendaire' },
-  { type: 'icone', nom: 'Icône', description: '2 000 sauts', icone: '👑', categorie: 'volume', couleur: '#D97706', rarete: 'legendaire' },
-  { type: 'mythe', nom: 'Mythe', description: '5 000 sauts', icone: '🌟', categorie: 'volume', couleur: '#D97706', rarete: 'legendaire' },
-  { type: 'immortel', nom: 'Immortel', description: '10 000 sauts', icone: '⚡', categorie: 'volume', couleur: '#D97706', rarete: 'legendaire' },
+  { type: 'premier_saut', nom: 'Premier saut', description: '1 saut', categorie: 'volume', couleur: '#64748B', rarete: 'commun' },
+  { type: 'decollage', nom: 'Décollage', description: '10 sauts', categorie: 'volume', couleur: '#64748B', rarete: 'commun' },
+  { type: 'en_route', nom: 'En route', description: '25 sauts', categorie: 'volume', couleur: '#64748B', rarete: 'commun' },
+  { type: 'confirme', nom: 'Confirmé', description: '50 sauts', categorie: 'volume', couleur: '#16A34A', rarete: 'rare' },
+  { type: 'centenaire', nom: 'Centenaire', description: '100 sauts', categorie: 'volume', couleur: '#16A34A', rarete: 'rare' },
+  { type: 'veteran', nom: 'Vétéran', description: '200 sauts', categorie: 'volume', couleur: '#2563EB', rarete: 'epique' },
+  { type: 'expert', nom: 'Expert', description: '300 sauts', categorie: 'volume', couleur: '#2563EB', rarete: 'epique' },
+  { type: 'maitre', nom: 'Maître', description: '500 sauts', categorie: 'volume', couleur: '#7C3AED', rarete: 'epique' },
+  { type: 'legende', nom: 'Légende', description: '1 000 sauts', categorie: 'volume', couleur: '#D97706', rarete: 'legendaire' },
+  { type: 'icone', nom: 'Icône', description: '2 000 sauts', categorie: 'volume', couleur: '#D97706', rarete: 'legendaire' },
+  { type: 'mythe', nom: 'Mythe', description: '5 000 sauts', categorie: 'volume', couleur: '#D97706', rarete: 'legendaire' },
+  { type: 'immortel', nom: 'Immortel', description: '10 000 sauts', categorie: 'volume', couleur: '#D97706', rarete: 'legendaire' },
 
   // ── Discipline générale ──────────────────────────────────────────────────────
-  { type: 'noctambule', nom: 'Noctambule', description: '1er saut de nuit', icone: '🌙', categorie: 'discipline', couleur: '#2563EB', rarete: 'epique' },
-  { type: 'aile', nom: 'Ailé', description: '1er saut wingsuit', icone: '🦅', categorie: 'discipline', couleur: '#2563EB', rarete: 'epique' },
-  { type: 'instructeur_badge', nom: 'Instructeur', description: "1er saut en tant qu'instructeur", icone: '🎓', categorie: 'discipline', couleur: '#16A34A', rarete: 'rare' },
-  { type: 'tandem_badge', nom: 'Tandem', description: '1er saut tandem', icone: '👥', categorie: 'discipline', couleur: '#64748B', rarete: 'commun' },
-  { type: 'competiteur', nom: 'Compétiteur', description: '1er saut en compétition', icone: '🎯', categorie: 'discipline', couleur: '#16A34A', rarete: 'rare' },
-  { type: 'globetrotter', nom: 'Globetrotter', description: 'Sauts dans 3 dropzones différentes', icone: '🌍', categorie: 'discipline', couleur: '#16A34A', rarete: 'rare' },
-  { type: 'explorateur', nom: 'Explorateur', description: 'Sauts dans 10 dropzones', icone: '🗺️', categorie: 'discipline', couleur: '#2563EB', rarete: 'epique' },
-  { type: 'fidele', nom: 'Fidèle', description: '50 sauts dans la même dropzone', icone: '❤️', categorie: 'discipline', couleur: '#16A34A', rarete: 'rare' },
-  { type: 'altitude_max', nom: 'Altitude max', description: '1er saut au-dessus de 5 000m', icone: '⛰️', categorie: 'discipline', couleur: '#D97706', rarete: 'legendaire' },
+  { type: 'noctambule', nom: 'Noctambule', description: '1er saut de nuit', categorie: 'discipline', couleur: '#2563EB', rarete: 'epique' },
+  { type: 'aile', nom: 'Ailé', description: '1er saut wingsuit', categorie: 'discipline', couleur: '#2563EB', rarete: 'epique' },
+  { type: 'instructeur_badge', nom: 'Instructeur', description: "1er saut en tant qu'instructeur", categorie: 'discipline', couleur: '#16A34A', rarete: 'rare' },
+  { type: 'tandem_badge', nom: 'Tandem', description: '1er saut tandem', categorie: 'discipline', couleur: '#64748B', rarete: 'commun' },
+  { type: 'competiteur', nom: 'Compétiteur', description: '1er saut en compétition', categorie: 'discipline', couleur: '#16A34A', rarete: 'rare' },
+  { type: 'globetrotter', nom: 'Globetrotter', description: 'Sauts dans 3 dropzones différentes', categorie: 'discipline', couleur: '#16A34A', rarete: 'rare' },
+  { type: 'explorateur', nom: 'Explorateur', description: 'Sauts dans 10 dropzones', categorie: 'discipline', couleur: '#2563EB', rarete: 'epique' },
+  { type: 'fidele', nom: 'Fidèle', description: '50 sauts dans la même dropzone', categorie: 'discipline', couleur: '#16A34A', rarete: 'rare' },
+  { type: 'altitude_max', nom: 'Altitude max', description: '1er saut au-dessus de 5 000m', categorie: 'discipline', couleur: '#D97706', rarete: 'legendaire' },
 
   // ── Temporel ─────────────────────────────────────────────────────────────────
-  { type: 'anniversaire_1an', nom: 'Anniversaire 1 an', description: '1 an depuis le 1er saut', icone: '🎂', categorie: 'temporel', couleur: '#64748B', rarete: 'commun' },
-  { type: 'anniversaire_5ans', nom: 'Anniversaire 5 ans', description: '5 ans depuis le 1er saut', icone: '🎉', categorie: 'temporel', couleur: '#16A34A', rarete: 'rare' },
-  { type: 'saison_active', nom: 'Saison active', description: '20 sauts en 1 mois', icone: '🔥', categorie: 'temporel', couleur: '#2563EB', rarete: 'epique' },
-  { type: 'regulier', nom: 'Régulier', description: '1 saut/mois pendant 6 mois consécutifs', icone: '📅', categorie: 'temporel', couleur: '#16A34A', rarete: 'rare' },
+  { type: 'anniversaire_1an', nom: 'Anniversaire 1 an', description: '1 an depuis le 1er saut', categorie: 'temporel', couleur: '#64748B', rarete: 'commun' },
+  { type: 'anniversaire_5ans', nom: 'Anniversaire 5 ans', description: '5 ans depuis le 1er saut', categorie: 'temporel', couleur: '#16A34A', rarete: 'rare' },
+  { type: 'saison_active', nom: 'Saison active', description: '20 sauts en 1 mois', categorie: 'temporel', couleur: '#2563EB', rarete: 'epique' },
+  { type: 'regulier', nom: 'Régulier', description: '1 saut/mois pendant 6 mois consécutifs', categorie: 'temporel', couleur: '#16A34A', rarete: 'rare' },
 
   // ── Figures VR (Voile Relative) ───────────────────────────────────────────────
-  { type: 'vr_first_formation', nom: 'Première formation', description: '1 saut VR / FS enregistré', icone: '🔵', categorie: 'figures_vr', couleur: '#2563EB', rarete: 'commun' },
-  { type: 'vr_2way', nom: 'Duo dans les airs', description: 'VR 2-way enregistré', icone: '✌️', categorie: 'figures_vr', couleur: '#2563EB', rarete: 'commun' },
-  { type: 'vr_4way', nom: 'Carré magique', description: 'VR 4-way enregistré', icone: '🟦', categorie: 'figures_vr', couleur: '#16A34A', rarete: 'rare' },
-  { type: 'vr_8way', nom: 'Octopus', description: 'VR 8-way enregistré', icone: '🐙', categorie: 'figures_vr', couleur: '#16A34A', rarete: 'rare' },
-  { type: 'vr_4way_10x', nom: 'Formation addict', description: '10 sauts VR 4-way', icone: '🔟', categorie: 'figures_vr', couleur: '#D97706', rarete: 'epique' },
-  { type: 'vr_sequential', nom: 'Séquenceur', description: 'Séquence VR enregistrée', icone: '⚡', categorie: 'figures_vr', couleur: '#D97706', rarete: 'epique' },
-  { type: 'vr_rw_specialist', nom: 'Spécialiste RW', description: '50 sauts VR au total', icone: '🏅', categorie: 'figures_vr', couleur: '#D97706', rarete: 'legendaire' },
+  { type: 'vr_first_formation', nom: 'Première formation', description: '1 saut VR / FS enregistré', categorie: 'figures_vr', couleur: '#2563EB', rarete: 'commun' },
+  { type: 'vr_2way', nom: 'Duo dans les airs', description: 'VR 2-way enregistré', categorie: 'figures_vr', couleur: '#2563EB', rarete: 'commun' },
+  { type: 'vr_4way', nom: 'Carré magique', description: 'VR 4-way enregistré', categorie: 'figures_vr', couleur: '#16A34A', rarete: 'rare' },
+  { type: 'vr_8way', nom: 'Octopus', description: 'VR 8-way enregistré', categorie: 'figures_vr', couleur: '#16A34A', rarete: 'rare' },
+  { type: 'vr_4way_10x', nom: 'Formation addict', description: '10 sauts VR 4-way', categorie: 'figures_vr', couleur: '#D97706', rarete: 'epique' },
+  { type: 'vr_sequential', nom: 'Séquenceur', description: 'Séquence VR enregistrée', categorie: 'figures_vr', couleur: '#D97706', rarete: 'epique' },
+  { type: 'vr_rw_specialist', nom: 'Spécialiste RW', description: '50 sauts VR au total', categorie: 'figures_vr', couleur: '#D97706', rarete: 'legendaire' },
 
   // ── Figures Freefly ───────────────────────────────────────────────────────────
-  { type: 'ff_first_sit', nom: 'Assis dans le vide', description: '1er saut en sit-fly', icone: '🪑', categorie: 'figures_freefly', couleur: '#F97316', rarete: 'commun' },
-  { type: 'ff_first_head_down', nom: 'Tête en bas', description: '1er saut en head-down', icone: '⬇️', categorie: 'figures_freefly', couleur: '#16A34A', rarete: 'rare' },
-  { type: 'ff_head_up_stable', nom: "Colonne d'air", description: '1er saut en head-up stable', icone: '⬆️', categorie: 'figures_freefly', couleur: '#16A34A', rarete: 'rare' },
-  { type: 'ff_tube', nom: 'Dans le tube', description: 'Figure tube/puck enregistrée', icone: '🎯', categorie: 'figures_freefly', couleur: '#D97706', rarete: 'epique' },
-  { type: 'ff_dynamic', nom: 'Dynamique', description: 'Dynamic freefly enregistré', icone: '💨', categorie: 'figures_freefly', couleur: '#D97706', rarete: 'epique' },
-  { type: 'ff_specialist', nom: 'Maître du freefly', description: '50 sauts freefly au total', icone: '🦁', categorie: 'figures_freefly', couleur: '#D97706', rarete: 'legendaire' },
+  { type: 'ff_first_sit', nom: 'Assis dans le vide', description: '1er saut en sit-fly', categorie: 'figures_freefly', couleur: '#F97316', rarete: 'commun' },
+  { type: 'ff_first_head_down', nom: 'Tête en bas', description: '1er saut en head-down', categorie: 'figures_freefly', couleur: '#16A34A', rarete: 'rare' },
+  { type: 'ff_head_up_stable', nom: "Colonne d'air", description: '1er saut en head-up stable', categorie: 'figures_freefly', couleur: '#16A34A', rarete: 'rare' },
+  { type: 'ff_tube', nom: 'Dans le tube', description: 'Figure tube/puck enregistrée', categorie: 'figures_freefly', couleur: '#D97706', rarete: 'epique' },
+  { type: 'ff_dynamic', nom: 'Dynamique', description: 'Dynamic freefly enregistré', categorie: 'figures_freefly', couleur: '#D97706', rarete: 'epique' },
+  { type: 'ff_specialist', nom: 'Maître du freefly', description: '50 sauts freefly au total', categorie: 'figures_freefly', couleur: '#D97706', rarete: 'legendaire' },
 
   // ── Figures Tracking / Angle ──────────────────────────────────────────────────
-  { type: 'track_first', nom: 'Premier angle', description: '1er saut tracking enregistré', icone: '↗️', categorie: 'figures_tracking', couleur: '#16A34A', rarete: 'commun' },
-  { type: 'track_group', nom: 'Meute volante', description: 'Tracking groupe 3+ enregistré', icone: '🐺', categorie: 'figures_tracking', couleur: '#16A34A', rarete: 'rare' },
-  { type: 'track_angle_dive', nom: 'Angle plongé', description: 'Angle dive enregistré', icone: '🏹', categorie: 'figures_tracking', couleur: '#D97706', rarete: 'epique' },
+  { type: 'track_first', nom: 'Premier angle', description: '1er saut tracking enregistré', categorie: 'figures_tracking', couleur: '#16A34A', rarete: 'commun' },
+  { type: 'track_group', nom: 'Meute volante', description: 'Tracking groupe 3+ enregistré', categorie: 'figures_tracking', couleur: '#16A34A', rarete: 'rare' },
+  { type: 'track_angle_dive', nom: 'Angle plongé', description: 'Angle dive enregistré', categorie: 'figures_tracking', couleur: '#D97706', rarete: 'epique' },
 
   // ── Figures Belly / Solo ──────────────────────────────────────────────────────
-  { type: 'belly_first_stable', nom: 'Stable et libre', description: 'Première chute libre stable', icone: '🕊️', categorie: 'figures_belly', couleur: '#64748B', rarete: 'commun' },
-  { type: 'belly_backfly', nom: 'Dos au ciel', description: '1er dos stable enregistré', icone: '🔄', categorie: 'figures_belly', couleur: '#16A34A', rarete: 'rare' },
-  { type: 'belly_flip', nom: 'Tonneau', description: 'Tonneau enregistré', icone: '🌀', categorie: 'figures_belly', couleur: '#16A34A', rarete: 'rare' },
-  { type: 'belly_delta', nom: 'Delta', description: 'Position delta enregistrée', icone: '🔺', categorie: 'figures_belly', couleur: '#16A34A', rarete: 'rare' },
-  { type: 'belly_track_solo', nom: 'Flèche solitaire', description: 'Tracking solo — 10 sauts', icone: '🏃', categorie: 'figures_belly', couleur: '#D97706', rarete: 'epique' },
+  { type: 'belly_first_stable', nom: 'Stable et libre', description: 'Première chute libre stable', categorie: 'figures_belly', couleur: '#64748B', rarete: 'commun' },
+  { type: 'belly_backfly', nom: 'Dos au ciel', description: '1er dos stable enregistré', categorie: 'figures_belly', couleur: '#16A34A', rarete: 'rare' },
+  { type: 'belly_flip', nom: 'Tonneau', description: 'Tonneau enregistré', categorie: 'figures_belly', couleur: '#16A34A', rarete: 'rare' },
+  { type: 'belly_delta', nom: 'Delta', description: 'Position delta enregistrée', categorie: 'figures_belly', couleur: '#16A34A', rarete: 'rare' },
+  { type: 'belly_track_solo', nom: 'Flèche solitaire', description: 'Tracking solo — 10 sauts', categorie: 'figures_belly', couleur: '#D97706', rarete: 'epique' },
 
   // ── Disciplines spéciales ─────────────────────────────────────────────────────
-  { type: 'canopy_first_hook', nom: 'Crochet ouvert', description: '1er virage serré enregistré', icone: '🪝', categorie: 'disciplines_speciales', couleur: '#64748B', rarete: 'commun' },
-  { type: 'canopy_swoop', nom: 'Swoop', description: 'Swoop enregistré', icone: '⚡', categorie: 'disciplines_speciales', couleur: '#D97706', rarete: 'epique' },
-  { type: 'wingsuit_first', nom: 'Homme-oiseau', description: '1er saut wingsuit', icone: '🦇', categorie: 'disciplines_speciales', couleur: '#16A34A', rarete: 'rare' },
-  { type: 'wingsuit_formation', nom: "Vol en escadrille", description: 'Wingsuit formation 2+', icone: '🦅', categorie: 'disciplines_speciales', couleur: '#D97706', rarete: 'epique' },
-  { type: 'speed_first', nom: 'Vitesse pure', description: '1er saut speed enregistré', icone: '💨', categorie: 'disciplines_speciales', couleur: '#16A34A', rarete: 'rare' },
+  { type: 'canopy_first_hook', nom: 'Crochet ouvert', description: '1er virage serré enregistré', categorie: 'disciplines_speciales', couleur: '#64748B', rarete: 'commun' },
+  { type: 'canopy_swoop', nom: 'Swoop', description: 'Swoop enregistré', categorie: 'disciplines_speciales', couleur: '#D97706', rarete: 'epique' },
+  { type: 'wingsuit_first', nom: 'Homme-oiseau', description: '1er saut wingsuit', categorie: 'disciplines_speciales', couleur: '#16A34A', rarete: 'rare' },
+  { type: 'wingsuit_formation', nom: "Vol en escadrille", description: 'Wingsuit formation 2+', categorie: 'disciplines_speciales', couleur: '#D97706', rarete: 'epique' },
+  { type: 'speed_first', nom: 'Vitesse pure', description: '1er saut speed enregistré', categorie: 'disciplines_speciales', couleur: '#16A34A', rarete: 'rare' },
 
   // ── Caméra & Équipement ───────────────────────────────────────────────────────
-  { type: 'camera_first_jump', nom: "Œil dans le ciel", description: '1er saut avec caméra déclarée', icone: '📷', categorie: 'equipement', couleur: '#64748B', rarete: 'commun' },
-  { type: 'camera_10_jumps', nom: 'Vidéaste confirmé', description: '10 sauts avec caméra', icone: '🎬', categorie: 'equipement', couleur: '#16A34A', rarete: 'rare' },
-  { type: 'camera_50_jumps', nom: 'Cinéaste du vide', description: '50 sauts avec caméra', icone: '🎥', categorie: 'equipement', couleur: '#D97706', rarete: 'epique' },
-  { type: 'camera_tandem_pro', nom: 'Tandem vidéo', description: '20 sauts caméra tandem', icone: '🎦', categorie: 'equipement', couleur: '#D97706', rarete: 'epique' },
-  { type: 'gopro_head', nom: 'GoPro head-cam', description: 'Saut avec caméra casque', icone: '🎮', categorie: 'equipement', couleur: '#64748B', rarete: 'commun' },
-  { type: 'two_cameras', nom: 'Double optique', description: 'Saut avec 2 caméras déclarées', icone: '📸', categorie: 'equipement', couleur: '#16A34A', rarete: 'rare' },
+  { type: 'camera_first_jump', nom: "Œil dans le ciel", description: '1er saut avec caméra déclarée', categorie: 'equipement', couleur: '#64748B', rarete: 'commun' },
+  { type: 'camera_10_jumps', nom: 'Vidéaste confirmé', description: '10 sauts avec caméra', categorie: 'equipement', couleur: '#16A34A', rarete: 'rare' },
+  { type: 'camera_50_jumps', nom: 'Cinéaste du vide', description: '50 sauts avec caméra', categorie: 'equipement', couleur: '#D97706', rarete: 'epique' },
+  { type: 'camera_tandem_pro', nom: 'Tandem vidéo', description: '20 sauts caméra tandem', categorie: 'equipement', couleur: '#D97706', rarete: 'epique' },
+  { type: 'gopro_head', nom: 'GoPro head-cam', description: 'Saut avec caméra casque', categorie: 'equipement', couleur: '#64748B', rarete: 'commun' },
+  { type: 'two_cameras', nom: 'Double optique', description: 'Saut avec 2 caméras déclarées', categorie: 'equipement', couleur: '#16A34A', rarete: 'rare' },
 ];
 
