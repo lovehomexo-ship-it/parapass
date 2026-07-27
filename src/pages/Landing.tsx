@@ -1,6 +1,24 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, Check, ArrowRight, Camera, Flame, Zap, Clock } from 'lucide-react';
+import { Shield, Check, ArrowRight, Camera, Flame, Zap, Clock,
+  Brain, Pencil, Siren, Scroll, Wind, Target, PlaneLanding, Medal, Award,
+  CreditCard, Smartphone, ClipboardList, TrendingUp, GraduationCap, CheckCircle2,
+  Backpack, CalendarDays, BarChart3, Wrench, Users, Euro, Star, Sparkles, Building2, AlertTriangle } from 'lucide-react';
+import { ParachuteGlyph } from '../design/BadgeIcon';
+import type { ComponentType, CSSProperties } from 'react';
+
+// Emojis marketing → famille vectorielle unique (rendu identique tous OS).
+const LANDING_ICONS: Record<string, ComponentType<{ className?: string; style?: CSSProperties }>> = {
+  '📷': Camera, '🧠': Brain, '✏️': Pencil, '🆘': Siren, '📜': Scroll, '🪂': ParachuteGlyph,
+  '🌬️': Wind, '🎯': Target, '🛬': PlaneLanding, '🎖️': Medal, '🏅': Award, '🪪': CreditCard,
+  '📱': Smartphone, '📋': ClipboardList, '📈': TrendingUp, '🎓': GraduationCap, '✅': CheckCircle2,
+  '🎒': Backpack, '📅': CalendarDays, '📊': BarChart3, '🔧': Wrench, '👥': Users, '💶': Euro,
+  '⭐': Star, '✨': Sparkles, '⚡': Zap, '🔴': Zap, '🏫': Building2, '⚠': AlertTriangle, '⚠️': AlertTriangle,
+};
+function EmojiIcon({ e, className, style }: { e: string; className?: string; style?: CSSProperties }) {
+  const I = LANDING_ICONS[e] ?? Sparkles;
+  return <I className={className ?? 'w-6 h-6'} style={style} aria-hidden />;
+}
 import { ParaPassLogo } from '../components/ParaPassLogo';
 import { ParachuteIcon, ParachuteDropIcon } from '../components/ParachuteIcon';
 import { QRCodeSVG } from 'qrcode.react';
@@ -222,7 +240,7 @@ function DemoPassportCard({ compact = false }: { compact?: boolean }) {
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>Mon carnet</div>
               </div>
               <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)' }}>
-                <span style={{ fontSize: 12 }}>⭐</span>
+                <Star className="w-3 h-3" style={{ color: '#FBBF24' }} aria-hidden />
                 <span style={{ fontSize: 12, fontWeight: 700, color: '#FB923C' }}>{DEMO.noteProgression}</span>
                 <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>/5 moy.</span>
               </div>
@@ -303,7 +321,7 @@ function SectionOCR() {
         <Reveal>
           <div className="text-center mb-14">
             <div className="inline-flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full mb-5" style={{ background: 'rgba(249,115,22,0.12)', color: '#FB923C', border: '1px solid rgba(249,115,22,0.3)' }}>
-              ✨ Fonctionnalité différenciante
+              <Sparkles className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> Fonctionnalité différenciante
             </div>
             <h2 className="font-extrabold text-white mb-4 leading-tight" style={{ fontSize: 'clamp(28px, 3.5vw, 42px)', letterSpacing: '-0.02em' }}>
               Votre carnet papier, importé par l'IA
@@ -324,7 +342,7 @@ function SectionOCR() {
                 )}
                 <div className="relative flex-shrink-0">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl" style={{ background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.3)' }}>
-                    {step.icon}
+                    <EmojiIcon e={step.icon} className="w-6 h-6" />
                   </div>
                 </div>
                 <div className="pb-8">
@@ -341,7 +359,7 @@ function SectionOCR() {
             <div className="rounded-2xl p-6 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 100%)', border: '1px solid rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)' }}>
               <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at top right, rgba(249,115,22,0.1) 0%, transparent 60%)' }} />
               <div className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full mb-4" style={{ background: 'rgba(249,115,22,0.18)', color: '#FB923C', border: '1px solid rgba(249,115,22,0.35)' }}>
-                ⚡ Paiement unique
+                <Zap className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> Paiement unique
               </div>
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.25)' }}>
                 <Camera className="w-7 h-7" style={{ color: '#F97316' }} />
@@ -431,7 +449,7 @@ function SectionModules() {
             <div className="absolute -top-3.5 left-6 px-3 py-1 rounded-full text-[11px] font-bold text-white" style={{ background: '#F97316' }}>
               Le plus avantageux
             </div>
-            <div className="text-4xl flex-shrink-0 mt-2 sm:mt-0">{STUDIO.icon}</div>
+            <div className="text-4xl flex-shrink-0 mt-2 sm:mt-0"><EmojiIcon e={STUDIO.icon} className="w-8 h-8" /></div>
             <div className="flex-1 min-w-0">
               <p className="font-bold text-lg" style={{ color: '#001A4D' }}>{STUDIO.nom}</p>
               <p className="text-sm mt-1 leading-relaxed" style={{ color: '#64748B' }}>{STUDIO.desc}</p>
@@ -465,7 +483,7 @@ function SectionModules() {
             {liveModules.map((mod) => (
               <div key={mod.id} className="rounded-xl p-5 flex flex-col gap-3 bg-white" style={{ border: '1.5px solid #E2E8F0', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                 <div className="flex items-start justify-between">
-                  <span className="text-2xl">{mod.icon}</span>
+                  <span className="text-2xl"><EmojiIcon e={mod.icon} className="w-6 h-6" /></span>
                   <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
                     style={{ background: 'rgba(16,185,129,0.1)', color: '#10B981', border: '1px solid rgba(16,185,129,0.25)' }}>
                     Disponible
@@ -505,7 +523,7 @@ function SectionModules() {
                 {soonModules.map((mod) => (
                   <div key={mod.id} className="rounded-xl p-3.5 flex flex-col gap-2" style={{ border: '1.5px solid #E2E8F0', background: '#F8FAFC', opacity: 0.85 }}>
                     <div className="flex items-center gap-2">
-                      <span className="text-lg" style={{ filter: 'grayscale(0.6)' }}>{mod.icon}</span>
+                      <span className="text-lg" style={{ filter: 'grayscale(0.6)' }}><EmojiIcon e={mod.icon} className="w-6 h-6" /></span>
                       <p className="font-semibold text-sm flex-1 truncate" style={{ color: '#334155' }}>{mod.nom}</p>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: '#F1F5F9', color: '#64748B', border: '1px solid #E2E8F0' }}>
                         Bientôt
@@ -599,7 +617,7 @@ function SectionAcademie() {
                     style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${t.color}30` }}
                   >
                     <div className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl mb-3" style={{ background: `${t.color}18`, border: `1px solid ${t.color}35` }}>
-                      {t.icon}
+                      <EmojiIcon e={t.icon} className="w-5 h-5" />
                     </div>
                     <p className="text-sm font-semibold text-white leading-snug">{t.label}</p>
                   </div>
@@ -613,7 +631,7 @@ function SectionAcademie() {
                 { icon: '🏅', label: '11 badges Académie', color: '#34D399' },
               ].map(chip => (
                 <span key={chip.label} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.06)', color: chip.color, border: '1px solid rgba(255,255,255,0.1)' }}>
-                  {chip.icon} {chip.label}
+                  <EmojiIcon e={chip.icon} className="w-4 h-4" /> {chip.label}
                 </span>
               ))}
             </div>
@@ -625,10 +643,10 @@ function SectionAcademie() {
               <div className="rounded-2xl overflow-hidden max-w-sm mx-auto" style={{ background: '#131B33', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 24px 56px rgba(0,0,0,0.45)' }}>
                 <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">🎓</span>
+                    <GraduationCap className="w-5 h-5" aria-hidden />
                     <span className="text-xs font-bold text-white">Académie · Sécurité & urgences</span>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(251,191,36,0.15)', color: '#FBBF24' }}>⚡ 1 240 XP</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(251,191,36,0.15)', color: '#FBBF24' }}><Zap className="w-3 h-3 inline-block mr-0.5 align-[-1px]" aria-hidden /> 1 240 XP</span>
                 </div>
                 <div className="p-4">
                   <div className="rounded-xl p-4 mb-3" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
@@ -704,7 +722,7 @@ function SectionReflexe() {
                 ].map(f => (
                   <li key={f.title} className="flex items-start gap-3.5">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: f.bg }}>
-                      {f.icon}
+                      <EmojiIcon e={f.icon} className="w-5 h-5" />
                     </div>
                     <div>
                       <p className="text-[15px] font-semibold mb-0.5" style={{ color: '#0F172A' }}>{f.title}</p>
@@ -730,8 +748,8 @@ function SectionReflexe() {
               <div className="rounded-2xl overflow-hidden max-w-sm mx-auto" style={{ background: '#0F172A', boxShadow: '0 24px 56px rgba(15,23,42,0.35)' }}>
                 <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#EF4444' }}>🔴 Réflexe du jour</p>
-                    <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}>🆘 Sécurité & urgences</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#EF4444' }}><Zap className="w-3 h-3 inline-block mr-1 align-[-1px]" aria-hidden /> Réflexe du jour</p>
+                    <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}><Siren className="w-3 h-3 inline-block mr-1 align-[-1px]" aria-hidden /> Sécurité & urgences</p>
                   </div>
                   {/* Timer ring */}
                   <div className="relative w-12 h-12 flex items-center justify-center">
@@ -1021,7 +1039,7 @@ export function LandingPage() {
                   {item.step}
                 </div>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 text-2xl" style={{ background: item.bg }}>
-                  {item.icon}
+                  <EmojiIcon e={item.icon} className="w-6 h-6" />
                 </div>
                 <h3 className="text-base font-semibold mb-2" style={{ color: '#001A4D' }}>{item.title}</h3>
                 <p className="text-sm leading-relaxed" style={{ color: '#64748B' }}>{item.desc}</p>
@@ -1052,7 +1070,7 @@ export function LandingPage() {
                 </div>
                 <div className="relative flex flex-col h-full">
                   <div className="flex items-center gap-3 mb-5">
-                    <span className="text-4xl" aria-hidden>🪂</span>
+                    <ParachuteGlyph className="w-9 h-9" style={{ color: '#2563EB' }} aria-hidden />
                     <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ background: 'rgba(37,99,235,0.3)', color: '#60A5FA', border: '1px solid rgba(96,165,250,0.3)' }}>
                       Parachutiste · Gratuit
                     </span>
@@ -1067,7 +1085,7 @@ export function LandingPage() {
                       { icon: '🏅', text: '57 badges, stats, suivi matériel et communauté' },
                     ].map(f => (
                       <li key={f.text} className="flex items-start gap-3">
-                        <span className="text-base w-5 flex-shrink-0">{f.icon}</span>
+                        <span className="text-base w-5 flex-shrink-0"><EmojiIcon e={f.icon} className="w-5 h-5" /></span>
                         <span className="text-sm" style={{ color: 'rgba(255,255,255,0.80)' }}>{f.text}</span>
                       </li>
                     ))}
@@ -1091,7 +1109,7 @@ export function LandingPage() {
                 </div>
                 <div className="relative flex flex-col h-full">
                   <div className="flex items-center gap-3 mb-5">
-                    <span className="text-4xl" aria-hidden>🏫</span>
+                    <Building2 className="w-9 h-9" style={{ color: '#F59E0B' }} aria-hidden />
                     <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ background: 'rgba(245,158,11,0.12)', color: '#D97706', border: '1px solid rgba(245,158,11,0.3)' }}>
                       Centre / DZ · dès 49€ HT/mois
                     </span>
@@ -1106,7 +1124,7 @@ export function LandingPage() {
                       { icon: '📊', text: 'Statistiques, finances et rapports de sauts' },
                     ].map(f => (
                       <li key={f.text} className="flex items-start gap-3">
-                        <span className="text-base w-5 flex-shrink-0">{f.icon}</span>
+                        <span className="text-base w-5 flex-shrink-0"><EmojiIcon e={f.icon} className="w-5 h-5" /></span>
                         <span className="text-sm" style={{ color: '#374151' }}>{f.text}</span>
                       </li>
                     ))}
@@ -1134,7 +1152,7 @@ export function LandingPage() {
             <div className="lg:w-[42%]">
               <Reveal>
                 <div className="inline-flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full mb-6" style={{ background: 'rgba(37,99,235,0.15)', color: '#60A5FA', border: '1px solid rgba(37,99,235,0.3)' }}>
-                  📱 Espace parachutiste
+                  <Smartphone className="w-4 h-4 inline-block mr-1 align-[-3px]" aria-hidden /> Espace parachutiste
                 </div>
                 <h2 className="font-extrabold text-white mb-5 leading-tight" style={{ fontSize: 'clamp(28px, 3.5vw, 40px)', letterSpacing: '-0.02em' }}>
                   Votre tableau de bord, toujours à jour
@@ -1204,7 +1222,7 @@ export function LandingPage() {
                   </div>
                   {/* Alert */}
                   <div className="mx-4 mt-2 rounded-lg px-3 py-2 flex items-center gap-2" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)' }}>
-                    <span className="text-red-400 text-xs">⚠</span>
+                    <AlertTriangle className="w-3 h-3 text-red-400" aria-hidden />
                     <span className="text-[10px] font-semibold text-red-400">Parachute de secours</span>
                     <span className="text-[10px] text-red-300 ml-1 truncate">— révision avant le 15/09/2026</span>
                   </div>
@@ -1281,7 +1299,7 @@ export function LandingPage() {
             ].map((f, i) => (
               <Reveal key={f.title} delay={i * 60}>
                 <div className="rounded-xl p-5 h-full" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div className="text-2xl mb-2">{f.icon}</div>
+                  <div className="text-2xl mb-2"><EmojiIcon e={f.icon} className="w-5 h-5" /></div>
                   <p className="text-sm font-semibold text-white mb-1">{f.title}</p>
                   <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>{f.desc}</p>
                 </div>
@@ -1306,7 +1324,7 @@ export function LandingPage() {
             <div className="lg:w-[42%]">
               <Reveal>
                 <div className="inline-flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full mb-6" style={{ background: 'rgba(245,158,11,0.1)', color: '#D97706', border: '1px solid rgba(245,158,11,0.3)' }}>
-                  🏫 Espace centre / DZ
+                  <Building2 className="w-4 h-4 inline-block mr-1 align-[-3px]" aria-hidden /> Espace centre / DZ
                 </div>
                 <h2 className="font-extrabold mb-5 leading-tight" style={{ fontSize: 'clamp(28px, 3.5vw, 40px)', color: '#0F172A', letterSpacing: '-0.02em' }}>
                   Gérez votre dropzone comme un pro
@@ -1375,7 +1393,7 @@ export function LandingPage() {
                     </div>
                     <div className="flex-1 p-3 overflow-hidden">
                       <div className="rounded-lg px-3 py-2 flex items-center gap-2 mb-2" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)' }}>
-                        <span className="text-yellow-400 text-xs">⚠</span>
+                        <AlertTriangle className="w-3 h-3 text-yellow-400" aria-hidden />
                         <span className="text-[10px]" style={{ color: '#FCD34D' }}>3 licenciés nécessitent votre attention</span>
                         <span className="ml-auto text-[9px] font-bold px-2 py-0.5 rounded text-white" style={{ background: '#F59E0B' }}>Voir →</span>
                       </div>
@@ -1434,7 +1452,7 @@ export function LandingPage() {
             ].map((m, i) => (
               <Reveal key={m.title} delay={i * 60}>
                 <div className="rounded-xl p-5 bg-white h-full" style={{ border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-                  <div className="text-2xl mb-2">{m.icon}</div>
+                  <div className="text-2xl mb-2"><EmojiIcon e={m.icon} className="w-6 h-6" /></div>
                   <p className="text-sm font-semibold mb-1" style={{ color: '#001A4D' }}>{m.title}</p>
                   <p className="text-xs leading-relaxed" style={{ color: '#64748B' }}>{m.desc}</p>
                 </div>
@@ -1484,7 +1502,7 @@ export function LandingPage() {
                   </div>
                   <blockquote className="text-sm leading-relaxed flex-1 mb-5" style={{ color: '#374151' }}>"{t.quote}"</blockquote>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: t.color }}>{t.init}</div>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: t.color }}><EmojiIcon e={t.init} className="w-5 h-5" style={{ color: '#fff' }} /></div>
                     <div>
                       <div className="text-sm font-semibold" style={{ color: '#0F172A' }}>{t.name}</div>
                       <div className="text-xs" style={{ color: '#64748B' }}>{t.meta}</div>

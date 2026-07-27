@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ParaPassLogo } from '../components/ParaPassLogo';
-import { ChevronLeft, ChevronRight, Video, Camera, Gift, Check, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Video, Camera, Gift, Check, AlertCircle, Search, Mail, ClipboardList, CreditCard } from 'lucide-react';
+import { ParachuteGlyph } from '../design/BadgeIcon';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -387,7 +388,7 @@ export function TandemPublicPage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-[#001A4D] to-[#003082]">
         <div className="text-center max-w-sm">
-          <div className="text-6xl mb-5">{isNotFound ? '🔍' : '🪂'}</div>
+          <div className="text-6xl mb-5">{isNotFound ? <Search className="w-14 h-14 mx-auto" aria-hidden /> : <ParachuteGlyph className="w-14 h-14 mx-auto" style={{ color: '#F97316' }} aria-hidden />}</div>
           <h1 className="text-2xl font-black text-white mb-3">
             {isNotFound ? 'Centre introuvable' : 'Réservations non disponibles'}
           </h1>
@@ -414,7 +415,7 @@ export function TandemPublicPage() {
       return (
         <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
           <div className="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full text-center">
-            <div className="text-5xl mb-4">🎁</div>
+            <div className="flex justify-center mb-4"><Gift className="w-12 h-12 text-orange-500" aria-hidden /></div>
             <h1 className="text-2xl font-black text-gray-900 mb-2">Bon cadeau créé !</h1>
             <p className="text-gray-500 text-sm mb-6">Le bon cadeau a bien été enregistré. Conservez ce code :</p>
             <div className="bg-[#001A4D] rounded-2xl py-5 px-6 mb-6">
@@ -422,7 +423,7 @@ export function TandemPublicPage() {
               <p className="text-white text-3xl font-black tracking-widest">{giftCode}</p>
             </div>
             <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-left mb-6">
-              <p className="text-sm text-amber-800 font-semibold mb-1">📧 Confirmation envoyée</p>
+              <p className="text-sm text-amber-800 font-semibold mb-1 flex items-center gap-1.5"><Mail className="w-4 h-4" aria-hidden /> Confirmation envoyée</p>
               <p className="text-xs text-amber-700">Un récapitulatif a été transmis à l'adresse fournie. Le bénéficiaire pourra réserver un créneau avec ce code.</p>
             </div>
             <p className="text-xs text-gray-400">Valable jusqu'au {(() => { const d = new Date(); d.setMonth(d.getMonth() + (config?.validite_bon_mois ?? 18)); return d.toLocaleDateString('fr-FR'); })()}</p>
@@ -442,12 +443,12 @@ export function TandemPublicPage() {
           </p>
           <p className="text-gray-400 text-xs mb-6">Un email de confirmation a été envoyé à {form.offreurEmail}</p>
           <div className="rounded-xl bg-blue-50 border border-blue-200 p-4 text-left">
-            <p className="text-sm font-semibold text-blue-800 mb-1">📋 Prochaine étape</p>
+            <p className="text-sm font-semibold text-blue-800 mb-1 flex items-center gap-1.5"><ClipboardList className="w-4 h-4" aria-hidden /> Prochaine étape</p>
             <p className="text-xs text-blue-700">Vous allez recevoir un lien pour compléter votre dossier passager (poids, contact d'urgence, décharge à signer). À faire avant le jour J !</p>
           </div>
           {solde > 0 && (
             <div className="mt-4 rounded-xl bg-orange-50 border border-orange-200 p-4 text-left">
-              <p className="text-sm font-semibold text-orange-800 mb-1">💳 Solde à régler</p>
+              <p className="text-sm font-semibold text-orange-800 mb-1 flex items-center gap-1.5"><CreditCard className="w-4 h-4" aria-hidden /> Solde à régler</p>
               <p className="text-xs text-orange-700">{solde} € à régler sur place le jour du saut.</p>
             </div>
           )}
@@ -505,7 +506,7 @@ export function TandemPublicPage() {
       {/* Mode tabs */}
       <div className="max-w-3xl mx-auto px-4">
         <div className="flex border-b border-slate-200 bg-white sticky top-0 z-10">
-          {([['reservation', '🪂 Réserver un saut'], ['bon_cadeau', '🎁 Bon cadeau']] as const).map(([m, l]) => (
+          {([['reservation', 'Réserver un saut'], ['bon_cadeau', 'Bon cadeau']] as const).map(([m, l]) => (
             <button
               key={m}
               onClick={() => { setMode(m); setStep(m === 'reservation' ? 'landing' : 'landing'); }}
@@ -708,7 +709,7 @@ export function TandemPublicPage() {
 
               {/* Politique */}
               <div className="rounded-xl p-4 border border-slate-200 bg-white text-sm text-gray-600 space-y-2">
-                <p className="font-semibold text-gray-900">📋 Bon à savoir</p>
+                <p className="font-semibold text-gray-900 flex items-center gap-1.5"><ClipboardList className="w-4 h-4" aria-hidden /> Bon à savoir</p>
                 <p>• Poids minimum {config?.poids_min} kg, maximum {config?.poids_max} kg</p>
                 <p>• {politiqueLabel(config?.politique_meteo ?? 'report_gratuit')}</p>
                 <p>• Dossier passager (poids, décharge) à compléter avant le jour J</p>

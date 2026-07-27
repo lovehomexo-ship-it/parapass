@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ParaPassLogo } from '../components/ParaPassLogo';
-import { Check, AlertTriangle, PenTool } from 'lucide-react';
+import { Check, AlertTriangle, PenTool, CreditCard } from 'lucide-react';
+import { ParachuteGlyph } from '../design/BadgeIcon';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -287,7 +288,7 @@ export function TandemPreparerPage() {
 
   if (erreur) return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
-      <div className="text-center"><div className="text-5xl mb-4">⚠️</div><h1 className="text-xl font-bold text-gray-900 mb-2">Lien invalide</h1><p className="text-sm text-gray-500">{erreur}</p></div>
+      <div className="text-center"><div className="flex justify-center mb-4"><AlertTriangle className="w-12 h-12 text-amber-500" aria-hidden /></div><h1 className="text-xl font-bold text-gray-900 mb-2">Lien invalide</h1><p className="text-sm text-gray-500">{erreur}</p></div>
     </div>
   );
 
@@ -317,7 +318,7 @@ export function TandemPreparerPage() {
             <ParaPassLogo className="h-6 opacity-70" />
             <span className="text-white/50 text-xs">Dossier passager</span>
           </div>
-          <h1 className="text-white font-black text-xl mb-1">Préparez votre saut 🪂</h1>
+          <h1 className="text-white font-black text-xl mb-1">Préparez votre saut <ParachuteGlyph className="w-5 h-5 inline-block align-[-2px]" aria-hidden /></h1>
           {booking && (
             <p className="text-white/60 text-sm">
               {booking.centre?.nom} · {booking.slot ? new Date(booking.slot.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }) : ''} à {booking.slot?.heure.slice(0, 5)}
@@ -511,7 +512,7 @@ export function TandemPreparerPage() {
               </div>
               {booking?.montant_solde && booking.montant_solde > 0 && (
                 <div className="rounded-xl bg-orange-50 border border-orange-200 p-4 text-left">
-                  <p className="font-semibold text-orange-800 text-sm mb-1">💳 Solde à régler</p>
+                  <p className="font-semibold text-orange-800 text-sm mb-1 flex items-center gap-1.5"><CreditCard className="w-4 h-4" aria-hidden /> Solde à régler</p>
                   <p className="text-orange-700 text-xs">{booking.montant_solde} € à régler sur place le jour du saut.</p>
                 </div>
               )}

@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ParaPassLogo } from '../components/ParaPassLogo';
-import { Download, Share2, CheckCircle } from 'lucide-react';
+import { Download, Share2, CheckCircle, AlertTriangle } from 'lucide-react';
+import { ParachuteGlyph } from '../design/BadgeIcon';
 
 interface CertifData {
   passenger: {
@@ -60,7 +61,7 @@ export function TandemCertifPage() {
 
   if (erreur || !data) return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
-      <div className="text-center"><div className="text-5xl mb-4">⚠️</div><h1 className="text-xl font-bold text-gray-900 mb-2">Certificat introuvable</h1></div>
+      <div className="text-center"><div className="flex justify-center mb-4"><AlertTriangle className="w-12 h-12 text-amber-500" aria-hidden /></div><h1 className="text-xl font-bold text-gray-900 mb-2">Certificat introuvable</h1></div>
     </div>
   );
 
@@ -88,7 +89,7 @@ export function TandemCertifPage() {
         {/* Contenu */}
         <div className="px-6 py-8 text-center space-y-5">
           <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center mx-auto border-4 border-[#001A4D]/10">
-            <span className="text-4xl">🪂</span>
+            <ParachuteGlyph className="w-9 h-9" style={{ color: '#F97316' }} aria-hidden />
           </div>
 
           <div>
