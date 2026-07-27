@@ -1,4 +1,5 @@
 import { Component } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import type { ReactNode, ErrorInfo } from 'react';
 
 interface Props { children: ReactNode; fallback?: ReactNode; }
@@ -23,7 +24,7 @@ export class ErrorBoundary extends Component<Props, State> {
       return this.props.fallback ?? (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
           <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
-            <div className="text-4xl mb-4">⚠️</div>
+            <div className="flex justify-center mb-4"><AlertTriangle className="w-10 h-10 text-amber-500" aria-hidden /></div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">Une erreur est survenue</h2>
             <p className="text-sm text-gray-500 mb-6">
               {this.state.error?.message ?? 'Erreur inattendue'}

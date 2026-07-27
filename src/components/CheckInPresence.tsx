@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MapPin, CheckCircle, LogOut, Pencil } from 'lucide-react';
+import { MapPin, CheckCircle, LogOut, Pencil, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useMaPresence, hhmm } from '../lib/presence';
 import { useBriefingDuJour, useBriefingAck } from '../lib/briefing';
@@ -135,7 +135,7 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
             <LogOut className="w-3 h-3" /> Je quitte la DZ
           </button>
         </span>
-        {error && <p className="w-full text-xs" style={{ color: '#FCA5A5' }}>⚠️ {error}</p>}
+        {error && <p className="w-full text-xs" style={{ color: '#FCA5A5' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}</p>}
       </div>
     );
   }
@@ -227,8 +227,8 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
         )
       )}
 
-      {erreurPlage && <p className="text-xs" style={{ color: '#FCA5A5' }}>⚠️ {erreurPlage}</p>}
-      {error && <p className="text-xs" style={{ color: '#FCA5A5' }}>⚠️ {error}</p>}
+      {erreurPlage && <p className="text-xs" style={{ color: '#FCA5A5' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {erreurPlage}</p>}
+      {error && <p className="text-xs" style={{ color: '#FCA5A5' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}</p>}
 
       <div className="flex gap-2">
         <button onClick={valider} disabled={saving}

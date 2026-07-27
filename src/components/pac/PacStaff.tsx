@@ -23,7 +23,7 @@ function StaffInner({ centreId }: { centreId: string }) {
         <h2 className="text-xl font-bold text-white flex items-center gap-2"><GraduationCap className="w-5 h-5" style={{ color: '#F97316' }} /> Carnet PAC — élèves en formation</h2>
         <p className="text-xs mt-0.5" style={{ color: 'var(--c-dim)' }}>L'appli informe et trace ; le moniteur valide chaque acquis.</p>
       </div>
-      {error && <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>⚠️ {error}</div>}
+      {error && <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}</div>}
 
       {eleves.length === 0 ? (
         <p className="text-sm text-center py-10" style={{ color: 'var(--c-dim)' }}>Aucun élève en progression PAC pour l'instant.</p>
@@ -93,7 +93,7 @@ function FicheEleve({ userId, nom, centreId, onBack }: { userId: string; nom: st
         </select>
       </div>
 
-      {err && <div className="rounded-xl px-4 py-2 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>⚠️ {err}</div>}
+      {err && <div className="rounded-xl px-4 py-2 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {err}</div>}
 
       {niveaux.map(n => (
         <div key={n.id} className="rounded-2xl p-3" style={{ background: 'var(--c-surface)', border: `1px solid ${niveauComplet(n, prog) ? 'rgba(16,185,129,0.35)' : 'var(--c-border)'}` }}>

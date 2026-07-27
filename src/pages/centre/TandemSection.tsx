@@ -55,7 +55,7 @@ function Toast({ msg, ok }: { msg: string; ok: boolean }) {
         textAlign: 'center',
       }}
     >
-      {ok ? '✓' : '⚠'} {msg}
+      {ok ? <Check className="w-4 h-4" aria-hidden /> : <AlertTriangle className="w-4 h-4" aria-hidden />} {msg}
     </div>
   );
 }

@@ -70,7 +70,7 @@ export function PasseportPage() {
     <Layout>
       {isDemo && (
         <div className="flex items-center justify-center gap-2 px-4 py-1.5 text-xs font-bold tracking-widest" style={{ background: '#F59E0B', color: '#1C1917' }}>
-          ⚠ DONNÉES DE DÉMONSTRATION — Les informations affichées sont fictives
+          <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> DONNÉES DE DÉMONSTRATION — Les informations affichées sont fictives
         </div>
       )}
       <div className="min-h-screen overflow-x-hidden" style={{ background: '#001A4D' }}>

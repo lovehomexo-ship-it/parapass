@@ -2622,7 +2622,7 @@ function LicencieDrawer({
 
                     {controleError && (
                       <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-                        ⚠️ {controleError}
+                        <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {controleError}
                       </div>
                     )}
                     <button

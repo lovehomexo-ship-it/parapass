@@ -5,7 +5,7 @@ import {
   useReferentielBrevets, useValidationStaff, epreuvesBrevetCompletes,
   TYPE_EPREUVE_LABELS, type Epreuve, type ProgressionEpreuve,
 } from '../../lib/brevetsProgression';
-import { GraduationCap, Check, X, Plus, Award } from 'lucide-react';
+import { GraduationCap, Check, X, Plus, Award, AlertTriangle } from 'lucide-react';
 
 const inputStyle: React.CSSProperties = {
   background: 'var(--c-border)', border: '1px solid var(--c-border-f)', color: 'white',
@@ -47,7 +47,7 @@ export function BrevetsSection({ centreId }: { centreId: string }) {
 
       {error && (
         <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
-          ⚠️ {error}
+          <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}
         </div>
       )}
 
@@ -345,7 +345,7 @@ function ReferentielEditor({ referentiel }: { referentiel: ReturnType<typeof use
         Saisissez ici le contenu officiel des brevets tel que défini par la FFP — épreuves, types, quantités, prérequis.
         Les valeurs inconnues restent « À DÉFINIR AVEC LA FFP » : n'inventez rien.
       </p>
-      {error && <p className="text-xs" style={{ color: '#FCA5A5' }}>⚠️ {error}</p>}
+      {error && <p className="text-xs" style={{ color: '#FCA5A5' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}</p>}
 
       <div className="flex gap-1.5 flex-wrap">
         {referentiel.brevets.map(b => (

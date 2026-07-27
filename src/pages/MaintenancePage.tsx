@@ -1,3 +1,5 @@
+import { ParachuteGlyph } from '../design/BadgeIcon';
+
 export function MaintenancePage() {
   return (
     <div
@@ -49,7 +51,7 @@ export function MaintenancePage() {
             boxShadow: '0 0 40px rgba(249,115,22,0.15)',
           }}
         >
-          <span className="text-5xl select-none" role="img" aria-label="parachute">🪂</span>
+          <ParachuteGlyph className="w-14 h-14" style={{ color: '#F97316' }} aria-label="parachute" />
         </div>
       </div>
 

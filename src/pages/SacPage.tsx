@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ParaPassLogo } from '../components/ParaPassLogo';
-import { ChevronDown, AlertTriangle, CheckCircle, ArrowLeft } from 'lucide-react';
+import { ChevronDown, AlertTriangle, CheckCircle, ArrowLeft, Backpack, Hand } from 'lucide-react';
+import { ParachuteGlyph } from '../design/BadgeIcon';
 import { CycleHelpButton } from '../components/CyclePliageSchema';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -468,7 +469,7 @@ export function SacPage() {
   const NomSacBlock = ({ sub }: { sub?: string }) => (
     <div className="flex-1 flex flex-col items-center justify-center px-5 py-8 text-center">
       <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-5xl mb-5"
-        style={{ background: 'rgba(249,115,22,0.1)', border: '2px solid rgba(249,115,22,0.25)' }}>🎒</div>
+        style={{ background: 'rgba(249,115,22,0.1)', border: '2px solid rgba(249,115,22,0.25)' }}><Backpack className="w-7 h-7" style={{ color: '#F97316' }} aria-hidden /></div>
       <h1 className="text-4xl font-black text-white mb-2 leading-tight">{nomSac}</h1>
       {sub && <p className="text-base" style={{ color: 'rgba(255,255,255,0.45)' }}>{sub}</p>}
       <p className="text-xs font-mono mt-1" style={{ color: 'rgba(255,255,255,0.2)' }}>
@@ -483,7 +484,7 @@ export function SacPage() {
   if (erreur && !sac) return (
     <div style={base} className="flex items-center justify-center p-6">
       <div className="text-center max-w-sm">
-        <div className="text-5xl mb-4">⚠️</div>
+        <div className="flex justify-center mb-4"><AlertTriangle className="w-12 h-12 text-amber-500" aria-hidden /></div>
         <h1 className="text-xl font-bold text-white mb-2">QR code invalide</h1>
         <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>{erreur}</p>
       </div>
@@ -533,13 +534,13 @@ export function SacPage() {
       <Header etatLabel="Mon sac" etatColor="#60A5FA" />
       <NomSacBlock sub={assignment ? `Pris à ${heure(assignment.start_at)} (${elapsed(assignment.start_at)})` : undefined} />
       <div className="px-5 pb-10 space-y-3 max-w-xs w-full mx-auto">
-        <Btn onClick={marquerAPlier} color="#F97316">🪂 Déposer au tapis (à plier)</Btn>
+        <Btn onClick={marquerAPlier} color="#F97316"><ParachuteGlyph className="w-4 h-4 inline-block mr-1.5 align-[-2px]" aria-hidden />Déposer au tapis (à plier)</Btn>
         <Btn onClick={autoPlier} color="#A78BFA" secondary>
-          Auto-plié {!isQualif ? '⚠️' : ''}
+          Auto-plié {!isQualif ? <AlertTriangle className="w-3.5 h-3.5 inline-block align-[-2px]" aria-hidden /> : null}
         </Btn>
         {!isQualif && (
           <p className="text-xs text-center" style={{ color: 'rgba(245,158,11,0.8)' }}>
-            ⚠️ Qualification plieur non renseignée sur votre profil
+            <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> Qualification plieur non renseignée sur votre profil
           </p>
         )}
         {confirmRendre ? (
@@ -606,7 +607,7 @@ export function SacPage() {
       <NomSacBlock sub="En attente de pliage" />
       <div className="px-5 pb-10 space-y-3 max-w-xs w-full mx-auto">
         <Btn onClick={autoPlier} color="#A78BFA">
-          🙋 Auto-plié {!isQualif ? '⚠️' : ''}
+          <Hand className="w-4 h-4 inline-block mr-1 align-[-2px]" aria-hidden /> Auto-plié {!isQualif ? <AlertTriangle className="w-3.5 h-3.5 inline-block align-[-2px]" aria-hidden /> : null}
         </Btn>
         <Btn onClick={annulerAPlier} secondary>
           ← Reprendre le sac (annuler dépose)
@@ -624,7 +625,7 @@ export function SacPage() {
         <Header etatLabel="À plier" etatColor="#F97316" />
         <div className="flex-1 flex flex-col items-center justify-center px-5 py-6 text-center">
           <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-5xl mb-5"
-            style={{ background: 'rgba(249,115,22,0.1)', border: '2px solid rgba(249,115,22,0.3)' }}>🎒</div>
+            style={{ background: 'rgba(249,115,22,0.1)', border: '2px solid rgba(249,115,22,0.3)' }}><Backpack className="w-7 h-7" style={{ color: '#F97316' }} aria-hidden /></div>
           <h1 className="text-4xl font-black text-white mb-1 leading-tight">{nomSac}</h1>
           <p className="text-base mb-1" style={{ color: 'rgba(249,115,22,0.9)' }}>à plier</p>
           {assignment && (
@@ -669,8 +670,8 @@ export function SacPage() {
         </p>
         <div className="rounded-xl p-4 text-left space-y-2" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
           <p className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.4)' }}>PROCHAINES ACTIONS</p>
-          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>🪂 Avant de sauter : scannez à nouveau pour "Déposer au tapis"</p>
-          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>🎒 Fin de journée : scannez pour "Rendre le sac"</p>
+          <p className="text-sm flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.7)' }}><ParachuteGlyph className="w-4 h-4 flex-shrink-0" aria-hidden /> Avant de sauter : scannez à nouveau pour "Déposer au tapis"</p>
+          <p className="text-sm flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.7)' }}><Backpack className="w-4 h-4 flex-shrink-0" aria-hidden /> Fin de journée : scannez pour "Rendre le sac"</p>
         </div>
         <button onClick={() => navigate(dashboardPath)} className="w-full py-3 rounded-xl text-sm font-semibold"
           style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer' }}>
@@ -684,7 +685,7 @@ export function SacPage() {
   if (view === 'success_a_plier') return (
     <div style={base} className="flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-4 text-center">
-        <div className="text-6xl mb-2">🪂</div>
+        <div className="flex justify-center mb-2"><ParachuteGlyph className="w-14 h-14" style={{ color: '#F97316' }} aria-hidden /></div>
         <h1 className="text-2xl font-black text-white">Sac en file de pliage</h1>
         <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
           <strong className="text-white">{nomSac}</strong> est déposé au tapis. Un plieur va s'en occuper.
@@ -702,7 +703,7 @@ export function SacPage() {
     <div style={base} className="flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-4">
         <div className="rounded-2xl p-6 text-center" style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.25)' }}>
-          <p className="text-5xl mb-3">🙋</p>
+          <p className="flex justify-center mb-3"><Hand className="w-12 h-12" aria-hidden /></p>
           <h1 className="text-2xl font-black text-white mb-1">Auto-plié !</h1>
           <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>{nomSac} · Gratuit · Hors circuit paiement</p>
         </div>
@@ -758,7 +759,7 @@ export function SacPage() {
   if (view === 'success_rendu') return (
     <div style={base} className="flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm text-center space-y-4">
-        <div className="text-6xl mb-2">✅</div>
+        <div className="flex justify-center mb-2"><CheckCircle className="w-14 h-14 text-green-500" aria-hidden /></div>
         <h1 className="text-2xl font-black text-white">Sac rendu</h1>
         <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
           <strong className="text-white">{nomSac}</strong> est de nouveau disponible pour vos collègues.

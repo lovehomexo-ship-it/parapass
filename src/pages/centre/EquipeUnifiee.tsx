@@ -292,7 +292,7 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
                     </div>
                     {m.nbComptes > 1 && (
                       <p className="text-[10px] mt-1" style={{ color: '#FCD34D' }}>
-                        ⚠️ {m.nbComptes} comptes réunis{m.licencesAutres.length > 0 ? ` (aussi ${m.licencesAutres.join(', ')})` : ''} — à fusionner
+                        <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {m.nbComptes} comptes réunis{m.licencesAutres.length > 0 ? ` (aussi ${m.licencesAutres.join(', ')})` : ''} — à fusionner
                       </p>
                     )}
                   </div>

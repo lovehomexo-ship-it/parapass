@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { CheckCircle, XCircle, AlertTriangle, Shield, Copy, Check, Hash, ShieldAlert } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, Shield, Copy, Check, Hash, ShieldAlert, CreditCard, ClipboardList, Stethoscope, ShieldCheck } from 'lucide-react';
+import { ParachuteGlyph } from '../design/BadgeIcon';
 import type { Licence, CertificatMedical, Brevet, Saut } from '../lib/types';
 import { TYPE_BREVET_LABELS } from '../lib/types';
 import type { Profile } from '../lib/auth';
@@ -186,14 +187,14 @@ export function VerifyPage() {
         />
 
         {/* ── IDENTITÉ ── */}
-        <InfoCard title="Identité" icon="🪪">
+        <InfoCard title="Identité" icon={<CreditCard className="w-4 h-4" aria-hidden />}>
           <InfoRow label="Nom complet" value={`${d.profile?.prenom ?? '—'} ${d.profile?.nom ?? '—'}`} />
           <InfoRow label="Date de naissance" value={d.profile?.date_naissance ? fmtDate(d.profile.date_naissance) : 'Non renseignée'} />
           <InfoRow label="Nationalité" value={d.profile?.nationalite || 'Française'} last />
         </InfoCard>
 
         {/* ── LICENCE & VALIDITÉ ── */}
-        <InfoCard title="Licence & Validité" icon="📋">
+        <InfoCard title="Licence & Validité" icon={<ClipboardList className="w-4 h-4" aria-hidden />}>
           <InfoRow label="N° Licence FFP" value={licNum} mono />
           <InfoRow label="Code club" value={d.licence?.code_club || '—'} />
           <InfoRow
@@ -211,7 +212,7 @@ export function VerifyPage() {
         </InfoCard>
 
         {/* ── CERTIFICAT MÉDICAL ── */}
-        <InfoCard title="Certificat médical" icon="🏥">
+        <InfoCard title="Certificat médical" icon={<Stethoscope className="w-4 h-4" aria-hidden />}>
           <InfoRow label="Médecin" value={d.certif?.medecin || 'Non renseigné'} />
           <InfoRow
             label="Valide jusqu'au"
@@ -236,7 +237,7 @@ export function VerifyPage() {
         </InfoCard>
 
         {/* ── ACTIVITÉ ── */}
-        <InfoCard title="Activité récente" icon="🪂">
+        <InfoCard title="Activité récente" icon={<ParachuteGlyph className="w-4 h-4" aria-hidden />}>
           <InfoRow label="Sauts validés ParaPass" value={String(d.sautsValidés)} highlight />
           <InfoRow label="Total sauts enregistrés" value={String(d.sautsTotal)} />
           <InfoRow label="Dernier saut" value={d.dernierSaut ? fmtDate(d.dernierSaut) : 'Aucun'} />
@@ -245,7 +246,7 @@ export function VerifyPage() {
 
         {/* ── ASSURANCES ── */}
         {d.licence && (
-          <InfoCard title="Assurances" icon="🛡️">
+          <InfoCard title="Assurances" icon={<ShieldCheck className="w-4 h-4" aria-hidden />}>
             <AssuranceRow label="Assurance individuelle" active={d.licence.assurance_individuelle} />
             <AssuranceRow label="Responsabilité civile" active={d.licence.assurance_rc} last />
           </InfoCard>
@@ -445,11 +446,11 @@ function GridCell({ label, value, expired = false, last = false }: {
 
 // ─── Info Card ───────────────────────────────────────────────────────────────────
 
-function InfoCard({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
+function InfoCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
-        <span style={{ fontSize: '16px' }}>{icon}</span>
+        <span className="text-gray-400">{icon}</span>
         <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{title}</p>
       </div>
       <div className="divide-y divide-gray-50">{children}</div>

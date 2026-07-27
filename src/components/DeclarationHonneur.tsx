@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, CheckCircle } from 'lucide-react';
+import { X, CheckCircle, ClipboardList } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../lib/types';
 
@@ -15,21 +15,21 @@ type Methode = 'honneur' | 'dt' | 'ocr';
 const METHODES = [
   {
     value: 'honneur' as Methode,
-    titre: '📋 Déclaration sur l\'honneur',
+    titre: 'Déclaration sur l\'honneur',
     description: 'Je certifie sur l\'honneur avoir effectué ce nombre de sauts. Cette déclaration est archivée et horodatée.',
     badge: 'Recommandé',
     badgeColor: '#10B981',
   },
   {
     value: 'dt' as Methode,
-    titre: '🎓 Validation par le Directeur Technique',
+    titre: 'Validation par le Directeur Technique',
     description: 'Le DT de votre centre confirme votre solde de sauts. Plus robuste réglementairement.',
     badge: 'Renforcé',
     badgeColor: '#3B82F6',
   },
   {
     value: 'ocr' as Methode,
-    titre: '📸 Import carnet papier (OCR)',
+    titre: 'Import carnet papier (OCR)',
     description: 'Vous allez photographier votre carnet papier. Claude Vision extraira les données automatiquement.',
     badge: 'Précis',
     badgeColor: '#A78BFA',
@@ -122,7 +122,7 @@ export function DeclarationHonneur({ profile, userId, onClose, onConfirmed }: Pr
         >
           <div>
             <h2 className="font-bold text-base" style={{ color: 'var(--c-text)' }}>
-              📋 Déclaration de sauts antérieurs
+              <ClipboardList className="w-4 h-4 inline-block mr-1.5 align-[-3px]" aria-hidden /> Déclaration de sauts antérieurs
             </h2>
             <p className="text-xs mt-0.5" style={{ color: 'var(--c-muted)' }}>
               Conforme à la réglementation FFP — Art. L321-1 Code du sport

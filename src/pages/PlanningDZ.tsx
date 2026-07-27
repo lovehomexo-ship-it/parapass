@@ -1,11 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
-import {
-  ChevronLeft, ChevronRight, Calendar, Clock, Thermometer,
-  Users, X, MessageSquare, RefreshCw, MapPin,
-  Plane, CloudSun, Cloud, CloudRain, Eye, Ruler, Gift,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Clock, Thermometer, Users, X, MessageSquare, RefreshCw, MapPin, Plane, CloudSun, Cloud, CloudRain, Eye, Ruler, Gift, Check, AlertTriangle } from 'lucide-react';
 import { ParachuteGlyph } from '../design/BadgeIcon';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -287,7 +283,7 @@ function MeteoWidget({ creneau, brevet }: { creneau: Creneau; brevet: string }) 
               {meteo.windspeed_10m <= (BREVET_LIMITES[brevet]?.vent ?? 11) ? ' — OK' : ` — Limite ${BREVET_LIMITES[brevet]?.vent ?? 11} m/s`}
             </div>
             <div className="flex items-center gap-1.5 text-[11px]" style={{ color: meteo.precipitation_probability <= 30 ? '#10B981' : '#F59E0B' }}>
-              {meteo.precipitation_probability <= 30 ? '✓' : '⚠️'} Pluie {meteo.precipitation_probability}%
+              {meteo.precipitation_probability <= 30 ? <Check className="w-3 h-3 inline-block align-[-1px]" aria-hidden /> : <AlertTriangle className="w-3 h-3 inline-block align-[-1px]" aria-hidden />} Pluie {meteo.precipitation_probability}%
             </div>
           </div>
           <div className="flex items-center gap-2">

@@ -6,7 +6,7 @@ import {
   type SeanceJour, type MoniteurQualif,
 } from '../../lib/encadrement';
 import { useComplianceRules } from '../../lib/compliance';
-import { ShieldCheck, CheckCircle, AlertTriangle, X, Plus, Users } from 'lucide-react';
+import { ShieldCheck, CheckCircle, AlertTriangle, X, Plus, Users, User } from 'lucide-react';
 
 const inputStyle: React.CSSProperties = {
   background: 'var(--c-border)', border: '1px solid var(--c-border-f)', color: 'white',
@@ -46,7 +46,7 @@ export function EncadrementSection({ centreId, vue }: { centreId: string; vue?: 
 
       {enc.error && (
         <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
-          ⚠️ {enc.error}
+          <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {enc.error}
         </div>
       )}
 
@@ -147,7 +147,7 @@ function CarteSeance({ seance, enc }: { seance: SeanceJour; enc: ReturnType<type
         {etats.map(({ regle, satisfaite, rempliePar, expires }) => (
           <div key={regle.id} className="flex items-start gap-2 text-xs" title={regle.source_ref ?? undefined}>
             {regle.a_verifier
-              ? <span className="flex-shrink-0 mt-0.5">👤</span>
+              ? <User className="w-4 h-4 flex-shrink-0 mt-0.5" aria-hidden />
               : satisfaite
               ? <CheckCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#34D399' }} />
               : <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#FCD34D' }} />}
@@ -229,7 +229,7 @@ function AnnuaireMoniteurs({ centreId, enc }: { centreId: string; enc: ReturnTyp
 
   return (
     <div className="space-y-4">
-      {error && <p className="text-xs" style={{ color: '#FCA5A5' }}>⚠️ {error}</p>}
+      {error && <p className="text-xs" style={{ color: '#FCA5A5' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}</p>}
 
       {[...parMoniteur.entries()].map(([userId, qs]) => (
         <div key={userId} className="rounded-xl p-3" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>

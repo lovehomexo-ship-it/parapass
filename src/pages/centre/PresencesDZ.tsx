@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, UserMinus, Clock } from 'lucide-react';
+import { Users, UserMinus, Clock, AlertTriangle } from 'lucide-react';
 import { usePresencesDZ, hhmm } from '../../lib/presence';
 import { TYPE_BREVET_LABELS } from '../../lib/types';
 
@@ -28,7 +28,7 @@ export function PresencesDZ({ dzId }: { dzId: string }) {
       </div>
 
       {error && (
-        <p className="text-xs mb-2" style={{ color: '#FCA5A5' }}>⚠️ {error}</p>
+        <p className="text-xs mb-2" style={{ color: '#FCA5A5' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}</p>
       )}
 
       {tries.length === 0 ? (

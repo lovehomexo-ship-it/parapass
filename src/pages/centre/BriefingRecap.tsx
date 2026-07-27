@@ -120,7 +120,7 @@ export function BriefingRecapDZ({ centreId, onOuvrir }: { centreId: string; onOu
 
           {briefing.consignes && (
             <p className="text-xs leading-relaxed mb-2" style={{ color: 'var(--c-text2)' }}>
-              📢 {voirPlus || !consignesLongues ? briefing.consignes : `${briefing.consignes.slice(0, 140)}… `}
+              <Megaphone className="w-3.5 h-3.5 inline-block mr-1.5 align-[-2px]" aria-hidden /> {voirPlus || !consignesLongues ? briefing.consignes : `${briefing.consignes.slice(0, 140)}… `}
               {consignesLongues && !voirPlus && (
                 <button onClick={() => setVoirPlus(true)} className="underline font-semibold" style={{ color: '#60A5FA' }}>voir plus</button>
               )}

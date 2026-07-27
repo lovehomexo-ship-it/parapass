@@ -6,7 +6,7 @@ import {
   useBriefingDuJour, useDzCircuits, dzMapPublicUrl, sensAtterrissageDerive, compressImageFond,
   type DzCircuit, type DzSettings, type Point, type ZonePolygone,
 } from '../../lib/briefing';
-import { Upload, Megaphone, MapPin, Route, Shapes, Ban, Trash2, Undo2, AlertTriangle, Plus, Pencil, Wind as WindIcon, ExternalLink } from 'lucide-react';
+import { Upload, Megaphone, MapPin, Route, Shapes, Ban, Trash2, Undo2, AlertTriangle, Plus, Pencil, Wind as WindIcon, ExternalLink, CheckCircle } from 'lucide-react';
 import { BriefingSuiviDuJour, BriefingArchive } from './BriefingSuivi';
 import { useMeteoAltitude, indexHeureCourante, kmhEnKt } from '../../lib/meteoAltitude';
 
@@ -355,12 +355,12 @@ export function BriefingSection({ centreId }: { centreId: string }) {
 
       {error && (
         <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
-          ⚠️ {error}
+          <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}
         </div>
       )}
       {okMsg && (
         <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', color: '#6EE7B7' }}>
-          ✅ {okMsg}
+          <CheckCircle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {okMsg}
         </div>
       )}
 
@@ -406,7 +406,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
             </a>
 
             {/* Sélecteur du circuit à ÉDITER (≠ du circuit publié, choisi à droite) */}
-            <span className="text-xs ml-2 font-semibold" style={{ color: 'var(--c-text2)' }}>✏️ Circuit en cours d'édition :</span>
+            <span className="text-xs ml-2 font-semibold" style={{ color: 'var(--c-text2)' }}><Pencil className="w-3 h-3 inline-block mr-1 align-[-1px]" aria-hidden /> Circuit en cours d'édition :</span>
             <select
               value={editCircuitId ?? ''}
               onChange={e => setEditCircuitId(e.target.value || null)}
@@ -549,7 +549,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
             ))}
             {draftSettings.no_fly_zones.map((z, i) => (
               <span key={`n${i}`} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full" style={{ background: 'rgba(239,68,68,0.1)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.3)' }}>
-                ⛔ {z.nom}
+                <Ban className="w-3 h-3 inline-block mr-1 align-[-1px]" aria-hidden /> {z.nom}
                 <button onClick={() => deleteNoFly(i)} aria-label={`Supprimer ${z.nom}`} style={{ minWidth: 24, minHeight: 24 }}>
                   <Trash2 className="w-3 h-3" />
                 </button>

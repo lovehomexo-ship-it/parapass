@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { usePacEleve, niveauComplet, rouesParDomaine, type PacNiveau, type PacProgression, type PacSaut } from '../../lib/pac';
 import { ErrorBoundary } from '../ErrorBoundary';
-import { Check, Clock, RotateCcw, Lock, Unlock, Award, ChevronRight } from 'lucide-react';
+import { Check, Clock, RotateCcw, Lock, Unlock, Award, ChevronRight, PartyPopper } from 'lucide-react';
 
 // ─── Carnet PAC — vue ÉLÈVE (3 angles : temps / compétence / parcours) ────────
 // L'appli informe ; c'est le moniteur qui valide chaque acquis.
@@ -65,7 +65,7 @@ function VueNiveaux({ niveaux, prog }: { niveaux: PacNiveau[]; prog: Record<stri
               <p className="font-bold text-white text-sm flex-1">{n.libelle}</p>
               <span className="text-xs font-semibold" style={{ color: complet ? '#34D399' : 'var(--c-dim)' }}>{acquis}/{n.objectifs.length}</span>
             </div>
-            {complet && <p className="text-[11px] mt-1 ml-7" style={{ color: '#34D399' }}>🎉 Niveau débloqué</p>}
+            {complet && <p className="text-[11px] mt-1 ml-7 flex items-center gap-1" style={{ color: '#34D399' }}><PartyPopper className="w-3 h-3" aria-hidden /> Niveau débloqué</p>}
             <div className="mt-2 ml-7 space-y-1">
               {n.objectifs.map(o => {
                 const st = prog[o.id]?.statut;

@@ -53,7 +53,7 @@ function CycleSVG({ printMode = false }: { printMode?: boolean }) {
         Prendre ce sac
       </text>
       <text x={(libre.x + pris.x) / 2} y={libre.y - 48} textAnchor="middle" fontSize="13">
-        👤
+        
       </text>
       <text x={(libre.x + pris.x) / 2} y={libre.y - 19} textAnchor="middle" fontSize="9" fill={actorColor}>
         parachutiste
@@ -63,10 +63,10 @@ function CycleSVG({ printMode = false }: { printMode?: boolean }) {
       <line x1={pris.x - r} y1={pris.y + 18} x2={libre.x + r + 8} y2={libre.y + 18}
         stroke={track} strokeWidth="2" markerEnd="url(#arrow-track)" />
       <text x={(libre.x + pris.x) / 2} y={pris.y + 38} textAnchor="middle" fontSize="10.5" fill={mutedColor}>
-        Rendre le sac / ⏰ Auto 21h
+        Rendre le sac / Auto 21h
       </text>
       <text x={(libre.x + pris.x) / 2} y={pris.y + 52} textAnchor="middle" fontSize="9" fill={actorColor}>
-        👤 porteur · 🏢 staff · ⏰ auto
+        porteur · staff · auto
       </text>
 
       {/* PRIS → À PLIER (haut) */}
@@ -76,7 +76,7 @@ function CycleSVG({ printMode = false }: { printMode?: boolean }) {
         Marquer "À plier"
       </text>
       <text x={(pris.x + aplier.x) / 2} y={pris.y - 48} textAnchor="middle" fontSize="13">
-        👤
+        
       </text>
       <text x={(pris.x + aplier.x) / 2} y={pris.y - 19} textAnchor="middle" fontSize="9" fill={actorColor}>
         porteur (après le saut)
@@ -89,7 +89,7 @@ function CycleSVG({ printMode = false }: { printMode?: boolean }) {
         ✓ Pliage effectué
       </text>
       <text x={(pris.x + aplier.x) / 2} y={aplier.y + 52} textAnchor="middle" fontSize="9" fill={actorColor}>
-        🪂 plieur (attribué au porteur, payable)
+        plieur (attribué au porteur, payable)
       </text>
 
       {/* PRIS self-loop → Auto-plié (boucle au sommet) */}
@@ -101,7 +101,7 @@ function CycleSVG({ printMode = false }: { printMode?: boolean }) {
         Auto-plié (Brevet C/D)
       </text>
       <text x={pris.x} y={pris.y - r - 70} textAnchor="middle" fontSize="13">
-        🎓
+        
       </text>
 
       {/* ─── Nœuds ─────────────────────────────────────────────────────── */}
@@ -193,29 +193,29 @@ function imprimerSchema() {
     <!-- LIBRE → PRIS -->
     <line x1="168" y1="162" x2="382" y2="162" stroke="#10B981" stroke-width="2" marker-end="url(#ag)"/>
     <text x="275" y="148" text-anchor="middle" font-size="11" fill="#0F172A" font-weight="700">Prendre ce sac</text>
-    <text x="275" y="134" text-anchor="middle" font-size="13">👤</text>
+    <text x="275" y="134" text-anchor="middle" font-size="13"></text>
     <text x="275" y="161" text-anchor="middle" font-size="8.5" fill="#64748B">parachutiste</text>
 
     <!-- PRIS → LIBRE -->
     <line x1="382" y1="198" x2="168" y2="198" stroke="#94A3B8" stroke-width="2" marker-end="url(#at)"/>
-    <text x="275" y="218" text-anchor="middle" font-size="10.5" fill="#64748B">Rendre / ⏰ Auto 21h</text>
-    <text x="275" y="231" text-anchor="middle" font-size="8.5" fill="#94A3B8">👤 porteur · 🏢 staff · ⏰ auto</text>
+    <text x="275" y="218" text-anchor="middle" font-size="10.5" fill="#64748B">Rendre / Auto 21h</text>
+    <text x="275" y="231" text-anchor="middle" font-size="8.5" fill="#94A3B8">porteur · staff · auto</text>
 
     <!-- PRIS → À PLIER -->
     <line x1="478" y1="162" x2="672" y2="162" stroke="#F97316" stroke-width="2" marker-end="url(#ao)"/>
     <text x="575" y="148" text-anchor="middle" font-size="11" fill="#0F172A" font-weight="700">Marquer "À plier"</text>
-    <text x="575" y="134" text-anchor="middle" font-size="13">👤</text>
+    <text x="575" y="134" text-anchor="middle" font-size="13"></text>
     <text x="575" y="161" text-anchor="middle" font-size="8.5" fill="#64748B">porteur, après le saut</text>
 
     <!-- À PLIER → PRIS -->
     <line x1="672" y1="198" x2="478" y2="198" stroke="#60A5FA" stroke-width="2" marker-end="url(#ab)"/>
     <text x="575" y="218" text-anchor="middle" font-size="11" fill="#0F172A" font-weight="700">✓ Pliage effectué</text>
-    <text x="575" y="231" text-anchor="middle" font-size="8.5" fill="#64748B">🪂 plieur — attribué au porteur, payable</text>
+    <text x="575" y="231" text-anchor="middle" font-size="8.5" fill="#64748B">plieur — attribué au porteur, payable</text>
 
     <!-- Self-loop Auto-plié -->
     <path d="M 408 132 C 408 84, 452 84, 452 132" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#at)"/>
     <text x="430" y="76" text-anchor="middle" font-size="10" fill="#64748B">Auto-plié (Brevet C/D)</text>
-    <text x="430" y="62" text-anchor="middle" font-size="13">🎓</text>
+    <text x="430" y="62" text-anchor="middle" font-size="13"></text>
 
     <!-- Nodes -->
     <circle cx="120" cy="180" r="48" fill="#D1FAE5" stroke="#10B981" stroke-width="2.5"/>

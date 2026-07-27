@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { Lock, Unlock, AlertTriangle } from 'lucide-react';
 
 const SECRET = 'FP@ParaPass2026';
 
@@ -84,7 +85,7 @@ export function AdminSecretPage() {
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(12px)' }}
           >
             <div className="text-center">
-              <div className="text-3xl mb-3">🔐</div>
+              <div className="flex justify-center mb-3"><Lock className="w-8 h-8" aria-hidden /></div>
               <h1 className="text-lg font-bold text-white">Accès administrateur</h1>
               <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
                 Panneau de contrôle ParaPass
@@ -138,7 +139,7 @@ export function AdminSecretPage() {
               <h1 className="text-lg font-bold text-white">Panneau Admin — ParaPass</h1>
               <span className="text-xs px-2 py-0.5 rounded-full font-medium"
                 style={{ background: 'rgba(249,115,22,0.15)', color: '#F97316', border: '1px solid rgba(249,115,22,0.3)' }}>
-                🔓 Connecté
+                <Unlock className="w-4 h-4 inline-block mr-1 align-[-2px]" aria-hidden /> Connecté
               </span>
             </div>
             <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
@@ -214,9 +215,9 @@ export function AdminSecretPage() {
                   Application…
                 </span>
               ) : maintenanceOn ? (
-                '🟢 Remettre le site EN LIGNE'
+                'Remettre le site EN LIGNE'
               ) : (
-                '🔴 Activer la MAINTENANCE'
+                'Activer la MAINTENANCE'
               )}
             </button>
 
@@ -231,7 +232,7 @@ export function AdminSecretPage() {
               className="rounded-xl px-4 py-3 text-xs leading-relaxed"
               style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: 'rgba(245,158,11,0.8)' }}
             >
-              ⚠️ {maintenanceOn
+              <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {maintenanceOn
                 ? 'Le site est actuellement inaccessible pour les utilisateurs. Cliquez pour le remettre en ligne.'
                 : 'Activer la maintenance rend le site inaccessible pour tous les utilisateurs sauf cette page admin.'}
             </div>

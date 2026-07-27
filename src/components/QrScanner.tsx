@@ -286,7 +286,7 @@ export function QrScanner({ onClose }: QrScannerProps) {
 
 // ─── Bouton compact ───────────────────────────────────────────────────────────
 
-export function QrScannerButton({ label = '📷 Scanner', className, style }: { label?: string; className?: string; style?: React.CSSProperties }) {
+export function QrScannerButton({ label = 'Scanner', className, style }: { label?: string; className?: string; style?: React.CSSProperties }) {
   const [open, setOpen] = useState(false);
   return (
     <>

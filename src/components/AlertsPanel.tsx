@@ -205,7 +205,7 @@ export function AlertsPanel({ alertes, unreadCount, onMarkRead, onMarkAllRead, a
                 const enriched = enrichirAlerte(a);
                 return (
                   <div key={a.id} className="flex items-start gap-3 p-3 rounded-lg bg-red-50 border border-red-200">
-                    <span className="text-base flex-shrink-0">🔴</span>
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: '#EF4444' }} aria-hidden />
                     <div className="flex-1 min-w-0">
                       <p className="text-red-800 font-semibold text-xs">{a.titre}</p>
                       <p className="text-red-700 text-[11px] mt-0.5 leading-relaxed line-clamp-2">{a.message}</p>

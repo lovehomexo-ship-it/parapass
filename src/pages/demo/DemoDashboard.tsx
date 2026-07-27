@@ -10,7 +10,9 @@ import {
   Plus, FileDown, QrCode, TrendingUp, ChevronRight, ShieldCheck,
   Hash, X, ChevronLeft, Zap, Wind, Sun, Cloud, CloudRain, Thermometer,
   Award,
+  Trophy, Brain, Plane, Sparkles,
 } from 'lucide-react';
+import { ParachuteGlyph } from '../../design/BadgeIcon';
 
 type DashTab = 'accueil' | 'carnet' | 'planning';
 
@@ -279,7 +281,7 @@ function DemoProgressionCard({ onShowConversion }: { onShowConversion: (t: strin
       label: 'Mental',
       value: `${prog.note_mental.toFixed(1)} / 5`,
       color: noteColor(prog.note_mental),
-      sub: '🧠',
+      sub: <Brain className="w-3.5 h-3.5" aria-hidden />,
       subColor: 'rgba(255,255,255,0.4)',
     },
   ];
@@ -589,20 +591,20 @@ function DemoDashboardInner() {
                       </div>
                       <div className="grid grid-cols-4 gap-2">
                         {[
-                          { icon: '🪂', label: '1er saut', color: '#F97316' },
-                          { icon: '✈️', label: '10 sauts', color: '#0EA5E9' },
-                          { icon: '🌟', label: '25 sauts', color: '#F59E0B' },
-                          { icon: '🏅', label: '50 sauts', color: '#F97316' },
+                          { icon: ParachuteGlyph, label: '1er saut', color: '#F97316' },
+                          { icon: Plane, label: '10 sauts', color: '#0EA5E9' },
+                          { icon: Sparkles, label: '25 sauts', color: '#F59E0B' },
+                          { icon: Award, label: '50 sauts', color: '#F97316' },
                         ].map((b) => (
                           <div key={b.label} className="flex flex-col items-center gap-1 p-2 rounded-lg"
                             style={{ background: `${b.color}14`, border: `0.5px solid ${b.color}40` }}>
-                            <span className="text-xl">{b.icon}</span>
+                            <b.icon className="w-5 h-5" style={{ color: b.color }} aria-hidden />
                             <span className="text-[9px] font-semibold text-white/70 text-center leading-tight">{b.label}</span>
                           </div>
                         ))}
                         <div className="flex flex-col items-center gap-1 p-2 rounded-lg opacity-40"
                           style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.06)' }}>
-                          <span className="text-xl" style={{ filter: 'grayscale(1)' }}>🏆</span>
+                          <Trophy className="w-5 h-5" style={{ color: '#64748B' }} aria-hidden />
                           <span className="text-[9px] font-semibold text-white/70 text-center leading-tight">100 sauts</span>
                           <span className="text-[9px] font-medium" style={{ color: '#64748B' }}>50 restants</span>
                         </div>

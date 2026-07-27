@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { ArrowLeft, Check } from 'lucide-react';
+import { ArrowLeft, Check, AlertTriangle } from 'lucide-react';
 import type { ComplianceRule } from '../../lib/compliance';
 import type { CurrencyRule } from '../../lib/currency';
 import type { CanopyGuideline } from '../../lib/canopy';
@@ -56,7 +56,7 @@ function CanopyGuidelinesSection() {
       </p>
       {error && (
         <div className="rounded-xl px-4 py-3 mb-4 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
-          ⚠️ {error}
+          <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}
         </div>
       )}
       <div className="space-y-3">
@@ -152,7 +152,7 @@ function CurrencyRulesSection() {
       </p>
       {error && (
         <div className="rounded-xl px-4 py-3 mb-4 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
-          ⚠️ {error}
+          <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}
         </div>
       )}
       <div className="space-y-3">
@@ -261,7 +261,7 @@ export function ConformiteAdminPage() {
 
         {error && (
           <div className="rounded-xl px-4 py-3 mb-4 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
-            ⚠️ {error}
+            <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}
           </div>
         )}
 

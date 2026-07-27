@@ -286,12 +286,12 @@ function DemoCentreInner() {
               <div className="space-y-2">
                 <AlertBanner
                   level="red"
-                  message={`⚠ ${stats.alertesCritiques} licencié(s) avec licence FFP expirée`}
+                  message={`${stats.alertesCritiques} licencié(s) avec licence FFP expirée`}
                   onView={() => openConversion('Licences expirées')}
                 />
                 <AlertBanner
                   level="orange"
-                  message="⚠ 1 certificat médical expirant dans 30 jours"
+                  message="1 certificat médical expirant dans 30 jours"
                   onView={() => openConversion('Certificats médicaux')}
                 />
               </div>

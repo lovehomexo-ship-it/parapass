@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { PackageCheck } from 'lucide-react';
+import { PackageCheck, AlertTriangle } from 'lucide-react';
 import { fetchDernierPliageMateriel, declarerAutoPliage, type DernierPliage } from '../lib/pliage';
 import { useComplianceRules, daysUntil } from '../lib/compliance';
 
@@ -52,7 +52,7 @@ export function AutoPliageBlock({ materielId, userId, centreId }: {
           {saving ? '…' : 'Déclarer un auto-pliage'}
         </button>
       </div>
-      {error && <p className="text-xs mt-1" style={{ color: '#FCA5A5' }}>⚠️ {error}</p>}
+      {error && <p className="text-xs mt-1" style={{ color: '#FCA5A5' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}</p>}
     </div>
   );
 }

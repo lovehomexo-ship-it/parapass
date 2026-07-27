@@ -1,3 +1,4 @@
+import { Loader, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { QR_PUBLIC_KEY_JWK } from '../lib/qrPublicKey';
 import { verdictControle } from '../lib/verdictControle';
@@ -103,11 +104,11 @@ export function VerifyOfflinePage() {
   }
 
   const statusConfig = {
-    loading: { bg: '#F1F5F9', border: '#CBD5E1', icon: '⏳', label: 'Vérification en cours…', color: '#64748B' },
-    valid: { bg: '#F0FDF4', border: '#86EFAC', icon: '✅', label: 'Vérifié', color: '#16A34A' },
-    'valid-offline': { bg: '#FFF7ED', border: '#FED7AA', icon: '🟠', label: 'Vérifié hors ligne', color: '#C2410C' },
-    expired: { bg: '#FEF2F2', border: '#FCA5A5', icon: '⚠️', label: 'QR code expiré', color: '#DC2626' },
-    invalid: { bg: '#FEF2F2', border: '#FCA5A5', icon: '❌', label: 'Non authentique', color: '#DC2626' },
+    loading: { bg: '#F1F5F9', border: '#CBD5E1', icon: Loader, label: 'Vérification en cours…', color: '#64748B' },
+    valid: { bg: '#F0FDF4', border: '#86EFAC', icon: CheckCircle, label: 'Vérifié', color: '#16A34A' },
+    'valid-offline': { bg: '#FFF7ED', border: '#FED7AA', icon: AlertTriangle, label: 'Vérifié hors ligne', color: '#C2410C' },
+    expired: { bg: '#FEF2F2', border: '#FCA5A5', icon: AlertTriangle, label: 'QR code expiré', color: '#DC2626' },
+    invalid: { bg: '#FEF2F2', border: '#FCA5A5', icon: XCircle, label: 'Non authentique', color: '#DC2626' },
   };
 
   const cfg = statusConfig[status];
@@ -156,7 +157,7 @@ export function VerifyOfflinePage() {
       <div className="w-full max-w-sm bg-white rounded-2xl overflow-hidden shadow-xl">
         {/* Status banner */}
         <div className="px-6 py-4 flex items-center gap-3" style={{ background: cfg.bg, borderBottom: `2px solid ${cfg.border}` }}>
-          <span className="text-2xl">{cfg.icon}</span>
+          <cfg.icon className="w-6 h-6" style={{ color: cfg.color }} aria-hidden />
           <div>
             <p className="font-bold text-base" style={{ color: cfg.color }}>{cfg.label}</p>
             {status === 'valid-offline' && (

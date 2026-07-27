@@ -16,10 +16,10 @@ interface Transaction {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  saut: '🪂 Saut',
-  pliage: '🎿 Pliage',
-  location_parachute: '📦 Location',
-  autre: '📋 Autre',
+  saut: 'Saut',
+  pliage: 'Pliage',
+  location_parachute: 'Location',
+  autre: 'Autre',
 };
 
 const STATUT_STYLES: Record<string, { label: string; bg: string; color: string }> = {

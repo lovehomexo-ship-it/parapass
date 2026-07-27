@@ -254,7 +254,7 @@ export function DocumentsFFPDZ({ centreId, dtId }: { centreId: string; dtId: str
         l'obligation de conservation 3 ans, sans papier. Formats exacts <strong>à valider avec la FFP</strong>.
       </p>
 
-      {erreur && <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>⚠️ {erreur}</div>}
+      {erreur && <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {erreur}</div>}
       {info && <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)', color: '#86EFAC' }}>{info}</div>}
 
       {/* Génération */}

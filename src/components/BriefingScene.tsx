@@ -158,7 +158,7 @@ export function BriefingScene({
       const cx = z.points.reduce((s, p) => s + px(p).x, 0) / z.points.length;
       const cy = z.points.reduce((s, p) => s + px(p).y, 0) / z.points.length;
       const styles = {
-        nofly:     { fill: 'url(#noflyHatch)', stroke: '#EF4444', text: '#FCA5A5', prefix: '⛔ ' },
+        nofly:     { fill: 'url(#noflyHatch)', stroke: '#EF4444', text: '#FCA5A5', prefix: '' },
         obstacle:  { fill: 'rgba(56,189,248,0.22)', stroke: '#38BDF8', text: '#7DD3FC', prefix: '' },
         evolution: { fill: 'rgba(167,139,250,0.20)', stroke: '#A78BFA', text: '#C4B5FD', prefix: '' },
       }[variant];

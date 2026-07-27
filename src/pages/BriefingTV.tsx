@@ -1,4 +1,6 @@
 import { useParams } from 'react-router-dom';
+import { ParachuteGlyph } from '../design/BadgeIcon';
+import { Megaphone } from 'lucide-react';
 import { useBriefingDuJour } from '../lib/briefing';
 import { formatHeureParis } from '../lib/datetime';
 import { BriefingScene } from '../components/BriefingScene';
@@ -21,7 +23,7 @@ export function BriefingTVPage() {
   if (!briefing || !settings) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center text-center px-8" style={{ background: '#020617' }}>
-        <div className="text-7xl mb-6">🪂</div>
+        <div className="flex justify-center mb-6"><ParachuteGlyph className="w-16 h-16" style={{ color: '#F97316' }} aria-hidden /></div>
         <h1 className="text-4xl font-extrabold text-white mb-3">Briefing du jour</h1>
         <p className="text-2xl capitalize mb-6" style={{ color: 'rgba(255,255,255,0.5)' }}>{today}</p>
         <p className="text-xl" style={{ color: 'rgba(255,255,255,0.35)' }}>Aucun briefing publié pour aujourd'hui.</p>
@@ -61,7 +63,7 @@ export function BriefingTVPage() {
       {briefing.consignes && (
         <div className="flex-shrink-0 mt-4 rounded-2xl px-8 py-5" style={{ background: 'rgba(249,115,22,0.1)', border: '2px solid rgba(249,115,22,0.4)' }}>
           <p className="text-2xl font-bold leading-relaxed" style={{ color: '#FDE68A' }}>
-            📢 {briefing.consignes}
+            <Megaphone className="w-5 h-5 inline-block mr-2 align-[-3px]" aria-hidden /> {briefing.consignes}
           </p>
         </div>
       )}

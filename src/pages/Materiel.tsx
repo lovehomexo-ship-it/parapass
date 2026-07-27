@@ -6,7 +6,7 @@ import { Layout } from '../components/Layout';
 import { uploadDocument, getSignedUrl } from '../lib/usePassport';
 import type { Materiel, Maintenance } from '../lib/types';
 import { TYPE_MATERIEL_LABELS, TYPE_MAINTENANCE_LABELS } from '../lib/types';
-import { Plus, Trash2, CreditCard as Edit3, Check, X, Upload, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, CreditCard as Edit3, Check, X, Upload, ExternalLink, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import { getComplianceStatus, useComplianceRules, getMaterielEcheance, type ComplianceRules } from '../lib/compliance';
 import { ComplianceBadge } from '../components/ComplianceBadge';
 import { ChargeAlaireCard } from '../components/ChargeAlaireCard';
@@ -178,7 +178,7 @@ export function MaterielPage() {
         {writeError && (
           <div className="rounded-xl px-4 py-3 mb-4 text-sm flex items-center justify-between gap-3"
             style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
-            <span>⚠️ {writeError}</span>
+            <span><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {writeError}</span>
             <button onClick={() => setWriteError(null)} style={{ color: '#FCA5A5' }}><X className="w-4 h-4" /></button>
           </div>
         )}
@@ -283,7 +283,7 @@ export function MaterielPage() {
                             </div>
                             {echeanceIso && (
                               <div className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                                Prochaine échéance : <span style={{ color: isDepassee ? '#F87171' : '#4ADE80', fontWeight: 600 }}>{new Date(echeanceIso).toLocaleDateString('fr-FR')}{isDepassee ? ' ⚠️ dépassée' : ''}</span>
+                                Prochaine échéance : <span style={{ color: isDepassee ? '#F87171' : '#4ADE80', fontWeight: 600 }}>{new Date(echeanceIso).toLocaleDateString('fr-FR')}{isDepassee ? ' — dépassée' : ''}</span>
                               </div>
                             )}
                           </div>

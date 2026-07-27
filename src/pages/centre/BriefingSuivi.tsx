@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { formatHeureParis, formatDateTimeParis } from '../../lib/datetime';
 import { supabase } from '../../lib/supabase';
 import type { DzBriefing, DzCircuit } from '../../lib/briefing';
-import { CheckCircle, Clock, Download, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle, Clock, Download, ChevronDown, ChevronUp, PartyPopper, Megaphone } from 'lucide-react';
 
 interface Membre { id: string; nom: string; prenom: string }
 interface Ack { user_id: string; acknowledged_at: string }
@@ -115,7 +115,7 @@ export function BriefingSuiviDuJour({ centreId }: { centreId: string }) {
           </h3>
           <p className="text-[10px] mb-3" style={{ color: 'var(--c-dim)' }}>À titre informatif — l'appli ne relance personne.</p>
           {nonAcquittes.length === 0 ? (
-            <p className="text-xs" style={{ color: '#34D399' }}>Tout le monde a acquitté 🎉</p>
+            <p className="text-xs" style={{ color: '#34D399' }}>Tout le monde a acquitté <PartyPopper className="w-3 h-3 inline-block align-[-1px]" aria-hidden /></p>
           ) : (
             <ul className="space-y-1.5">
               {nonAcquittes.map(m => (
@@ -207,7 +207,7 @@ export function BriefingArchive({ centreId, circuits }: { centreId: string; circ
             </button>
             {isOpen && (
               <div className="px-4 pb-4 space-y-3" style={{ borderTop: '1px solid var(--c-border)' }}>
-                {b.consignes && <p className="text-xs pt-3" style={{ color: 'var(--c-text2)' }}>📢 {b.consignes}</p>}
+                {b.consignes && <p className="text-xs pt-3" style={{ color: 'var(--c-text2)' }}><Megaphone className="w-3 h-3 inline-block mr-1 align-[-1px]" aria-hidden /> {b.consignes}</p>}
                 {acks.length > 0 ? (
                   <ul className="space-y-1 pt-1">
                     {[...acks].sort((x, y) => y.acknowledged_at.localeCompare(x.acknowledged_at)).map(a => (

@@ -157,7 +157,7 @@ function addRecapPage(
       doc.setFontSize(7);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(200, 50, 50);
-      doc.text('⚠ Assurance manquante — licence potentiellement invalide lors d\'un contrôle DGAC', margin + 2, y + 5);
+      doc.text('Assurance manquante — licence potentiellement invalide lors d\'un contrôle DGAC', margin + 2, y + 5);
       y += 8;
     }
   }

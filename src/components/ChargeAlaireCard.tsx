@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Gauge } from 'lucide-react';
+import { Gauge, AlertTriangle } from 'lucide-react';
 import {
   useCanopyGuidelines, usePoidsEquipe, getCanopyStatus, CANOPY_STATUS_CONFIG,
 } from '../lib/canopy';
@@ -110,7 +110,7 @@ export function ChargeAlaireCard({ userId, tailleVoileFt2 }: { userId: string | 
             {poidsKg != null ? `Poids équipé : ${poidsKg} kg — modifier` : '+ Renseigner mon poids équipé'}
           </button>
         )}
-        {saveError && <span className="text-xs" style={{ color: '#FCA5A5' }}>⚠️ {saveError}</span>}
+        {saveError && <span className="text-xs" style={{ color: '#FCA5A5' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {saveError}</span>}
       </div>
 
       <p className="text-[10px] mt-2 leading-relaxed" style={{ color: 'rgba(255,255,255,0.3)' }}>

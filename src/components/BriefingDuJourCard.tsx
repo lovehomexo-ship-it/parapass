@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Megaphone, CheckCircle, WifiOff, CloudOff, ChevronDown, ChevronUp } from 'lucide-react';
+import { Megaphone, CheckCircle, WifiOff, CloudOff, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import { useBriefingDuJour, useBriefingAck } from '../lib/briefing';
 import { formatHeureParis } from '../lib/datetime';
 import { BriefingScene } from './BriefingScene';
@@ -53,7 +53,7 @@ export function BriefingDuJourBlock({ dzId, dzNom, userId, position = 'haut' }: 
             />
             {briefing.consignes && (
               <p className="text-sm leading-relaxed mt-3 font-medium" style={{ color: 'rgba(255,255,255,0.8)' }}>
-                📢 {briefing.consignes}
+                <Megaphone className="w-4 h-4 inline-block mr-1.5 align-[-3px]" aria-hidden /> {briefing.consignes}
               </p>
             )}
           </div>
@@ -70,7 +70,7 @@ export function BriefingDuJourBlock({ dzId, dzNom, userId, position = 'haut' }: 
       <div className="mb-3 rounded-xl px-4 py-3 flex items-center justify-between gap-3 flex-wrap"
         style={{ background: 'rgba(148,163,184,0.1)', border: '1px solid rgba(148,163,184,0.3)' }}>
         <span className="text-sm" style={{ color: '#CBD5E1' }}>
-          ⚠️ Briefing{dzNom ? ` — ${dzNom}` : ''} : {loadError}
+          <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> Briefing{dzNom ? ` — ${dzNom}` : ''} : {loadError}
         </span>
         <button onClick={refresh} className="text-sm font-bold px-4 rounded-lg text-white flex-shrink-0"
           style={{ background: '#475569', minHeight: 44 }}>
@@ -152,10 +152,10 @@ export function BriefingDuJourBlock({ dzId, dzNom, userId, position = 'haut' }: 
         <div className="px-4 py-3">
           {briefing.consignes && (
             <p className="text-sm leading-relaxed mb-3 font-medium" style={{ color: 'rgba(255,255,255,0.8)' }}>
-              📢 {briefing.consignes}
+              <Megaphone className="w-4 h-4 inline-block mr-1.5 align-[-3px]" aria-hidden /> {briefing.consignes}
             </p>
           )}
-          {error && <p className="text-xs mb-2" style={{ color: '#FCA5A5' }}>⚠️ {error}</p>}
+          {error && <p className="text-xs mb-2" style={{ color: '#FCA5A5' }}><AlertTriangle className="w-3 h-3 inline-block mr-1 align-[-1px]" aria-hidden /> {error}</p>}
           {ackAt ? (
             <div className="flex items-center gap-2 text-sm font-semibold flex-wrap" style={{ color: '#34D399' }}>
               <CheckCircle className="w-4 h-4" />

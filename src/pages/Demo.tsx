@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ParachuteGlyph } from '../design/BadgeIcon';
 import { useNavigate } from 'react-router-dom';
 import { DemoProvider, DemoBanner, useDemo } from '../lib/DemoContext';
 import { BadgesGrid } from './Badges';
@@ -57,7 +58,7 @@ function ConversionModal({ action, onClose }: { action: string; onClose: () => v
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
           <X className="w-5 h-5" />
         </button>
-        <div className="text-4xl mb-3 text-center">🪂</div>
+        <div className="flex justify-center mb-3"><ParachuteGlyph className="w-10 h-10" style={{ color: '#F97316' }} aria-hidden /></div>
         <h2 className="text-lg font-bold text-[#001A4D] text-center mb-2">{action}</h2>
         <p className="text-sm text-gray-600 text-center mb-5">
           Cette fonctionnalité est disponible avec un compte ParaPass.
