@@ -311,8 +311,8 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter, statutDocs, l
   if (isVert) {
     return (
       <div
-        className="flex items-center gap-2 px-4 py-2.5"
-        style={{ background: 'rgba(22,163,74,0.15)', borderBottom: '1px solid rgba(22,163,74,0.2)' }}
+        className="flex items-center gap-2 mx-3 mt-3 px-4 py-2.5 rounded-2xl"
+        style={{ background: 'rgba(22,163,74,0.10)', border: '1px solid rgba(22,163,74,0.28)', borderLeft: '3px solid #22C55E' }}
       >
         <ShieldCheck className="w-4 h-4 text-green-400 flex-shrink-0" />
         <span className="text-green-400 text-sm font-medium">Documents à jour — Licence · Médical · Assurances valides</span>
@@ -342,20 +342,25 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter, statutDocs, l
     }
   }
 
-  const couleur = isRouge ? '#DC2626' : '#D97706';
+  // Traitement « information » plutôt qu'« alarme » : rouge/ambre MAÎTRISÉS
+  // (rgba doux sur fond sombre), carte arrondie intégrée au flux, accent latéral
+  // pour signaler la gravité sans barre pleine agressive.
+  const sev = isRouge
+    ? { bg: 'rgba(239,68,68,0.10)', border: 'rgba(239,68,68,0.32)', accent: '#EF4444', text: '#FCA5A5', chip: 'rgba(239,68,68,0.18)' }
+    : { bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.30)', accent: '#F59E0B', text: '#FCD34D', chip: 'rgba(245,158,11,0.18)' };
 
   return (
     <>
-      {/* ── Bandeau cliquable ── */}
+      {/* ── Bandeau cliquable (carte douce) ── */}
       <div
-        className="flex items-center justify-between px-4 py-2.5 cursor-pointer select-none"
-        style={{ background: couleur }}
+        className="flex items-center justify-between gap-3 mx-3 mt-3 px-4 py-2.5 rounded-2xl cursor-pointer select-none"
+        style={{ background: sev.bg, border: `1px solid ${sev.border}`, borderLeft: `3px solid ${sev.accent}` }}
         onClick={() => setDetailOuvert((o) => !o)}
       >
         <div className="flex items-center gap-3 min-w-0">
-          <AlertTriangle className="w-4 h-4 text-white flex-shrink-0" />
+          <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: sev.accent }} />
 
-          <span className="text-white font-medium text-sm whitespace-nowrap">
+          <span className="font-semibold text-sm whitespace-nowrap" style={{ color: sev.text }}>
             {isRouge ? (
               nbCritiques > 0 ? (
                 <>
@@ -368,7 +373,7 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter, statutDocs, l
             ) : nbAttention > 0 ? (
               <>{nbAttention} point{nbAttention > 1 ? 's' : ''} à vérifier</>
             ) : (
-              <>Attention — Un document expire bientôt</>
+              <>Un document expire bientôt</>
             )}
           </span>
 
@@ -377,8 +382,8 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter, statutDocs, l
             {alertesPourAffichage.slice(0, 3).map((a) => (
               <span
                 key={a.id}
-                className="text-white text-[11px] px-2 py-0.5 rounded-full whitespace-nowrap"
-                style={{ background: 'rgba(255,255,255,0.2)' }}
+                className="text-[11px] px-2 py-0.5 rounded-full whitespace-nowrap"
+                style={{ background: sev.chip, color: sev.text }}
               >
                 {a.titre.split(' ').slice(0, 3).join(' ')}
               </span>
@@ -387,12 +392,12 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter, statutDocs, l
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-          <span className="text-white/80 text-xs hidden sm:inline">
+          <span className="text-xs hidden sm:inline" style={{ color: sev.text, opacity: 0.85 }}>
             {detailOuvert ? 'Masquer' : 'Voir le détail'}
           </span>
           {detailOuvert
-            ? <ChevronUp className="w-4 h-4 text-white/80" />
-            : <ChevronDown className="w-4 h-4 text-white/80" />
+            ? <ChevronUp className="w-4 h-4" style={{ color: sev.text }} />
+            : <ChevronDown className="w-4 h-4" style={{ color: sev.text }} />
           }
 
           <button
@@ -402,9 +407,10 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter, statutDocs, l
               if (userId) localStorage.setItem(lsKey(userId), todayIso());
               setSessionDismissed(true);
             }}
-            className="flex items-center gap-1 text-white text-xs px-3 rounded-full transition-colors"
+            className="flex items-center gap-1 text-xs px-3 rounded-full transition-colors"
             style={{
-              background: 'rgba(255,255,255,0.2)',
+              background: sev.chip,
+              color: sev.text,
               minHeight: 32,
               paddingTop: 4,
               paddingBottom: 4,
@@ -419,8 +425,8 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter, statutDocs, l
 
       {/* ── Panel détail dépliable ── */}
       {detailOuvert && (
-        <div style={{ background: '#001540', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-          <div className="max-w-5xl mx-auto px-4 py-4 space-y-3">
+        <div className="mx-3 mt-2 rounded-2xl" style={{ background: 'rgba(0,21,64,0.6)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="px-4 py-4 space-y-3">
 
             {(alertesPourAffichage.length > 0 ? alertesPourAffichage : lignesSynthetiques).map((alerte) => {
               const isCritique = alerte.urgence === 'critique';
@@ -433,7 +439,8 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter, statutDocs, l
                     border: `1px solid ${isCritique ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)'}`,
                   }}
                 >
-                  <span className="text-lg flex-shrink-0 mt-0.5">{isCritique ? '🔴' : '🟡'}</span>
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: isCritique ? '#EF4444' : '#F59E0B' }} aria-hidden />
+                  <span className="sr-only">{isCritique ? 'Critique' : 'Attention'}</span>
 
                   <div className="flex-1 min-w-0">
                     <p
