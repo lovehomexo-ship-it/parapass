@@ -6,10 +6,12 @@ import { supabase } from '../lib/supabase';
 import { useBadges } from '../lib/useBadges';
 import type { Badge, Saut, BadgeDefinition } from '../lib/types';
 import { BADGES } from '../lib/types';
-import { Award, X, CheckCheck } from 'lucide-react';
+import { Award, X, CheckCheck, Check, Lock } from 'lucide-react';
 
 // ─── Rarity config ─────────────────────────────────────────────────────────────
 
+// Chaque rareté a un traitement de MÉDAILLON distinct : dégradé de disque
+// (top→bottom), anneau (ring), halo (glow) et brillance (shimmer légendaire).
 const RARETE_CONFIG = {
   commun: {
     label: 'Commun',
@@ -18,6 +20,8 @@ const RARETE_CONFIG = {
     text: '#94A3B8',
     glow: 'none',
     shimmer: false,
+    ring: '#64748B', top: '#334155', bottom: '#1E293B', accent: '#CBD5E1',
+    halo: 'none',
   },
   rare: {
     label: 'Rare',
@@ -26,6 +30,8 @@ const RARETE_CONFIG = {
     text: '#4ADE80',
     glow: '0 0 8px rgba(22,163,74,0.25)',
     shimmer: false,
+    ring: '#22C55E', top: '#16A34A', bottom: '#064E3B', accent: '#DCFCE7',
+    halo: '0 0 14px 1px rgba(34,197,94,0.35)',
   },
   epique: {
     label: 'Épique',
@@ -34,6 +40,8 @@ const RARETE_CONFIG = {
     text: '#60A5FA',
     glow: '0 0 10px rgba(37,99,235,0.3)',
     shimmer: false,
+    ring: '#3B82F6', top: '#2563EB', bottom: '#1E3A8A', accent: '#DBEAFE',
+    halo: '0 0 18px 2px rgba(59,130,246,0.4)',
   },
   legendaire: {
     label: 'Légendaire',
@@ -42,6 +50,8 @@ const RARETE_CONFIG = {
     text: '#FCD34D',
     glow: '0 0 14px rgba(217,119,6,0.4)',
     shimmer: true,
+    ring: '#F59E0B', top: '#D97706', bottom: '#78350F', accent: '#FEF3C7',
+    halo: '0 0 22px 3px rgba(245,158,11,0.5)',
   },
 };
 
@@ -72,17 +82,6 @@ const CAT_ORDER: CatKey[] = [
   'disciplines_speciales', 'equipement',
 ];
 
-// ─── Progress bar ───────────────────────────────────────────────────────────────
-
-function ProgressBar({ current, required, color }: { current: number; required: number; color: string }) {
-  const pct = Math.min(100, (current / required) * 100);
-  return (
-    <div className="w-full mt-1" style={{ height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 4 }}>
-      <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 4, transition: 'width 0.4s ease' }} />
-    </div>
-  );
-}
-
 // ─── Badge card ─────────────────────────────────────────────────────────────────
 
 function BadgeCard({
@@ -100,100 +99,107 @@ function BadgeCard({
 }) {
   const cfg = RARETE_CONFIG[def.rarete];
   const catCfg = CAT_CONFIG[def.categorie];
+  const hasProgress = !!progress && progress.required > 0;
+  const pct = hasProgress ? Math.min(100, Math.round((progress!.current / progress!.required) * 100)) : 0;
+  const restants = progress ? Math.max(0, progress.required - progress.current) : 0;
 
   return (
     <div
-      className="relative flex flex-col items-center p-4 rounded-2xl border transition-all duration-200 group cursor-default"
+      className="badge-medallion relative flex flex-col items-center p-3 rounded-2xl border cursor-default"
       style={{
-        background: obtained ? cfg.bg : 'rgba(255,255,255,0.03)',
-        borderColor: obtained ? cfg.border : 'rgba(255,255,255,0.08)',
-        boxShadow: obtained ? cfg.glow : 'none',
-        opacity: obtained ? 1 : 0.55,
-      }}
-      onMouseEnter={(e) => {
-        if (obtained) {
-          const el = e.currentTarget as HTMLElement;
-          el.style.transform = 'scale(1.04)';
-          el.style.boxShadow = cfg.glow === 'none'
-            ? '0 4px 20px rgba(0,0,0,0.25)'
-            : cfg.glow.replace(/[\d.]+\)$/, '0.6)');
-        }
-      }}
-      onMouseLeave={(e) => {
-        const el = e.currentTarget as HTMLElement;
-        el.style.transform = 'scale(1)';
-        el.style.boxShadow = obtained ? cfg.glow : 'none';
+        background: obtained ? cfg.bg : 'rgba(255,255,255,0.02)',
+        borderColor: obtained ? `${cfg.border}55` : 'rgba(255,255,255,0.06)',
       }}
     >
-      {/* Shimmer overlay for legendary */}
-      {obtained && cfg.shimmer && (
-        <div className="absolute inset-0 rounded-2xl pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
-          <div className="shimmer-bar" />
-        </div>
-      )}
-
       {/* NEW badge */}
       {isNew && obtained && (
         <div
-          className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider z-20 animate-pulse"
+          className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider z-20"
           style={{ background: '#F97316', color: '#fff', whiteSpace: 'nowrap' }}
         >
           NOUVEAU
         </div>
       )}
 
-      {/* Obtained check */}
-      {obtained && (
-        <div
-          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center z-10"
-          style={{ background: cfg.text, boxShadow: `0 0 6px ${cfg.border}` }}
-        >
-          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-      )}
-
-      <div className="mb-2 relative z-10 transition-transform duration-200 flex items-center justify-center">
-        <BadgeIcon type={def.type} nom={def.nom} couleur={def.couleur} locked={!obtained} className="w-8 h-8" />
+      {/* ── MÉDAILLON ── */}
+      <div className="relative mb-2 badge-disc" style={{ width: 64, height: 64 }}>
+        {obtained ? (
+          <>
+            {/* Halo (rareté) */}
+            {cfg.halo !== 'none' && <div aria-hidden className="absolute inset-0 rounded-full" style={{ boxShadow: cfg.halo }} />}
+            {/* Disque avec relief */}
+            <div
+              className="absolute inset-0 rounded-full flex items-center justify-center overflow-hidden"
+              style={{
+                background: `radial-gradient(circle at 38% 28%, ${cfg.top}, ${cfg.bottom})`,
+                border: `2px solid ${cfg.ring}`,
+                boxShadow: 'inset 0 2px 5px rgba(255,255,255,0.25), inset 0 -5px 9px rgba(0,0,0,0.4)',
+              }}
+            >
+              <div aria-hidden className="absolute inset-0 rounded-full" style={{ background: 'radial-gradient(circle at 42% 22%, rgba(255,255,255,0.38), transparent 55%)' }} />
+              {cfg.shimmer && <div className="shimmer-bar" />}
+              <BadgeIcon type={def.type} nom={def.nom} couleur={cfg.accent} className="w-8 h-8 relative z-10" />
+            </div>
+            {/* Pastille obtenu */}
+            <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center z-10" style={{ background: cfg.ring, boxShadow: `0 0 6px ${cfg.ring}` }}>
+              <Check className="w-3 h-3 text-white" strokeWidth={3} />
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Anneau de progression (conic) + silhouette */}
+            <div
+              className="absolute inset-0 rounded-full"
+              style={{ background: hasProgress ? `conic-gradient(${catCfg.color} ${pct}%, rgba(255,255,255,0.08) ${pct}%)` : 'rgba(255,255,255,0.08)', padding: 3 }}
+            >
+              <div className="w-full h-full rounded-full flex items-center justify-center" style={{ background: '#0d1a30', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <BadgeIcon type={def.type} nom={def.nom} locked className="w-7 h-7" />
+              </div>
+            </div>
+            {/* Cadenas */}
+            <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center z-10" style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <Lock className="w-2.5 h-2.5" style={{ color: '#64748B' }} aria-hidden />
+            </div>
+          </>
+        )}
       </div>
-      <div
-        className="text-xs font-bold text-center leading-tight relative z-10"
-        style={{ color: obtained ? '#FFFFFF' : '#94A3B8' }}
-      >
+
+      {/* Nom */}
+      <div className="text-xs font-bold text-center leading-tight" style={{ color: obtained ? '#FFFFFF' : '#CBD5E1' }}>
         {def.nom}
       </div>
 
+      {/* Sous-ligne : date obtenue / progression motivante / description */}
       {obtained && badge ? (
-        <div className="text-[10px] mt-1 relative z-10 text-center" style={{ color: cfg.text }}>
+        <div className="text-[10px] mt-1 text-center" style={{ color: cfg.text }}>
           {new Date(badge.date_obtention).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
         </div>
+      ) : hasProgress ? (
+        <div className="mt-1 text-center">
+          <p className="text-[11px] font-extrabold" style={{ color: catCfg.color }}>
+            {restants} restant{restants > 1 ? 's' : ''}
+          </p>
+          <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.3)' }}>{progress!.current}/{progress!.required} · {pct}%</p>
+        </div>
       ) : (
-        <>
-          <div className="text-[10px] mt-1 text-center leading-tight relative z-10" style={{ color: 'rgba(255,255,255,0.3)' }}>
-            {def.description}
-          </div>
-          {progress && progress.required > 0 && (
-            <div className="w-full mt-2 relative z-10">
-              <ProgressBar current={progress.current} required={progress.required} color={catCfg.color} />
-              <p className="text-[9px] text-center mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>
-                {progress.current} / {progress.required}
-              </p>
-            </div>
-          )}
-        </>
-      )}
-
-      {obtained && (
-        <div className="mt-1.5 relative z-10">
-          <span
-            className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full"
-            style={{ background: cfg.bg, color: cfg.text, border: `1px solid ${cfg.border}` }}
-          >
-            {RARETE_CONFIG[def.rarete].label}
-          </span>
+        <div className="text-[10px] mt-1 text-center leading-tight" style={{ color: 'rgba(255,255,255,0.3)' }}>
+          {def.description}
         </div>
       )}
+
+      {/* Puce de rareté — visible dans les DEUX états pour lire la rareté d'un coup d'œil */}
+      <div className="mt-1.5">
+        <span
+          className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full"
+          style={{
+            background: obtained ? cfg.bg : 'rgba(255,255,255,0.04)',
+            color: obtained ? cfg.text : 'rgba(255,255,255,0.4)',
+            border: `1px solid ${obtained ? `${cfg.border}55` : 'rgba(255,255,255,0.08)'}`,
+          }}
+        >
+          {cfg.label}
+        </span>
+      </div>
     </div>
   );
 }
@@ -308,6 +314,32 @@ export function BadgesPage() {
           background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
           animation: shimmerMove 2.2s ease-in-out infinite;
         }
+        /* Survol médaillon : léger relief, transform seule (GPU) pour rester fluide mobile */
+        .badge-medallion { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+        .badge-medallion:hover .badge-disc { transform: scale(1.06); }
+        .badge-disc { transition: transform 0.18s ease; }
+        /* Célébration de déblocage — jouée UNE fois (iteration-count 1), non bloquante */
+        @keyframes badgePop {
+          0% { transform: scale(0.6); opacity: 0; }
+          55% { transform: scale(1.12); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes celebRing {
+          0% { transform: scale(0.5); opacity: 0.7; }
+          100% { transform: scale(2.2); opacity: 0; }
+        }
+        @keyframes celebSpark {
+          0% { transform: translate(0,0) scale(1); opacity: 1; }
+          100% { transform: translate(var(--dx), var(--dy)) scale(0.3); opacity: 0; }
+        }
+        .celeb-pop { animation: badgePop 0.5s cubic-bezier(0.34,1.56,0.64,1) 1 both; }
+        .celeb-ring { animation: celebRing 0.7s ease-out 1 both; }
+        .celeb-spark { animation: celebSpark 0.7s ease-out 1 both; }
+        @media (prefers-reduced-motion: reduce) {
+          .shimmer-bar,
+          .badge-medallion, .badge-medallion:hover .badge-disc, .badge-disc,
+          .celeb-pop, .celeb-ring, .celeb-spark { animation: none !important; transition: none !important; transform: none !important; }
+        }
       `}</style>
 
       <div style={{ background: '#001A4D', minHeight: '100vh' }}>
@@ -326,7 +358,27 @@ export function BadgesPage() {
             </button>
             {(() => {
               const nb = BADGES.find((b) => b.nom === newBadge);
-              return <div className="mb-2"><BadgeIcon type={nb?.type ?? ''} nom={newBadge} couleur={nb?.couleur ?? '#FCD34D'} className="w-7 h-7" /></div>;
+              const rc = nb ? RARETE_CONFIG[nb.rarete] : RARETE_CONFIG.legendaire;
+              return (
+                <div className="mb-2 relative inline-flex items-center justify-center" style={{ width: 48, height: 48 }}>
+                  {/* Éclat de célébration — pur CSS, une fois, pointer-events none */}
+                  <div aria-hidden className="celeb-ring absolute rounded-full" style={{ inset: 0, border: `2px solid ${rc.ring}`, pointerEvents: 'none' }} />
+                  {[0, 60, 120, 180, 240, 300].map((a) => (
+                    <span key={a} aria-hidden className="celeb-spark absolute rounded-full" style={{
+                      width: 4, height: 4, background: rc.accent, pointerEvents: 'none',
+                      ['--dx' as string]: `${Math.round(Math.cos(a * Math.PI / 180) * 26)}px`,
+                      ['--dy' as string]: `${Math.round(Math.sin(a * Math.PI / 180) * 26)}px`,
+                    }} />
+                  ))}
+                  <div className="celeb-pop rounded-full flex items-center justify-center" style={{
+                    width: 44, height: 44,
+                    background: `radial-gradient(circle at 38% 28%, ${rc.top}, ${rc.bottom})`,
+                    border: `2px solid ${rc.ring}`, boxShadow: rc.halo === 'none' ? undefined : rc.halo,
+                  }}>
+                    <BadgeIcon type={nb?.type ?? ''} nom={newBadge} couleur={rc.accent} className="w-6 h-6" />
+                  </div>
+                </div>
+              );
             })()}
             <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: '#FCD34D' }}>
               Nouveau badge débloqué !
