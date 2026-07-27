@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Plus, X, Check, Cloud, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, X, Check, Cloud, Users, ChevronLeft, ChevronRight, Globe, CalendarDays, Video, Camera, AlertTriangle, ClipboardList, Gift } from 'lucide-react';
+import { ParachuteGlyph } from '../../design/BadgeIcon';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -250,7 +251,7 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
           className="text-xs px-3 py-2 rounded-xl"
           style={{ border: '1px solid var(--c-border)', color: 'var(--c-muted)', textDecoration: 'none' }}
         >
-          🌐 Page publique
+          <Globe className="w-4 h-4 inline-block mr-1.5 align-[-3px]" aria-hidden /> Page publique
         </a>
       </div>
 
@@ -282,7 +283,7 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
         <div className="text-center py-8" style={{ color: 'var(--c-muted)' }}>Chargement...</div>
       ) : slotsJour.length === 0 ? (
         <div className="text-center py-12" style={{ color: 'var(--c-muted)' }}>
-          <div className="text-4xl mb-3">📅</div>
+          <div className="flex justify-center mb-3"><CalendarDays className="w-10 h-10" style={{ color: 'var(--c-muted)' }} aria-hidden /></div>
           <p className="font-medium">Aucun créneau ce jour</p>
           <p className="text-xs mt-1" style={{ color: 'var(--c-dim)' }}>Créez un créneau pour cette date</p>
         </div>
@@ -301,7 +302,7 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
                     </span>
                     <div className="flex items-center gap-2">
                       <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: isAnnule ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.12)', color: isAnnule ? '#EF4444' : '#10B981' }}>
-                        {isAnnule ? '⛈️ Annulé météo' : `${dispo}/${slot.capacite} places`}
+                        {isAnnule ? 'Annulé météo' : `${dispo}/${slot.capacite} places`}
                       </span>
                     </div>
                   </div>
@@ -341,12 +342,12 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
                                   {b.passager_nom || b.offreur_nom}
                                 </p>
                                 <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold" style={{ background: badge.bg, color: badge.color }}>{badge.label}</span>
-                                {b.avec_video && <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(139,92,246,0.12)', color: '#A78BFA' }}>📹 Vidéo</span>}
-                                {b.avec_photos && <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(249,115,22,0.12)', color: '#F97316' }}>📷 Photos</span>}
+                                {b.avec_video && <span className="text-[10px] px-1.5 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(139,92,246,0.12)', color: '#A78BFA' }}><Video className="w-3 h-3" aria-hidden />Vidéo</span>}
+                                {b.avec_photos && <span className="text-[10px] px-1.5 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(249,115,22,0.12)', color: '#F97316' }}><Camera className="w-3 h-3" aria-hidden />Photos</span>}
                                 {b.dossier_complete ? (
                                   <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.1)', color: '#10B981' }}>✓ Dossier OK</span>
                                 ) : (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(245,158,11,0.1)', color: '#F59E0B' }}>⚠️ Dossier incomplet</span>
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(245,158,11,0.1)', color: '#F59E0B' }}><AlertTriangle className="w-3 h-3" aria-hidden />Dossier incomplet</span>
                                 )}
                               </div>
                               {/* Solde + paiement */}
@@ -397,7 +398,7 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
                                 className="text-[11px] px-2 py-1 rounded-lg"
                                 style={{ background: 'var(--c-hover)', color: 'var(--c-muted)', textDecoration: 'none' }}
                               >
-                                📋 Dossier
+                                <ClipboardList className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> Dossier
                               </a>
                             )}
                           </div>
@@ -460,7 +461,7 @@ function OngletBons({ centreId }: { centreId: string }) {
       </div>
 
       {loading ? <div className="text-center py-8" style={{ color: 'var(--c-muted)' }}>Chargement...</div>
-        : filtered.length === 0 ? <div className="text-center py-12" style={{ color: 'var(--c-muted)' }}><div className="text-4xl mb-2">🎁</div><p>Aucun bon cadeau</p></div>
+        : filtered.length === 0 ? <div className="text-center py-12" style={{ color: 'var(--c-muted)' }}><div className="flex justify-center mb-2"><Gift className="w-10 h-10" aria-hidden /></div><p>Aucun bon cadeau</p></div>
         : (
           <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--c-border)' }}>
             {filtered.map((b, i) => {
@@ -735,17 +736,17 @@ export function TandemSection({ centreId }: { centreId: string }) {
   if (loading) return <div className="text-center py-12" style={{ color: 'var(--c-muted)' }}>Chargement...</div>;
 
   const ONGLETS: { id: Onglet; label: string }[] = [
-    { id: 'planning', label: '📅 Planning' },
-    { id: 'bons', label: '🎁 Bons cadeaux' },
-    { id: 'stats', label: '📊 Stats' },
-    { id: 'config', label: '⚙️ Config' },
+    { id: 'planning', label: 'Planning' },
+    { id: 'bons', label: 'Bons cadeaux' },
+    { id: 'stats', label: 'Stats' },
+    { id: 'config', label: 'Config' },
   ];
 
   return (
     <div>
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h2 className="text-xl font-bold" style={{ color: 'var(--c-text)' }}>🪂 Module Tandem</h2>
+          <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--c-text)' }}><ParachuteGlyph className="w-5 h-5" aria-hidden /> Module Tandem</h2>
           <p className="text-sm mt-0.5" style={{ color: 'var(--c-muted)' }}>Réservations, bons cadeaux, dossiers passagers</p>
         </div>
         <div className="flex items-center gap-2">

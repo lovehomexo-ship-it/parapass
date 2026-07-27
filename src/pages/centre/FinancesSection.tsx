@@ -57,10 +57,10 @@ interface Kpis {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const TYPE_LABELS: Record<string, string> = {
-  saut: '🪂 Saut',
-  pliage: '🎿 Pliage',
-  location_parachute: '📦 Location',
-  autre: '📋 Autre',
+  saut: 'Saut',
+  pliage: 'Pliage',
+  location_parachute: 'Location',
+  autre: 'Autre',
 };
 
 const STATUT_STYLES: Record<string, { label: string; bg: string; color: string }> = {
@@ -121,10 +121,10 @@ function TarifModal({
             <select value={type} onChange={e => setType(e.target.value as Tarif['type'])}
               className="w-full rounded-lg px-3 py-2 text-sm outline-none"
               style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)', color: 'var(--c-text)' }}>
-              <option value="saut">🪂 Saut</option>
-              <option value="pliage">🎿 Pliage</option>
-              <option value="location_parachute">📦 Location parachute</option>
-              <option value="autre">📋 Autre</option>
+              <option value="saut">Saut</option>
+              <option value="pliage">Pliage</option>
+              <option value="location_parachute">Location parachute</option>
+              <option value="autre">Autre</option>
             </select>
           </div>
           <div>

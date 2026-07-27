@@ -4,6 +4,7 @@ import { ymdLocal } from '../lib/datetime';
 import {
   ChevronLeft, ChevronRight, Plus, X, Check, Users, Clock,
   Send, Plane, BarChart2, Download, ChevronDown,
+  CalendarDays,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -35,10 +36,10 @@ interface InscriptionWithProfile {
 }
 
 const STATUT_CONFIG = {
-  ouvert: { bgLight: '#DCFCE7', bg: '#10B981', text: '#065F46', label: 'Ouvert', emoji: '🟢' },
-  ferme: { bgLight: '#FEE2E2', bg: '#EF4444', text: '#991B1B', label: 'Fermé', emoji: '🔴' },
-  sous_reserve: { bgLight: '#FEF3C7', bg: '#F59E0B', text: '#92400E', label: 'Sous réserve', emoji: '🟡' },
-  annule: { bgLight: '#F1F5F9', bg: '#64748B', text: '#334155', label: 'Annulé', emoji: '⛔' },
+  ouvert: { bgLight: '#DCFCE7', bg: '#10B981', text: '#065F46', label: 'Ouvert' },
+  ferme: { bgLight: '#FEE2E2', bg: '#EF4444', text: '#991B1B', label: 'Fermé' },
+  sous_reserve: { bgLight: '#FEF3C7', bg: '#F59E0B', text: '#92400E', label: 'Sous réserve' },
+  annule: { bgLight: '#F1F5F9', bg: '#64748B', text: '#334155', label: 'Annulé' },
 };
 
 const TYPES_SAUTS = ['OA', 'OC', 'OR', 'PAC', 'Tandem', 'Compétition', 'Stage'];
@@ -118,7 +119,7 @@ function ModalCreneau({
         const notifs = licencies.map(l => ({
           user_id: l.parachutiste_id,
           type: 'creneau_ouvert',
-          titre: '📅 Créneau ouvert',
+          titre: 'Créneau ouvert',
           message: `${dateLabel}${titre ? ` — ${titre}` : ''} · ${heureDebut}-${heureFin}${message ? `\n"${message}"` : ''}`,
           data: { centre_id: centreId, date },
           lue: false,
@@ -170,7 +171,7 @@ function ModalCreneau({
                     color: statut === key ? sc.text : '#64748B',
                   }}
                 >
-                  <span>{sc.emoji}</span> {sc.label}
+                  <span className="inline-block w-2.5 h-2.5 rounded-full align-middle" style={{ background: sc.bg }} /> {sc.label}
                 </button>
               ))}
             </div>
@@ -255,7 +256,7 @@ function ModalCreneau({
                   <span className="text-xs text-gray-400">{message.length}/280</span>
                 </div>
                 <textarea value={message} onChange={e => setMessage(e.target.value.slice(0, 280))}
-                  rows={3} placeholder="Conditions météo parfaites prévues ! Venez nombreux 🪂"
+                  rows={3} placeholder="Conditions météo parfaites prévues ! Venez nombreux"
                   className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#001A4D]/20 resize-none" />
               </div>
 
@@ -541,7 +542,7 @@ export function PlanningCentre({ centreId }: { centreId: string }) {
       {creneauAuj && (
         <div className="bg-white rounded-2xl border border-green-200 p-5" style={{ boxShadow: '0 4px 16px rgba(16,185,129,0.1)' }}>
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{ background: '#DCFCE7' }}>📅</div>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{ background: '#DCFCE7' }}><CalendarDays className="w-5 h-5" style={{ color: '#065F46' }} aria-hidden /></div>
             <div>
               <div className="font-bold text-gray-900">Aujourd'hui — Ouvert</div>
               <div className="text-sm text-gray-500">{creneauAuj.heure_debut.slice(0,5)}-{creneauAuj.heure_fin.slice(0,5)} {creneauAuj.avion ? `· ${creneauAuj.avion}` : ''}</div>
@@ -607,7 +608,7 @@ export function PlanningCentre({ centreId }: { centreId: string }) {
                   {d.getDate()}
                 </span>
                 {sc ? (
-                  <span className="text-[8px] font-bold" style={{ color: sc.bg }}>{sc.emoji}</span>
+                  <span className="inline-block w-2 h-2 rounded-full" style={{ background: sc.bg }} />
                 ) : isCurrentMonth ? (
                   <span className="text-[10px] text-gray-300 group-hover:text-blue-300 transition-colors">+</span>
                 ) : null}
@@ -646,7 +647,7 @@ export function PlanningCentre({ centreId }: { centreId: string }) {
             return (
               <div key={c.id} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-3" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0" style={{ background: sc.bgLight }}>
-                  {sc.emoji}
+                  <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: sc.bg }} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-gray-900 capitalize">{dateLabel}</div>

@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { QRCodeSVG } from 'qrcode.react';
-import { X, Plus, Printer, Download, ChevronRight, Clock, Package } from 'lucide-react';
+import { X, Plus, Printer, Download, ChevronRight, Clock, Package, Backpack, AlertTriangle, Smartphone, Sparkles } from 'lucide-react';
+import { ParachuteGlyph } from '../../design/BadgeIcon';
 import { CycleHelpPanel } from '../../components/CyclePliageSchema';
 import { habilitationValide } from '../../lib/pliage';
 import { QrScannerButton } from '../../components/QrScanner';
@@ -439,7 +440,7 @@ function FileDePliage({ centreId }: { centreId: string }) {
         return (
           <div key={s.id} className="flex items-center gap-3 px-4 py-3"
             style={{ borderTop: i > 0 ? '1px solid rgba(249,115,22,0.12)' : 'none' }}>
-            <span className="text-xl">🎒</span>
+            <Backpack className="w-5 h-5" aria-hidden />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold" style={{ color: 'var(--c-text)' }}>{nom}</p>
               {s.assignment?.porteur && (
@@ -527,13 +528,13 @@ function OngletPliageDuJour({ centreId }: { centreId: string }) {
 
       {actionError && (
         <div className="rounded-xl px-4 py-3 mb-4 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
-          ⚠️ {actionError}
+          <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {actionError}
         </div>
       )}
 
       {flagges > 0 && (
         <div className="rounded-xl px-4 py-3 mb-4 flex items-center gap-3" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
-          <span className="text-lg">⚠️</span>
+          <AlertTriangle className="w-5 h-5" aria-hidden />
           <p className="text-sm" style={{ color: '#FCD34D' }}>
             {flagges} pliage{flagges > 1 ? 's' : ''} flagué{flagges > 1 ? 's' : ''} — qualification plieur non renseignée
           </p>
@@ -544,7 +545,7 @@ function OngletPliageDuJour({ centreId }: { centreId: string }) {
         <div className="text-center py-12" style={{ color: 'var(--c-muted)' }}>Chargement...</div>
       ) : pliages.length === 0 ? (
         <div className="text-center py-16" style={{ color: 'var(--c-muted)' }}>
-          <div className="text-5xl mb-3">🪂</div>
+          <div className="flex justify-center mb-3"><ParachuteGlyph className="w-12 h-12" style={{ color: 'var(--c-muted)' }} aria-hidden /></div>
           <p className="font-medium">Aucun pliage enregistré aujourd'hui</p>
           <p className="text-xs mt-1" style={{ color: 'var(--c-dim)' }}>Les scans apparaissent ici en temps réel</p>
         </div>
@@ -566,7 +567,7 @@ function OngletPliageDuJour({ centreId }: { centreId: string }) {
               >
                 <div className="flex-shrink-0 text-center w-10">
                   <p className="text-xs font-mono font-semibold" style={{ color: 'var(--c-muted)' }}>{heure}</p>
-                  {p.flag_qualif && <span className="text-[10px]" title="Qualification manquante">⚠️</span>}
+                  {p.flag_qualif && <span className="text-[10px]" title="Qualification manquante"><AlertTriangle className="w-3 h-3 inline-block" aria-hidden /></span>}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold truncate" style={{ color: 'var(--c-text)' }}>{voileNom}</p>
@@ -585,7 +586,7 @@ function OngletPliageDuJour({ centreId }: { centreId: string }) {
                   <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
                     style={{ background: 'rgba(249,115,22,0.12)', color: '#FDBA74', border: '1px solid rgba(249,115,22,0.35)' }}
                     title="Aucune habilitation active et non expirée dans le référentiel des plieurs">
-                    ⚠ Plieur non habilité ou habilitation expirée
+                    <AlertTriangle className="w-3 h-3 inline-block mr-1 align-[-1px]" aria-hidden /> Plieur non habilité ou habilitation expirée
                   </span>
                 )}
                 <div className="flex-shrink-0 flex flex-col items-end gap-1">
@@ -664,7 +665,7 @@ function OngletGestionSacs({ centreId }: { centreId: string }) {
         <div className="text-center py-12" style={{ color: 'var(--c-muted)' }}>Chargement...</div>
       ) : sacs.length === 0 ? (
         <div className="text-center py-16" style={{ color: 'var(--c-muted)' }}>
-          <div className="text-5xl mb-3">🎒</div>
+          <div className="flex justify-center mb-3"><Backpack className="w-12 h-12" style={{ color: 'var(--c-muted)' }} aria-hidden /></div>
           <p className="font-medium">Aucun sac enregistré</p>
           <p className="text-xs mt-1" style={{ color: 'var(--c-dim)' }}>Cliquez sur "Enregistrer un sac" pour générer le premier QR</p>
         </div>
@@ -677,7 +678,7 @@ function OngletGestionSacs({ centreId }: { centreId: string }) {
               <div key={sac.id} className="rounded-xl p-4" style={{ background: 'var(--c-dropdown)', border: '1px solid var(--c-border)' }}>
                 <div className="flex items-start gap-3 mb-3">
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{ background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.2)' }}>
-                    🎒
+                    <Backpack className="w-5 h-5" aria-hidden />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm truncate" style={{ color: 'var(--c-text)' }}>{nom}</p>
@@ -693,7 +694,7 @@ function OngletGestionSacs({ centreId }: { centreId: string }) {
                 </div>
                 <div className="flex flex-wrap gap-1.5 mb-3">
                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: sc.bg, color: sc.color }}>
-                    {sac.statut === 'en_service' ? '● En service' : sac.statut === 'au_repliage_secours' ? '⏳ Repliage secours' : '✕ Retiré'}
+                    {sac.statut === 'en_service' ? '● En service' : sac.statut === 'au_repliage_secours' ? 'Repliage secours' : '✕ Retiré'}
                   </span>
                 </div>
                 <div className="flex gap-2">
@@ -702,14 +703,14 @@ function OngletGestionSacs({ centreId }: { centreId: string }) {
                     className="flex-1 py-2 rounded-lg text-xs font-semibold"
                     style={{ border: '1px solid var(--c-border)', color: 'var(--c-text)', background: 'transparent' }}
                   >
-                    📱 Voir QR
+                    <Smartphone className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> Voir QR
                   </button>
                   <button
                     onClick={() => { imprimerQR(sac); }}
                     className="flex-1 py-2 rounded-lg text-xs font-bold text-white"
                     style={{ background: '#F97316' }}
                   >
-                    🖨️ Imprimer
+                    <Printer className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> Imprimer
                   </button>
                 </div>
               </div>
@@ -802,7 +803,7 @@ function OngletStats({ centreId }: { centreId: string }) {
 
       {stats.flagues > 0 && (
         <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
-          <span className="text-lg">⚠️</span>
+          <AlertTriangle className="w-5 h-5" aria-hidden />
           <p className="text-sm" style={{ color: '#FCD34D' }}>{stats.flagues} pliage{stats.flagues > 1 ? 's' : ''} avec qualification plieur non renseignée</p>
         </div>
       )}
@@ -1054,7 +1055,7 @@ function OngletParcSacs({ centreId }: { centreId: string }) {
       {/* Scanner rapide staff */}
       <div className="mb-5">
         <QrScannerButton
-          label="📷 Scanner un sac"
+          label="Scanner un sac"
           className="w-full flex items-center justify-center gap-2 rounded-xl text-sm font-semibold"
           style={{ height: 44, background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)', cursor: 'pointer' }}
         />
@@ -1074,10 +1075,10 @@ function OngletParcSacs({ centreId }: { centreId: string }) {
 
       {/* Grille sacs */}
       {[
-        { titre: '🟠 À plier', items: aPlier, etat: 'a_plier' as const },
-        { titre: '🔵 Sortis', items: pris, etat: 'pris' as const },
-        { titre: '🟢 Libres', items: libres, etat: 'libre' as const },
-        { titre: '⚫ Hors service', items: horsService, etat: 'hors_service' as const },
+        { titre: 'À plier', items: aPlier, etat: 'a_plier' as const },
+        { titre: 'Sortis', items: pris, etat: 'pris' as const },
+        { titre: 'Libres', items: libres, etat: 'libre' as const },
+        { titre: 'Hors service', items: horsService, etat: 'hors_service' as const },
       ].map(({ titre, items, etat }) => items.length > 0 && (
         <div key={etat} className="mb-6">
           <h3 className="text-sm font-bold mb-3" style={{ color: 'var(--c-muted)' }}>{titre} ({items.length})</h3>
@@ -1319,23 +1320,23 @@ export function GestionPliage({ centreId }: { centreId: string }) {
   const [onglet, setOnglet] = useState<Onglet>('jour');
 
   const ONGLETS: { id: Onglet; label: string }[] = [
-    { id: 'jour', label: '📋 Du jour' },
-    { id: 'parc', label: '🅿️ Parc de sacs' },
-    { id: 'sacs', label: '🎒 Sacs' },
-    { id: 'stats', label: '📊 Stats' },
-    { id: 'releve', label: '💶 Relevé plieurs' },
-    { id: 'habilitations', label: '🛡️ Habilitations' },
+    { id: 'jour', label: 'Du jour' },
+    { id: 'parc', label: 'Parc de sacs' },
+    { id: 'sacs', label: 'Sacs' },
+    { id: 'stats', label: 'Stats' },
+    { id: 'releve', label: 'Relevé plieurs' },
+    { id: 'habilitations', label: 'Habilitations' },
   ];
 
   return (
     <div>
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h2 className="text-xl font-bold" style={{ color: 'var(--c-text)' }}>🪂 Gestion du pliage</h2>
+          <h2 className="text-xl font-bold" style={{ color: 'var(--c-text)' }}><ParachuteGlyph className="w-5 h-5 inline-block mr-2 align-[-2px]" aria-hidden />Gestion du pliage</h2>
           <p className="text-sm mt-0.5" style={{ color: 'var(--c-muted)' }}>Sac → QR → 1 tap · Tout est traçé</p>
         </div>
         <span className="text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: 'rgba(249,115,22,0.12)', color: '#F97316', border: '1px solid rgba(249,115,22,0.3)' }}>
-          ✨ Option Pro
+          <Sparkles className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> Option Pro
         </span>
       </div>
 

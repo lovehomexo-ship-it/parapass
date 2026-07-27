@@ -4,8 +4,9 @@ import { useAuth } from '../lib/auth';
 import {
   ChevronLeft, ChevronRight, Calendar, Clock, Thermometer,
   Users, X, MessageSquare, RefreshCw, MapPin,
-  Plane,
+  Plane, CloudSun, Cloud, CloudRain, Eye, Ruler, Gift,
 } from 'lucide-react';
+import { ParachuteGlyph } from '../design/BadgeIcon';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -74,12 +75,12 @@ function evaluerConditions(meteo: MeteoData, brevet: string): ConditionEval {
   const limite = BREVET_LIMITES[brevet] ?? BREVET_LIMITES.B;
   const { windspeed_10m, precipitation_probability, visibility } = meteo;
   if (windspeed_10m > limite.vent || precipitation_probability > 70 || visibility < 5000) {
-    return { statut: 'interdit', couleur: '#EF4444', emoji: '🔴', message: `Conditions non conformes pour votre brevet ${brevet}` };
+    return { statut: 'interdit', couleur: '#EF4444', message: `Conditions non conformes pour votre brevet ${brevet}` };
   }
   if (windspeed_10m > limite.vent * 0.8 || precipitation_probability > 30) {
-    return { statut: 'limite', couleur: '#F59E0B', emoji: '🟡', message: 'Conditions limites — vérifiez avec votre DT' };
+    return { statut: 'limite', couleur: '#F59E0B', message: 'Conditions limites — vérifiez avec votre DT' };
   }
-  return { statut: 'favorable', couleur: '#10B981', emoji: '🟢', message: `Conditions favorables pour votre brevet ${brevet}` };
+  return { statut: 'favorable', couleur: '#10B981', message: `Conditions favorables pour votre brevet ${brevet}` };
 }
 
 function ms2kmh(ms: number) { return (ms * 3.6).toFixed(0); }
@@ -226,7 +227,7 @@ function MeteoWidget({ creneau, brevet }: { creneau: Creneau; brevet: string }) 
     <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
       <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="flex items-center gap-2">
-          <span className="text-base">🌤️</span>
+          <CloudSun className="w-4 h-4" style={{ color: '#38BDF8' }} aria-hidden />
           <span className="text-xs font-semibold text-white">Météo en temps réel</span>
         </div>
         <div className="flex items-center gap-2">
@@ -246,13 +247,13 @@ function MeteoWidget({ creneau, brevet }: { creneau: Creneau; brevet: string }) 
             {meteo.temperature.toFixed(0)}°C
           </span>
           <span className="flex items-center gap-1.5 text-xs text-white">
-            ☁️ {meteo.cloudcover}% nuages
+            <Cloud className="w-3 h-3 inline-block mr-1 align-[-1px]" aria-hidden /> {meteo.cloudcover}% nuages
           </span>
           <span className="flex items-center gap-1.5 text-xs text-white">
-            🌧️ Pluie {meteo.precipitation_probability}%
+            <CloudRain className="w-3 h-3 inline-block mr-1 align-[-1px]" aria-hidden /> Pluie {meteo.precipitation_probability}%
           </span>
           <span className="flex items-center gap-1.5 text-xs text-white">
-            👁️ {(meteo.visibility / 1000).toFixed(0)} km
+            <Eye className="w-3 h-3 inline-block mr-1 align-[-1px]" aria-hidden /> {(meteo.visibility / 1000).toFixed(0)} km
           </span>
         </div>
         {/* Vent */}
@@ -290,7 +291,7 @@ function MeteoWidget({ creneau, brevet }: { creneau: Creneau; brevet: string }) 
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-base">{conditions.emoji}</span>
+            <span className="inline-block w-3 h-3 rounded-full" style={{ background: conditions.couleur }} />
             <div>
               <div className="text-xs font-bold" style={{ color: conditions.couleur }}>
                 CONDITIONS {conditions.statut === 'favorable' ? 'FAVORABLES' : conditions.statut === 'limite' ? 'LIMITES' : 'DÉCONSEILLÉES'}
@@ -307,10 +308,10 @@ function MeteoWidget({ creneau, brevet }: { creneau: Creneau; brevet: string }) 
 // ─── Statut colors ────────────────────────────────────────────────────────────
 
 const STATUT_CONFIG = {
-  ouvert: { bg: '#10B981', bgLight: '#DCFCE7', text: '#065F46', label: 'OUVERT', emoji: '🟢' },
-  ferme: { bg: '#EF4444', bgLight: '#FEE2E2', text: '#991B1B', label: 'FERMÉ', emoji: '🔴' },
-  sous_reserve: { bg: '#F59E0B', bgLight: '#FEF3C7', text: '#92400E', label: 'SOUS RÉSERVE', emoji: '🟡' },
-  annule: { bg: '#64748B', bgLight: '#F1F5F9', text: '#334155', label: 'ANNULÉ', emoji: '⛔' },
+  ouvert: { bg: '#10B981', bgLight: '#DCFCE7', text: '#065F46', label: 'OUVERT' },
+  ferme: { bg: '#EF4444', bgLight: '#FEE2E2', text: '#991B1B', label: 'FERMÉ' },
+  sous_reserve: { bg: '#F59E0B', bgLight: '#FEF3C7', text: '#92400E', label: 'SOUS RÉSERVE' },
+  annule: { bg: '#64748B', bgLight: '#F1F5F9', text: '#334155', label: 'ANNULÉ' },
 };
 
 // ─── Fiche créneau ────────────────────────────────────────────────────────────
@@ -354,7 +355,7 @@ function FicheCreneauModal({
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-2"
               style={{ background: sc.bg + '25', color: sc.bg }}>
-              {sc.emoji} {sc.label}
+              <span className="inline-block w-2.5 h-2.5 rounded-full align-middle" style={{ background: sc.bg }} /> {sc.label}
             </div>
             <h2 className="text-lg font-bold text-white leading-tight capitalize">{dateFormatted}</h2>
             {creneau.titre && <p className="text-sm mt-0.5" style={{ color: '#60A5FA' }}>{creneau.titre}</p>}
@@ -375,7 +376,7 @@ function FicheCreneauModal({
               { icon: <Clock className="w-3.5 h-3.5" />, label: `${creneau.heure_debut.slice(0, 5)} → ${creneau.heure_fin.slice(0, 5)}` },
               { icon: <Users className="w-3.5 h-3.5" />, label: `${nbInscrits} / ${creneau.nb_places_total} places` },
               creneau.avion ? { icon: <Plane className="w-3.5 h-3.5" />, label: creneau.avion } : null,
-              creneau.altitude_prevue ? { icon: <span className="text-xs">📏</span>, label: `${creneau.altitude_prevue}m` } : null,
+              creneau.altitude_prevue ? { icon: <Ruler className="w-3.5 h-3.5" aria-hidden />, label: `${creneau.altitude_prevue}m` } : null,
             ].filter(Boolean).map((item, i) => item && (
               <div key={i} className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: 'rgba(255,255,255,0.07)' }}>
                 <span style={{ color: 'rgba(255,255,255,0.5)' }}>{item.icon}</span>
@@ -389,7 +390,7 @@ function FicheCreneauModal({
             <div className="flex flex-wrap gap-1.5">
               {creneau.type_saut.map(t => (
                 <span key={t} className="text-xs px-2 py-1 rounded-md font-medium" style={{ background: 'rgba(37,99,235,0.2)', color: '#93C5FD' }}>
-                  🪂 {t}
+                  <ParachuteGlyph className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {t}
                 </span>
               ))}
             </div>
@@ -408,7 +409,7 @@ function FicheCreneauModal({
           {/* Offre promo */}
           {creneau.offre_promo && (
             <div className="rounded-xl px-4 py-3" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)' }}>
-              <div className="text-[10px] font-semibold tracking-wider mb-1" style={{ color: '#F59E0B' }}>🎁 OFFRE</div>
+              <div className="text-[10px] font-semibold tracking-wider mb-1 flex items-center gap-1" style={{ color: '#F59E0B' }}><Gift className="w-3 h-3" aria-hidden /> OFFRE</div>
               <p className="text-sm font-medium" style={{ color: '#FCD34D' }}>{creneau.offre_promo}</p>
             </div>
           )}
@@ -508,7 +509,7 @@ function DayCell({
       {sc && (
         <span className="text-[8px] font-bold px-1 py-0.5 rounded leading-none"
           style={{ background: sc.bg + '20', color: sc.bg }}>
-          {sc.emoji}
+          <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: sc.bg }} />
         </span>
       )}
     </button>
@@ -726,13 +727,13 @@ export function PlanningDZ() {
                     style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
                   >
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
-                      style={{ background: '#DCFCE7' }}>🟢</div>
+                      style={{ background: '#DCFCE7' }}><span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: '#10B981' }} /></div>
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-gray-900 capitalize">{dateLabel} — {c.centres?.nom}</div>
                       <div className="text-sm text-gray-500">{c.heure_debut.slice(0, 5)}-{c.heure_fin.slice(0, 5)} · Tu y vas ✓</div>
                     </div>
                     {meteoEval && (
-                      <span className="text-sm flex-shrink-0">{meteoEval.emoji}</span>
+                      <span className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: meteoEval.couleur }} />
                     )}
                     {insc?.commentaire && (
                       <span className="text-xs text-gray-400 hidden sm:block truncate max-w-[120px]">{insc.commentaire}</span>
@@ -810,7 +811,7 @@ export function PlanningDZ() {
                     onClick={() => setSelectedCreneau(c)}
                     className="w-full bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-3 hover:border-blue-200 hover:shadow-sm transition-all text-left"
                   >
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-base" style={{ background: '#DCFCE7' }}>🟢</div>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-base" style={{ background: '#DCFCE7' }}><span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: '#10B981' }} /></div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold text-gray-900 capitalize">{dateLabel}</div>
                       <div className="text-xs text-gray-500">{c.heure_debut.slice(0, 5)}-{c.heure_fin.slice(0, 5)} · {nbInscrits}/{c.nb_places_total} inscrits</div>
