@@ -3,7 +3,7 @@ import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { Layout } from '../../components/Layout';
 import { THEMES, diffLabel } from '../../lib/quiz';
-import { Plus, Pencil, Check, X, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Check, X, ChevronDown, ChevronUp, Trash2, Lock, Lightbulb, Paperclip } from 'lucide-react';
 import { QuizThemeIcon } from '../../design/academieIcons';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -219,7 +219,7 @@ export function QuizAdminPage() {
     return (
       <Layout>
         <div className="max-w-xl mx-auto px-4 py-12 text-center">
-          <div className="text-5xl mb-4">🔒</div>
+          <div className="flex justify-center mb-4"><Lock className="w-12 h-12" style={{ color: 'var(--c-muted)' }} aria-hidden /></div>
           <p className="font-semibold" style={{ color: 'var(--c-text)' }}>Accès réservé aux super-admins ParaPass</p>
         </div>
       </Layout>
@@ -306,7 +306,7 @@ export function QuizAdminPage() {
             <button key={f} onClick={() => setFilterValide(f)}
               className="rounded-lg px-3 py-1.5 text-xs font-semibold"
               style={{ background: filterValide === f ? '#7C3AED' : 'var(--c-surface)', color: filterValide === f ? '#fff' : 'var(--c-muted)', border: '1px solid var(--c-border)' }}>
-              {f === 'all' ? 'Toutes' : f === 'valide' ? '✅ Validées' : '📝 Brouillons'}
+              {f === 'all' ? 'Toutes' : f === 'valide' ? 'Validées' : 'Brouillons'}
             </button>
           ))}
         </div>
@@ -348,8 +348,8 @@ export function QuizAdminPage() {
                             <span style={{ color: p.id === q.bonne_reponse ? '#6EE7B7' : 'var(--c-muted)' }}>{p.id}. {p.texte}</span>
                           </div>
                         ))}
-                        {q.explication && <p className="text-xs mt-2 italic" style={{ color: 'var(--c-muted)' }}>💡 {q.explication}</p>}
-                        {q.reference && <p className="text-xs" style={{ color: '#64748B' }}>📎 {q.reference}</p>}
+                        {q.explication && <p className="text-xs mt-2 italic" style={{ color: 'var(--c-muted)' }}><Lightbulb className="w-3 h-3 inline-block mr-1 align-[-1px]" aria-hidden /> {q.explication}</p>}
+                        {q.reference && <p className="text-xs" style={{ color: '#64748B' }}><Paperclip className="w-3 h-3 inline-block mr-1 align-[-1px]" aria-hidden /> {q.reference}</p>}
                       </div>
                       <div className="flex gap-2 mt-4">
                         <button

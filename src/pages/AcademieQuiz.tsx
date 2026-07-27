@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { getGrade, PROPOSITION_COLORS, diffLabel, type QuizQuestion, type QuizResult } from '../lib/quiz';
-import { ArrowLeft, ChevronRight, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Clock, CheckCircle, XCircle, Trophy, Star, BookOpen, Inbox, CalendarDays, Target, AlertTriangle, Zap } from 'lucide-react';
 import { GradeIcon } from '../design/academieIcons';
 
 // ─── Durée timer par question (secondes) ────────────────────────────────────────
@@ -65,7 +65,7 @@ function ResultsScreen({ stats, onRetry, onDone }: { stats: SessionStats; onRetr
   const pct = Math.round((stats.correctes / stats.total) * 100);
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: '#0F172A' }}>
-      <div className="text-6xl mb-4">{pct === 100 ? '🏆' : pct >= 70 ? '⭐' : '📚'}</div>
+      <div className="flex justify-center mb-4">{pct === 100 ? <Trophy className="w-14 h-14" style={{ color: '#F59E0B' }} aria-hidden /> : pct >= 70 ? <Star className="w-14 h-14" style={{ color: '#FCD34D' }} aria-hidden /> : <BookOpen className="w-14 h-14" style={{ color: '#94A3B8' }} aria-hidden />}</div>
       <h1 className="text-3xl font-bold mb-2" style={{ color: '#F8FAFC' }}>
         {pct === 100 ? 'Parfait !' : pct >= 70 ? 'Bien joué !' : 'Continue comme ça !'}
       </h1>
@@ -283,7 +283,7 @@ export function AcademieQuizPage() {
   if (questions.length === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: '#0F172A' }}>
-        <div className="text-5xl mb-4">📭</div>
+        <Inbox className="w-12 h-12 mb-4" style={{ color: '#475569' }} aria-hidden />
         <p className="text-lg font-semibold mb-2" style={{ color: '#F8FAFC' }}>Aucune question disponible</p>
         <p className="text-sm mb-2" style={{ color: '#94A3B8' }}>
           {theme ? `Aucune question trouvée pour le thème « ${theme} ».` : 'La banque de questions est vide pour ce mode.'}
@@ -317,8 +317,8 @@ export function AcademieQuizPage() {
         <button onClick={() => navigate('/academie')} className="p-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.05)' }}>
           <ArrowLeft className="w-5 h-5" style={{ color: '#94A3B8' }} />
         </button>
-        <span className="text-sm font-semibold" style={{ color: '#94A3B8' }}>
-          {mode === 'daily' ? '📅 Défi du jour' : '🎯 Entraînement'}
+        <span className="text-sm font-semibold inline-flex items-center gap-1.5" style={{ color: '#94A3B8' }}>
+          {mode === 'daily' ? <><CalendarDays className="w-4 h-4" aria-hidden /> Défi du jour</> : <><Target className="w-4 h-4" aria-hidden /> Entraînement</>}
         </span>
         <span className="ml-auto text-xs px-2 py-1 rounded-full font-semibold" style={{ background: `${diff.color}20`, color: diff.color }}>
           {diff.label}
@@ -335,7 +335,7 @@ export function AcademieQuizPage() {
       {/* Erreur soumission */}
       {submitError && (
         <div className="rounded-xl px-4 py-3 mb-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
-          ⚠️ {submitError}
+<AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {submitError}
         </div>
       )}
 
@@ -380,12 +380,12 @@ export function AcademieQuizPage() {
           <div className="rounded-xl p-4 mb-3"
             style={{ background: result.est_correcte ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', border: `1px solid ${result.est_correcte ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
             <div className="flex items-start gap-2">
-              <span className="text-xl flex-shrink-0">{result.est_correcte ? '✅' : '❌'}</span>
+              <span className="flex-shrink-0">{result.est_correcte ? <CheckCircle className="w-5 h-5" style={{ color: '#10B981' }} aria-hidden /> : <XCircle className="w-5 h-5" style={{ color: '#EF4444' }} aria-hidden />}</span>
               <div>
                 <p className="font-semibold text-sm mb-1" style={{ color: result.est_correcte ? '#6EE7B7' : '#FCA5A5' }}>
                   {result.est_correcte ? `Correct ! +${result.xp_gagnes} XP` : 'Incorrect'}
-                  {result.bonus_vitesse > 0 && <span style={{ color: '#FBBF24' }}> ⚡ +{result.bonus_vitesse} vitesse</span>}
-                  {result.bonus_diff > 0 && <span style={{ color: '#A78BFA' }}> 🎯 +{result.bonus_diff} difficulté</span>}
+                  {result.bonus_vitesse > 0 && <span className="inline-flex items-center gap-0.5" style={{ color: '#FBBF24' }}> <Zap className="w-3 h-3" aria-hidden /> +{result.bonus_vitesse} vitesse</span>}
+                  {result.bonus_diff > 0 && <span className="inline-flex items-center gap-0.5" style={{ color: '#A78BFA' }}> <Target className="w-3 h-3" aria-hidden /> +{result.bonus_diff} difficulté</span>}
                 </p>
                 {result.explication && <p className="text-xs" style={{ color: '#94A3B8' }}>{result.explication}</p>}
                 {result.reference && <p className="text-xs mt-1" style={{ color: '#64748B' }}>{result.reference}</p>}

@@ -6,7 +6,7 @@ import {
   DRILL_CATEGORIES, DRILL_TIMER_SEC, DRILL_PROP_COLORS,
   type DrillScenario, type DrillResult,
 } from '../lib/drill';
-import { ArrowLeft, Flame, Zap } from 'lucide-react';
+import { ArrowLeft, Flame, Zap, Inbox, CheckCircle2, XCircle, Timer, AlertTriangle } from 'lucide-react';
 import { DrillCategoryIcon } from '../design/academieIcons';
 
 // ─── Sélection déterministe du scénario du jour ────────────────────────────────
@@ -169,7 +169,7 @@ export function ReflexeDuJourPage() {
   if (!scenario) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: '#0F172A' }}>
-        <div className="text-5xl mb-4">📭</div>
+        <Inbox className="w-12 h-12 mb-4" style={{ color: '#475569' }} aria-hidden />
         <p className="text-lg font-semibold mb-2" style={{ color: '#F8FAFC' }}>Aucun scénario disponible</p>
         <p className="text-sm mb-6" style={{ color: '#64748B' }}>Revenez bientôt.</p>
         <button onClick={() => navigate('/dashboard')} className="rounded-xl px-6 py-3 font-semibold" style={{ background: '#1E293B', color: '#94A3B8' }}>
@@ -187,7 +187,7 @@ export function ReflexeDuJourPage() {
   if (alreadyDone && !result) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: '#0F172A' }}>
-        <div className="text-6xl mb-4">✅</div>
+        <CheckCircle2 className="w-14 h-14 mb-4" style={{ color: '#10B981' }} aria-hidden />
         <h1 className="text-2xl font-bold mb-2" style={{ color: '#F8FAFC' }}>Réflexe du jour fait !</h1>
         <p className="text-sm mb-1" style={{ color: '#64748B' }}>Vous avez déjà complété le réflexe d'aujourd'hui.</p>
         <p className="text-sm mb-8" style={{ color: '#64748B' }}>Revenez demain pour le prochain scénario.</p>
@@ -209,7 +209,7 @@ export function ReflexeDuJourPage() {
 
         <div className="flex-1 flex flex-col items-center justify-center text-center max-w-sm mx-auto w-full">
           {/* Verdict */}
-          <div className="text-6xl mb-3">{timedOut ? '⏱️' : result.est_correct ? '✅' : '❌'}</div>
+          <div className="mb-3">{timedOut ? <Timer className="w-14 h-14" style={{ color: '#F59E0B' }} aria-hidden /> : result.est_correct ? <CheckCircle2 className="w-14 h-14" style={{ color: '#10B981' }} aria-hidden /> : <XCircle className="w-14 h-14" style={{ color: '#EF4444' }} aria-hidden />}</div>
           <h1 className="text-2xl font-bold mb-1" style={{ color: '#F8FAFC' }}>
             {timedOut ? 'Temps écoulé' : result.est_correct ? 'Bon réflexe !' : 'Pas le bon réflexe'}
           </h1>
@@ -284,7 +284,7 @@ export function ReflexeDuJourPage() {
       {/* Erreur soumission */}
       {submitError && (
         <div className="rounded-xl px-4 py-3 mb-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
-          ⚠️ {submitError}
+<AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {submitError}
         </div>
       )}
 

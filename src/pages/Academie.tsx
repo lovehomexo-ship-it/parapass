@@ -4,7 +4,7 @@ import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { Layout } from '../components/Layout';
 import { getGrade, getProgressToNextGrade, THEMES, QUIZ_BADGES, RARETE_COLORS } from '../lib/quiz';
-import { Flame, ChevronRight, Lock, Trophy, Medal } from 'lucide-react';
+import { Flame, ChevronRight, Lock, Trophy, Medal, CheckCircle2, CalendarDays } from 'lucide-react';
 import { GradeIcon, QuizThemeIcon, QuizBadgeIcon } from '../design/academieIcons';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -208,7 +208,7 @@ export function AcademiePage() {
           }}
           disabled={xp.daily_done}
         >
-          <div className="text-3xl">{xp.daily_done ? '✅' : '📅'}</div>
+          <div>{xp.daily_done ? <CheckCircle2 className="w-8 h-8" style={{ color: '#10B981' }} aria-label="Fait" /> : <CalendarDays className="w-8 h-8" style={{ color: '#60A5FA' }} aria-hidden />}</div>
           <div className="flex-1">
             <p className="font-bold" style={{ color: 'var(--c-text)' }}>
               {xp.daily_done ? 'Défi du jour terminé !' : 'Défi du jour'}

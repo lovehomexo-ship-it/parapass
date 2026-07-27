@@ -3,7 +3,7 @@ import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { Layout } from '../../components/Layout';
 import { DRILL_CATEGORIES } from '../../lib/drill';
-import { Plus, Pencil, Check, X, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Check, X, ChevronDown, ChevronUp, Trash2, Lock, Lightbulb, Paperclip, Zap } from 'lucide-react';
 import { DrillCategoryIcon } from '../../design/academieIcons';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -189,7 +189,7 @@ export function DrillAdminPage() {
     return (
       <Layout>
         <div className="max-w-xl mx-auto px-4 py-12 text-center">
-          <div className="text-5xl mb-4">🔒</div>
+          <div className="flex justify-center mb-4"><Lock className="w-12 h-12" style={{ color: 'var(--c-muted)' }} aria-hidden /></div>
           <p className="font-semibold" style={{ color: 'var(--c-text)' }}>Accès réservé aux super-admins ParaPass</p>
         </div>
       </Layout>
@@ -238,7 +238,7 @@ export function DrillAdminPage() {
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl font-bold" style={{ color: 'var(--c-text)' }}>🔴 Drill Admin</h1>
+            <h1 className="text-xl font-bold" style={{ color: 'var(--c-text)' }} ><Zap className="w-5 h-5 inline-block mr-1.5 align-[-3px]" aria-hidden />Drill Admin</h1>
             <p className="text-sm" style={{ color: 'var(--c-muted)' }}>
               {scenarios.length} scénarios · {scenarios.filter(s => s.valide).length} validés
             </p>
@@ -272,7 +272,7 @@ export function DrillAdminPage() {
             <button key={f} onClick={() => setFilterValide(f)}
               className="rounded-lg px-3 py-1.5 text-xs font-semibold"
               style={{ background: filterValide === f ? '#EF4444' : 'var(--c-surface)', color: filterValide === f ? '#fff' : 'var(--c-muted)', border: '1px solid var(--c-border)' }}>
-              {f === 'all' ? 'Tous' : f === 'valide' ? '✅ Validés' : '📝 Brouillons'}
+              {f === 'all' ? 'Tous' : f === 'valide' ? 'Validés' : 'Brouillons'}
             </button>
           ))}
         </div>
@@ -316,8 +316,8 @@ export function DrillAdminPage() {
                             </span>
                           </div>
                         ))}
-                        {s.explication && <p className="text-xs mt-2 italic" style={{ color: 'var(--c-muted)' }}>💡 {s.explication}</p>}
-                        {s.reference && <p className="text-xs" style={{ color: '#64748B' }}>📎 {s.reference}</p>}
+                        {s.explication && <p className="text-xs mt-2 italic" style={{ color: 'var(--c-muted)' }}><Lightbulb className="w-3 h-3 inline-block mr-1 align-[-1px]" aria-hidden /> {s.explication}</p>}
+                        {s.reference && <p className="text-xs" style={{ color: '#64748B' }}><Paperclip className="w-3 h-3 inline-block mr-1 align-[-1px]" aria-hidden /> {s.reference}</p>}
                       </div>
                       <div className="flex gap-2 mt-4">
                         <button onClick={() => toggleValide(s)}
