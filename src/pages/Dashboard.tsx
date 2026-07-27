@@ -30,6 +30,8 @@ import { formatDateTimeParis } from '../lib/datetime';
 import { useDemo } from '../lib/useDemo';
 import { PasseportCardView } from '../components/PasseportCardView';
 import { BadgeIcon } from '../design/BadgeIcon';
+import { AnimatedNumber, AnimatedBar } from '../components/AnimatedNumber';
+import { CelebrationBurst } from '../components/CelebrationBurst';
 import {
   Plus, FileDown, QrCode, TrendingUp,
   ChevronDown, ChevronUp, Trash2, X, ShieldCheck, Hash,
@@ -314,6 +316,7 @@ export function DashboardPage() {
   const [sauts, setSauts] = useState<Saut[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [celebrate, setCelebrate] = useState(false);
   const [showOCR, setShowOCR] = useState(false);
   const [showDeclaration, setShowDeclaration] = useState(false);
   const [sautAEditer, setSautAEditer] = useState<Saut | null>(null);
@@ -737,7 +740,7 @@ export function DashboardPage() {
                       value={
                         <span className="flex items-center gap-2">
                           <ParachuteDropIcon className="w-6 h-6 text-orange-500" />
-                          {totalSauts}
+                          <AnimatedNumber value={totalSauts} />
                         </span>
                       }
                       sub={`+${sautsCetteAnnee} cette année`}
@@ -746,7 +749,7 @@ export function DashboardPage() {
                     <KpiCard
                       accent="#003082"
                       label="Cette année"
-                      value={<span className="flex items-center gap-2"><TrendingUp className="w-5 h-5 text-blue-400" />{sautsCetteAnnee}</span>}
+                      value={<span className="flex items-center gap-2"><TrendingUp className="w-5 h-5 text-blue-400" /><AnimatedNumber value={sautsCetteAnnee} /></span>}
                       sub={dernierSaut ? `Dernier : ${dernierSaut}` : 'Aucun saut encore'}
                     />
                     {/* Card 3 — Licence FFP */}
@@ -1242,14 +1245,20 @@ export function DashboardPage() {
         onAdded={(saut) => {
           if (sautAEditer) {
             setSauts((s) => s.map((sa) => sa.id === saut.id ? saut : sa));
+            // Célébration légère uniquement sur un VRAI passage à « validé »
+            // (le saut édité devient valide), non bloquante.
+            if (saut.statut === 'valide' && sautAEditer.statut !== 'valide') setCelebrate(true);
           } else {
             setSauts((s) => [saut, ...s]);
+            if (saut.statut === 'valide') setCelebrate(true);
             // Entrée « à chaud » (V2) : proposer de partager sa journée après un vrai saut.
             if (!saut.is_tunnel) setProposeShare(true);
           }
         }}
         sautAEditer={sautAEditer}
       />
+
+      <CelebrationBurst show={celebrate} onDone={() => setCelebrate(false)} />
 
       {/* Écran de partage (V2) — même composant pour les deux entrées. */}
       {shareOpen && user && (
@@ -1915,6 +1924,7 @@ function ProgressionCard({ userId }: { userId: string | null }) {
     {
       label: 'Note globale',
       value: noteGlobaleAvg !== null ? `${noteGlobaleAvg.toFixed(1)} ★` : '—',
+      animate: noteGlobaleAvg !== null ? { value: noteGlobaleAvg, decimals: 1, suffix: ' ★' } : undefined,
       color: noteColor(noteGlobaleAvg),
       sub: trend === 'up' ? '↑ En hausse' : trend === 'down' ? '↓ En baisse' : '→ Stable',
       subColor: trend === 'up' ? '#10B981' : trend === 'down' ? '#EF4444' : 'var(--c-dim)',
@@ -1929,6 +1939,7 @@ function ProgressionCard({ userId }: { userId: string | null }) {
     {
       label: 'Posés debout',
       value: `${atterrissageDebout} / ${data.length}`,
+      animate: { value: atterrissageDebout, decimals: 0, suffix: ` / ${data.length}` },
       color: '#10B981',
       sub: null,
       bar: data.length > 0 ? (atterrissageDebout / data.length) * 100 : 0,
@@ -1937,6 +1948,7 @@ function ProgressionCard({ userId }: { userId: string | null }) {
     {
       label: 'Éléments maîtrisés',
       value: `${techScore} / ${techTotal}`,
+      animate: { value: techScore, decimals: 0, suffix: ` / ${techTotal}` },
       color: '#003082',
       sub: null,
       bar: techScore / techTotal * 100,
@@ -1945,6 +1957,7 @@ function ProgressionCard({ userId }: { userId: string | null }) {
     {
       label: 'Précision atterro',
       value: precisionAvg !== null ? `${precisionAvg} m` : '—',
+      animate: precisionAvg !== null ? { value: precisionAvg, decimals: 0, suffix: ' m' } : undefined,
       color: precisionAvg !== null && precisionAvg < 10 ? '#10B981' : '#F59E0B',
       sub: precisionAvg !== null ? 'du cible' : 'Pas de données',
       subColor: 'var(--c-muted)',
@@ -1952,6 +1965,7 @@ function ProgressionCard({ userId }: { userId: string | null }) {
     {
       label: 'Mental',
       value: mentalAvg !== null ? `${mentalAvg.toFixed(1)} / 5` : '—',
+      animate: mentalAvg !== null ? { value: mentalAvg, decimals: 1, suffix: ' / 5' } : undefined,
       color: noteColor(mentalAvg),
       // Icône vectorielle (nette, indépendante de l'OS) à la couleur d'accent
       // du Mental — remplace l'emoji système 🧠.
@@ -1996,11 +2010,15 @@ function ProgressionCard({ userId }: { userId: string | null }) {
               // État vide explicite et élégant, plutôt qu'un tiret orphelin.
               <p className="text-sm italic leading-tight" style={{ color: 'var(--c-dim)' }}>Pas encore évalué</p>
             ) : (
-              <p className="text-xl font-bold leading-tight" style={{ color: kpi.color }}>{kpi.value}</p>
+              <p className="text-xl font-bold leading-tight" style={{ color: kpi.color }}>
+                {'animate' in kpi && kpi.animate
+                  ? <AnimatedNumber value={kpi.animate.value} decimals={kpi.animate.decimals} suffix={kpi.animate.suffix} />
+                  : kpi.value}
+              </p>
             )}
             {'bar' in kpi && kpi.bar !== undefined && (
-              <div style={{ height: 6, background: 'var(--c-hover)', borderRadius: 3, margin: '8px 0 4px', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${kpi.bar}%`, background: kpi.barColor, borderRadius: 3 }} />
+              <div style={{ margin: '8px 0 4px' }}>
+                <AnimatedBar pct={kpi.bar} color={kpi.barColor as string} height={6} />
               </div>
             )}
             {kpi.sub && (

@@ -66,6 +66,28 @@ canvas,
   transition: none !important;
 }
 
+/* ── Feedback tactile discret sur les boutons ────────────────────────────────
+   Retour visuel au clic (léger enfoncement), sans jamais retarder l'action. */
+button:not(:disabled), [role="button"]:not([aria-disabled="true"]) {
+  transition: transform 0.08s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+button:not(:disabled):active, [role="button"]:not([aria-disabled="true"]):active {
+  transform: scale(0.97);
+}
+
+/* ── Respect global de « prefers-reduced-motion » ────────────────────────────
+   L'utilisateur qui réduit les animations : on coupe transitions/animations
+   décoratives (l'information reste immédiate). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  button:active, [role="button"]:active { transform: none !important; }
+}
+
 @layer base {
   html, body {
     overflow-x: hidden;
