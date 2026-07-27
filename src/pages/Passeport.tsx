@@ -1,4 +1,5 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useDemo } from '../lib/useDemo';
 import { supabase } from '../lib/supabase';
@@ -38,6 +39,15 @@ export function PasseportPage() {
   const { licences, brevets, certificats, centresLicencies, qualifications, modulesBrevets, contacts, incidents, interdictions, refresh } = usePassport(user?.id);
   const [tab, setTab] = useState<PassportTab>('carte');
   const [saving, setSaving] = useState(false);
+
+  // Ouverture directe sur un onglet via ?onglet= (liens des alertes / états vides).
+  const ONGLETS_VALIDES: PassportTab[] = ['carte', 'licence', 'medical', 'pac', 'brevets', 'modules', 'qualifications', 'centres', 'securite', 'incidents'];
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    const o = searchParams.get('onglet') as PassportTab | null;
+    if (o && ONGLETS_VALIDES.includes(o)) setTab(o);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const isMoniteurOrAdmin = (profile?.role === 'admin' || profile?.role === 'moniteur') && !isDemo;
 

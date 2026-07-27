@@ -769,7 +769,7 @@ export function DashboardPage() {
                           ? licenceMonths !== null && licenceMonths < 0
                             ? <span style={{ color: '#EF4444', fontWeight: 600 }}>EXPIRÉE</span>
                             : `Valide · ${licenceMonths} mois restants`
-                          : 'Non renseignée'
+                          : <Link to="/passeport?onglet=licence" className="inline-flex items-center gap-1 no-underline font-semibold" style={{ color: '#F97316' }}><Plus className="w-3 h-3" /> Ajouter ma licence</Link>
                       }
                     />
                     {/* Card 4 — Certificat médical */}
@@ -789,7 +789,7 @@ export function DashboardPage() {
                           ? certifMonths !== null && certifMonths < 0
                             ? <span style={{ color: '#EF4444', fontWeight: 600 }}>EXPIRÉ</span>
                             : `Valide · ${certifMonths} mois restants`
-                          : 'Non renseigné'
+                          : <Link to="/passeport?onglet=medical" className="inline-flex items-center gap-1 no-underline font-semibold" style={{ color: '#F97316' }}><Plus className="w-3 h-3" /> Ajouter mon certificat</Link>
                       }
                     />
                   </div>
@@ -2007,8 +2007,18 @@ function ProgressionCard({ userId }: { userId: string | null }) {
           <div key={kpi.label} className="rounded-lg p-4" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
             <p className="text-[10px] uppercase tracking-wider mb-2 font-medium" style={{ color: 'var(--c-muted)', letterSpacing: '0.5px' }}>{kpi.label}</p>
             {kpi.value === '—' ? (
-              // État vide explicite et élégant, plutôt qu'un tiret orphelin.
-              <p className="text-sm italic leading-tight" style={{ color: 'var(--c-dim)' }}>Pas encore évalué</p>
+              // État vide = invitation à agir (pas une absence terne) : message clair
+              // + micro-CTA vers l'évaluation d'un saut, qui alimente cet indicateur.
+              <div className="leading-tight">
+                <p className="text-sm italic" style={{ color: 'var(--c-dim)' }}>Pas encore évalué</p>
+                <Link
+                  to="/dashboard?action=add-jump"
+                  className="inline-flex items-center gap-1 mt-1 text-[11px] font-semibold no-underline"
+                  style={{ color: '#F97316' }}
+                >
+                  <Plus className="w-3 h-3" /> Évaluer un saut
+                </Link>
+              </div>
             ) : (
               <p className="text-xl font-bold leading-tight" style={{ color: kpi.color }}>
                 {'animate' in kpi && kpi.animate
