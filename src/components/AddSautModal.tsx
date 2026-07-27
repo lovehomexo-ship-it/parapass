@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { useDemo } from '../lib/useDemo';
-import { X, ChevronDown, ChevronUp, AlertTriangle, Check, Search, Info, Star, Wind, Target, Pencil } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, AlertTriangle, Check, Search, Info, Star, Wind, Target, Pencil, Wallet, Hand, HelpCircle, Brain } from 'lucide-react';
 import { NATURE_SAUT_LABELS, CATEGORIE_LABELS, FONCTION_LABELS } from '../lib/types';
 import type { Saut, NotationTernaire } from '../lib/types';
 import { ReAuthModal } from './ReAuthModal';
@@ -1271,28 +1271,30 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
               <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>Pliage du parachute</label>
               <div className="grid grid-cols-3 gap-2">
                 {([
-                  { val: 'plieur_paye', label: '💰 Plieur payé', color: '#10B981', bg: 'rgba(16,185,129,0.15)' },
-                  { val: 'auto', label: '🙋 Auto-plié', color: '#A78BFA', bg: 'rgba(139,92,246,0.15)' },
-                  { val: 'non_renseigne', label: '❓ Non renseigné', color: 'rgba(255,255,255,0.45)', bg: 'rgba(255,255,255,0.06)' },
+                  { val: 'plieur_paye', label: 'Plieur payé', Icon: Wallet, color: '#10B981', bg: 'rgba(16,185,129,0.15)' },
+                  { val: 'auto', label: 'Auto-plié', Icon: Hand, color: '#A78BFA', bg: 'rgba(139,92,246,0.15)' },
+                  { val: 'non_renseigne', label: 'Non renseigné', Icon: HelpCircle, color: 'rgba(255,255,255,0.45)', bg: 'rgba(255,255,255,0.06)' },
                 ] as const).map(opt => (
                   <button
                     key={opt.val}
                     type="button"
                     onClick={() => update('type_pliage', opt.val)}
-                    className="py-2 px-1 rounded-lg text-xs font-semibold transition-all text-center"
+                    className="py-2 px-1 rounded-lg text-xs font-semibold transition-all flex flex-col items-center gap-1"
                     style={{
                       border: `1px solid ${form.type_pliage === opt.val ? opt.color : 'rgba(255,255,255,0.12)'}`,
                       background: form.type_pliage === opt.val ? opt.bg : 'transparent',
                       color: form.type_pliage === opt.val ? opt.color : 'rgba(255,255,255,0.4)',
                     }}
                   >
+                    <opt.Icon className="w-4 h-4" aria-hidden="true" />
                     {opt.label}
                   </button>
                 ))}
               </div>
               {form.type_pliage === 'auto' && (
-                <p className="mt-2 text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(167,139,250,0.1)', color: 'rgba(167,139,250,0.9)', border: '1px solid rgba(167,139,250,0.25)' }}>
-                  ⚠️ Auto-pliage déclaratif — vous certifiez avoir plié votre propre parachute. Brevet C/D ou qualification plieur requis. Non-payant.
+                <p className="mt-2 text-xs px-3 py-2 rounded-lg flex items-start gap-1.5" style={{ background: 'rgba(167,139,250,0.1)', color: 'rgba(167,139,250,0.9)', border: '1px solid rgba(167,139,250,0.25)' }}>
+                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                  <span>Auto-pliage déclaratif — vous certifiez avoir plié votre propre parachute. Brevet C/D ou qualification plieur requis. Non-payant.</span>
                 </p>
               )}
             </div>}
@@ -1541,7 +1543,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                   {/* ── SECTION 3 : MENTAL & RÉGULARITÉ ── */}
                   <div className="p-4 space-y-4">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#C084FC' }}>🧠 Mental & Régularité</span>
+                      <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: '#C084FC' }}><Brain className="w-3.5 h-3.5" aria-hidden="true" /> Mental & Régularité</span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(192,132,252,0.12)', color: 'rgba(192,132,252,0.7)' }}>→ Mental & Régularité</span>
                       <span className="text-[10px] ml-auto" style={{ color: 'rgba(255,255,255,0.25)' }}>optionnel</span>
                     </div>

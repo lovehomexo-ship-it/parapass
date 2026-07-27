@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Layout } from '../components/Layout';
+import { BadgeIcon } from '../design/BadgeIcon';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { useBadges } from '../lib/useBadges';
@@ -48,16 +49,21 @@ const RARETE_CONFIG = {
 
 type CatKey = BadgeDefinition['categorie'];
 
-const CAT_CONFIG: Record<CatKey, { label: string; emoji: string; color: string }> = {
-  volume:              { label: 'Volume',               emoji: '🪂', color: '#F97316' },
-  discipline:          { label: 'Discipline',            emoji: '🎯', color: '#3B82F6' },
-  temporel:            { label: 'Temporel',              emoji: '📅', color: '#10B981' },
-  figures_vr:          { label: 'Voile Relative',        emoji: '🔵', color: '#2563EB' },
-  figures_freefly:     { label: 'Freefly',               emoji: '🟠', color: '#F97316' },
-  figures_tracking:    { label: 'Tracking & Angle',      emoji: '🟢', color: '#16A34A' },
-  figures_belly:       { label: 'Belly & Solo',          emoji: '🔴', color: '#EF4444' },
-  disciplines_speciales: { label: 'Disciplines spéciales', emoji: '🟣', color: '#8B5CF6' },
-  equipement:          { label: 'Caméra & Équipement',   emoji: '⚙️', color: '#64748B' },
+// Pastille de couleur (vectorielle CSS) — plus d'emoji « rond » système.
+function CatDot({ color, size = 10 }: { color: string; size?: number }) {
+  return <span aria-hidden="true" className="inline-block rounded-full flex-shrink-0" style={{ width: size, height: size, background: color }} />;
+}
+
+const CAT_CONFIG: Record<CatKey, { label: string; color: string }> = {
+  volume:              { label: 'Volume',               color: '#F97316' },
+  discipline:          { label: 'Discipline',            color: '#3B82F6' },
+  temporel:            { label: 'Temporel',              color: '#10B981' },
+  figures_vr:          { label: 'Voile Relative',        color: '#2563EB' },
+  figures_freefly:     { label: 'Freefly',               color: '#F97316' },
+  figures_tracking:    { label: 'Tracking & Angle',      color: '#16A34A' },
+  figures_belly:       { label: 'Belly & Solo',          color: '#EF4444' },
+  disciplines_speciales: { label: 'Disciplines spéciales', color: '#8B5CF6' },
+  equipement:          { label: 'Caméra & Équipement',   color: '#64748B' },
 };
 
 const CAT_ORDER: CatKey[] = [
@@ -148,11 +154,8 @@ function BadgeCard({
         </div>
       )}
 
-      <div
-        className="text-3xl mb-2 relative z-10 transition-transform duration-200"
-        style={{ filter: obtained ? 'none' : 'grayscale(1)' }}
-      >
-        {def.icone}
+      <div className="mb-2 relative z-10 transition-transform duration-200 flex items-center justify-center">
+        <BadgeIcon type={def.type} nom={def.nom} couleur={def.couleur} locked={!obtained} className="w-8 h-8" />
       </div>
       <div
         className="text-xs font-bold text-center leading-tight relative z-10"
@@ -321,7 +324,10 @@ export function BadgesPage() {
             >
               <X className="w-4 h-4" />
             </button>
-            <div className="text-2xl mb-2">🏅</div>
+            {(() => {
+              const nb = BADGES.find((b) => b.nom === newBadge);
+              return <div className="mb-2"><BadgeIcon type={nb?.type ?? ''} nom={newBadge} couleur={nb?.couleur ?? '#FCD34D'} className="w-7 h-7" /></div>;
+            })()}
             <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: '#FCD34D' }}>
               Nouveau badge débloqué !
             </p>
@@ -447,7 +453,7 @@ export function BadgesPage() {
             {CAT_ORDER.map((cat) => {
               const catBadges = BADGES.filter((b) => b.categorie === cat);
               const catObtained = catBadges.filter((b) => obtainedSet.has(b.type)).length;
-              const { label, emoji, color } = CAT_CONFIG[cat];
+              const { label, color } = CAT_CONFIG[cat];
               const active = activeFilter === cat;
               return (
                 <button
@@ -460,7 +466,7 @@ export function BadgesPage() {
                     border: `1px solid ${active ? color : 'rgba(255,255,255,0.08)'}`,
                   }}
                 >
-                  {emoji} {label} <span style={{ opacity: 0.6 }}>({catObtained}/{catBadges.length})</span>
+                  <span className="inline-flex items-center gap-1.5"><CatDot color={color} size={8} /> {label} <span style={{ opacity: 0.6 }}>({catObtained}/{catBadges.length})</span></span>
                 </button>
               );
             })}
@@ -473,12 +479,12 @@ export function BadgesPage() {
               {CAT_ORDER.map((cat) => {
                 const catBadges = BADGES.filter((b) => b.categorie === cat);
                 const catObtained = catBadges.filter((b) => obtainedSet.has(b.type)).length;
-                const { label, emoji, color } = CAT_CONFIG[cat];
+                const { label, color } = CAT_CONFIG[cat];
                 return (
                   <div key={cat}>
                     <div className="flex items-center justify-between mb-4">
                       <h2 className="text-sm font-bold uppercase tracking-wide flex items-center gap-2" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                        <span>{emoji}</span>
+                        <CatDot color={color} />
                         <span>{label}</span>
                       </h2>
                       <div className="flex items-center gap-2">

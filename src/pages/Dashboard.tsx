@@ -29,11 +29,13 @@ import { countMasteredElements } from '../lib/progression';
 import { formatDateTimeParis } from '../lib/datetime';
 import { useDemo } from '../lib/useDemo';
 import { PasseportCardView } from '../components/PasseportCardView';
+import { BadgeIcon } from '../design/BadgeIcon';
 import {
   Plus, FileDown, QrCode, TrendingUp,
   ChevronDown, ChevronUp, Trash2, X, ShieldCheck, Hash,
   Pencil, Lock, Award, ChevronRight, Camera, Wallet, Flame, Share2,
   Target, GraduationCap, ScanLine, Wind, CheckCircle2, Clock, Activity, BarChart3, Backpack, Brain,
+  ClipboardList, AlertTriangle,
 } from 'lucide-react';
 
 // ─── Weather helpers (reused from PlanningDZ) ────────────────────────────────
@@ -577,7 +579,7 @@ export function DashboardPage() {
     if (saut.statut === 'declaration_honneur') {
       return (
         <span style={{ background: 'rgba(167,139,250,0.12)', color: '#A78BFA', border: '1px solid rgba(167,139,250,0.25)', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 500 }} className="inline-flex items-center gap-1">
-          📋 Déclaration
+          <ClipboardList className="w-3 h-3" aria-hidden="true" /> Déclaration
         </span>
       );
     }
@@ -656,7 +658,7 @@ export function DashboardPage() {
     <Layout noPadding>
       {isDemo && (
         <div className="sticky top-0 z-50 flex items-center justify-center gap-2 px-4 py-1.5 text-xs font-bold tracking-widest" style={{ background: '#F59E0B', color: '#1C1917' }}>
-          ⚠ DONNÉES DE DÉMONSTRATION — Les informations affichées sont fictives
+          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" /> DONNÉES DE DÉMONSTRATION — Les informations affichées sont fictives
         </div>
       )}
       <BandeauAlertes alertes={alertes} acquittees={acquittees} onAcquitter={acquitterAlertes} statutDocs={statutDocs} licenceExpiration={licenceFFP?.date_expiration ?? null} certifExpiration={certifMedical?.date_expiration ?? null} userId={user?.id} />
@@ -1004,7 +1006,7 @@ export function DashboardPage() {
                               {new Date(saut.date_saut).toLocaleDateString('fr-FR')}
                               {saut.source === 'soufflerie'
                                 ? ` · Soufflerie${(saut as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes ? ` · ${(saut as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes} min` : ''}`
-                                : ` · ↑${saut.hauteur_m}m${saut.hauteur_ouverture ? ` · ✂${saut.hauteur_ouverture}m` : ''} · ${NATURE_SAUT_LABELS[saut.nature_saut] || saut.nature_saut}`}
+                                : ` · ↑${saut.hauteur_m}m${saut.hauteur_ouverture ? ` · ↓${saut.hauteur_ouverture}m` : ''} · ${NATURE_SAUT_LABELS[saut.nature_saut] || saut.nature_saut}`}
                             </p>
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
@@ -1120,8 +1122,8 @@ export function DashboardPage() {
                   style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.25)' }}
                 >
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold" style={{ color: '#A78BFA' }}>
-                      📋 Vous avez déjà sauté avant ParaPass ?
+                    <p className="text-sm font-semibold inline-flex items-center gap-1.5" style={{ color: '#A78BFA' }}>
+                      <ClipboardList className="w-4 h-4 flex-shrink-0" aria-hidden="true" /> Vous avez déjà sauté avant ParaPass ?
                     </p>
                     <p className="text-xs mt-0.5" style={{ color: 'var(--c-muted)' }}>
                       Déclarez votre solde antérieur sur l'honneur pour démarrer votre carnet numérique au bon numéro.
@@ -1323,7 +1325,7 @@ function SautCardMobile({
         style={{ background: 'rgba(167,139,250,0.06)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: 10, padding: '12px 14px' }}
       >
         <div className="flex items-center gap-2">
-          <span style={{ fontSize: 18 }}>📋</span>
+          <ClipboardList className="w-4 h-4" aria-hidden="true" style={{ color: '#A78BFA' }} />
           <div>
             <p className="text-sm font-semibold" style={{ color: '#A78BFA' }}>
               Solde antérieur — {saut.nb_sauts_declares ?? '?'} sauts déclarés sur l'honneur
@@ -1345,7 +1347,7 @@ function SautCardMobile({
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
           {isSoufflerie
-            ? <span style={{ fontSize: 14 }}>🌬️</span>
+            ? <Wind className="w-4 h-4" aria-hidden="true" style={{ color: '#60A5FA' }} />
             : <span style={{ color: '#F97316', fontSize: 12, fontFamily: 'monospace', fontWeight: 700 }}>{numero !== null ? `#${numero}` : '—'}</span>}
           <span style={{ color: 'var(--c-text)', fontSize: 13, fontWeight: 500 }}>{new Date(saut.date_saut).toLocaleDateString('fr-FR')}</span>
         </div>
@@ -1364,7 +1366,7 @@ function SautCardMobile({
             <span>{NATURE_SAUT_LABELS[saut.nature_saut] || saut.nature_saut}</span>
             <span>·</span>
             <span title={saut.hauteur_ouverture ? `Largage : ${saut.hauteur_m}m · Ouverture : ${saut.hauteur_ouverture}m` : undefined}>
-              ↑{saut.hauteur_m}m{saut.hauteur_ouverture ? ` · ✂${saut.hauteur_ouverture}m` : ''}
+              ↑{saut.hauteur_m}m{saut.hauteur_ouverture ? ` · ↓${saut.hauteur_ouverture}m` : ''}
             </span>
             <span>·</span>
             <span>{FONCTION_LABELS[saut.fonction] || saut.fonction}</span>
@@ -1410,7 +1412,7 @@ function CompactBadgeCard({ def, earned, locked, sauts }: { def: BadgeDefinition
       {locked && (
         <span className="absolute top-1 right-1"><Lock className="w-3 h-3" style={{ color: '#64748B' }} /></span>
       )}
-      <span className="text-xl" style={{ filter: locked ? 'grayscale(1)' : 'none', opacity: locked ? 0.5 : 1 }}>{def.icone}</span>
+      <BadgeIcon type={def.type} nom={def.nom} couleur={def.couleur} locked={locked} className="w-6 h-6" />
       {/* Titre jamais tronqué à un seul caractère : 2 lignes + tooltip. */}
       <span className="text-[9px] font-semibold text-white/70 text-center leading-tight line-clamp-2">{def.nom}</span>
       <span className="text-[9px] font-medium" style={{ color: locked ? '#64748B' : rs.labelColor }}>
@@ -1446,7 +1448,7 @@ function SautRowCarnet({
       <tr style={{ background: 'rgba(167,139,250,0.06)' }}>
         <td colSpan={9} className="px-4 py-3">
           <div className="flex items-center gap-3">
-            <span style={{ fontSize: 18 }}>📋</span>
+            <ClipboardList className="w-4 h-4" aria-hidden="true" style={{ color: '#A78BFA' }} />
             <div>
               <p className="text-sm font-semibold" style={{ color: '#A78BFA' }}>
                 Solde antérieur — {saut.nb_sauts_declares ?? '?'} sauts déclarés sur l'honneur
@@ -1471,20 +1473,20 @@ function SautRowCarnet({
     >
       <td className="px-4 py-3">
         {isSoufflerie
-          ? <span style={{ fontSize: 16 }}>🌬️</span>
+          ? <Wind className="w-4 h-4" aria-hidden="true" style={{ color: '#60A5FA' }} />
           : <span className="font-mono text-xs font-semibold" style={{ color: 'var(--c-dim)' }}>{numero !== null ? `#${numero}` : '—'}</span>}
       </td>
       <td className="px-4 py-3 whitespace-nowrap" style={{ color: 'var(--c-text)' }}>{new Date(saut.date_saut).toLocaleDateString('fr-FR')}</td>
       <td style={{ color: 'var(--c-text2)' }} className="px-4 py-3 truncate">{saut.lieu}</td>
       <td style={{ color: 'var(--c-text2)' }} className="px-4 py-3 truncate">
         {isSoufflerie
-          ? <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold" style={{ background: 'rgba(96,165,250,0.15)', color: '#60A5FA' }}>🌬️ Soufflerie</span>
+          ? <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold" style={{ background: 'rgba(96,165,250,0.15)', color: '#60A5FA' }}><Wind className="w-3 h-3" aria-hidden="true" /> Soufflerie</span>
           : (NATURE_SAUT_LABELS[saut.nature_saut] || saut.nature_saut)}
       </td>
       <td style={{ color: 'var(--c-text2)' }} className="px-4 py-3">
         {isSoufflerie
           ? <span style={{ color: '#93C5FD', fontSize: 12 }}>{(saut as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes ? `${(saut as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes} min` : '—'}{(saut as { tunnel_discipline?: string | null }).tunnel_discipline ? ` · ${(saut as { tunnel_discipline?: string | null }).tunnel_discipline}` : ''}</span>
-          : <span title={saut.hauteur_ouverture ? `Largage : ${saut.hauteur_m}m · Ouverture : ${saut.hauteur_ouverture}m` : undefined}>↑{saut.hauteur_m}m{saut.hauteur_ouverture ? ` · ✂${saut.hauteur_ouverture}m` : ''}</span>}
+          : <span title={saut.hauteur_ouverture ? `Largage : ${saut.hauteur_m}m · Ouverture : ${saut.hauteur_ouverture}m` : undefined}>↑{saut.hauteur_m}m{saut.hauteur_ouverture ? ` · ↓${saut.hauteur_ouverture}m` : ''}</span>}
       </td>
       <td style={{ color: 'var(--c-text2)' }} className="px-4 py-3 truncate">{FONCTION_LABELS[saut.fonction] || saut.fonction}</td>
       <td className="px-4 py-3"><MiniStars value={saut.position_globale} /></td>
@@ -1564,7 +1566,7 @@ function SautDetailModal({ saut, onClose }: { saut: Saut; onClose: () => void })
       <div style={{ background: '#002266', border: '1px solid rgba(255,255,255,0.15)' }} className="rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }} className="flex items-center justify-between p-5">
           <div>
-            <p style={{ color: 'rgba(255,255,255,0.4)' }} className="text-xs font-medium uppercase tracking-wide">{saut.source === 'soufflerie' ? '🌬️ Session soufflerie' : 'Détail du saut'}</p>
+            <p style={{ color: 'rgba(255,255,255,0.4)' }} className="text-xs font-medium uppercase tracking-wide">{saut.source === 'soufflerie' ? 'Session soufflerie' : 'Détail du saut'}</p>
             <h2 className="text-lg font-bold text-white mt-0.5">
               {new Date(saut.date_saut).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </h2>

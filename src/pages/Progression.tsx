@@ -4,10 +4,11 @@ import {
   BarElement, Title, Tooltip, Legend, RadialLinearScale, Filler, ArcElement,
 } from 'chart.js';
 import { Line, Radar, Bar, Doughnut } from 'react-chartjs-2';
-import { TrendingUp, TrendingDown, Plus, Target, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react';
+import { TrendingUp, TrendingDown, Plus, Target, Lightbulb, ChevronDown, ChevronUp, Brain } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { Layout } from '../components/Layout';
+import { ParachuteGlyph } from '../design/BadgeIcon';
 import { Link, useNavigate } from 'react-router-dom';
 import { ParachuteIcon } from '../components/ParachuteIcon';
 import { TECH_ELEMENTS, techStatus, countMasteredElements, countSautsAEvaluer } from '../lib/progression';
@@ -628,7 +629,7 @@ export function ProgressionPage() {
                     {/* Chute libre */}
                     <div className="rounded-2xl p-5 space-y-4" style={{ background: '#112240', border: '1px solid rgba(255,255,255,0.08)' }}>
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">🪂</span>
+                        <ParachuteGlyph className="w-5 h-5 text-white" />
                         <h3 className="font-bold text-white text-sm">Chute libre</h3>
                       </div>
 
@@ -678,7 +679,7 @@ export function ProgressionPage() {
                     {/* Voile & Atterrissage */}
                     <div className="rounded-2xl p-5 space-y-4" style={{ background: '#112240', border: '1px solid rgba(255,255,255,0.08)' }}>
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">🎯</span>
+                        <Target className="w-5 h-5 text-white" aria-hidden="true" />
                         <h3 className="font-bold text-white text-sm">Voile & Atterrissage</h3>
                       </div>
 
@@ -738,7 +739,7 @@ export function ProgressionPage() {
                     {/* Mental & Régularité */}
                     <div className="rounded-2xl p-5 space-y-4" style={{ background: '#112240', border: '1px solid rgba(255,255,255,0.08)' }}>
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">🧠</span>
+                        <Brain className="w-5 h-5 text-white" aria-hidden="true" />
                         <h3 className="font-bold text-white text-sm">Mental & Régularité</h3>
                       </div>
 

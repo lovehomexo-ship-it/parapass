@@ -1,4 +1,4 @@
-import { GraduationCap, CheckCircle, Clock, Hourglass, XCircle } from 'lucide-react';
+import { GraduationCap, CheckCircle, Clock, Hourglass, XCircle, AlertTriangle, User } from 'lucide-react';
 import {
   useReferentielBrevets, useMaProgression, useContexteEleve,
   prerequisEpreuveOk, epreuvesBrevetCompletes, resteAFaire, evalRegle, conditionsBrevetOk,
@@ -32,7 +32,7 @@ export function ProgressionBrevets({ userId }: { userId: string | undefined }) {
         </p>
       ) : (
         <div className="space-y-4">
-          {error && <p className="text-xs" style={{ color: '#FCA5A5' }}>⚠️ {error}</p>}
+          {error && <p className="text-xs flex items-center gap-1" style={{ color: '#FCA5A5' }}><AlertTriangle className="w-3 h-3 flex-shrink-0" aria-hidden="true" /> {error}</p>}
           {brevets.map(brevet => {
             const eps = epreuvesDe(brevet.id);
             if (eps.length === 0) return null;
@@ -70,7 +70,7 @@ export function ProgressionBrevets({ userId }: { userId: string | undefined }) {
                             : ev.ok === false
                             ? { background: 'rgba(239,68,68,0.1)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.25)' }
                             : { background: 'rgba(148,163,184,0.1)', color: '#CBD5E1', border: '1px solid rgba(148,163,184,0.25)' }}>
-                          {ev.ok === true ? <CheckCircle className="w-3 h-3" /> : ev.ok === false ? <XCircle className="w-3 h-3" /> : '👤'}
+                          {ev.ok === true ? <CheckCircle className="w-3 h-3" /> : ev.ok === false ? <XCircle className="w-3 h-3" /> : <User className="w-3 h-3" aria-hidden="true" />}
                           {ev.label}
                         </span>
                       );

@@ -5,6 +5,7 @@ import { Layout } from '../components/Layout';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { TYPE_BREVET_LABELS, BADGES } from '../lib/types';
+import { BadgeIcon } from '../design/BadgeIcon';
 import type { Badge } from '../lib/types';
 import { getOrCreateConversation } from '../lib/useMessages';
 
@@ -577,7 +578,7 @@ export function ProfilPublicPage() {
                             className="flex flex-col items-center p-3 rounded-xl border text-center"
                             style={{ background: cfg.bg, borderColor: cfg.border }}
                           >
-                            <div className="text-2xl mb-1">{def.icone}</div>
+                            <div className="mb-1 flex items-center justify-center"><BadgeIcon type={def.type} nom={def.nom} couleur={def.couleur} locked={!badgeRecord} className="w-6 h-6" /></div>
                             <div className="text-[10px] font-semibold leading-tight" style={{ color: '#0F172A' }}>{def.nom}</div>
                             <div className="text-[9px] mt-0.5 font-bold uppercase tracking-wider" style={{ color: cfg.text }}>{def.rarete}</div>
                           </div>

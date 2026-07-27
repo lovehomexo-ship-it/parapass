@@ -3,8 +3,9 @@ import { useAuth, isDelegationActive } from '../lib/auth';
 import {
   Menu, X, LogOut, BookOpen, Bell, MessageSquare,
   Settings, User, Award, ChevronDown, CheckCircle, AlertTriangle,
-  Sun, Moon, QrCode, MapPin, Plus,
+  Sun, Moon, QrCode, MapPin, Plus, CalendarDays, XCircle, KeyRound, Eye,
 } from 'lucide-react';
+import { ParachuteGlyph } from '../design/BadgeIcon';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNotifications } from '../lib/useNotifications';
 import { useConversations } from '../lib/useMessages';
@@ -80,12 +81,14 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
 
   const isActive = (path: string) => location.pathname === path;
 
+  // Le fond/texte du badge portent déjà la couleur de statut → pas besoin d'un
+  // rond emoji redondant (et OS-dépendant). Libellé texte seul.
   const statutBadge = statutDocs === 'expire'
-    ? { label: '🔴 Documents à renouveler', bg: 'rgba(239,68,68,0.15)', color: '#F87171', border: 'rgba(239,68,68,0.3)' }
+    ? { label: 'Documents à renouveler', bg: 'rgba(239,68,68,0.15)', color: '#F87171', border: 'rgba(239,68,68,0.3)' }
     : statutDocs === 'expire_bientot'
-    ? { label: '🟠 Attention', bg: 'rgba(245,158,11,0.15)', color: '#FCD34D', border: 'rgba(245,158,11,0.3)' }
+    ? { label: 'Attention', bg: 'rgba(245,158,11,0.15)', color: '#FCD34D', border: 'rgba(245,158,11,0.3)' }
     : statutDocs === 'valide'
-    ? { label: '🟢 Documents à jour', bg: 'rgba(16,185,129,0.15)', color: '#6EE7B7', border: 'rgba(16,185,129,0.3)' }
+    ? { label: 'Documents à jour', bg: 'rgba(16,185,129,0.15)', color: '#6EE7B7', border: 'rgba(16,185,129,0.3)' }
     : null;
 
   const parachutisteItems = [
@@ -123,8 +126,8 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
           className="w-full flex items-center justify-between gap-3 px-4 py-2.5"
           style={{ background: 'linear-gradient(90deg, #F97316 0%, #EA580C 100%)', minHeight: '44px' }}
         >
-          <span className="text-white text-sm font-semibold truncate">
-            👁 Mode démo · Lecture seule · Créez votre compte pour accéder à toutes les fonctionnalités
+          <span className="text-white text-sm font-semibold truncate inline-flex items-center gap-1.5">
+            <Eye className="w-4 h-4 flex-shrink-0" aria-hidden="true" /> Mode démo · Lecture seule · Créez votre compte pour accéder à toutes les fonctionnalités
           </span>
           <Link
             to="/register"
@@ -621,22 +624,25 @@ interface Notif {
 
 import type { Alerte } from '../lib/types';
 
-function notifIcon(type: string | undefined): string {
+// Icône de notification — famille vectorielle unique (plus d'emoji système).
+// Chaque icône est porteuse de sens → aria-label ; teinte selon la nature.
+function NotifIcon({ type }: { type: string | undefined }) {
+  const cls = 'w-4 h-4';
   switch (type) {
     case 'creneau_ouvert':
     case 'creneau_modifie':
-    case 'creneau_annule': return '📅';
-    case 'saut_valide': return '✅';
-    case 'saut_refuse': return '❌';
+    case 'creneau_annule': return <CalendarDays className={cls} style={{ color: '#60A5FA' }} role="img" aria-label="Créneau" />;
+    case 'saut_valide': return <CheckCircle className={cls} style={{ color: '#34D399' }} role="img" aria-label="Saut validé" />;
+    case 'saut_refuse': return <XCircle className={cls} style={{ color: '#F87171' }} role="img" aria-label="Saut refusé" />;
     case 'saut_a_valider':
-    case 'validation_demandee': return '🪂';
-    case 'nouveau_message': return '💬';
+    case 'validation_demandee': return <ParachuteGlyph className={cls} style={{ color: '#F97316' }} role="img" aria-label="Saut à valider" />;
+    case 'nouveau_message': return <MessageSquare className={cls} style={{ color: '#60A5FA' }} role="img" aria-label="Message" />;
     case 'nouveau_abonne':
-    case 'demande_suivi': return '👤';
-    case 'delegation_accordee': return '🔑';
+    case 'demande_suivi': return <User className={cls} style={{ color: '#A78BFA' }} role="img" aria-label="Abonné" />;
+    case 'delegation_accordee': return <KeyRound className={cls} style={{ color: '#FBBF24' }} role="img" aria-label="Délégation" />;
     case 'licence_expire':
-    case 'medical_expire': return '⚠️';
-    default: return '🔔';
+    case 'medical_expire': return <AlertTriangle className={cls} style={{ color: '#FBBF24' }} role="img" aria-label="Échéance" />;
+    default: return <Bell className={cls} style={{ color: 'var(--c-dim)' }} role="img" aria-label="Notification" />;
   }
 }
 
@@ -790,7 +796,7 @@ function NotifPanel({
                 <div className="flex-shrink-0 mt-2">
                   <div className="w-2 h-2 rounded-full" style={{ background: !notif.lue ? '#F59E0B' : 'transparent' }} />
                 </div>
-                <span className="flex-shrink-0 text-base mt-0.5">{notifIcon(notif.type)}</span>
+                <span className="flex-shrink-0 mt-0.5"><NotifIcon type={notif.type} /></span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm leading-snug" style={{ color: !notif.lue ? '#fff' : 'rgba(255,255,255,0.5)', fontWeight: !notif.lue ? 600 : 400 }}>
                     {notif.titre}
