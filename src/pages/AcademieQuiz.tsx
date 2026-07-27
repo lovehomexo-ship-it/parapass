@@ -4,6 +4,7 @@ import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { getGrade, PROPOSITION_COLORS, diffLabel, type QuizQuestion, type QuizResult } from '../lib/quiz';
 import { ArrowLeft, ChevronRight, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { GradeIcon } from '../design/academieIcons';
 
 // ─── Durée timer par question (secondes) ────────────────────────────────────────
 
@@ -57,7 +58,6 @@ interface SessionStats {
   xpTotal: number;
   newGrade: boolean;
   gradeName: string;
-  gradeIcon: string;
   gradeColor: string;
 }
 
@@ -77,7 +77,7 @@ function ResultsScreen({ stats, onRetry, onDone }: { stats: SessionStats; onRetr
       {stats.newGrade && (
         <div className="rounded-2xl p-4 mb-6 w-full max-w-xs"
           style={{ background: `${stats.gradeColor}15`, border: `1px solid ${stats.gradeColor}50` }}>
-          <div className="text-4xl mb-1">{stats.gradeIcon}</div>
+          <div className="flex justify-center mb-1"><GradeIcon nom={stats.gradeName} color={stats.gradeColor} className="w-9 h-9" /></div>
           <p className="font-bold" style={{ color: stats.gradeColor }}>Nouveau grade !</p>
           <p className="text-sm" style={{ color: '#94A3B8' }}>{stats.gradeName}</p>
         </div>
@@ -269,7 +269,6 @@ export function AcademieQuizPage() {
         xpTotal: totalXp - xpBefore,
         newGrade: gradeBefore.nom !== gradeAfter.nom,
         gradeName: gradeAfter.nom,
-        gradeIcon: gradeAfter.icone,
         gradeColor: gradeAfter.color,
       });
     } else {

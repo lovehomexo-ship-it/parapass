@@ -6,7 +6,8 @@ import {
   DRILL_CATEGORIES, DRILL_TIMER_SEC, DRILL_PROP_COLORS,
   type DrillScenario, type DrillResult,
 } from '../lib/drill';
-import { ArrowLeft, Flame } from 'lucide-react';
+import { ArrowLeft, Flame, Zap } from 'lucide-react';
+import { DrillCategoryIcon } from '../design/academieIcons';
 
 // ─── Sélection déterministe du scénario du jour ────────────────────────────────
 
@@ -231,8 +232,8 @@ export function ReflexeDuJourPage() {
           {/* Explication */}
           <div className="w-full rounded-2xl p-5 text-left mb-6"
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>
-              {cat?.icone} {cat?.label}
+            <p className="text-xs font-semibold uppercase tracking-wide mb-2 flex items-center gap-1.5" style={{ color: '#64748B' }}>
+              <DrillCategoryIcon categorie={scenario.categorie} label={cat?.label ?? ''} className="w-3.5 h-3.5" /> {cat?.label}
             </p>
             {!result.est_correct && (
               <p className="text-sm font-semibold mb-3" style={{ color: '#6EE7B7' }}>
@@ -266,8 +267,8 @@ export function ReflexeDuJourPage() {
           <ArrowLeft className="w-5 h-5" style={{ color: '#94A3B8' }} />
         </button>
         <div className="flex-1">
-          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#EF4444' }}>🔴 Réflexe du jour</p>
-          <p className="text-xs" style={{ color: '#475569' }}>{cat?.icone} {cat?.label}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide flex items-center gap-1.5" style={{ color: '#EF4444' }}><Zap className="w-3.5 h-3.5" aria-hidden /> Réflexe du jour</p>
+          <p className="text-xs flex items-center gap-1.5" style={{ color: '#475569' }}><DrillCategoryIcon categorie={scenario.categorie} label={cat?.label ?? ''} className="w-3.5 h-3.5" /> {cat?.label}</p>
         </div>
         <TimerRing timer={timer} max={DRILL_TIMER_SEC} />
       </div>

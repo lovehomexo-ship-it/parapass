@@ -4,7 +4,8 @@ import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { Layout } from '../components/Layout';
 import { getGrade, getProgressToNextGrade, THEMES, QUIZ_BADGES, RARETE_COLORS } from '../lib/quiz';
-import { Flame, ChevronRight } from 'lucide-react';
+import { Flame, ChevronRight, Lock, Trophy, Medal } from 'lucide-react';
+import { GradeIcon, QuizThemeIcon, QuizBadgeIcon } from '../design/academieIcons';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -175,7 +176,7 @@ export function AcademiePage() {
         {/* Header grade */}
         <div className="rounded-2xl p-5 mb-4 text-center"
           style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(59,130,246,0.1))', border: '1px solid rgba(139,92,246,0.3)' }}>
-          <div className="text-5xl mb-2">{grade.icone}</div>
+          <div className="flex justify-center mb-2"><GradeIcon nom={grade.nom} color={grade.color} className="w-12 h-12" /></div>
           <h1 className="text-2xl font-bold" style={{ color: grade.color }}>{grade.nom}</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--c-muted)' }}>ParaPass Académie</p>
           <div className="mt-3 flex items-center gap-3 justify-center">
@@ -234,7 +235,7 @@ export function AcademiePage() {
                 className="rounded-xl p-4 text-left"
                 style={{ background: th.bg, border: `1px solid ${th.color}40` }}
               >
-                <div className="text-2xl mb-1">{th.icone}</div>
+                <div className="mb-1"><QuizThemeIcon theme={key} label={th.label} color={th.color} className="w-6 h-6" /></div>
                 <p className="text-sm font-semibold" style={{ color: 'var(--c-text)' }}>{th.label}</p>
                 {tp && tp.nb_questions > 0 && (
                   <div className="mt-2">
@@ -261,7 +262,11 @@ export function AcademiePage() {
               <div key={b.id}
                 className="rounded-xl p-3 text-center"
                 style={{ background: earned ? `${RARETE_COLORS[b.rarete]}15` : 'var(--c-surface)', border: `1px solid ${earned ? RARETE_COLORS[b.rarete] + '50' : 'var(--c-border)'}`, opacity: earned ? 1 : 0.4 }}>
-                <div className="text-2xl mb-1">{earned ? b.icone : '🔒'}</div>
+                <div className="mb-1 flex justify-center">
+                  {earned
+                    ? <QuizBadgeIcon id={b.id} nom={b.nom} color={RARETE_COLORS[b.rarete]} className="w-6 h-6" />
+                    : <Lock className="w-5 h-5" style={{ color: 'var(--c-muted)' }} aria-label={`${b.nom} — verrouillé`} />}
+                </div>
                 <p className="text-xs font-semibold leading-tight" style={{ color: earned ? RARETE_COLORS[b.rarete] : 'var(--c-muted)' }}>{b.nom}</p>
               </div>
             );
@@ -272,7 +277,7 @@ export function AcademiePage() {
         {classement.length > 0 && (
           <>
             <h2 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: 'var(--c-muted)' }}>
-              🏆 Classement DZ
+              <Trophy className="w-4 h-4 inline-block mr-1 align-[-2px]" aria-hidden /> Classement DZ
             </h2>
             <div className="rounded-xl overflow-hidden mb-6" style={{ border: '1px solid var(--c-border)' }}>
               {classement.map((c, i) => {
@@ -282,10 +287,10 @@ export function AcademiePage() {
                   <div key={c.profil_id}
                     className="flex items-center gap-3 px-4 py-3"
                     style={{ background: isMe ? 'rgba(139,92,246,0.1)' : i % 2 === 0 ? 'var(--c-card)' : 'var(--c-surface)', borderBottom: i < classement.length - 1 ? '1px solid var(--c-border)' : undefined }}>
-                    <span className="w-6 text-center text-sm font-bold" style={{ color: i === 0 ? '#F59E0B' : i === 1 ? '#94A3B8' : i === 2 ? '#D97706' : 'var(--c-muted)' }}>
-                      {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`}
+                    <span className="w-6 flex items-center justify-center text-sm font-bold" style={{ color: i === 0 ? '#F59E0B' : i === 1 ? '#94A3B8' : i === 2 ? '#D97706' : 'var(--c-muted)' }}>
+                      {i <= 2 ? <Medal className="w-4 h-4" aria-label={`${i + 1}ᵉ`} /> : `${i + 1}`}
                     </span>
-                    <span className="text-lg">{grade.icone}</span>
+                    <GradeIcon nom={grade.nom} color={grade.color} className="w-5 h-5" />
                     <span className="flex-1 text-sm font-semibold" style={{ color: isMe ? '#A78BFA' : 'var(--c-text)' }}>
                       {c.prenom} {c.nom}{isMe ? ' (moi)' : ''}
                     </span>

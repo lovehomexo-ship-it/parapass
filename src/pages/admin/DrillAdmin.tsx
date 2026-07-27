@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { Layout } from '../../components/Layout';
 import { DRILL_CATEGORIES } from '../../lib/drill';
 import { Plus, Pencil, Check, X, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { DrillCategoryIcon } from '../../design/academieIcons';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -128,7 +129,7 @@ function ScenarioForm({ initial, onSave, onCancel }: {
               className="w-full rounded-lg px-2 py-2 text-sm"
               style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)' }}>
               {Object.entries(DRILL_CATEGORIES).map(([k, v]) => (
-                <option key={k} value={k}>{v.icone} {v.label}</option>
+                <option key={k} value={k}>{v.label}</option>
               ))}
             </select>
           </div>
@@ -290,7 +291,7 @@ export function DrillAdminPage() {
                   style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
                   <button className="w-full text-left px-4 py-3 flex items-center gap-3"
                     onClick={() => setExpanded(isExpanded ? null : s.id)}>
-                    <span className="text-lg">{cat?.icone ?? '❓'}</span>
+                    <DrillCategoryIcon categorie={s.categorie} label={cat?.label ?? s.categorie} color={cat?.color} className="w-5 h-5" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold truncate" style={{ color: 'var(--c-text)' }}>{s.situation}</p>
                       <div className="flex items-center gap-2 mt-0.5">
