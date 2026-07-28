@@ -50,7 +50,7 @@ import {
   Search, Filter, Eye, Trash2, UserCheck, UserX,
   Download, Upload, Hash, TrendingUp, MapPin, Send, Zap, Sun, Moon,
   GraduationCap, MoreVertical, UserMinus, Euro, BookCheck, Puzzle,
-  Palette, CalendarOff, CheckCircle2,
+  Palette, CalendarOff, CheckCircle2, BadgeCheck,
 } from 'lucide-react';
 import { PlanningCentre } from './PlanningCentre';
 import { GestionPliage } from './centre/GestionPliage';
@@ -424,24 +424,46 @@ function DashboardHome({
   return (
     <div className="space-y-6">
       {/* ── 1 · EN-TÊTE — bandeau Centre DZ (identité + licenciés) ── */}
-      <div className="rounded-2xl p-5 flex items-center gap-4" style={{ background: 'linear-gradient(135deg, var(--c-dropdown), #1a3a6e)', border: '1px solid var(--c-border-f)' }}>
+      <div className="rounded-2xl p-5 flex items-center gap-4 flex-wrap relative overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, var(--c-dropdown) 0%, #12294d 55%, #1a3a6e 100%)', border: '1px solid var(--c-border-f)', boxShadow: '0 8px 28px rgba(0,0,0,0.28)' }}>
+        {/* Reflet « matière » pour un rendu premium cohérent avec la carte de licence */}
+        <div aria-hidden className="absolute inset-x-0 top-0 pointer-events-none" style={{ height: 70, background: 'linear-gradient(180deg, rgba(255,255,255,0.06), transparent)' }} />
         {centre?.logo_url ? (
-          <img src={centre.logo_url} alt={centre.nom} className="w-14 h-14 rounded-xl object-contain flex-shrink-0 p-1" style={{ background: 'rgba(255,255,255,0.06)' }} />
+          <img src={centre.logo_url} alt={centre.nom} className="w-16 h-16 rounded-2xl object-contain flex-shrink-0 p-1.5 relative" style={{ background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.14)' }} />
         ) : (
-          <div className="w-14 h-14 rounded-xl flex items-center justify-center font-black text-lg text-white/40 flex-shrink-0" style={{ background: 'rgba(255,255,255,0.06)' }}>{(centre?.nom ?? 'DZ').slice(0, 2).toUpperCase()}</div>
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center font-black text-xl text-white/45 flex-shrink-0 relative" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}>{(centre?.nom ?? 'DZ').slice(0, 2).toUpperCase()}</div>
         )}
-        <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: 'var(--c-muted)', letterSpacing: '1px' }}>Centre DZ</p>
-          <h1 className="truncate" style={{ color: 'var(--c-text)', fontSize: 22, fontWeight: 700, lineHeight: 1.15 }}>{centre?.nom ?? 'Mon Centre'}</h1>
-          <p className="truncate" style={{ color: 'var(--c-muted)', fontSize: 12 }}>
-            {[centre?.ville, centre?.numero_agrement_ffp ? `Code ${centre.numero_agrement_ffp}` : null, isPlanActif(centre) ? 'Agréé' : planLabel(centre?.plan)].filter(Boolean).join(' · ')}
-            {centre?.nom_dt ? ` · DT ${centre.nom_dt}` : ''}
+        <div className="flex-1 min-w-0 relative">
+          <p className="text-[10px] font-semibold uppercase mb-1" style={{ color: 'var(--c-muted)', letterSpacing: '1.5px' }}>Centre DZ{centre?.ville ? ` · ${centre.ville}` : ''}</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="truncate" style={{ color: 'var(--c-text)', fontSize: 24, fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.01em' }}>{centre?.nom ?? 'Mon Centre'}</h1>
+            {/* Statut « Agréé » valorisé en badge distinct */}
+            {isPlanActif(centre) ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold flex-shrink-0"
+                style={{ background: 'rgba(16,185,129,0.16)', color: '#34D399', border: '1px solid rgba(16,185,129,0.35)' }}>
+                <BadgeCheck className="w-3.5 h-3.5" /> Agréé
+              </span>
+            ) : (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold flex-shrink-0"
+                style={{ background: 'rgba(148,163,184,0.15)', color: 'var(--c-dim)', border: '1px solid var(--c-border-f)' }}>
+                {planLabel(centre?.plan)}
+              </span>
+            )}
+          </div>
+          <p className="truncate text-[12px] mt-1" style={{ color: 'var(--c-muted)' }}>
+            {[centre?.numero_agrement_ffp ? `Code FFP ${centre.numero_agrement_ffp}` : null, centre?.nom_dt ? `DT ${centre.nom_dt}` : null].filter(Boolean).join(' · ')}
           </p>
         </div>
-        <div className="flex flex-col items-center flex-shrink-0">
-          <p style={{ color: '#3B82F6', fontSize: 26, fontWeight: 700, lineHeight: 1 }}>{stats.totalLicencies}</p>
-          <p style={{ color: 'var(--c-muted)', fontSize: 11 }}>licenciés</p>
-          {sautsThisMonth > 0 && <p className="text-[10px] mt-0.5 whitespace-nowrap" style={{ color: 'var(--c-dim)' }}>+{sautsThisMonth} sauts/mois</p>}
+        {/* Chiffres clés en tuiles lisibles */}
+        <div className="flex gap-2 flex-shrink-0 relative">
+          <div className="rounded-xl px-3.5 py-2 text-center" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}>
+            <p style={{ color: '#60A5FA', fontSize: 24, fontWeight: 800, lineHeight: 1 }}>{stats.totalLicencies}</p>
+            <p style={{ color: 'var(--c-muted)', fontSize: 10.5, marginTop: 2 }}>licenciés</p>
+          </div>
+          <div className="rounded-xl px-3.5 py-2 text-center" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}>
+            <p style={{ color: '#34D399', fontSize: 24, fontWeight: 800, lineHeight: 1 }}>{sautsThisMonth}</p>
+            <p style={{ color: 'var(--c-muted)', fontSize: 10.5, marginTop: 2 }}>sauts / mois</p>
+          </div>
         </div>
       </div>
 
