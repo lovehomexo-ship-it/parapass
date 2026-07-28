@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import {
-  Wind, ChevronDown, ChevronUp, CloudOff, AlertTriangle,
+  Wind, ChevronDown, ChevronUp, CloudOff,
   Sun, CloudSun, Cloud, CloudFog, CloudRain, CloudSnow, CloudDrizzle, CloudLightning,
 } from 'lucide-react';
 import {
@@ -36,48 +36,125 @@ function FlecheVent({ dirProvenance, size = 18 }: { dirProvenance: number; size?
   );
 }
 
-function LigneEtage({ altM, speed, dir, seuil }: { altM: number; speed: number; dir: number; seuil: number }) {
-  const fort = speed >= seuil;
+// Code couleur de seuil partagé (vert dans les seuils, orange à surveiller, rouge hors seuils).
+function seuilColor(speed: number, seuil: number): string {
+  if (speed >= seuil) return '#F87171';        // hors seuils
+  if (speed >= seuil * 0.75) return '#FBBF24';  // à surveiller
+  return '#34D399';                             // dans les seuils
+}
+
+function altLabel(altM: number): string {
+  return altM >= 1000 ? `${(altM / 1000).toFixed(1).replace('.0', '')} km` : `${altM} m`;
+}
+
+/** Une altitude = une barre horizontale (longueur ∝ vent), teintée par le seuil,
+ *  flèche de direction, valeur exacte inscrite + tooltip complet (kt · degrés). */
+function BarreEtage({ label, speed, dir, gust, seuil, maxSpeed, sol }: {
+  label: string; speed: number; dir: number; gust?: number; seuil: number; maxSpeed: number; sol?: boolean;
+}) {
+  const color = seuilColor(speed, seuil);
+  const pct = Math.max(5, Math.min(100, (speed / maxSpeed) * 100));
+  const title = `${label} : ${Math.round(speed)} km/h (${kmhEnKt(speed)} kt) · vient de ${Math.round(dir)}°${sol && gust != null ? ` · rafales ${Math.round(gust)} km/h` : ''}`;
   return (
-    <div className="flex items-center gap-3 py-1.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-      <span className="w-16 text-xs font-mono text-right flex-shrink-0" style={{ color: 'rgba(255,255,255,0.55)' }}>
-        {altM >= 1000 ? `${(altM / 1000).toFixed(1).replace('.0', '')} km` : `${altM} m`}
+    <div className="flex items-center gap-2 py-0.5" title={title}>
+      <span className="w-11 text-[11px] font-mono text-right flex-shrink-0"
+        style={{ color: sol ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.5)', fontWeight: sol ? 700 : 400 }}>
+        {label}
       </span>
-      <span style={{ color: fort ? '#F87171' : '#7DD3FC' }}><FlecheVent dirProvenance={dir} /></span>
-      <span className="text-sm font-bold" style={{ color: fort ? '#F87171' : '#fff' }}>
-        {Math.round(speed)} km/h
-      </span>
-      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>({kmhEnKt(speed)} kt · {Math.round(dir)}°)</span>
-      {fort && <span className="text-[10px] font-bold ml-auto" style={{ color: '#F87171' }}>vent fort</span>}
+      <span className="flex-shrink-0" style={{ color }}><FlecheVent dirProvenance={dir} size={14} /></span>
+      <div className="flex-1 h-4 rounded relative overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+        <div className="h-full rounded" style={{ width: `${pct}%`, background: color, transition: 'width 0.4s ease' }} />
+        <span className="absolute inset-y-0 right-1.5 flex items-center text-[10px] font-bold" style={{ color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>
+          {Math.round(speed)}{sol && gust != null ? ` · raf ${Math.round(gust)}` : ''}
+        </span>
+      </div>
     </div>
   );
 }
 
-/** Profil vertical du sol vers le haut — tableau lisible d'un coup d'œil. */
+/** Profil vertical VISUEL : barres du vent par altitude, sol en bas, code couleur seuil. */
 export function ProfilVertical({ payload, heure, seuilAltitude, seuilSol }: {
   payload: MeteoAltitudePayload; heure: number; seuilAltitude: number; seuilSol: number;
 }) {
+  const levels = [...payload.niveaux].reverse(); // haut → bas à l'écran
+  const solSpeed = payload.sol.speed[heure] ?? 0;
+  const maxSpeed = Math.max(seuilAltitude, solSpeed, ...levels.map(n => n.speed[heure] ?? 0), 40) * 1.1;
   return (
     <div>
-      {/* Du haut vers le bas à l'écran = altitudes décroissantes, sol en bas */}
-      {[...payload.niveaux].reverse().map(n => (
-        <LigneEtage key={n.hPa} altM={n.altM} speed={n.speed[heure] ?? 0} dir={n.dir[heure] ?? 0} seuil={seuilAltitude} />
+      {levels.map(n => (
+        <BarreEtage key={n.hPa} label={altLabel(n.altM)} speed={n.speed[heure] ?? 0} dir={n.dir[heure] ?? 0}
+          seuil={seuilAltitude} maxSpeed={maxSpeed} />
       ))}
-      <div className="flex items-center gap-3 py-1.5 rounded-b-lg" style={{ borderTop: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.03)' }}>
-        <span className="w-16 text-xs font-mono text-right flex-shrink-0 font-bold" style={{ color: 'rgba(255,255,255,0.7)' }}>sol</span>
-        <span style={{ color: (payload.sol.speed[heure] ?? 0) >= seuilSol ? '#F87171' : '#7DD3FC' }}>
-          <FlecheVent dirProvenance={payload.sol.dir[heure] ?? 0} />
-        </span>
-        <span className="text-sm font-bold" style={{ color: (payload.sol.speed[heure] ?? 0) >= seuilSol ? '#F87171' : '#fff' }}>
-          {Math.round(payload.sol.speed[heure] ?? 0)} km/h
-        </span>
-        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
-          raf. {Math.round(payload.sol.gusts[heure] ?? 0)} · {Math.round(payload.sol.dir[heure] ?? 0)}°
-        </span>
+      <div className="mt-0.5 pt-0.5" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+        <BarreEtage label="sol" speed={solSpeed} dir={payload.sol.dir[heure] ?? 0}
+          gust={payload.sol.gusts[heure] ?? 0} seuil={seuilSol} maxSpeed={maxSpeed} sol />
       </div>
       <p className="text-[10px] mt-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
-        Flèches orientées dans le sens où le vent souffle (comme la manche à air) · degrés = d'où il vient
+        Barre = force du vent · flèche = sens où il souffle · <span style={{ color: '#34D399' }}>vert</span> dans les seuils, <span style={{ color: '#FBBF24' }}>orange</span> à surveiller, <span style={{ color: '#F87171' }}>rouge</span> hors seuils.
       </p>
+    </div>
+  );
+}
+
+/** Évolution de la journée : courbe SVG vent sol + rafales, bandes de seuil
+ *  (vert/orange/rouge). Valeurs exactes accessibles au survol/tap (lecture ci-dessous). */
+function EvolutionViz({ payload, indices, seuilSol, seuilAlt, largage }: {
+  payload: MeteoAltitudePayload; indices: number[]; seuilSol: number; seuilAlt: number;
+  largage: MeteoAltitudePayload['niveaux'][number] | undefined;
+}) {
+  const [sel, setSel] = useState<number>(0);
+  const W = 300, H = 140, padL = 8, padR = 8, padT = 10, padB = 20;
+  const cW = W - padL - padR, cH = H - padT - padB;
+  const solVals = indices.map(i => payload.sol.speed[i] ?? 0);
+  const gustVals = indices.map(i => payload.sol.gusts[i] ?? 0);
+  const maxY = Math.max(seuilSol * 1.25, ...gustVals, ...solVals, 30);
+  const x = (k: number) => padL + (indices.length <= 1 ? cW / 2 : (k / (indices.length - 1)) * cW);
+  const y = (v: number) => padT + cH - (Math.min(v, maxY) / maxY) * cH;
+  const y0 = padT + cH, yG = y(seuilSol * 0.75), yO = y(seuilSol);
+  const solPts = indices.map((i, k) => `${x(k)},${y(payload.sol.speed[i] ?? 0)}`).join(' ');
+  const gustPts = indices.map((i, k) => `${x(k)},${y(payload.sol.gusts[i] ?? 0)}`).join(' ');
+  const selIdx = indices[sel];
+
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: 'block', maxHeight: 160 }} role="img" aria-label="Évolution du vent sur la journée">
+        {/* Bandes de seuil : vert (dans), orange (à surveiller), rouge (hors) */}
+        <rect x={padL} y={yG} width={cW} height={y0 - yG} fill="rgba(52,211,153,0.10)" />
+        <rect x={padL} y={yO} width={cW} height={yG - yO} fill="rgba(251,191,36,0.12)" />
+        <rect x={padL} y={padT} width={cW} height={yO - padT} fill="rgba(248,113,113,0.12)" />
+        <line x1={padL} x2={W - padR} y1={yO} y2={yO} stroke="#FBBF24" strokeWidth="0.7" strokeDasharray="3 3" opacity="0.6" />
+        {/* Rafales (pointillé) puis vent sol (plein) */}
+        <polyline points={gustPts} fill="none" stroke="#93C5FD" strokeWidth="1.2" strokeDasharray="3 2" opacity="0.7" />
+        <polyline points={solPts} fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinejoin="round" />
+        {/* Points cliquables/survolables — valeur exacte via readout + <title> */}
+        {indices.map((i, k) => {
+          const sp = payload.sol.speed[i] ?? 0;
+          return (
+            <g key={i} onClick={() => setSel(k)} onMouseEnter={() => setSel(k)} style={{ cursor: 'pointer' }}>
+              <rect x={x(k) - cW / (indices.length * 2)} y={padT} width={cW / indices.length} height={cH} fill="transparent" />
+              <circle cx={x(k)} cy={y(sp)} r={k === sel ? 4 : 3} fill={seuilColor(sp, seuilSol)} stroke={k === sel ? '#fff' : 'none'} strokeWidth="1.5">
+                <title>{`${payload.times[i].substring(11, 16)} — sol ${Math.round(sp)} km/h · rafales ${Math.round(payload.sol.gusts[i] ?? 0)}${largage ? ` · ~4200m ${Math.round(largage.speed[i] ?? 0)}` : ''}`}</title>
+              </circle>
+              <text x={x(k)} y={H - 6} textAnchor="middle" fontSize="8" fill={k === sel ? '#fff' : 'rgba(255,255,255,0.45)'}>
+                {payload.times[i].substring(11, 13)}h
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      {/* Lecture exacte du créneau sélectionné (survol/tap) — valeurs jamais supprimées */}
+      <div className="mt-1 flex items-center gap-3 flex-wrap text-[11px] rounded-lg px-2.5 py-1.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <span className="font-mono font-bold" style={{ color: '#fff' }}>{payload.times[selIdx].substring(11, 16)}</span>
+        <span className="inline-flex items-center gap-1" style={{ color: seuilColor(payload.sol.speed[selIdx] ?? 0, seuilSol) }}>
+          <FlecheVent dirProvenance={payload.sol.dir[selIdx] ?? 0} size={12} /> sol {Math.round(payload.sol.speed[selIdx] ?? 0)} km/h
+        </span>
+        <span style={{ color: 'rgba(255,255,255,0.6)' }}>raf. {Math.round(payload.sol.gusts[selIdx] ?? 0)}</span>
+        {largage && (
+          <span className="inline-flex items-center gap-1" style={{ color: seuilColor(largage.speed[selIdx] ?? 0, seuilAlt) }}>
+            <FlecheVent dirProvenance={largage.dir[selIdx] ?? 0} size={12} /> ~4200 m {Math.round(largage.speed[selIdx] ?? 0)}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -243,47 +320,12 @@ export function MeteoAltitudeDZ({ dzId }: { dzId: string }) {
         {/* Projection sur la journée */}
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--c-dim)' }}>Évolution de la journée</p>
-          <div className="overflow-x-auto">
-            <table className="text-xs w-full">
-              <thead>
-                <tr style={{ color: 'var(--c-dim)' }}>
-                  <th className="text-left py-1 pr-2 font-medium">Heure</th>
-                  <th className="text-left py-1 pr-2 font-medium">Sol</th>
-                  <th className="text-left py-1 pr-2 font-medium">Rafales</th>
-                  <th className="text-left py-1 font-medium">~4 200 m</th>
-                </tr>
-              </thead>
-              <tbody>
-                {heuresProj.map(idx => {
-                  // Créneau à risque = vent sol OU largage au-delà du seuil → surligné.
-                  const risque = (payload.sol.speed[idx] ?? 0) >= seuilSol || (largage && (largage.speed[idx] ?? 0) >= seuilAlt);
-                  return (
-                  <tr key={idx} style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: risque ? 'rgba(248,113,113,0.10)' : 'transparent' }}>
-                    <td className="py-1.5 pr-2 font-mono" style={{ color: risque ? '#F87171' : 'var(--c-text2)' }}>
-                      {risque && <AlertTriangle className="w-3 h-3 inline mr-1" />}{payload.times[idx].substring(11, 16)}
-                    </td>
-                    <td className="py-1.5 pr-2">
-                      <span className="inline-flex items-center gap-1" style={{ color: (payload.sol.speed[idx] ?? 0) >= seuilSol ? '#F87171' : '#fff' }}>
-                        <FlecheVent dirProvenance={payload.sol.dir[idx] ?? 0} size={13} />
-                        {Math.round(payload.sol.speed[idx] ?? 0)}
-                      </span>
-                    </td>
-                    <td className="py-1.5 pr-2" style={{ color: 'var(--c-text2)' }}>{Math.round(payload.sol.gusts[idx] ?? 0)}</td>
-                    <td className="py-1.5">
-                      {largage && (
-                        <span className="inline-flex items-center gap-1" style={{ color: (largage.speed[idx] ?? 0) >= seuilAlt ? '#F87171' : '#fff' }}>
-                          <FlecheVent dirProvenance={largage.dir[idx] ?? 0} size={13} />
-                          {Math.round(largage.speed[idx] ?? 0)}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          <p className="text-[10px] mt-1" style={{ color: 'var(--c-dim)' }}>Vitesses en km/h.</p>
+          <EvolutionViz payload={payload} indices={heuresProj} seuilSol={seuilSol} seuilAlt={seuilAlt} largage={largage} />
+          <p className="text-[10px] mt-1 flex items-center gap-2 flex-wrap" style={{ color: 'var(--c-dim)' }}>
+            <span className="inline-flex items-center gap-1"><span style={{ width: 10, height: 2, background: '#fff', display: 'inline-block' }} /> vent sol</span>
+            <span className="inline-flex items-center gap-1"><span style={{ width: 10, height: 0, borderTop: '1.5px dashed #93C5FD', display: 'inline-block' }} /> rafales</span>
+            <span>· survolez / touchez un point pour les valeurs exactes (km/h)</span>
+          </p>
         </div>
       </div>
 
