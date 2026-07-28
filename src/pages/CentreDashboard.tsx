@@ -561,9 +561,12 @@ function DashboardHome({
           <h2 style={{ color: 'var(--c-text)', fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Validités licenciés</h2>
           <div className="space-y-3">
             {[
-              { label: 'Licences FFP valides', value: licencesValides, total: totalMembers, color: licencesValides === totalMembers ? '#10B981' : '#F97316' },
+              // Sémantique stricte : vert = conforme/OK · orange = à surveiller · rouge = critique.
+              // Les valeurs POSITIVES (valides, médicaux OK) sont vertes — le manque
+              // éventuel est déjà signalé par « expirées » (rouge) juste en dessous.
+              { label: 'Licences FFP valides', value: licencesValides, total: totalMembers, color: '#10B981' },
               { label: 'Licences expirées', value: licencesExpirees, total: null, color: licencesExpirees > 0 ? '#EF4444' : '#10B981' },
-              { label: 'Certificats médicaux OK', value: certifOk, total: totalMembers, color: certifOk === totalMembers ? '#10B981' : '#F97316' },
+              { label: 'Certificats médicaux OK', value: certifOk, total: totalMembers, color: '#10B981' },
               { label: 'Expirant dans 30j', value: certifExpirant, total: null, color: certifExpirant > 0 ? '#F97316' : '#10B981' },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
