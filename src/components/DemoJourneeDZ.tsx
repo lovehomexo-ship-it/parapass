@@ -27,10 +27,10 @@ function DemoJourneeInner({ centreId, onDone }: { centreId: string; onDone?: () 
       setError(mode === 'gen' ? 'Génération de la démo impossible.' : 'Retrait de la démo impossible.');
       return;
     }
-    const r = (data ?? {}) as { presents?: number; sauts?: number; supprime?: number };
+    const r = (data ?? {}) as { presents?: number; sauts?: number; pliages?: number; tandem?: number; supprime?: number };
     setInfo(mode === 'gen'
-      ? `Journée de démo générée : ${r.presents ?? 0} présents, ${r.sauts ?? 0} sauts.`
-      : `Données de démo retirées (${r.supprime ?? 0} parachutistes fictifs).`);
+      ? `Journée de démo générée sur tous les modules : ${r.presents ?? 0} présents, ${r.sauts ?? 0} sauts, ${r.pliages ?? 0} pliages, ${r.tandem ?? 0} résas tandem, briefing + messages.`
+      : `Données de démo retirées (${r.supprime ?? 0} parachutistes fictifs) sur tous les modules.`);
     onDone?.(); // rafraîchit le dashboard sans rechargement complet
   };
 
@@ -42,7 +42,7 @@ function DemoJourneeInner({ centreId, onDone }: { centreId: string; onDone?: () 
         <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Outil de démo · provisoire</span>
       </div>
       <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
-        Repeuple la journée avec des données fictives (parachutistes « DÉMO ») pour une présentation. N'affecte que ce centre.
+        Repeuple tous les modules DZ (présences, sauts, pliages, tandem, briefing, messages) avec des données fictives reliées (parachutistes « DÉMO »). N'affecte que ce centre.
       </p>
       <div className="flex gap-2 flex-wrap">
         {/* Style secondaire NEUTRE (hors palette d'accent) : ne concurrence pas

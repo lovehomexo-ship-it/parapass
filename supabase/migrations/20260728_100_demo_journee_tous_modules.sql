@@ -1,0 +1,6 @@
+-- Étend la journée de démo DZ à TOUS les modules (pliage, tandem, messages,
+-- notifications, matériel) en plus du tableau de bord. Données fictives « DÉMO »
+-- reliées, UUID déterministes pour retrait précis, scope au seul centre.
+-- (Miroir de la migration appliquée via MCP le 2026-07-28 — voir generer_demo_journee
+--  / retirer_demo_journee dans la base pour la source de vérité.)
+-- Aucune validation automatique d'acte de sécurité : les sauts gardent leurs statuts.
