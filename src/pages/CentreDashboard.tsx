@@ -293,9 +293,9 @@ function TuileEncadrementDZ({ centreId, onGo }: { centreId: string; onGo: (secti
             ? <CheckCircle2 className="w-7 h-7" />
             : manque}
       </p>
-      <p className="text-xs mt-1" style={{ color: 'var(--c-dim)' }}>
+      <p className="text-xs mt-1" style={{ color: enc.seances.length === 0 ? '#F97316' : 'var(--c-dim)' }}>
         {enc.seances.length === 0
-          ? 'Aucune séance ouverte.'
+          ? 'Aucune séance ouverte — en ouvrir une →'
           : manque === 0
             ? `${enc.seances.length} séance${enc.seances.length > 1 ? 's' : ''} — encadrement réglementaire`
             : `${manque} exigence${manque > 1 ? 's' : ''} non couverte${manque > 1 ? 's' : ''}`}
@@ -482,19 +482,29 @@ function DashboardHome({
       {/* ── 3 · À TRAITER — les actions en attente ── */}
       <ZoneTitre>À traiter</ZoneTitre>
 
-      {/* Carnets à valider — chiffre ACTIONNABLE DOMINANT (priorité métier du DT),
-          au-dessus des alertes ponctuelles à faible volume. Orange = actionnable. */}
+      {/* Carnets à valider — chiffre ACTIONNABLE DOMINANT (priorité métier du DT).
+          Zéro POSITIF (rien à valider = rassurant, vert) distingué du « à action »
+          (orange + CTA « Valider »). */}
       <button onClick={() => onNavigate('validations')}
         className="w-full rounded-2xl p-4 flex items-center gap-4 text-left transition"
-        style={{ background: carnetsEnAttente > 0 ? 'rgba(249,115,22,0.12)' : 'var(--c-surface)', border: `1px solid ${carnetsEnAttente > 0 ? 'rgba(249,115,22,0.4)' : 'var(--c-border)'}` }}>
-        <span className="flex-shrink-0" style={{ color: carnetsEnAttente > 0 ? '#F97316' : 'var(--c-muted)' }}>
-          <BookCheck className="w-8 h-8" />
+        style={{ background: carnetsEnAttente > 0 ? 'rgba(249,115,22,0.12)' : 'rgba(16,185,129,0.08)', border: `1px solid ${carnetsEnAttente > 0 ? 'rgba(249,115,22,0.4)' : 'rgba(16,185,129,0.25)'}` }}>
+        <span className="flex-shrink-0" style={{ color: carnetsEnAttente > 0 ? '#F97316' : '#34D399' }}>
+          {carnetsEnAttente > 0 ? <BookCheck className="w-8 h-8" /> : <CheckCircle2 className="w-8 h-8" />}
         </span>
         <div className="flex-1 min-w-0">
-          <div className="text-3xl font-extrabold leading-none" style={{ color: carnetsEnAttente > 0 ? '#F97316' : 'var(--c-text)' }}>{carnetsEnAttente}</div>
-          <div className="text-sm font-semibold mt-1" style={{ color: 'var(--c-text)' }}>Carnets à valider</div>
+          {carnetsEnAttente > 0 ? (
+            <>
+              <div className="text-3xl font-extrabold leading-none" style={{ color: '#F97316' }}>{carnetsEnAttente}</div>
+              <div className="text-sm font-semibold mt-1" style={{ color: 'var(--c-text)' }}>Carnets à valider</div>
+            </>
+          ) : (
+            <>
+              <div className="text-sm font-bold" style={{ color: '#34D399' }}>Tout est à jour</div>
+              <div className="text-xs mt-0.5" style={{ color: 'var(--c-dim)' }}>Aucun carnet en attente de validation</div>
+            </>
+          )}
         </div>
-        {carnetsEnAttente > 0 && <span className="text-sm font-bold flex-shrink-0" style={{ color: '#F97316' }}>Valider →</span>}
+        <span className="text-sm font-bold flex-shrink-0" style={{ color: carnetsEnAttente > 0 ? '#F97316' : 'var(--c-dim)' }}>{carnetsEnAttente > 0 ? 'Valider →' : 'Voir →'}</span>
       </button>
 
       {/* Alertes ponctuelles (faible volume) — SOUS le chiffre dominant. */}

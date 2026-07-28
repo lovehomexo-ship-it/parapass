@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, UserMinus, Clock, AlertTriangle } from 'lucide-react';
+import { Users, UserMinus, Clock, AlertTriangle, MapPin } from 'lucide-react';
 import { usePresencesDZ, hhmm } from '../../lib/presence';
 import { TYPE_BREVET_LABELS } from '../../lib/types';
 
@@ -32,9 +32,12 @@ export function PresencesDZ({ dzId }: { dzId: string }) {
       )}
 
       {tries.length === 0 ? (
-        <p className="text-xs py-2" style={{ color: 'var(--c-dim)' }}>
-          Personne ne s'est encore déclaré présent — les parachutistes se déclarent depuis leur téléphone.
-        </p>
+        <div className="flex items-center gap-2.5 py-2">
+          <MapPin className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--c-dim)' }} aria-hidden />
+          <p className="text-xs" style={{ color: 'var(--c-dim)' }}>
+            En attente des premières présences — les parachutistes se déclarent depuis leur téléphone.
+          </p>
+        </div>
       ) : (
         <div className="space-y-1">
           {tries.map(p => (
