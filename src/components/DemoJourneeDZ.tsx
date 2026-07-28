@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkles, Trash2 } from 'lucide-react';
+import { Sparkles, Trash2, FlaskConical } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { ErrorBoundary } from './ErrorBoundary';
 
@@ -36,23 +36,25 @@ function DemoJourneeInner({ centreId, onDone }: { centreId: string; onDone?: () 
 
   return (
     <div className="rounded-xl p-3 flex flex-col gap-2"
-      style={{ background: 'rgba(139,92,246,0.06)', border: '1px dashed rgba(139,92,246,0.4)' }}>
-      <div className="flex items-center gap-2">
-        <Sparkles className="w-4 h-4" style={{ color: '#A78BFA' }} />
-        <span className="text-xs font-bold" style={{ color: '#A78BFA' }}>Outil de démo (provisoire)</span>
+      style={{ background: 'rgba(148,163,184,0.05)', border: '1px dashed var(--c-border-f)' }}>
+      <div className="flex items-center gap-1.5">
+        <FlaskConical className="w-3.5 h-3.5" style={{ color: 'var(--c-dim)' }} />
+        <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Outil de démo · provisoire</span>
       </div>
       <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
         Repeuple la journée avec des données fictives (parachutistes « DÉMO ») pour une présentation. N'affecte que ce centre.
       </p>
       <div className="flex gap-2 flex-wrap">
+        {/* Style secondaire NEUTRE (hors palette d'accent) : ne concurrence pas
+            les CTA métier (« Valider », « Préparer le briefing »). */}
         <button onClick={() => run('gen')} disabled={busy !== null}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-white disabled:opacity-50"
-          style={{ background: '#8B5CF6' }}>
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold disabled:opacity-50"
+          style={{ background: 'rgba(148,163,184,0.14)', color: 'var(--c-text2)', border: '1px solid var(--c-border-f)' }}>
           <Sparkles className="w-3.5 h-3.5" /> {busy === 'gen' ? 'Génération…' : 'Générer une journée de démo'}
         </button>
         <button onClick={() => run('clr')} disabled={busy !== null}
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold disabled:opacity-50"
-          style={{ background: 'var(--c-surface)', color: 'var(--c-text)', border: '1px solid var(--c-border-f)' }}>
+          style={{ background: 'transparent', color: 'var(--c-dim)', border: '1px solid var(--c-border-f)' }}>
           <Trash2 className="w-3.5 h-3.5" /> {busy === 'clr' ? 'Retrait…' : 'Retirer la démo'}
         </button>
       </div>
