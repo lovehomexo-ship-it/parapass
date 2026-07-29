@@ -437,7 +437,7 @@ function SectionModules() {
             <div className="absolute -top-3.5 left-6 px-3 py-1 rounded-full text-[11px] font-bold text-white" style={{ background: '#F97316' }}>
               Le plus avantageux
             </div>
-            <div className="text-4xl flex-shrink-0 mt-2 sm:mt-0"><STUDIO.icon className="w-8 h-8" /></div>
+            <div className="flex-shrink-0 mt-2 sm:mt-0"><ModuleIcon id={STUDIO.id} label={STUDIO.nom} className="w-8 h-8" /></div>
             <div className="flex-1 min-w-0">
               <p className="font-bold text-lg" style={{ color: '#001A4D' }}>{STUDIO.nom}</p>
               <p className="text-sm mt-1 leading-relaxed" style={{ color: '#64748B' }}>{STUDIO.desc}</p>
