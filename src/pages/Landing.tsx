@@ -614,7 +614,7 @@ function SectionAcademie() {
             </div>
             <div className="flex flex-wrap gap-3 mt-6">
               {[
-                { icon: <Zap className="w-3.5 h-3.5" />, label: 'Système d\'XP', color: '#FBBF24' },
+                { icon: Zap, label: 'Système d\'XP', color: '#FBBF24' },
                 { icon: Medal, label: 'Grades à débloquer', color: '#A78BFA' },
                 { icon: Award, label: '11 badges Académie', color: '#34D399' },
               ].map(chip => (
@@ -704,13 +704,13 @@ function SectionReflexe() {
               </p>
               <ul className="space-y-4 mb-8">
                 {[
-                  { icon: <Clock className="w-4 h-4 text-white" />, bg: '#EF4444', title: 'Un scénario chronométré par jour', desc: 'Situation réelle, décision sous pression. Comme en l\'air.' },
-                  { icon: <Flame className="w-4 h-4 text-white" />, bg: '#F97316', title: 'Série de jours consécutifs', desc: 'Votre streak grandit chaque jour. Ne cassez pas la chaîne.' },
-                  { icon: <Zap className="w-4 h-4 text-white" />, bg: '#7C3AED', title: 'XP et bonus de rapidité', desc: 'Chaque bonne réponse alimente votre progression Académie.' },
+                  { icon: Clock, bg: '#EF4444', title: 'Un scénario chronométré par jour', desc: 'Situation réelle, décision sous pression. Comme en l\'air.' },
+                  { icon: Flame, bg: '#F97316', title: 'Série de jours consécutifs', desc: 'Votre streak grandit chaque jour. Ne cassez pas la chaîne.' },
+                  { icon: Zap, bg: '#7C3AED', title: 'XP et bonus de rapidité', desc: 'Chaque bonne réponse alimente votre progression Académie.' },
                 ].map(f => (
                   <li key={f.title} className="flex items-start gap-3.5">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: f.bg }}>
-                      <f.icon className="w-5 h-5" />
+                      <f.icon className="w-5 h-5 text-white" />
                     </div>
                     <div>
                       <p className="text-[15px] font-semibold mb-0.5" style={{ color: '#0F172A' }}>{f.title}</p>
