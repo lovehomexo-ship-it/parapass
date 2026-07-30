@@ -4,6 +4,9 @@ export default defineConfig({
   // Runtime JSX automatique (comme l'app) pour que les tests .tsx n'aient pas
   // besoin d'importer React explicitement.
   esbuild: { jsx: 'automatic' },
+  // Mêmes globaux que vite.config.ts (sinon les composants qui affichent la
+  // version du build lèvent « __APP_VERSION__ is not defined » sous test).
+  define: { __APP_VERSION__: JSON.stringify('test') },
   test: {
     // Fuseau non-UTC à offset positif : c'est précisément le cas où l'ancien
     // `toISOString()` décalait les dates d'un jour (bug Planning DZ). Les tests

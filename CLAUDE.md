@@ -15,13 +15,33 @@ Il compile le code mais ne REND jamais l'arbre React. Un composant `undefined`
 (`<x.icon/>` où `x.icon` est `<Icon/>`) ne se voit qu'à l'exécution → React #130,
 qui fait tomber toute la page. C'est exactement ce qui a cassé la page d'accueil.
 
+### ⚠️ Cause racine : le typage ne tourne PAS dans `npm run build`
+
+`tsconfig.json` est un fichier « solution style » (`{ "files": [], "references": [...] }`).
+Or le script build lance `tsc --noEmit` **sans `-p`** → il lit `tsconfig.json`,
+y trouve `files: []` et vérifie **0 fichier**. Mesuré :
+
+| Commande | Fichiers vérifiés |
+|---|---|
+| `tsc --noEmit` (script `build`/`check`) | **0** |
+| `npm run typecheck` (`-p tsconfig.app.json`) | **165** |
+
+Avec le bon projet, TypeScript attrapait précisément le bug :
+`src/pages/Landing.tsx(440,65): error TS2339: Property 'icon' does not exist on type 'Module'.`
+
+**Conséquence** : ~113 erreurs de type préexistantes se sont accumulées en silence.
+**→ Lancer `npm run typecheck` avant tout push.** Le brancher sur `build` seulement
+quand les erreurs seront à zéro (chantier progressif, sinon le build casse).
+
 Règles :
 1. **« build vert » ≠ « ça marche ».** Après un gros refactor (surtout des
    remplacements scriptés multi-fichiers), CHARGER réellement les écrans modifiés
    (preview / `npm run dev`) ou lancer les tests fumée avant de conclure.
-2. **Tests fumée obligatoires** : `src/pages/pages.smoke.test.tsx` rend chaque page
-   PUBLIQUE via `renderToStaticMarkup` et vérifie qu'elle ne crashe pas. Toute
-   NOUVELLE page publique doit y être ajoutée. Ces tests attrapent les #130.
+2. **Tests fumée obligatoires** — ils rendent réellement les écrans et attrapent les #130 :
+   - `src/pages/pages.smoke.test.tsx` → 9 pages **publiques**
+   - `src/pages/pages-privees.smoke.test.tsx` → écrans **privés** (Dashboard para,
+     Dashboard DZ, Passeport), contextes stubés (auth/démo/thème/alertes)
+   Toute nouvelle page importante doit y être ajoutée.
 3. **Refactors scriptés (sed/python)** : à double tranchant. Vérifier chaque
    remplacement générique (`<X.icon/>` ne vaut que si `X.icon` est une RÉFÉRENCE de
    composant, pas un élément ni un champ supprimé).
