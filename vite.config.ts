@@ -15,19 +15,16 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      manifest: false, // served from public/manifest.json
-      workbox: {
-        skipWaiting: true,
-        clientsClaim: true,
+      manifest: false, // servi depuis public/manifest.json (lié dans index.html)
+      // injectManifest : service worker CUSTOM (src/sw.ts) — indispensable pour
+      // gérer les événements push/notificationclick, impossibles avec generateSW.
+      // Le pré-cache Workbox est conservé à l'identique.
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
+      injectManifest: {
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/parapass\.fr\/v\//,
-            handler: 'StaleWhileRevalidate',
-            options: { cacheName: 'verify-offline', expiration: { maxEntries: 1 } },
-          },
-        ],
       },
     }),
   ],
