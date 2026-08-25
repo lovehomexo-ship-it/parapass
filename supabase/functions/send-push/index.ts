@@ -31,13 +31,18 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const vapidPublic = Deno.env.get('VAPID_PUBLIC_KEY');
-    const vapidPrivate = Deno.env.get('VAPID_PRIVATE_KEY');
-    const vapidSubject = Deno.env.get('VAPID_SUBJECT') ?? 'mailto:contact@parapass.fr';
+    // .trim() : un espace ou un retour à la ligne collé par erreur dans le secret
+    // rendait la clé invalide (« Vapid private key should be 32 bytes long »).
+    const vapidPublic = Deno.env.get('VAPID_PUBLIC_KEY')?.trim();
+    const vapidPrivate = Deno.env.get('VAPID_PRIVATE_KEY')?.trim();
+    const vapidSubject = (Deno.env.get('VAPID_SUBJECT') ?? 'mailto:contact@parapass.fr').trim();
     if (!vapidPublic || !vapidPrivate) {
       console.error('Clés VAPID absentes : notifications push non configurées.');
       return json({ error: 'Push non configuré sur ce serveur.' }, 500);
     }
+    // Trace de diagnostic (longueurs seulement, jamais les valeurs).
+    console.log('VAPID longueurs — publique:', vapidPublic.length, '| privee:', vapidPrivate.length,
+                '(attendu ~87 et ~43)');
     webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
