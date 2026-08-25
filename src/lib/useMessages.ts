@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from './supabase';
+import { notifierPush } from './notifierPush';
 
 export interface Message {
   id: string;
@@ -143,6 +144,10 @@ export async function sendMessage(
     .single();
 
   if (error) throw error;
+
+  // Notification push au destinataire (bonus, non bloquant : le message est
+  // déjà enregistré et visible dans la messagerie interne).
+  if (msg?.id) void notifierPush({ type: 'message', message_id: msg.id });
 
   await supabase
     .from('conversations')

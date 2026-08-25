@@ -8,6 +8,7 @@ import type { Saut, NotationTernaire } from '../lib/types';
 import { ReAuthModal } from './ReAuthModal';
 import { hashSautData } from '../lib/validationCrypto';
 import { getRegles } from '../data/reglesFFP';
+import { notifierPush } from '../lib/notifierPush';
 
 type ProgressionTernaire = 'non' | 'en_cours' | 'maitrise' | null;
 
@@ -991,6 +992,12 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
         const toNotify: string[] = envoiATous
           ? allMoniteurs.map((m) => m.id)
           : moniteur_id ? [moniteur_id] : [];
+
+        // Push au(x) moniteur(s) — bonus non bloquant, en plus de la
+        // notification interne ci-dessous qui reste le canal fiable.
+        if (data?.id && moniteur_id && !envoiATous) {
+          void notifierPush({ type: 'saut_a_valider', saut_id: data.id });
+        }
 
         if (toNotify.length > 0) {
           await supabase.from('notifications').insert(

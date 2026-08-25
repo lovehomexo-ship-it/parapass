@@ -6,6 +6,7 @@ import { useDemo } from '../lib/useDemo';
 import { useTheme } from '../lib/ThemeContext';
 import { supabase } from '../lib/supabase';
 import { Layout } from '../components/Layout';
+import { PushNotifCard } from '../components/PushNotifCard';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   QrCode, Palette, Bell, Shield, User, Trash2,
@@ -194,6 +195,8 @@ export function ParametresPage() {
 
         {/* Notifications */}
         <Section icon={<Bell className="w-4 h-4" />} title="Notifications">
+          {/* Push natives (téléphone) — permission demandée au clic uniquement. */}
+          <PushNotifCard userId={user?.id} />
           {savingNotif && <p className="text-xs" style={{ color: 'var(--c-dim)' }}>Enregistrement...</p>}
           <ToggleRow label="Rappel expiration licence (60j avant)" checked={notifLicence} onChange={v => { setNotifLicence(v); saveNotifPref('notif_licence', v); }} />
           <ToggleRow label="Rappel certificat médical (60j avant)" checked={notifMedical} onChange={v => { setNotifMedical(v); saveNotifPref('notif_medical', v); }} />
