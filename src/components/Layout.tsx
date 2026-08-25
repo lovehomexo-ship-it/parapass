@@ -441,6 +441,14 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
               <DrawerExtra to="/profil" onClick={() => setDrawerOpen(false)} active={isActive('/profil')}>
                 <User className="w-4 h-4" /> Mon Profil
               </DrawerExtra>
+              {/* Paramètres : absent du menu mobile jusqu'ici, alors que la page
+                  n'était accessible QUE par ce menu sur téléphone (notifications
+                  push, thème, QR…). Mêmes rôles que la route protégée. */}
+              {(profile?.role === 'parachutiste' || profile?.role === 'moniteur' || profile?.role === 'moniteur_delegue') && (
+                <DrawerExtra to="/parametres" onClick={() => setDrawerOpen(false)} active={isActive('/parametres')}>
+                  <Settings className="w-4 h-4" /> Paramètres
+                </DrawerExtra>
+              )}
             </nav>
 
             <div className="px-3 py-4" style={{ borderTop: '1px solid var(--c-border)' }}>
