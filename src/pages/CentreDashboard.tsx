@@ -41,6 +41,7 @@ function planLabel(plan: string | null | undefined): string {
   return '—';
 }
 import { PresencesDZ } from './centre/PresencesDZ';
+import { AptitudeDuJour } from './centre/AptitudeDuJour';
 import { VigilanceVoileDZ } from '../components/VigilanceVoileDZ';
 import { BriefingSection } from './centre/BriefingSection';
 import { BrevetsSection } from './centre/BrevetsSection';
@@ -3267,7 +3268,14 @@ export function CentreDashboardPage() {
                     onNavigate={setActiveSection}
                     carnetsEnAttente={carnetsEnAttente}
                     briefingSlot={centreId ? <BriefingRecapDZ centreId={centreId} onOuvrir={() => setActiveSection('briefing')} /> : undefined}
-                    presencesSlot={centreId ? <PresencesDZ dzId={centreId} /> : undefined}
+                    presencesSlot={centreId ? (
+                      <>
+                        <PresencesDZ dzId={centreId} />
+                        {/* P2 — « celui-là, il peut y aller ? » : la question que
+                            se pose un DT toute la journée, juste sous les présents. */}
+                        <div className="mt-4"><AptitudeDuJour centreId={centreId} /></div>
+                      </>
+                    ) : undefined}
                     encadrementSlot={centreId ? <TuileEncadrementDZ centreId={centreId} onGo={goRecap} /> : undefined}
                     relancesSlot={centreId ? <TuileRelancesDZ centreId={centreId} onGo={goRecap} /> : undefined}
                     vigilanceSlot={centreId ? <VigilanceVoileDZ centreId={centreId} /> : undefined}
