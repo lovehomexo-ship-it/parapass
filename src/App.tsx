@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import { MaintenancePage } from './pages/MaintenancePage';
+import { LoaderParaPass } from './components/LoaderParaPass';
 import { AdminSecretPage } from './pages/AdminSecret';
 import { AuthProvider, useAuth } from './lib/auth';
 import { Layout } from './components/Layout';
@@ -56,7 +57,7 @@ import { supabase } from './lib/supabase';
 
 function AuthRedirect() {
   const { user, profile, loading } = useAuth();
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#001A4D]" /></div>;
+  if (loading) return <LoaderParaPass pleinEcran />;
   if (!user) return <Navigate to="/login" replace />;
   if (profile?.role === 'admin_centre') return <Navigate to="/centre/dashboard" replace />;
   if (profile?.role === 'admin') return <Navigate to="/admin" replace />;
@@ -87,7 +88,7 @@ function NotFoundInApp() {
 
 function NotFoundPage() {
   const { user, profile, loading } = useAuth();
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#001A4D]" /></div>;
+  if (loading) return <LoaderParaPass pleinEcran />;
   // Déconnecté : la landing publique est légitime.
   if (!user) return <Navigate to="/" replace />;
   // Admins : renvoyés vers LEUR tableau de bord (session conservée, jamais la landing).
