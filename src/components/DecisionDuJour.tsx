@@ -32,6 +32,28 @@ function DecisionInner({ centreId }: { centreId: string }) {
       });
   }, [centreId]);
 
+  // « Présents prêts » vient désormais du MOTEUR D'APTITUDE (P2), plus d'un
+  // second calcul local. computeReadiness ne bloquait que sur un document
+  // 'expire' et jamais sur 'inconnu' : un document ABSENT passait donc pour
+  // conforme, et la tuile annonçait « aucun blocage détecté » pendant que
+  // l'aptitude listait trois blocages sur la même personne.
+  const [aptitude, setAptitude] = useState<{ nom: string; prenom: string; statut: string; nb_blocages: number; motifs: Array<{ libelle: string; severite: string; levee: boolean }> }[] | null>(null);
+
+  useEffect(() => {
+    if (!centreId) return;
+    supabase.rpc('get_aptitude_du_jour', { p_centre_id: centreId })
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Aptitude du jour (tuile décision) — échec :', {
+            code: error.code, message: error.message, details: error.details, hint: error.hint,
+          });
+          setAptitude(null);   // on retombe alors sur l'ancien calcul, jamais sur un chiffre faux
+          return;
+        }
+        setAptitude((data ?? []) as typeof aptitude);
+      });
+  }, [centreId]);
+
   useEffect(() => {
     if (!centreId) return;
     supabase.rpc('get_decision_du_jour', { p_centre_id: centreId })
@@ -53,7 +75,24 @@ function DecisionInner({ centreId }: { centreId: string }) {
   })();
 
   const verdict = meteoCourante ? verdictMeteo(meteoCourante, seuils) : null;
-  const readiness = computeReadiness(presents, currencyRules);
+  // Source unique quand le moteur d'aptitude répond ; repli sur l'ancien calcul
+  // seulement s'il est indisponible — mieux vaut un chiffre ancien qu'aucun.
+  const readinessLocal = computeReadiness(presents, currencyRules);
+  const readiness = aptitude
+    ? {
+        presents: aptitude.length,
+        prets: aptitude.filter(a => a.statut === 'vert').length,
+        bloques: aptitude.filter(a => a.statut !== 'vert').length,
+        bloquesDetail: aptitude
+          .filter(a => a.statut !== 'vert')
+          .map(a => ({
+            nom: `${a.prenom} ${a.nom}`.trim(),
+            raison: a.motifs.find(m => !m.levee && m.severite === 'blocage')?.libelle
+                 ?? a.motifs.find(m => !m.levee)?.libelle
+                 ?? 'à vérifier',
+          })),
+      }
+    : readinessLocal;
   const ui = verdict ? LEVEL_UI[verdict.level] : null;
 
   return (
