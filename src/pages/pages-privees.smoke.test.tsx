@@ -91,3 +91,29 @@ describe('smoke : les écrans privés se rendent sans crash (React #130)', () =>
     expect(renders(node)).not.toThrow();
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Le passeport n'affiche qu'UN onglet à la fois : rendre la page ne prouve donc
+// rien sur les neuf autres.
+//
+// C'est ainsi que l'onglet « Licence » est resté CASSÉ plus d'un mois : le
+// commit 80a6da8 (2026-07-24) avait supprimé emptyLicenceForm, LicenceForm et
+// ToggleField sans retirer LicenceTab, qui les utilise. Le test fumée passait
+// au vert parce qu'il ne rendait que l'onglet « carte ».
+//
+// La page lit ?onglet= : on rend donc CHAQUE onglet.
+// ═══════════════════════════════════════════════════════════════════════════
+const ONGLETS_PASSEPORT = [
+  'carte', 'licence', 'medical', 'pac', 'brevets',
+  'modules', 'qualifications', 'centres', 'securite', 'incidents',
+] as const;
+
+describe('smoke : chaque onglet du passeport se rend', () => {
+  it.each(ONGLETS_PASSEPORT)('onglet « %s »', (onglet) => {
+    expect(() => renderToStaticMarkup(
+      <MemoryRouter initialEntries={[`/passeport?onglet=${onglet}`]}>
+        <PasseportPage />
+      </MemoryRouter>
+    )).not.toThrow();
+  });
+});

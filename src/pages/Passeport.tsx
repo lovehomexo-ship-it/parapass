@@ -37,12 +37,20 @@ export function PasseportPage() {
   const { user, profile } = useAuth();
   const { isDemo } = useDemo();
   const { licences, brevets, certificats, centresLicencies, qualifications, modulesBrevets, contacts, incidents, interdictions, refresh } = usePassport(user?.id);
-  const [tab, setTab] = useState<PassportTab>('carte');
   const [saving, setSaving] = useState(false);
 
   // Ouverture directe sur un onglet via ?onglet= (liens des alertes / états vides).
   const ONGLETS_VALIDES: PassportTab[] = ['carte', 'licence', 'medical', 'pac', 'brevets', 'modules', 'qualifications', 'centres', 'securite', 'incidents'];
   const [searchParams] = useSearchParams();
+
+  // L'onglet est lu DÈS LE PREMIER RENDU, et non dans un effet : un lien profond
+  // n'affiche donc plus « carte » avant de basculer. Effet de bord utile, les
+  // tests fumée peuvent enfin atteindre chaque onglet — c'est ce qui manquait
+  // pour repérer l'onglet Licence cassé pendant plus d'un mois.
+  const ongletUrl = searchParams.get('onglet') as PassportTab | null;
+  const [tab, setTab] = useState<PassportTab>(
+    ongletUrl && ONGLETS_VALIDES.includes(ongletUrl) ? ongletUrl : 'carte');
+
   useEffect(() => {
     const o = searchParams.get('onglet') as PassportTab | null;
     if (o && ONGLETS_VALIDES.includes(o)) setTab(o);
@@ -303,6 +311,73 @@ function ValidationDZStatus({ activeLicencie, userId }: { activeLicencie: Centre
           {sent ? 'Demande envoyée ✓' : sending ? 'Envoi…' : 'Demander la validation à ma DZ'}
         </button>
       )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RESTAURÉ le 2026-09-02.
+//
+// Le commit 80a6da8 du 2026-07-24 (« chore(lint): garde-fou ESLint ») a
+// supprimé 295 lignes de ce fichier, dont ces trois définitions — alors que
+// LicenceTab, qui les utilise, est resté monté. L'onglet Licence du passeport
+// levait donc une ReferenceError sur emptyLicenceForm à chaque ouverture,
+// depuis plus d'un mois.
+//
+// Le build restait VERT : `tsc --noEmit` est lancé sans `-p`, il ne vérifie
+// donc AUCUN fichier (voir CLAUDE.md). Seul `npm run typecheck` le voyait.
+// ═══════════════════════════════════════════════════════════════════════════
+
+type LicenceForm = {
+  numero_licence: string;
+  date_delivrance: string;
+  date_expiration: string;
+  organisme: 'FFP' | 'DGAC' | 'autre';
+  statut: 'actif' | 'expire' | 'suspendu';
+  code_club: string;
+  nom_club: string;
+  beneficiaire_nom: string;
+  beneficiaire_lien: 'conjoint' | 'enfant' | 'parent' | 'frere_soeur' | 'autre' | '';
+  beneficiaire_telephone: string;
+  assurance_individuelle: boolean;
+  assurance_rc: boolean;
+  tampon_dz_url: string | null;
+  tampon_valide_par: string;
+  tampon_date_validation: string;
+  tampon_signature_url: string | null;
+  tampon_statut: 'en_attente' | 'valide' | 'refuse';
+  type_licence: 'lps' | 'lp' | 'lj' | 'ld' | '';
+};
+
+const emptyLicenceForm: LicenceForm = {
+  numero_licence: '', date_delivrance: '', date_expiration: '',
+  organisme: 'FFP', statut: 'actif',
+  code_club: '', nom_club: '',
+  beneficiaire_nom: '', beneficiaire_lien: '', beneficiaire_telephone: '',
+  assurance_individuelle: false, assurance_rc: false,
+  tampon_dz_url: null, tampon_valide_par: '', tampon_date_validation: '',
+  tampon_signature_url: null, tampon_statut: 'en_attente',
+  type_licence: '',
+};
+
+function ToggleField({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-center justify-between py-2">
+      <span className="text-sm text-white">{label}</span>
+      <div className="flex gap-2">
+        <button type="button"
+          onClick={() => onChange(true)}
+          className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${value ? 'bg-green-500 text-white border-green-500' : 'text-white border-white/30'}`}
+          style={!value ? { background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.15)' } : {}}>
+          OUI
+        </button>
+        <button type="button"
+          onClick={() => onChange(false)}
+          className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${!value ? 'bg-red-500 text-white border-red-500' : 'text-white border-white/30'}`}
+          style={value ? { background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.15)' } : {}}>
+          NON
+        </button>
+      </div>
     </div>
   );
 }
