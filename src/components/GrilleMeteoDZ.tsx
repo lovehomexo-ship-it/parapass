@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { ErrorBoundary } from './ErrorBoundary';
 import { LoaderParaPass } from './LoaderParaPass';
+import { ModaleSaisie } from './ModaleSaisie';
 import { useMeteoAltitude, indexHeureCourante, kmhEnKt } from '../lib/meteoAltitude';
 import {
   evaluerTousPublics, calculerDerive,
@@ -44,6 +45,9 @@ function GrilleInner({ centreId }: { centreId: string }) {
   const [erreur, setErreur] = useState<string | null>(null);
   const [envoi, setEnvoi] = useState(false);
   const [detailOuvert, setDetailOuvert] = useState<string | null>(null);
+  // Décision en cours de saisie (modale) et historique des décisions du jour.
+  const [saisie, setSaisie] = useState<{ cle: string; label: string; couleur: string } | null>(null);
+  const [historique, setHistorique] = useState<{ heure: string; texte: string }[]>([]);
 
   const charger = useCallback(async () => {
     setChargement(true); setErreur(null);
@@ -51,9 +55,9 @@ function GrilleInner({ centreId }: { centreId: string }) {
     const [{ data: s, error: e1 }, { data: c }, { data: j }] = await Promise.all([
       supabase.from('meteo_seuils_public').select('*').eq('centre_id', centreId),
       supabase.from('centres').select('code_oaci').eq('id', centreId).maybeSingle(),
-      supabase.from('journal_dz').select('texte, auteur_nom, donnees')
+      supabase.from('journal_dz').select('texte, auteur_nom, donnees, survenu_a')
         .eq('centre_id', centreId).eq('date_jour', jour).eq('type', 'decision_meteo')
-        .order('survenu_a', { ascending: false }).limit(1).maybeSingle(),
+        .order('survenu_a', { ascending: false }),
     ]);
     if (e1) {
       console.error('Seuils météo — chargement échoué :', {
@@ -63,10 +67,17 @@ function GrilleInner({ centreId }: { centreId: string }) {
     }
     setSeuils((s ?? []) as SeuilsPublic[]);
     setOaci(c?.code_oaci ?? null);
-    if (j) {
-      const d = (j.donnees ?? {}) as { decision?: string; motif?: string };
-      setDecision({ decision: d.decision ?? '', motif: d.motif ?? '', auteur: j.auteur_nom });
-    }
+    const lignes = (j ?? []) as { texte: string; auteur_nom: string; donnees: Record<string, unknown>; survenu_a: string }[];
+    if (lignes.length > 0) {
+      const d = (lignes[0].donnees ?? {}) as { decision?: string; motif?: string };
+      setDecision({ decision: d.decision ?? '', motif: d.motif ?? '', auteur: lignes[0].auteur_nom });
+    } else { setDecision(null); }
+    // Historique : les conditions changent, la décision aussi. Chaque révision
+    // est une NOUVELLE entrée du journal — rien n'est écrasé.
+    setHistorique(lignes.map(l => ({
+      heure: new Date(l.survenu_a).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      texte: String((l.donnees as { decision?: string })?.decision ?? ''),
+    })));
     setChargement(false);
   }, [centreId]);
 
@@ -98,9 +109,7 @@ function GrilleInner({ centreId }: { centreId: string }) {
     .map(n => ({ altitudeM: n.altM, vitesseKt: kmhEnKt(n.speed[i] ?? 0), directionDeg: n.dir[i] ?? 0 }));
   const derive = calculerDerive(couches, altLargage);
 
-  const prendreDecision = async (cle: string, label: string) => {
-    const motif = window.prompt(`Décision du jour : ${label}.\n\nMotif (il sera consigné au journal) :`);
-    if (motif === null) return;
+  const prendreDecision = async (cle: string, label: string, motif: string) => {
     setEnvoi(true);
     const { error } = await supabase.rpc('journaliser', {
       p_centre_id: centreId,
@@ -233,29 +242,69 @@ function GrilleInner({ centreId }: { centreId: string }) {
             L’application informe ; la décision vous appartient, et elle est consignée.
           </p>
         </div>
-        {decision ? (
-          <div className="rounded-xl px-3 py-2.5 text-sm"
+        {/* Les boutons restent TOUJOURS actifs : la météo évolue dans la journée,
+            la décision doit pouvoir être révisée. Chaque révision crée une
+            nouvelle entrée du journal — rien n'est écrasé, la chronologie des
+            décisions reste lisible six mois plus tard. */}
+        <div className="flex gap-2 flex-wrap">
+          {DECISIONS.map(d => {
+            const active = decision?.decision === d.cle;
+            return (
+              <button key={d.cle}
+                onClick={() => setSaisie({ cle: d.cle, label: d.label, couleur: d.couleur })}
+                disabled={envoi}
+                className="flex-1 px-3 rounded-xl text-sm font-bold disabled:opacity-50 transition"
+                style={{
+                  minHeight: 48, minWidth: 110,
+                  background: active ? d.couleur : 'transparent',
+                  color: active ? '#fff' : d.couleur,
+                  border: `2px solid ${d.couleur}`,
+                  boxShadow: active ? `0 0 0 3px ${d.couleur}33` : 'none',
+                }}>
+                {d.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {decision && (
+          <div className="mt-2 rounded-xl px-3 py-2.5 text-sm"
             style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
             <span style={{ color: 'var(--c-text)', fontWeight: 700 }}>
-              {DECISIONS.find(d => d.cle === decision.decision)?.label ?? decision.decision}
+              En vigueur : {DECISIONS.find(d => d.cle === decision.decision)?.label ?? decision.decision}
             </span>
             {decision.motif && <span style={{ color: 'var(--c-text2)' }}> — {decision.motif}</span>}
             <span className="text-xs block mt-0.5" style={{ color: 'var(--c-dim)' }}>
               Décidé par {decision.auteur} · consigné au journal de bord
             </span>
-          </div>
-        ) : (
-          <div className="flex gap-2 flex-wrap">
-            {DECISIONS.map(d => (
-              <button key={d.cle} onClick={() => prendreDecision(d.cle, d.label)} disabled={envoi}
-                className="flex-1 px-3 rounded-xl text-sm font-bold disabled:opacity-50"
-                style={{ minHeight: 48, background: d.couleur, color: '#fff', minWidth: 110 }}>
-                {d.label}
-              </button>
-            ))}
+            {historique.length > 1 && (
+              <p className="text-[11px] mt-1.5 pt-1.5" style={{ color: 'var(--c-dim)', borderTop: '1px solid var(--c-border)' }}>
+                Journée : {historique.slice().reverse().map(h =>
+                  `${h.heure} ${DECISIONS.find(d => d.cle === h.texte)?.label ?? h.texte}`).join(' → ')}
+              </p>
+            )}
           </div>
         )}
       </div>
+
+      {saisie && (
+        <ModaleSaisie
+          titre={`Décision du jour : ${saisie.label}`}
+          description={
+            `Conditions retenues : vent ${Math.round(ventKt)} kt, rafales ${Math.round(rafalesKt)} kt`
+            + (ventAltitudeKt != null ? `, ${Math.round(ventAltitudeKt)} kt en altitude` : '')
+            + '. Elles seront consignées avec votre décision.'}
+          label="Motif"
+          placeholder="Ex. : rafales en hausse, élèves suspendus jusqu'à 15 h."
+          libelleValider="Consigner la décision"
+          couleurValider={saisie.couleur}
+          onFermer={() => setSaisie(null)}
+          onValider={async (motif) => {
+            await prendreDecision(saisie.cle, saisie.label, motif);
+            setSaisie(null);
+          }}
+        />
+      )}
     </div>
   );
 }

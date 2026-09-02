@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
+import { ModaleSaisie } from '../../components/ModaleSaisie';
 import { Check, X, ChevronDown, ChevronUp, Upload, ExternalLink } from 'lucide-react';
 
 interface ParaEnAttente {
@@ -362,6 +363,7 @@ export function ValidationsCarnet({ dzId, onNavigate }: { dzId: string; onNaviga
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'en_attente' | 'valide' | 'refuse' | 'tous'>('en_attente');
   const [lotEnCours, setLotEnCours] = useState(false);
+  const [saisieLot, setSaisieLot] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -472,12 +474,11 @@ export function ValidationsCarnet({ dzId, onNavigate }: { dzId: string; onNaviga
   const conformes = enAttente.filter(p => !p.anomalie);
   const aLaMain = enAttente.length - conformes.length;
 
-  const attesterConformes = async () => {
+  // window.prompt est BLOQUÉ en PWA installée et sur nombre de navigateurs
+  // mobiles : le bouton semblait mort, sans message ni erreur. Passage par une
+  // modale intégrée, qui fonctionne partout.
+  const attesterConformes = async (nomDt: string) => {
     if (conformes.length === 0) return;
-    const nomDt = window.prompt(
-      `Attester ${conformes.length} carnet${conformes.length > 1 ? 's' : ''} conforme${conformes.length > 1 ? 's' : ''}.\n\n`
-      + `Votre nom (il sera inscrit sur chaque attestation) :`);
-    if (nomDt === null) return;               // annulation explicite
     setLotEnCours(true);
     const { data, error } = await supabase.rpc('attester_carnets_en_lot', {
       p_centre_id: dzId,
@@ -546,7 +547,7 @@ export function ValidationsCarnet({ dzId, onNavigate }: { dzId: string; onNaviga
               </p>
             </div>
             <button
-              onClick={attesterConformes}
+              onClick={() => setSaisieLot(true)}
               disabled={conformes.length === 0 || lotEnCours}
               className="px-4 rounded-xl text-sm font-bold disabled:opacity-40"
               style={{ minHeight: 44, background: '#10B981', color: '#fff' }}
@@ -587,6 +588,20 @@ export function ValidationsCarnet({ dzId, onNavigate }: { dzId: string; onNaviga
           </button>
         ))}
       </div>
+
+      {saisieLot && (
+        <ModaleSaisie
+          titre={`Attester ${conformes.length} carnet${conformes.length > 1 ? 's' : ''} conforme${conformes.length > 1 ? 's' : ''}`}
+          description={aLaMain > 0 ? `${aLaMain} dossier(s) portant une anomalie seront écartés automatiquement.` : undefined}
+          label="Votre nom (inscrit sur chaque attestation)"
+          placeholder="Prénom NOM"
+          multiligne={false}
+          libelleValider="Attester"
+          couleurValider="#10B981"
+          onFermer={() => setSaisieLot(false)}
+          onValider={async (nom) => { setSaisieLot(false); await attesterConformes(nom); }}
+        />
+      )}
 
       {filtered.length === 0 ? (
         <div className="text-center py-12 rounded-xl" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border-f)' }}>
