@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { LoaderParaPass } from '../../components/LoaderParaPass';
-import { Wrench, Building2, User, QrCode, Filter, Send } from 'lucide-react';
+import { Wrench, Building2, User, QrCode, Filter, Send, Plus, Upload, CheckCircle2 } from 'lucide-react';
+import { AjouterEquipement, EnregistrerOperation, ImporterParc } from './MaterielActions';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // P5 — ÉCHÉANCES RÉGLEMENTAIRES DU MATÉRIEL.
@@ -41,6 +42,17 @@ const PALIER = {
   ok:      { label: 'À jour',          couleur: '#34D399', fond: 'var(--c-surface)',      bord: 'var(--c-border)' },
 } as const;
 
+// type_maintenance est stocké en CODE : on le traduit pour l'affichage.
+const OP_LABEL: Record<string, string> = {
+  pliage_secours: 'Pliage secours',
+  revision_aad: 'Contrôle du déclencheur',
+  revision_constructeur: 'Révision constructeur',
+  inspection_conteneur: 'Contrôle du harnais',
+  controle_altimetre: 'Contrôle altimètre',
+  remplacement_cartouche: 'Remplacement de cartouche',
+  autre: 'Opération',
+};
+
 const TYPE_LABEL: Record<string, string> = {
   parachute_principal: 'Voile principale',
   parachute_secours: 'Voile de secours',
@@ -54,6 +66,11 @@ function EcheancesInner({ centreId }: { centreId: string }) {
   const [erreur, setErreur] = useState<string | null>(null);
   const [seulementUrgent, setSeulementUrgent] = useState(true);
   const [relance, setRelance] = useState<'idle' | 'envoi' | 'fait'>('idle');
+  // Les trois gestes du DT : ajouter, importer, et surtout ENREGISTRER une
+  // opération — sans quoi un équipement reste « jamais contrôlé » à vie.
+  const [ajout, setAjout] = useState(false);
+  const [importCsv, setImportCsv] = useState(false);
+  const [operation, setOperation] = useState<Echeance | null>(null);
 
   const charger = useCallback(async () => {
     setChargement(true); setErreur(null);
@@ -131,6 +148,17 @@ function EcheancesInner({ centreId }: { centreId: string }) {
             {urgentes.length > 0 && ` · ${urgentes.length} à traiter`}
           </p>
         </div>
+        <div className="flex gap-2 flex-wrap">
+          <button onClick={() => setAjout(true)}
+            className="flex items-center gap-1.5 px-3 rounded-xl text-xs font-bold"
+            style={{ minHeight: 40, background: '#2563EB', color: '#fff' }}>
+            <Plus className="w-3.5 h-3.5" aria-hidden /> Équipement
+          </button>
+          <button onClick={() => setImportCsv(true)}
+            className="flex items-center gap-1.5 px-3 rounded-xl text-xs font-semibold"
+            style={{ minHeight: 40, color: 'var(--c-muted)', border: '1px solid var(--c-border)' }}>
+            <Upload className="w-3.5 h-3.5" aria-hidden /> Importer
+          </button>
         {lignes.length > urgentes.length && (
           <button onClick={() => setSeulementUrgent(v => !v)}
             className="flex items-center gap-1.5 px-3 rounded-full text-xs font-semibold"
@@ -142,6 +170,7 @@ function EcheancesInner({ centreId }: { centreId: string }) {
             {seulementUrgent ? 'Ce qui presse' : 'Tout le parc'}
           </button>
         )}
+        </div>
       </div>
 
       {affichees.length === 0 ? (
@@ -171,17 +200,24 @@ function EcheancesInner({ centreId }: { centreId: string }) {
                       {l.numero_serie && ` · n° ${l.numero_serie}`}
                     </p>
                     <p className="text-xs mt-1" style={{ color: p.couleur, fontWeight: 600 }}>
-                      {l.type_echeance} — {p.label}
+                      {OP_LABEL[l.type_echeance] ?? l.type_echeance} — {p.label}
                       {l.echeance && ` (${new Date(l.echeance).toLocaleDateString('fr-FR')}`}
                       {l.echeance && l.jours_restants !== null &&
                         `, ${l.jours_restants < 0 ? `${-l.jours_restants} j de retard` : `dans ${l.jours_restants} j`})`}
                     </p>
                   </div>
-                  {l.qr_token && (
-                    <span title="QR de l'équipement" className="flex-shrink-0">
-                      <QrCode className="w-4 h-4" style={{ color: 'var(--c-dim)' }} aria-hidden />
-                    </span>
-                  )}
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    {l.qr_token && (
+                      <span title="QR de l'équipement">
+                        <QrCode className="w-4 h-4" style={{ color: 'var(--c-dim)' }} aria-hidden />
+                      </span>
+                    )}
+                    <button onClick={() => setOperation(l)}
+                      className="flex items-center gap-1 px-2 rounded-lg text-[11px] font-semibold"
+                      style={{ minHeight: 32, color: '#60A5FA', border: '1px solid var(--c-border)' }}>
+                      <CheckCircle2 className="w-3 h-3" aria-hidden /> Opération
+                    </button>
+                  </div>
                 </div>
               </li>
             );
@@ -199,6 +235,15 @@ function EcheancesInner({ centreId }: { centreId: string }) {
             : relance === 'fait' ? 'Propriétaires prévenus'
             : `Prévenir ${urgentes.filter(l => !l.est_parc_centre && l.proprietaire_id).length} propriétaire(s)`}
         </button>
+      )}
+      {ajout && <AjouterEquipement centreId={centreId} onFait={charger} onFermer={() => setAjout(false)} />}
+      {importCsv && <ImporterParc centreId={centreId} onFait={charger} onFermer={() => setImportCsv(false)} />}
+      {operation && (
+        <EnregistrerOperation
+          materielId={operation.materiel_id}
+          libelleMateriel={`${TYPE_LABEL[operation.type] ?? operation.type}${operation.marque ? ` — ${operation.marque}` : ''}`}
+          typeDefaut={operation.type_echeance}
+          onFait={charger} onFermer={() => setOperation(null)} />
       )}
     </div>
   );

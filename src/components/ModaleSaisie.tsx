@@ -65,7 +65,7 @@ export function ModaleSaisie({
       style={{ background: 'rgba(0,0,0,0.6)' }} onClick={onFermer}
       role="dialog" aria-modal="true" aria-label={titre}>
       <div className="w-full max-w-md rounded-2xl p-4 space-y-3"
-        style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}
+        style={{ background: 'var(--c-bg)', border: '1px solid var(--c-border)' }}
         onClick={e => e.stopPropagation()}>
         <div>
           <h4 className="font-bold text-sm" style={{ color: 'var(--c-text)' }}>{titre}</h4>

@@ -1,0 +1,44 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- P5 (suite) — PEUPLER le parc, ENREGISTRER une opération, IMPORTER un CSV.
+--
+-- Sans ces gestes, le module ne faisait que constater : aucun équipement ne
+-- pouvait être ajouté, et aucun ne pouvait passer de « jamais contrôlé » à
+-- « à jour ». Il serait resté décoratif.
+--
+-- ── TROIS DÉFAUTS DE SCHÉMA, TROUVÉS EN EXÉCUTANT ────────────────────────
+-- 1. materiels.parachutiste_id était NOT NULL. La table était conçue pour du
+--    matériel PERSONNEL : ajouter centre_id ne suffisait pas, le parc du
+--    centre restait impossible à enregistrer. La contrainte
+--    materiels_un_proprietaire était elle-même inopérante — elle ne pouvait
+--    jamais être fausse. Colonne rendue nullable, contrainte réécrite en
+--    num_nonnulls(...) = 1 : un propriétaire, et un seul.
+--
+-- 2. maintenances.type_maintenance n'accepte que des CODES
+--    (pliage_secours, revision_aad…). J'écrivais des libellés libres : le
+--    déclencheur pliage → maintenance aurait échoué à CHAQUE pliage de
+--    secours, et le formulaire d'opération à chaque saisie. Contrainte
+--    étendue (revision_constructeur, remplacement_cartouche) et déclencheur
+--    corrigé.
+--
+-- 3. get_echeances_materiel renvoyait un libellé quand aucune opération
+--    n'existait, et un code sinon : l'écran affichait donc tantôt « Pliage
+--    secours », tantôt « pliage_secours ». Uniformisé sur les codes, traduits
+--    à l'affichage.
+--
+-- Aucun n'était visible à la lecture du code.
+--
+-- ── FONCTIONS ────────────────────────────────────────────────────────────
+-- ajouter_equipement / enregistrer_maintenance passent par des fonctions et
+-- non par des insertions directes : le centre doit pouvoir écrire sur le
+-- matériel PERSONNEL de ses licenciés (c'est lui qui contrôle sur le terrain),
+-- ce que les policies de materiels ne permettent pas — elles sont écrites pour
+-- le propriétaire. Chaque opération entre au journal de bord.
+--
+-- Déployées via l'outil de migration Supabase le 2026-09-02 :
+--   p5_saisie_equipement_et_maintenance,
+--   p5_materiels_parachutiste_id_nullable,
+--   p5_types_maintenance_codes.
+--
+-- Cycle vérifié de bout en bout sur un équipement jetable, supprimé ensuite :
+-- création d'un équipement de CENTRE, enregistrement d'une opération,
+-- échéance recalculée à 335 jours. Aucune trace laissée en base.

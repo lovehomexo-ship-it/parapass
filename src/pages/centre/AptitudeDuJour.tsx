@@ -212,7 +212,7 @@ function ModaleLevee({ centreId, ligne, motif, onFerme, onFait }: {
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
       style={{ background: 'rgba(0,0,0,0.6)' }} onClick={onFerme}>
       <div className="w-full max-w-md rounded-2xl p-4 space-y-3"
-        style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}
+        style={{ background: 'var(--c-bg)', border: '1px solid var(--c-border)' }}
         onClick={(e) => e.stopPropagation()}>
         <div>
           <h4 className="font-bold text-sm" style={{ color: 'var(--c-text)' }}>
