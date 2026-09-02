@@ -8,6 +8,7 @@ import {
   buildCardModel, generateShareCard, loadImage,
   type ShareFormat, type ShareToggles,
 } from '../lib/shareCard';
+import { LoaderParaPass } from './LoaderParaPass';
 
 interface Props {
   userId: string;
@@ -137,7 +138,9 @@ function ShareCardInner({ userId, prenom, centre, sautsDuJour = 0, nouveauBadge 
           {/* Aperçu */}
           <div className="rounded-2xl overflow-hidden flex items-center justify-center" style={{ background: '#001A4D', minHeight: 220 }}>
             {loadingData || (rendering && !previewUrl) ? (
-              <div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin my-16" />
+              // Génération de l'image : attente de plusieurs secondes, donc un
+              // vrai écran de chargement plutôt qu'un cercle anonyme.
+              <div className="my-8"><LoaderParaPass taille={130} message="Préparation de votre carte…" /></div>
             ) : dataError ? (
               <p className="text-sm text-red-300 py-16 px-4 text-center">{dataError}</p>
             ) : previewUrl ? (
