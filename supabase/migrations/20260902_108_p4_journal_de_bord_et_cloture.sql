@@ -1,0 +1,37 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- P4 — JOURNAL DE BORD ET CLÔTURE DE JOURNÉE
+--
+-- Objectif : qu'un directeur technique puisse répondre, six mois plus tard, à
+-- « que s'est-il passé ce jour-là, et qu'ai-je fait ? ».
+--
+-- journal_dz est en AJOUT SEUL : aucune policy UPDATE ni DELETE, plus un
+-- déclencheur qui refuse explicitement (message clair plutôt que silence RLS).
+-- Vérifié : modification ET suppression refusées, y compris depuis un contexte
+-- service. Un registre qu'on peut réécrire ne protège personne.
+--
+-- « texte » est FIGÉ à l'écriture : le libellé lisible ne doit pas changer si
+-- un nom, un seuil ou une règle évolue. Les données brutes restent dans
+-- « donnees » pour un usage ultérieur.
+--
+-- ALIMENTATION PAR DÉCLENCHEURS plutôt que par des appels ajoutés dans le code
+-- applicatif : une écriture faite par un autre chemin (import, script, futur
+-- module) est consignée quand même. Le registre ne dépend pas de la discipline
+-- de l'appelant. Branchés : dérogations (P2), publication de briefing,
+-- acquittements.
+--
+-- CLÔTURE : cloturer_journee fige la synthèse dans clotures_journee. Rappelée
+-- sur une date déjà clôturée, elle rend la synthèse FIGÉE sans la recalculer —
+-- c'est ce qui garantit que rouvrir la date affiche le même document.
+--
+-- La section « rotations » est volontairement absente : le manifest (P3) n'est
+-- pas construit. Le PDF le DIT, plutôt que de laisser croire qu'aucune rotation
+-- n'a eu lieu.
+--
+-- Fonctions déployées via l'outil de migration Supabase le 2026-09-02 :
+--   p4_journal_de_bord_dz, p4_alimentation_automatique_journal,
+--   p4_synthese_et_cloture_journee (+ correctif : la colonne du centre
+--   s'appelle numero_agrement_ffp, et non code_ffp ; ajout du DT de service).
+--
+-- Vérifié en session BigAir : journal alimenté seul (briefing + 3
+-- acquittements), clôture produisant une synthèse complète — DT « Florian
+-- PUYBAREAU », 4 présents, 6 sauts, 3 acquittements, 4 évènements.

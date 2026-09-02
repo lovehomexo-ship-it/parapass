@@ -12,7 +12,7 @@ import { sendMessage, useConversationMessages, getOrCreateConversation, useConve
 import type { Message } from '../lib/useMessages';
 import { PasseportCardView } from '../components/PasseportCardView';
 import { AddSautModal } from '../components/AddSautModal';
-import { useComplianceRules, licenceStatus, type ComplianceStatus } from '../lib/compliance';
+import { useComplianceRules, licenceStatus, getComplianceStatus, type ComplianceStatus } from '../lib/compliance';
 import { ComplianceBadge, ComplianceDot } from '../components/ComplianceBadge';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { formatDateTimeParis } from '../lib/datetime';
@@ -42,6 +42,7 @@ function planLabel(plan: string | null | undefined): string {
 }
 import { PresencesDZ } from './centre/PresencesDZ';
 import { AptitudeDuJour } from './centre/AptitudeDuJour';
+import { JournalDeBord } from './centre/JournalDeBord';
 import { VigilanceVoileDZ } from '../components/VigilanceVoileDZ';
 import { BriefingSection } from './centre/BriefingSection';
 import { BrevetsSection } from './centre/BrevetsSection';
@@ -377,7 +378,7 @@ function DashboardHome({
         .eq('statut', 'actif');
 
       const ids = (membresIds ?? []).map((m: { parachutiste_id: string }) => m.parachutiste_id);
-      const total = ids.length;
+      void ids; // conservés : d'autres blocs s'en servent
 
       // Use RPCs to avoid long in() lists that cause 503 on HEAD requests
       const [
@@ -394,11 +395,31 @@ function DashboardHome({
       const expMed = (expMedData as number) ?? 0;
       setAlerteExpires(expLic);
       setLicencesExpirees(expLic);
-      setLicencesValides(Math.max(0, total - expLic));
       setAlerteMedical(expMed);
       setCertifExpirant(expMed);
-      setCertifOk(Math.max(0, total - expMed));
       setSautsThisMonth((monthCountData as number) ?? 0);
+
+      // ── Conformité : SOURCE UNIQUE ────────────────────────────────────────
+      // Ce bloc calculait auparavant « total − expirés », ce qui comptait un
+      // document ABSENT comme valide, et s'appuyait sur son propre total (démos
+      // incluses) alors que le dénominateur les excluait : la jauge montait à
+      // 112 %. On passe par get_conformite_licencies, déjà utilisée par la liste
+      // et les filtres, et par getComplianceStatus, qui classe explicitement un
+      // document non renseigné en « inconnu » — donc NON conforme.
+      const { data: confData, error: confErr } = await supabase
+        .rpc('get_conformite_licencies', { p_centre_id: centre.id });
+      if (confErr) {
+        console.error('Conformité du centre — chargement échoué :', {
+          code: confErr.code, message: confErr.message, details: confErr.details, hint: confErr.hint,
+        });
+      } else {
+        const lignes = (confData ?? []) as Array<{
+          licence_expiration: string | null; certificat_expiration: string | null;
+        }>;
+        const conforme = (s: ComplianceStatus) => s === 'ok' || s === 'bientot';
+        setLicencesValides(lignes.filter(l => conforme(getComplianceStatus(l.licence_expiration))).length);
+        setCertifOk(lignes.filter(l => conforme(getComplianceStatus(l.certificat_expiration))).length);
+      }
 
       // Recent sauts via join to avoid long in() on GET
       if (ids.length > 0) {
@@ -3034,6 +3055,7 @@ export function CentreDashboardPage() {
     { key: 'briefing', label: 'Briefing du jour', icon: Megaphone },
     ...(activeModules.has('academy') ? [{ key: 'academy', label: 'Academy', icon: GraduationCap }] : []),
     { key: 'planning', label: 'Planning DZ', icon: Calendar },
+    { key: 'journal', label: 'Journal de bord', icon: BookCheck },
     { key: 'stats', label: 'Statistiques', icon: BarChart2 },
     { key: 'equipe', label: 'Mon équipe', icon: Shield },
     { key: 'centre', label: 'Mon centre', icon: Settings },
@@ -3396,6 +3418,9 @@ export function CentreDashboardPage() {
           )}
           {activeSection === 'tandem' && centreId && activeModules.has('tandem') && (
             <TandemSection centreId={centreId} />
+          )}
+          {activeSection === 'journal' && centreId && (
+            <JournalDeBord centreId={centreId} />
           )}
           {activeSection === 'modules' && centreId && (
             <ModulesSection centreId={centreId} onActiveChange={setActiveModules} />

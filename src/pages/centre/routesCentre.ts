@@ -28,6 +28,7 @@ export const URL_VERS_SECTION: Record<string, string> = {
   academie: 'academy',
   finances: 'finances',
   messages: 'messages',
+  journal: 'journal',
 };
 
 /** clé interne → segment d'URL (dérivée, pour ne jamais désynchroniser) */
@@ -53,6 +54,7 @@ export const LIBELLE_SECTION: Record<string, string> = {
   academy: 'Académie',
   finances: 'Finances',
   messages: 'Messages',
+  journal: 'Journal de bord',
 };
 
 /** Sous-onglets adressables, par section. Le premier est celui par défaut. */
