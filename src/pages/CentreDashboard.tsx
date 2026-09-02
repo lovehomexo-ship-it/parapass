@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
 import { MODULES, computeActiveModules } from '../data/modules';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  sectionDepuisUrl, urlDeSection, sousOngletValide, estIdentifiant, LIBELLE_SECTION,
+} from './centre/routesCentre';
 import { useAuth } from '../lib/auth';
 import { useTheme } from '../lib/ThemeContext';
 import { supabase } from '../lib/supabase';
@@ -2837,11 +2840,28 @@ export function CentreDashboardPage() {
   const [centre, setCentre] = useState<Centre | null>(null);
   const [centreId, setCentreId] = useState<string | undefined>(undefined);
   const [stats, setStats] = useState<DashStats>({ totalLicencies: 0, demandesAttente: 0, sautsAujourdhui: 0, alertes: 0 });
-  const [activeSection, setActiveSection] = useState<string>('dashboard');
+  // ── Navigation pilotée par l'URL (P1) ──────────────────────────────────────
+  // activeSection n'est plus un état local : c'est une LECTURE de l'URL. Chaque
+  // écran devient donc adressable, le retour navigateur fonctionne, et deux
+  // onglets peuvent afficher deux écrans différents.
+  const { section: segmentUrl, sousOnglet: segmentSousOnglet } = useParams();
+  const [searchParams] = useSearchParams();
+  const activeSection = sectionDepuisUrl(segmentUrl);
+  const modeKiosque = searchParams.get('kiosque') === '1';
+
+  // Les enfants continuent d'appeler onNavigate('validations') : on traduit ici.
+  const setActiveSection = useCallback((s: string, sousOnglet?: string) => {
+    navigate(urlDeSection(s, sousOnglet));
+  }, [navigate]);
+
   // Sous-onglets : Messages = la communication, Mon équipe = les gens et leur encadrement
-  const [messagesTab, setMessagesTab] = useState<'conversations' | 'relances'>('conversations');
-  const [equipeTab, setEquipeTab] = useState<'encadrement' | 'equipe'>('equipe');
-  const [academyTab, setAcademyTab] = useState<'quiz' | 'pac' | 'brevets' | 'documents'>('quiz');
+  // Ils sont lus dans l'URL (/centre/equipe/encadrement) et donc conservés au rechargement.
+  const messagesTab = (sousOngletValide('messages', segmentSousOnglet) ?? 'conversations') as 'conversations' | 'relances';
+  const equipeTab = (sousOngletValide('equipe', segmentSousOnglet) ?? 'equipe') as 'encadrement' | 'equipe';
+  const academyTab = (sousOngletValide('academy', segmentSousOnglet) ?? 'quiz') as 'quiz' | 'pac' | 'brevets' | 'documents';
+  const setMessagesTab = useCallback((t: string) => navigate(urlDeSection('messages', t)), [navigate]);
+  const setEquipeTab = useCallback((t: string) => navigate(urlDeSection('equipe', t)), [navigate]);
+  const setAcademyTab = useCallback((t: string) => navigate(urlDeSection('academy', t)), [navigate]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notifCount, setNotifCount] = useState(0);
@@ -2849,6 +2869,49 @@ export function CentreDashboardPage() {
   const [activeModules, setActiveModules] = useState<Set<string>>(new Set());
   const [drawerLicencie, setDrawerLicencie] = useState<LicencieSummary | null>(null);
   const [drawerInitialTab, setDrawerInitialTab] = useState<'carte' | 'sauts' | 'messages' | 'actions'>('carte');
+  // Le tiroir d'une fiche licencié a sa propre URL (/centre/licencies/<id>) :
+  // il se ferme donc par le bouton retour du navigateur.
+  const idLicencieUrl = estIdentifiant(segmentSousOnglet) ? segmentSousOnglet : undefined;
+
+  // L'URL fait autorité sur le tiroir : ouverture par lien direct (partage,
+  // favori) et fermeture par le bouton retour du navigateur.
+  useEffect(() => {
+    if (!idLicencieUrl) { setDrawerLicencie(null); return; }
+    let annule = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, nom, prenom, email, numero_licence, photo_profil_url, role')
+        .eq('id', idLicencieUrl).maybeSingle();
+      if (error) {
+        console.error('Fiche licencié — chargement échoué :', {
+          code: error.code, message: error.message, details: error.details, hint: error.hint,
+        });
+        return;
+      }
+      if (!data || annule) return;
+      const { data: aff } = await supabase
+        .from('licencies_centres').select('statut, date_adhesion')
+        .eq('parachutiste_id', idLicencieUrl).eq('centre_id', centreId ?? '').maybeSingle();
+      if (annule) return;
+      setDrawerLicencie({
+        id: data.id, nom: data.nom, prenom: data.prenom, email: data.email,
+        numero_licence: data.numero_licence, photo_profil_url: data.photo_profil_url,
+        role: data.role,
+        statut_adhesion: (aff?.statut ?? 'actif') as 'en_attente' | 'actif' | 'inactif',
+        date_adhesion: aff?.date_adhesion ?? null,
+      });
+    })();
+    return () => { annule = true; };
+    // drawerLicencie volontairement absent : il est PILOTÉ par cet effet.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idLicencieUrl, centreId]);
+
+  // Titre de l'onglet du navigateur, par écran (favoris et historique lisibles).
+  useEffect(() => {
+    const libelle = LIBELLE_SECTION[activeSection] ?? 'Centre';
+    document.title = centre?.nom ? `${libelle} — ${centre.nom} · ParaPass` : `${libelle} — ParaPass`;
+  }, [activeSection, centre?.nom]);
   const { totalUnread: msgUnread } = useConversations(profile?.id);
 
   useEffect(() => {
@@ -3110,6 +3173,10 @@ export function CentreDashboardPage() {
 
   return (
     <div className="min-h-screen flex" style={{ background: 'var(--c-bg)' }}>
+      {/* Mode kiosque (?kiosque=1) : écran du hangar, sans aucune navigation.
+          On masque la barre latérale et on laisse le contenu occuper l'écran. */}
+      {!modeKiosque && (
+      <>
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex flex-col fixed top-0 left-0 h-full z-30" style={{ width: 220, background: 'var(--c-nav)', borderRight: '1px solid var(--c-border)' }}>
         <SidebarContent />
@@ -3130,11 +3197,13 @@ export function CentreDashboardPage() {
           </aside>
         </>
       )}
+      </>
+      )}
 
-      {/* Main content */}
-      <main className="flex-1 min-w-0 min-h-screen lg:ml-[220px]">
+      {/* Main content — sans marge de barre latérale en mode kiosque */}
+      <main className={`flex-1 min-w-0 min-h-screen ${modeKiosque ? '' : 'lg:ml-[220px]'}`}>
         {/* Top bar (mobile) */}
-        <div className="lg:hidden flex items-center justify-between px-4 py-3 sticky top-0 z-20" style={{ background: 'var(--c-nav)', borderBottom: '1px solid var(--c-border)' }}>
+        <div className={`${modeKiosque ? 'hidden' : 'lg:hidden'} flex items-center justify-between px-4 py-3 sticky top-0 z-20`} style={{ background: 'var(--c-nav)', borderBottom: '1px solid var(--c-border)' }}>
           <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-xl" style={{ color: 'var(--c-muted)' }}>
             <Menu className="w-5 h-5" />
           </button>
@@ -3157,16 +3226,40 @@ export function CentreDashboardPage() {
         </div>
 
         <div className="p-6">
+          {/* Fil d'Ariane — situe l'écran et ramène à la Journée en un clic.
+              Masqué en mode kiosque (écran de hangar, sans navigation). */}
+          {!modeKiosque && (
+            <nav aria-label="Fil d'Ariane" className="flex items-center gap-1.5 text-xs mb-4">
+              <button onClick={() => setActiveSection('dashboard')}
+                className="hover:underline" style={{ color: 'var(--c-muted)', minHeight: 24 }}>
+                {centre?.nom ?? 'Centre'}
+              </button>
+              {activeSection !== 'dashboard' && (
+                <>
+                  <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--c-dim)' }} aria-hidden />
+                  <span className="font-semibold" style={{ color: 'var(--c-text)' }}>
+                    {LIBELLE_SECTION[activeSection] ?? activeSection}
+                  </span>
+                </>
+              )}
+              {drawerLicencie && (
+                <>
+                  <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--c-dim)' }} aria-hidden />
+                  <span className="font-semibold" style={{ color: 'var(--c-text)' }}>
+                    {drawerLicencie.prenom} {drawerLicencie.nom}
+                  </span>
+                </>
+              )}
+            </nav>
+          )}
           {activeSection === 'dashboard' && (
             <>
               {/* Dashboard réagencé : En-tête → Aujourd'hui → À traiter → Pilotage → Météo.
                   Les blocs opérationnels sont passés en slots pour respecter l'ordre. */}
               {(() => {
-                const goRecap = (section: string, tab?: string) => {
-                  if (section === 'equipe' && tab) setEquipeTab(tab as 'encadrement' | 'moniteurs' | 'staff');
-                  if (section === 'messages' && tab) setMessagesTab(tab as 'conversations' | 'relances');
-                  setActiveSection(section);
-                };
+                // Une seule navigation : la section ET le sous-onglet tiennent
+                // désormais dans l'URL (/centre/equipe/encadrement).
+                const goRecap = (section: string, tab?: string) => setActiveSection(section, tab);
                 return (
                   <DashboardHome
                     centre={centre}
@@ -3199,8 +3292,8 @@ export function CentreDashboardPage() {
             <ErrorBoundary>
               <LicenciesSection
                 centreId={centreId}
-                onOpenDrawer={(l) => { setDrawerInitialTab('carte'); setDrawerLicencie(l); }}
-                onOpenMessages={(l) => { setDrawerInitialTab('messages'); setDrawerLicencie(l); }}
+                onOpenDrawer={(l) => { setDrawerInitialTab('carte'); setDrawerLicencie(l); navigate(`/centre/licencies/${l.id}`); }}
+                onOpenMessages={(l) => { setDrawerInitialTab('messages'); setDrawerLicencie(l); navigate(`/centre/licencies/${l.id}`); }}
               />
             </ErrorBoundary>
           )}
@@ -3319,7 +3412,7 @@ export function CentreDashboardPage() {
         <LicencieDrawer
           licencie={drawerLicencie}
           centreId={centreId}
-          onClose={() => setDrawerLicencie(null)}
+          onClose={() => { setDrawerLicencie(null); navigate('/centre/licencies'); }}
           initialTab={drawerInitialTab}
         />
       )}

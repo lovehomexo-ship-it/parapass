@@ -437,7 +437,7 @@ export function SacPage() {
 
   // ── Destination du bouton retour selon le rôle ──
   const dashboardPath = currentUser
-    ? (currentUser.role === 'admin_centre' ? '/centre/dashboard' : '/dashboard')
+    ? (currentUser.role === 'admin_centre' ? '/centre/journee' : '/dashboard')
     : '/';
 
   // ── Header commun ──

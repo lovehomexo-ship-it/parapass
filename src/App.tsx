@@ -188,7 +188,15 @@ function App() {
                 <Route path="/tampon" element={<ProtectedRoute roles={['admin']}><TamponAdminPage /></ProtectedRoute>} />
                 <Route path="/profil" element={<ProtectedRoute roles={['parachutiste', 'moniteur', 'moniteur_delegue', 'admin']}><ProfilPage /></ProtectedRoute>} />
                 <Route path="/parametres" element={<ProtectedRoute roles={['parachutiste', 'moniteur', 'moniteur_delegue']}><ParametresPage /></ProtectedRoute>} />
-                <Route path="/centre/dashboard" element={<ProtectedRoute roles={['admin_centre']}><ErrorBoundary><CentreDashboardPage /></ErrorBoundary></ProtectedRoute>} />
+                {/* Espace Centre : chaque écran a désormais son URL (P1).
+                    L'ancienne adresse unique reste valable et redirige, pour ne
+                    casser aucun favori ni lien déjà partagé. */}
+                <Route path="/centre/dashboard" element={<Navigate to="/centre/journee" replace />} />
+                <Route path="/centre" element={<Navigate to="/centre/journee" replace />} />
+                <Route path="/centre/:section" element={<ProtectedRoute roles={['admin_centre']}><ErrorBoundary><CentreDashboardPage /></ErrorBoundary></ProtectedRoute>} />
+                {/* Sous-onglet (/centre/equipe/encadrement) ou fiche licencié
+                    (/centre/licencies/<id>) : même page, l'URL est lue dedans. */}
+                <Route path="/centre/:section/:sousOnglet" element={<ProtectedRoute roles={['admin_centre']}><ErrorBoundary><CentreDashboardPage /></ErrorBoundary></ProtectedRoute>} />
                 <Route path="/parapass/:username" element={<ProfilPublicPage />} />
                 <Route path="/parapass/id/:id" element={<ProfilPublicPage />} />
                 <Route path="/inscription-centre" element={<InscriptionCentrePage />} />

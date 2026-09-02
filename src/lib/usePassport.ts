@@ -21,7 +21,8 @@ export function usePassport(userId: string | undefined) {
       supabase.from('licences').select('*').eq('parachutiste_id', userId).order('created_at', { ascending: false }),
       supabase.from('brevets').select('*').eq('parachutiste_id', userId).order('date_obtention', { ascending: false }),
       supabase.from('certificats_medicaux').select('*').eq('parachutiste_id', userId).order('date_expiration', { ascending: false }),
-      supabase.from('centres_licencies').select('*, centre:centres(*)').eq('parachutiste_id', userId),
+      // Table unique d'affiliation depuis la fusion : c'est celle que lit aussi la DZ.
+      supabase.from('licencies_centres').select('*, centre:centres(*)').eq('parachutiste_id', userId),
       supabase.from('qualifications').select('*').eq('parachutiste_id', userId).order('date_obtention', { ascending: false }),
       supabase.from('modules_brevets').select('*').eq('parachutiste_id', userId),
       supabase.from('contacts_urgence').select('*').eq('parachutiste_id', userId).order('created_at', { ascending: true }),

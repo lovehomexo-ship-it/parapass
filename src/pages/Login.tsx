@@ -16,7 +16,7 @@ const TEST_ACCOUNTS = [
 const TEST_PASS = 'Test1234!';
 
 function getRolePath(role: string) {
-  if (role === 'admin_centre') return '/centre/dashboard';
+  if (role === 'admin_centre') return '/centre/journee';
   if (role === 'admin') return '/admin';
   // moniteur and parachutiste both use the unified dashboard
   return '/dashboard';

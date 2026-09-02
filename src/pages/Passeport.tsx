@@ -935,20 +935,40 @@ function CentresTab({ centresLicencies, userId, onRefresh, saving, setSaving }: 
   const save = async () => {
     if (!userId) return;
     setSaving(true);
-    await supabase.from('centres_licencies').upsert({
-      parachutiste_id: userId,
-      centre_id: form.centre_id,
-      date_adhesion: form.date_adhesion,
-      statut: form.statut,
-      numero_adhesion: form.numero_adhesion || null,
-    }, { onConflict: 'parachutiste_id,centre_id' });
+    // Passe par une RPC : la ligne d'affiliation est PARTAGÉE avec la DZ (elle
+    // porte carnet_*, notes, moniteur_assigne_id). La fonction n'écrit que les
+    // trois champs qui relèvent du licencié, et aucune policy UPDATE ne
+    // l'autoriserait à écrire directement sur cette table.
+    const { error } = await supabase.rpc('upsert_adhesion_licencie', {
+      p_centre_id: form.centre_id,
+      p_date_adhesion: form.date_adhesion || null,
+      p_statut: form.statut,
+      p_numero_adhesion: form.numero_adhesion || null,
+    });
+    if (error) {
+      console.error('Adhésion centre — échec :', {
+        code: error.code, message: error.message, details: error.details, hint: error.hint,
+      });
+      alert("Impossible d'enregistrer ce centre : " + error.message);
+      setSaving(false);
+      return;
+    }
     setSaving(false);
     setShowForm(false);
     onRefresh();
   };
 
-  const remove = async (id: string) => {
-    await supabase.from('centres_licencies').delete().eq('id', id);
+  // « Quitter » DÉSACTIVE l'affiliation au lieu de la supprimer : la ligne porte
+  // la validation de carnet du centre, qu'une suppression détruirait.
+  const remove = async (centreId: string) => {
+    const { error } = await supabase.rpc('quitter_centre_licencie', { p_centre_id: centreId });
+    if (error) {
+      console.error('Quitter le centre — échec :', {
+        code: error.code, message: error.message, details: error.details, hint: error.hint,
+      });
+      alert('Impossible de quitter ce centre : ' + error.message);
+      return;
+    }
     onRefresh();
   };
 
@@ -1008,7 +1028,8 @@ function CentresTab({ centresLicencies, userId, onRefresh, saving, setSaving }: 
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cl.statut === 'actif' ? 'bg-green-500/30 text-green-300' : 'bg-white/10 text-white/50'}`}>
               {cl.statut}
             </span>
-            <button onClick={() => remove(cl.id)} className="p-1 hover:text-red-400" style={{ color: 'rgba(255,255,255,0.5)' }}><Trash2 className="w-4 h-4" /></button>
+            <button onClick={() => remove(cl.centre_id)} title="Quitter ce centre"
+              className="p-1 hover:text-red-400" style={{ color: 'rgba(255,255,255,0.5)' }}><Trash2 className="w-4 h-4" /></button>
           </div>
         </div>
       ))}

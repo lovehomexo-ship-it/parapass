@@ -5,7 +5,7 @@ import { Lock } from 'lucide-react';
 // Only these routes are accessible in parachutiste demo
 const ALLOWED_PARA = ['/dashboard', '/passeport'];
 // Only these routes are accessible in centre demo
-const ALLOWED_CENTRE = ['/centre/dashboard'];
+const ALLOWED_CENTRE = ['/centre']; // couvre /centre/journee, /centre/licencies/... (routes P1)
 
 function isAllowed(pathname: string, allowed: string[]): boolean {
   return allowed.some((r) => pathname === r || pathname.startsWith(r + '/'));
