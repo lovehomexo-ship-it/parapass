@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { ErrorBoundary } from './ErrorBoundary';
 import { useMeteoAltitude, indexHeureCourante, kmhEnKt } from '../lib/meteoAltitude';
 import { useCurrencyRules } from '../lib/currency';
+import { evaluerTousPublics, type SeuilsPublic, type MesuresMeteo, type Feu } from '../lib/meteoPublics';
 import {
   verdictMeteo, computeReadiness, DEFAULT_METEO_SEUILS,
   type MeteoSeuils, type MeteoLevel, type PresentDecision,
@@ -16,11 +17,18 @@ const LEVEL_UI: Record<MeteoLevel, { Icon: ComponentType<{ className?: string }>
   rouge:  { Icon: XOctagon,      label: 'Défavorable', color: '#EF4444', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.35)' },
 };
 
+// Couleurs des feux du récapitulatif par public — mêmes teintes que la grille
+// « Qui peut sauter ? », pour que l'œil fasse le lien immédiatement.
+const FEU_COULEUR: Record<Feu, string> = {
+  vert: '#34D399', orange: '#FB923C', rouge: '#F87171',
+};
+
 function DecisionInner({ centreId }: { centreId: string }) {
   const { payload, loading: meteoLoading } = useMeteoAltitude(centreId);
   const { rules: currencyRules } = useCurrencyRules();
   const [seuils, setSeuils] = useState<MeteoSeuils>(DEFAULT_METEO_SEUILS);
   const [presents, setPresents] = useState<PresentDecision[]>([]);
+  const [seuilsPublics, setSeuilsPublics] = useState<SeuilsPublic[]>([]);
 
   useEffect(() => {
     if (!centreId) return;
@@ -38,6 +46,16 @@ function DecisionInner({ centreId }: { centreId: string }) {
   // conforme, et la tuile annonçait « aucun blocage détecté » pendant que
   // l'aptitude listait trois blocages sur la même personne.
   const [aptitude, setAptitude] = useState<{ nom: string; prenom: string; statut: string; nb_blocages: number; motifs: Array<{ libelle: string; severite: string; levee: boolean }> }[] | null>(null);
+
+  useEffect(() => {
+    if (!centreId) return;
+    supabase.from('meteo_seuils_public').select('*').eq('centre_id', centreId)
+      .then(({ data, error }) => {
+        if (error) { console.error('Seuils par public — chargement échoué :', {
+          code: error.code, message: error.message, details: error.details, hint: error.hint }); return; }
+        setSeuilsPublics((data ?? []) as SeuilsPublic[]);
+      });
+  }, [centreId]);
 
   useEffect(() => {
     if (!centreId) return;
@@ -75,6 +93,25 @@ function DecisionInner({ centreId }: { centreId: string }) {
   })();
 
   const verdict = meteoCourante ? verdictMeteo(meteoCourante, seuils) : null;
+
+  // ── Récapitulatif par public — MÊME logique que la grille « Qui peut sauter ? »
+  // (src/lib/meteoPublics.ts). Deux affichages, un seul calcul : la tuile ne
+  // peut pas contredire la grille située plus bas sur la même page.
+  const iH = payload ? indexHeureCourante(payload.times) : 0;
+  const niveauLargage = payload?.niveaux
+    ?.slice().sort((a, b) => Math.abs(a.altM - 4000) - Math.abs(b.altM - 4000))[0];
+  const mesuresPublics: MesuresMeteo = {
+    ventKt: payload ? kmhEnKt(payload.sol.speed[iH] ?? 0) : 0,
+    rafalesKt: payload ? kmhEnKt(payload.sol.gusts[iH] ?? 0) : 0,
+    ventAltitudeKt: niveauLargage ? kmhEnKt(niveauLargage.speed[iH] ?? 0) : null,
+    plafondM: (payload?.nuages.bas[iH] ?? 0) >= 70 ? 900
+            : (payload?.nuages.bas[iH] ?? 0) >= 40 ? 1500 : null,
+    visibiliteKm: null,
+  };
+  const verdictsPublics = payload ? evaluerTousPublics(seuilsPublics, mesuresPublics) : [];
+  const nbPraticables = verdictsPublics.filter(v => v.feu === 'vert').length;
+  const pireFeu: Feu = verdictsPublics.some(v => v.feu === 'rouge') ? 'rouge'
+                     : verdictsPublics.some(v => v.feu === 'orange') ? 'orange' : 'vert';
   // Source unique quand le moteur d'aptitude répond ; repli sur l'ancien calcul
   // seulement s'il est indisponible — mieux vaut un chiffre ancien qu'aucun.
   const readinessLocal = computeReadiness(presents, currencyRules);
@@ -105,10 +142,35 @@ function DecisionInner({ centreId }: { centreId: string }) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {/* Verdict météo */}
         <div className="rounded-xl p-3 sm:col-span-1" style={{ background: ui?.bg ?? 'var(--c-hover)', border: `1px solid ${ui?.border ?? 'var(--c-border-s)'}` }}>
-          <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Météo</div>
+          <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Météo par public</div>
           {meteoLoading && !verdict ? (
             <div className="text-sm mt-1" style={{ color: 'var(--c-muted)' }}>Chargement…</div>
+          ) : verdictsPublics.length > 0 ? (
+            <>
+              {/* Récapitulatif de « Qui peut sauter ? » : le DT voit ici la même
+                  chose que dans la grille, sans avoir à défiler. Un seul feu ne
+                  pouvait pas dire qu'un vent ferme les élèves et laisse partir
+                  les confirmés. */}
+              <div className="text-base font-extrabold mt-0.5 flex items-center gap-1.5"
+                style={{ color: FEU_COULEUR[pireFeu] }}>
+                {nbPraticables}/{verdictsPublics.length} praticable{nbPraticables > 1 ? 's' : ''}
+              </div>
+              <ul className="mt-1 space-y-0.5">
+                {verdictsPublics.map(v => (
+                  <li key={v.public_cible} className="flex items-baseline gap-1.5 text-[11px]">
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                      style={{ background: FEU_COULEUR[v.feu] }} aria-hidden />
+                    <span className="flex-1 min-w-0 truncate" style={{ color: 'var(--c-text2)' }}>{v.libelle}</span>
+                    {v.declencheur && (
+                      <span className="flex-shrink-0" style={{ color: FEU_COULEUR[v.feu] }}>{v.declencheur}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
           ) : verdict && ui ? (
+            // Repli sur l'ancien feu unique tant qu'aucun seuil par public n'est
+            // paramétré pour ce centre.
             <>
               <div className="text-base font-extrabold mt-0.5 flex items-center gap-1.5" style={{ color: ui.color }}>
                 <ui.Icon className="w-4 h-4" /> {ui.label}
