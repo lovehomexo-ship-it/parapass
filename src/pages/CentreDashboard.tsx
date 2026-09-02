@@ -43,6 +43,7 @@ function planLabel(plan: string | null | undefined): string {
 import { PresencesDZ } from './centre/PresencesDZ';
 import { AptitudeDuJour } from './centre/AptitudeDuJour';
 import { JournalDeBord } from './centre/JournalDeBord';
+import { GrilleMeteoDZ } from '../components/GrilleMeteoDZ';
 import { VigilanceVoileDZ } from '../components/VigilanceVoileDZ';
 import { BriefingSection } from './centre/BriefingSection';
 import { BrevetsSection } from './centre/BrevetsSection';
@@ -3323,6 +3324,10 @@ export function CentreDashboardPage() {
                 <div className="mt-6">
                   <DemoJourneeDZ centreId={centreId} onDone={fetchCentreData} />
                 </div>
+              )}
+              {/* P7 — grille par public : la question du DT, « qui peut sauter ? ». */}
+              {centreId && (
+                <div className="mt-6"><GrilleMeteoDZ centreId={centreId} /></div>
               )}
               {/* Météo — toujours en dernier (prévision indicative) */}
               {centreId && (
