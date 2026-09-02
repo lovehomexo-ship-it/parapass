@@ -46,7 +46,8 @@ export function BriefingSuiviDuJour({ centreId }: { centreId: string }) {
   const load = useCallback(async () => {
     const today = new Date().toISOString().substring(0, 10);
     const { data: b, error } = await supabase
-      .from('dz_briefings').select('*').eq('dz_id', centreId).eq('date_briefing', today).maybeSingle();
+      .from('dz_briefings').select('*').eq('dz_id', centreId).eq('date_briefing', today)
+      .order('revision', { ascending: false }).limit(1).maybeSingle();
     if (error) { console.error('Chargement briefing du jour échoué :', error); setLoading(false); return; }
     setBriefing((b as DzBriefing | null) ?? null);
     const [m, a] = await Promise.all([

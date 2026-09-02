@@ -868,7 +868,8 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
     (async () => {
       const today = new Date().toISOString().substring(0, 10);
       const { data: brief, error: bErr } = await supabase
-        .from('dz_briefings').select('id, published_at').eq('dz_id', centreId).eq('date_briefing', today).maybeSingle();
+        .from('dz_briefings').select('id, published_at').eq('dz_id', centreId).eq('date_briefing', today)
+        .order('revision', { ascending: false }).limit(1).maybeSingle();
       if (bErr) { console.error('Chargement briefing du jour échoué :', bErr); return; }
       if (!brief) { setBriefingDuJourId(null); return; }
       setBriefingDuJourId(brief.id);

@@ -210,7 +210,12 @@ export function useBriefingDuJour(dzId: string | undefined) {
     try {
       const [{ data: s, error: se }, { data: b, error: be }] = await Promise.all([
         supabase.from('dz_settings').select('*').eq('dz_id', dzId).maybeSingle(),
-        supabase.from('dz_briefings').select('*').eq('dz_id', dzId).eq('date_briefing', today).maybeSingle(),
+        // Depuis P8, un jour peut porter PLUSIEURS révisions : maybeSingle()
+        // échouerait sur « multiple rows ». On prend la révision COURANTE, la
+        // plus élevée — c'est elle qui fait foi, et c'est elle qu'il faut
+        // acquitter.
+        supabase.from('dz_briefings').select('*').eq('dz_id', dzId).eq('date_briefing', today)
+          .order('revision', { ascending: false }).limit(1).maybeSingle(),
       ]);
       if (se || be) throw se ?? be;
 

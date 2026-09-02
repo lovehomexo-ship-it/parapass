@@ -150,7 +150,8 @@ export function usePresencesDZ(dzId: string | undefined) {
       userIds.length ? supabase.from('brevets').select('parachutiste_id, type_brevet, date_obtention')
         .in('parachutiste_id', userIds).order('date_obtention', { ascending: false }) : Promise.resolve({ data: [], error: null }),
       materielIds.length ? supabase.from('materiels').select('id, marque, modele, taille_voile_ft2').in('id', materielIds) : Promise.resolve({ data: [], error: null }),
-      supabase.from('dz_briefings').select('id, published_at').eq('dz_id', dzId).eq('date_briefing', today()).maybeSingle(),
+      supabase.from('dz_briefings').select('id, published_at').eq('dz_id', dzId).eq('date_briefing', today())
+        .order('revision', { ascending: false }).limit(1).maybeSingle(),
     ]);
     if (brevetsRes.error) console.error('Chargement brevets échoué :', brevetsRes.error);
     if (materielsRes.error) console.error('Chargement matériels échoué :', materielsRes.error);
