@@ -1,0 +1,34 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- P8 — BRIEFING REÇU, pas seulement publié.
+--
+-- 1) CONTENU OPÉRATIONNEL du jour ajouté à dz_briefings : aéronef, pilote,
+--    altitude de largage, ordre de sortie, séparation, activités particulières,
+--    fréquence radio, consigne de poser hors zone, point de rassemblement,
+--    DT de service.
+--
+-- 2) RÉVISIONS. Un briefing publié ne se modifie plus : toute modification crée
+--    une NOUVELLE ligne (revision + 1, remplace_id vers la précédente). Les
+--    acquittements restent attachés à LEUR version — sinon un DT croirait que
+--    tout le monde a lu un texte publié après leur lecture.
+--    Même philosophie que le journal de bord (P4) : on n'écrase pas l'histoire.
+--
+--    ⚠️ La contrainte dz_briefings_dz_date_unique imposait UN briefing par jour
+--    et rendait donc toute révision impossible (violation de clé). Remplacée par
+--    (dz_id, date_briefing, revision). Défaut trouvé en essayant réellement de
+--    réviser un briefing, pas en relisant le code.
+--
+-- 3) get_non_acquittes : qui, parmi les PRÉSENTS, n'a pas acquitté la révision
+--    COURANTE — en distinguant ceux qui ont lu une version antérieure. La
+--    relance n'est pas la même : « lisez le briefing » ≠ « relisez la mise à
+--    jour ».
+--
+-- 4) get_aptitude_du_jour trie désormais par revision desc : un acquittement
+--    sur une version antérieure ne vaut plus pour la règle de vigilance.
+--
+-- Fonctions déployées via l'outil de migration Supabase le 2026-09-02 :
+--   p8_briefing_revisions_et_contenu_operationnel, p8_unicite_par_revision.
+--
+-- Vérifié en session BigAir, après création d'une révision 2 :
+--   « Briefing reçu par 0 / 4 · révision 2 »
+--   David DÉMO (jamais acquitté) ; Alice, Chloé, Bruno « version antérieure »
+--   La révision 1 conserve ses 3 acquittements.

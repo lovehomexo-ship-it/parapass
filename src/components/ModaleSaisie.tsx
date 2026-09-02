@@ -74,6 +74,8 @@ export function ModaleSaisie({
           )}
         </div>
 
+        {/* Un label vide signale une simple CONFIRMATION : pas de champ à saisir. */}
+        {label !== '' && (
         <label className="block text-xs font-semibold" style={{ color: 'var(--c-muted)' }}>
           {label}{obligatoire && ' *'}
           {multiligne ? (
@@ -89,6 +91,7 @@ export function ModaleSaisie({
               className="mt-1 w-full rounded-xl px-3 text-sm" style={styleChamp} />
           )}
         </label>
+        )}
 
         <div className="flex gap-2 justify-end">
           <button onClick={onFermer} className="px-4 rounded-xl text-sm font-semibold"

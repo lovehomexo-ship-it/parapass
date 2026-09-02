@@ -9,6 +9,7 @@ import {
 import { Upload, Megaphone, MapPin, Route, Shapes, Ban, Trash2, Undo2, AlertTriangle, Plus, Pencil, Wind as WindIcon, ExternalLink, CheckCircle } from 'lucide-react';
 import { BriefingSuiviDuJour, BriefingArchive } from './BriefingSuivi';
 import { useMeteoAltitude, indexHeureCourante, kmhEnKt } from '../../lib/meteoAltitude';
+import { useDialogues } from '../../components/useDialogues';
 
 type EditTool = 'aucun' | 'trace' | 'lz' | 'zone_evolution' | 'sock' | 'obstacle' | 'nofly';
 
@@ -47,6 +48,8 @@ export function BriefingSection({ centreId }: { centreId: string }) {
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Remplace window.prompt/confirm, bloqués en PWA installée (P8).
+  const { demanderTexte, demanderConfirmation, dialogue } = useDialogues();
   const [okMsg, setOkMsg] = useState<string | null>(null);
   const [ongletActif, setOngletActif] = useState<'reglage' | 'suivi' | 'archive'>('reglage');
   const fileRef = useRef<HTMLInputElement>(null);
@@ -249,7 +252,10 @@ export function BriefingSection({ centreId }: { centreId: string }) {
     if (tool === 'zone_evolution' && draftCircuit) {
       setDraftCircuit({ ...draftCircuit, zone_evolution: pendingPolygon });
     } else if (tool === 'obstacle' || tool === 'nofly') {
-      const nom = window.prompt(tool === 'obstacle' ? 'Nom de l\'obstacle (ex : étang)' : 'Nom de la zone (ex : base militaire — survol interdit)');
+      // window.prompt est bloqué en PWA installée : passage par une modale (P8).
+      const nom = await demanderTexte(
+        tool === 'obstacle' ? "Nom de l'obstacle" : 'Nom de la zone',
+        tool === 'obstacle' ? 'ex : étang' : 'ex : base militaire — survol interdit');
       if (nom) {
         const zone: ZonePolygone = { nom, points: pendingPolygon };
         const next = tool === 'obstacle'
@@ -277,7 +283,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
   };
 
   const handleNewCircuit = async () => {
-    const nom = window.prompt('Nom du nouveau circuit', `Circuit ${circuits.length + 1}`);
+    const nom = await demanderTexte('Nom du nouveau circuit', '', `Circuit ${circuits.length + 1}`);
     if (!nom) return;
     setError(null);
     const err = await saveCircuit({ dz_id: centreId, nom, sens: 'main_gauche', trace: [], altitude_debut_m: 300, actif: true });
@@ -287,7 +293,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
 
   const handleRename = async () => {
     if (!draftCircuit) return;
-    const nom = window.prompt('Nouveau nom du circuit', draftCircuit.nom);
+    const nom = await demanderTexte('Nouveau nom du circuit', '', draftCircuit.nom);
     if (!nom) return;
     setDraftCircuit({ ...draftCircuit, nom });
   };
@@ -301,7 +307,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
     if (!circuitPublie) { setError('Circuit introuvable — resélectionnez le circuit à publier.'); return; }
     // Confirmation : le DT valide en connaissance de cause ce qui part réellement
     const recap = `Vous publiez le circuit « ${circuitPublie.nom} », vent ${ventDir}°${ventVitesse.trim() ? ` · ${ventVitesse} kt` : ''}${consignes.trim() ? ', avec consignes' : ', sans consigne'}. Confirmer ?`;
-    if (!window.confirm(recap)) return;
+    if (!(await demanderConfirmation('Publier le briefing', recap))) return;
     setSaving(true);
     setError(null);
     setOkMsg(null);
@@ -316,7 +322,12 @@ export function BriefingSection({ centreId }: { centreId: string }) {
         vent_vitesse_kt: ventVitesse.trim() === '' ? null : parseFloat(ventVitesse.replace(',', '.')),
         consignes: consignes.trim() || null,
         published_at: new Date().toISOString(),
-      }, { onConflict: 'dz_id,date_briefing' })
+        // La publication du jour vise la révision 1. Une modification APRÈS
+        // publication ne repasse plus ici : elle crée une révision 2 via
+        // publier_revision_briefing, pour ne pas effacer les acquittements
+        // déjà recueillis sur la version précédente (P8).
+        revision: 1,
+      }, { onConflict: 'dz_id,date_briefing,revision' })
       .select('id');
     setSaving(false);
     if (error || !written || written.length === 0) {
@@ -561,7 +572,9 @@ export function BriefingSection({ centreId }: { centreId: string }) {
                 Circuit : {c.nom}
                 <button
                   onClick={async () => {
-                    if (!window.confirm(`Supprimer le circuit « ${c.nom} » et son tracé (${c.trace.length} points) ? Cette action est définitive.`)) return;
+                    if (!(await demanderConfirmation(
+                      `Supprimer le circuit « ${c.nom} » ?`,
+                      `Son tracé (${c.trace.length} points) sera perdu. Cette action est définitive.`))) return;
                     const err = await removeCircuit(c.id);
                     if (err) { setError(err); return; }
                     if (editCircuitId === c.id) setEditCircuitId(null);
@@ -669,6 +682,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
         </div>
       </div>
       )}
+      {dialogue}
     </div>
   );
 }

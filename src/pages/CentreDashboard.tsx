@@ -43,6 +43,7 @@ function planLabel(plan: string | null | undefined): string {
 import { PresencesDZ } from './centre/PresencesDZ';
 import { AptitudeDuJour } from './centre/AptitudeDuJour';
 import { JournalDeBord } from './centre/JournalDeBord';
+import { SuiviAcquittements } from './centre/SuiviAcquittements';
 import { GrilleMeteoDZ } from '../components/GrilleMeteoDZ';
 import { VigilanceVoileDZ } from '../components/VigilanceVoileDZ';
 import { BriefingSection } from './centre/BriefingSection';
@@ -3308,6 +3309,8 @@ export function CentreDashboardPage() {
                         {/* P2 — « celui-là, il peut y aller ? » : la question que
                             se pose un DT toute la journée, juste sous les présents. */}
                         <div className="mt-4"><AptitudeDuJour centreId={centreId} /></div>
+                        {/* P8 — publier ne prouve rien : qui l’a REÇU ? */}
+                        <div className="mt-4"><SuiviAcquittements centreId={centreId} /></div>
                       </>
                     ) : undefined}
                     encadrementSlot={centreId ? <TuileEncadrementDZ centreId={centreId} onGo={goRecap} /> : undefined}
