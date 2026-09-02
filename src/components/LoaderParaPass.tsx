@@ -1,77 +1,67 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// Écran de chargement ParaPass — voile vue de dessus tournant autour de la cible.
+// Écran de chargement ParaPass — parachutiste sous voile.
 //
-// 100 % SVG + CSS : s'affiche instantanément (aucune image à télécharger), net
-// à toutes les tailles, animé sur GPU (transform seul). Respecte
-// prefers-reduced-motion : sans mouvement, la scène reste lisible et posée.
+// Visuel réaliste (silhouette issue du logo) animé d'un mouvement de BALANCIER,
+// comme un pilote sous sa voile, avec des nuages qui défilent pour donner la
+// sensation de descente. Animation en transform/opacity uniquement (GPU) :
+// fluide même sur un téléphone modeste. Respecte prefers-reduced-motion.
+//
+// La silhouette s'adapte au thème : claire sur fond sombre, foncée en clair.
 // ═══════════════════════════════════════════════════════════════════════════
 
 export function LoaderParaPass({
-  taille = 120,
+  taille = 160,
   message = 'Chargement…',
   pleinEcran = false,
 }: { taille?: number; message?: string | null; pleinEcran?: boolean }) {
   const scene = (
-    <div className="flex flex-col items-center gap-4">
-      <svg
-        width={taille} height={taille} viewBox="0 0 120 120"
-        role="img" aria-label="Chargement en cours"
-        style={{ overflow: 'visible' }}
-      >
-        <defs>
-          <radialGradient id="pp-halo" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#F97316" stopOpacity="0.18" />
-            <stop offset="100%" stopColor="#F97316" stopOpacity="0" />
-          </radialGradient>
-          <linearGradient id="pp-voile" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#FFFFFF" />
-            <stop offset="100%" stopColor="#93C5FD" />
-          </linearGradient>
-        </defs>
-
-        {/* Halo doux au centre */}
-        <circle cx="60" cy="60" r="46" fill="url(#pp-halo)" />
-
-        {/* CIBLE — anneaux concentriques, comme l'aire d'atterrissage */}
-        <circle cx="60" cy="60" r="40" fill="none" stroke="currentColor" strokeOpacity="0.14" strokeWidth="1" />
-        <circle cx="60" cy="60" r="27" fill="none" stroke="currentColor" strokeOpacity="0.20" strokeWidth="1" />
-        <circle cx="60" cy="60" r="14" fill="none" stroke="#F97316" strokeOpacity="0.55" strokeWidth="1.5" />
-        <circle cx="60" cy="60" r="3.2" fill="#F97316" />
-
-        {/* Trajectoire parcourue (arc qui suit la voile) */}
-        <g className="pp-orbite">
-          <path
-            d="M 60 18 A 42 42 0 0 1 96 39"
-            fill="none" stroke="#60A5FA" strokeOpacity="0.5" strokeWidth="2" strokeLinecap="round"
-          />
-          {/* VOILE vue de dessus : aile rectangulaire à caissons, inclinée dans le virage */}
-          <g transform="translate(60 18)">
-            <g transform="rotate(90)">
-              <rect x="-4.5" y="-12" width="9" height="24" rx="4.5" fill="url(#pp-voile)" />
-              {/* caissons */}
-              {[-8, -4, 0, 4, 8].map((y) => (
-                <line key={y} x1="-4.5" y1={y} x2="4.5" y2={y} stroke="#1E3A8A" strokeOpacity="0.35" strokeWidth="0.7" />
-              ))}
-              {/* suspentes + parachutiste */}
-              <line x1="0" y1="12" x2="0" y2="17" stroke="#1E3A8A" strokeOpacity="0.5" strokeWidth="0.8" />
-              <circle cx="0" cy="18.5" r="2.2" fill="#0F2547" />
-            </g>
-          </g>
-        </g>
-      </svg>
+    <div className="flex flex-col items-center gap-3">
+      <div className="pp-ciel" style={{ width: taille, height: taille * 0.78 }}>
+        {/* Nuages qui défilent — matérialisent la descente */}
+        <span className="pp-nuage" />
+        <span className="pp-nuage pp-n2" />
+        <span className="pp-nuage pp-n3" />
+        <div className="pp-balancier">
+          <div className="pp-flotte">
+            <img src="/icons/parachutiste.png" alt="" aria-hidden className="pp-para" />
+          </div>
+        </div>
+      </div>
 
       {message && (
-        <p className="text-sm font-medium" style={{ color: 'var(--c-muted, #64748B)' }}>{message}</p>
+        <p className="text-sm font-medium" style={{ color: 'var(--c-muted, #94A3B8)' }}>{message}</p>
       )}
 
       <style>{`
-        @keyframes ppOrbite { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .pp-orbite {
-          transform-origin: 60px 60px;
-          animation: ppOrbite 2.8s linear infinite;
+        .pp-ciel { position: relative; overflow: visible; }
+        /* Balancier : le pilote oscille sous l'aile, comme en vol réel. */
+        @keyframes ppBalancier {
+          0%,100% { transform: rotate(-7deg) translateX(-10px); }
+          50%     { transform: rotate(7deg)  translateX(10px); }
         }
+        @keyframes ppFlotte { 0%,100% { transform: translateY(-6px); } 50% { transform: translateY(6px); } }
+        @keyframes ppNuage {
+          0%   { transform: translateY(-24px); opacity: 0; }
+          20%  { opacity: .30; }
+          80%  { opacity: .30; }
+          100% { transform: translateY(150px); opacity: 0; }
+        }
+        .pp-balancier { width:100%; height:100%; transform-origin:50% 8%;
+          animation: ppBalancier 3.6s ease-in-out infinite; }
+        .pp-flotte { width:100%; height:100%; animation: ppFlotte 2.6s ease-in-out infinite; }
+        .pp-para { width:100%; height:100%; object-fit:contain;
+          /* Silhouette claire par défaut (thème sombre) */
+          filter: brightness(0) invert(1) drop-shadow(0 6px 18px rgba(96,165,250,.45)); }
+        :root[data-theme="light"] .pp-para {
+          filter: brightness(0) saturate(100%) invert(11%) sepia(38%) saturate(1800%)
+                  hue-rotate(195deg) drop-shadow(0 6px 14px rgba(15,37,71,.25)); }
+        .pp-nuage { position:absolute; left:0; right:0; top:20%; height:2px; border-radius:2px;
+          background:linear-gradient(90deg, transparent, #93C5FD, transparent);
+          animation: ppNuage 4.2s linear infinite; }
+        .pp-n2 { animation-delay: 1.4s; }
+        .pp-n3 { animation-delay: 2.8s; }
         @media (prefers-reduced-motion: reduce) {
-          .pp-orbite { animation: none; }
+          .pp-balancier, .pp-flotte, .pp-nuage { animation: none; }
         }
       `}</style>
     </div>
@@ -80,7 +70,7 @@ export function LoaderParaPass({
   if (!pleinEcran) return scene;
   return (
     <div className="min-h-screen flex items-center justify-center px-6"
-      style={{ background: 'var(--c-bg, #001A4D)', color: 'var(--c-text, #FFFFFF)' }}>
+      style={{ background: 'var(--c-bg, #001A4D)' }}>
       {scene}
     </div>
   );
