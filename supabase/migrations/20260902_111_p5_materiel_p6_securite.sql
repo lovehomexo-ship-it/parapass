@@ -1,0 +1,53 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- P5 — MATÉRIEL ET ÉCHÉANCES · P6 — ÉVÈNEMENTS SÉCURITÉ
+--
+-- ── P5 : ON ÉTEND, ON NE DUPLIQUE PAS ────────────────────────────────────
+-- La spécification demandait des tables equipements / echeances_equipement.
+-- Or materiels et maintenances portaient DÉJÀ type, marque, modèle, numéro de
+-- série, surface, date d'acquisition, dernière opération, prochaine échéance,
+-- intervenant et justificatif. Créer des jumelles aurait reproduit exactement
+-- le défaut licencies_centres / centres_licencies corrigé le matin même : deux
+-- tables pour un objet, et deux écrans qui ne lisent pas la même.
+--
+-- Ce qui manquait vraiment, et qui est ajouté :
+--   • materiels.centre_id — le PARC DU CENTRE (école, tandem) : la table
+--     n'avait que parachutiste_id, donc aucun moyen de l'enregistrer ;
+--   • materiels.qr_token — ouvrir la fiche depuis le terrain ;
+--   • maintenances.periodicite_mois — la périodicité était globale.
+--
+-- get_echeances_materiel : parc du centre ET matériel personnel des licenciés
+-- actifs (le DT répond de ce qui saute sur son terrain), trié par urgence,
+-- paliers 60 / 30 / 0. Un équipement JAMAIS contrôlé ne passe pas pour
+-- conforme : il ressort en « inconnu », juste après les dépassés.
+--
+-- Pliage ↔ échéance : les deux modules restent distincts (le pliage est un
+-- service facturé, le matériel un cycle de vie) mais un pliage de secours EST
+-- une maintenance : un déclencheur l'écrit, l'échéance se recalcule seule.
+--
+-- La règle d'aptitude « materiel_echeance » cesse d'être inerte, en VIGILANCE
+-- et jamais en blocage.
+--
+-- ── P6 : UNE NOUVELLE TABLE, ET POURQUOI ─────────────────────────────────
+-- `incidents` (0 ligne) appartient au PARACHUTISTE — son historique personnel,
+-- sur son passeport. evenements_securite appartient au CENTRE : déclarable par
+-- un moniteur, visible du DT, rapportable à la fédération et à l'assureur. Les
+-- fusionner mêlerait deux responsabilités et deux périmètres de
+-- confidentialité. (`incidents` reste à consolider un jour — c'est noté.)
+--
+-- Les conditions météo sont FIGÉES à la déclaration, depuis le briefing du
+-- jour : dans six mois, la prévision n'existera plus nulle part.
+-- Une déclaration notifie le DT immédiatement ET entre au journal de bord.
+--
+-- Fonctions déployées via l'outil de migration Supabase le 2026-09-02 :
+--   p5_materiel_parc_centre_et_echeances,
+--   p5_lier_pliage_echeance_et_activer_regle,
+--   p6_registre_evenements_securite.
+--
+-- Vérifié en session BigAir : « 5 équipements suivis · 5 à traiter » avec le
+-- détail par propriétaire ; registre sécurité prêt et vide.
+--
+-- Défaut corrigé après essai réel : les paramètres de SORTIE de
+-- get_echeances_materiel (type, marque, echeance…) masquaient les colonnes
+-- homonymes — « column reference "type" is ambiguous ». Résolu par
+-- #variable_conflict use_column. Un test avec une fonction SQL temporaire ne
+-- l'avait pas vu, faute de paramètres de sortie.

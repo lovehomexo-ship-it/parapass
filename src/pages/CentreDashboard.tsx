@@ -45,6 +45,8 @@ import { AptitudeDuJour } from './centre/AptitudeDuJour';
 import { JournalDeBord } from './centre/JournalDeBord';
 import { SuiviAcquittements } from './centre/SuiviAcquittements';
 import { BriefingOperationnel } from './centre/BriefingOperationnel';
+import { EcheancesMateriel } from './centre/EcheancesMateriel';
+import { EvenementsSecurite } from './centre/EvenementsSecurite';
 import { GrilleMeteoDZ } from '../components/GrilleMeteoDZ';
 import { VigilanceVoileDZ } from '../components/VigilanceVoileDZ';
 import { BriefingSection } from './centre/BriefingSection';
@@ -54,7 +56,7 @@ import { EquipeUnifiee } from './centre/EquipeUnifiee';
 import {
   Home, Users, ClipboardList, Activity, BarChart2, Calendar, Megaphone,
   Settings, Shield, MessageSquare, Bell, LogOut, Menu, X,
-  AlertTriangle, CheckCircle, Clock, ChevronRight, Plus,
+  AlertTriangle, CheckCircle, Clock, ChevronRight, Plus, Wrench, ShieldAlert,
   Search, Filter, Eye, Trash2, UserCheck, UserX,
   Download, Upload, Hash, TrendingUp, MapPin, Send, Zap, Sun, Moon,
   GraduationCap, MoreVertical, UserMinus, Euro, BookCheck, Puzzle,
@@ -3059,6 +3061,8 @@ export function CentreDashboardPage() {
     { key: 'briefing', label: 'Briefing du jour', icon: Megaphone },
     ...(activeModules.has('academy') ? [{ key: 'academy', label: 'Academy', icon: GraduationCap }] : []),
     { key: 'planning', label: 'Planning DZ', icon: Calendar },
+    { key: 'materiel', label: 'Matériel', icon: Wrench },
+    { key: 'securite', label: 'Sécurité', icon: ShieldAlert },
     { key: 'journal', label: 'Journal de bord', icon: BookCheck },
     { key: 'stats', label: 'Statistiques', icon: BarChart2 },
     { key: 'equipe', label: 'Mon équipe', icon: Shield },
@@ -3433,6 +3437,12 @@ export function CentreDashboardPage() {
           )}
           {activeSection === 'tandem' && centreId && activeModules.has('tandem') && (
             <TandemSection centreId={centreId} />
+          )}
+          {activeSection === 'materiel' && centreId && (
+            <div className="p-6 max-w-3xl"><EcheancesMateriel centreId={centreId} /></div>
+          )}
+          {activeSection === 'securite' && centreId && (
+            <EvenementsSecurite centreId={centreId} />
           )}
           {activeSection === 'journal' && centreId && (
             <JournalDeBord centreId={centreId} />
