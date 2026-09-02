@@ -43,6 +43,24 @@ export interface DzBriefing {
   published_at: string;
   /** Immuable — published_at nettement postérieur = briefing republié dans la journée. */
   created_at: string;
+
+  // ── P8 — Révisions ──
+  /** Un briefing publié n'est pas modifié : une révision crée une NOUVELLE ligne. */
+  revision: number;
+  /** Révision que celle-ci remplace, pour retracer les acquittements antérieurs. */
+  remplace_id: string | null;
+
+  // ── P8 — Contenu opérationnel du jour ──
+  aeronef: string | null;
+  pilote: string | null;
+  altitude_largage_m: number | null;
+  ordre_sortie: string | null;
+  separation: string | null;
+  activites: string | null;
+  frequence_radio: string | null;
+  consigne_hors_zone: string | null;
+  point_rassemblement: string | null;
+  dt_service: string | null;
 }
 
 /** Compresse une image côté client avant upload : largeur max 1600 px,

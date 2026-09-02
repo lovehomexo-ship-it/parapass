@@ -44,6 +44,7 @@ import { PresencesDZ } from './centre/PresencesDZ';
 import { AptitudeDuJour } from './centre/AptitudeDuJour';
 import { JournalDeBord } from './centre/JournalDeBord';
 import { SuiviAcquittements } from './centre/SuiviAcquittements';
+import { BriefingOperationnel } from './centre/BriefingOperationnel';
 import { GrilleMeteoDZ } from '../components/GrilleMeteoDZ';
 import { VigilanceVoileDZ } from '../components/VigilanceVoileDZ';
 import { BriefingSection } from './centre/BriefingSection';
@@ -3381,7 +3382,12 @@ export function CentreDashboardPage() {
             <GestionPliage centreId={centreId} />
           )}
           {activeSection === 'briefing' && centreId && (
-            <BriefingSection centreId={centreId} />
+            <>
+              <BriefingSection centreId={centreId} />
+              {/* P8 — ce que le parachutiste doit savoir avant de monter. */}
+              <div className="mt-5"><BriefingOperationnel centreId={centreId} /></div>
+              <div className="mt-4"><SuiviAcquittements centreId={centreId} /></div>
+            </>
           )}
           {/* Academy = la formation : quiz sécurité, progression brevets, documents FFP */}
           {activeSection === 'academy' && centreId && activeModules.has('academy') && (
