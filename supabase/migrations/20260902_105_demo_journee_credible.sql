@@ -1,0 +1,32 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- JOURNÉE DE DÉMO — profils réalistes.
+--
+-- Avant : les 4 parachutistes de démo n'avaient NI licence NI certificat
+-- médical. L'aptitude du jour les affichait donc tous les quatre en rouge :
+-- peu crédible pour une démonstration, et illisible — on ne voyait aucune des
+-- nuances dont le moteur de règles est capable.
+--
+-- Désormais, une journée ordinaire de DZ :
+--   Alice  — tout en règle, saut du jour, briefing acquitté          → VERT
+--   Bruno  — tout en règle, saut du jour, briefing acquitté          → VERT
+--   Chloé  — certificat médical périmé depuis 12 jours               → ROUGE
+--   David  — documents à jour, mais dernier saut il y a 200 jours
+--            et briefing non acquitté                                → ORANGE
+--
+-- David illustre exactement le palier « inactivité 200 jours — reprise avec
+-- moniteur » : la démonstration devient parlante pour un directeur technique.
+--
+-- Ajouts par rapport à la version précédente :
+--   * création des licences et certificats médicaux des 4 profils ;
+--   * saut ancien pour David (au lieu d'un saut du jour) ;
+--   * acquittement du briefing par 3 des 4.
+--
+-- (Fonction complète déployée via l'outil de migration Supabase le 2026-09-02 :
+--  « demo_journee_credible_documents_et_profils_varies ».)
+--
+-- Vérifié en session BigAir après un clic réel sur le bouton :
+--   Aptitude du jour — 4 présents · 2 à examiner
+--   Chloé  À examiner  — Certificat médical expiré — expiré le 21/08/2026
+--   David  Vigilance   — inactivité 200 jours — reprise avec moniteur
+--   Alice / Bruno      — Rien à signaler
+--   Tuile « Présents prêts » : 2/4, cohérente avec l'aptitude.
