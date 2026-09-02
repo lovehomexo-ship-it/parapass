@@ -1,0 +1,31 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- P11.3 — Attestation de carnet EN LOT.
+--
+-- Les dossiers se validaient un par un. Sur la file réelle de BigAir (21
+-- dossiers), c'était 21 fois le même geste — alors que 9 ne présentaient
+-- aucune anomalie.
+--
+-- La conformité est REVÉRIFIÉE côté serveur, et non reprise de l'écran : une
+-- liste calculée il y a dix minutes peut être périmée (un certificat a pu
+-- expirer entre-temps). La fonction écarte donc elle-même les dossiers
+-- portant une anomalie, et rend compte nominativement de ce qu'elle a écarté.
+--
+-- Définition retenue, la même que partout ailleurs (compliance.ts, aptitude du
+-- jour) : un document NON RENSEIGNÉ n'est pas un document conforme.
+--
+-- Garde-fous :
+--   • réservée aux responsables du centre (admin_centres) ;
+--   • lc.centre_id = p_centre_id     → jamais le dossier d'un autre centre ;
+--   • lc.carnet_statut = 'en_attente' → jamais un dossier déjà traité.
+--
+-- Écrite en CTE : la sélection, la mise à jour et les notifications partagent
+-- le même instantané. (Une première version utilisait « RETURNING ... INTO
+-- tableau » sur une mise à jour multi-lignes, ce qui n'est pas valide en
+-- PL/pgSQL.)
+--
+-- Fonction déployée via l'outil de migration Supabase le 2026-09-02 :
+-- « p11_attestation_lot_correction_cte ».
+--
+-- Vérifié en session BigAir sur /centre/attestations :
+--   « 21 dossiers en attente — 9 conformes · 12 à traiter à la main »
+--   conforme à la simulation SQL (11 licences absentes/expirées + 1 certificat).

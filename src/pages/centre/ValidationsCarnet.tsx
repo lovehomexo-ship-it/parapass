@@ -11,6 +11,8 @@ interface ParaEnAttente {
   carnet_signature_url: string | null;
   carnet_tampon_url: string | null;
   carnet_motif_refus: string | null;
+  /** Anomalie bloquant une attestation automatique (P11.3). */
+  anomalie: string | null;
   profile: {
     id: string;
     nom: string;
@@ -296,6 +298,12 @@ function ParaCard({ para, dzId, onDone }: { para: ParaEnAttente; dzId: string; o
           {profile.numero_licence && (
             <p className="text-xs" style={{ color: 'var(--c-dim)' }}>Licence {profile.numero_licence}</p>
           )}
+          {/* Pourquoi ce dossier est écarté de l'attestation en lot (P11.3). */}
+          {carnet_statut === 'en_attente' && para.anomalie && (
+            <p className="text-[11px] mt-0.5 font-medium" style={{ color: '#FB923C' }}>
+              {para.anomalie} — à examiner
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {carnet_statut === 'valide' && (
@@ -353,6 +361,7 @@ export function ValidationsCarnet({ dzId, onNavigate }: { dzId: string; onNaviga
   const [paras, setParas] = useState<ParaEnAttente[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'en_attente' | 'valide' | 'refuse' | 'tous'>('en_attente');
+  const [lotEnCours, setLotEnCours] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -398,11 +407,40 @@ export function ValidationsCarnet({ dzId, onNavigate }: { dzId: string; onNaviga
 
       // Keep only the most recent licence per parachutiste
       const licenceMap = new Map<string, string>();
+      const licenceExp = new Map<string, string | null>();
       for (const l of (licencesData ?? [])) {
         if (!licenceMap.has(l.parachutiste_id)) {
           licenceMap.set(l.parachutiste_id, l.numero_licence);
+          licenceExp.set(l.parachutiste_id, l.date_expiration);
         }
       }
+
+      // Certificats médicaux : nécessaires pour repérer les dossiers qui portent
+      // une anomalie, et donc ceux qu'une attestation en lot doit écarter.
+      const { data: medicauxData, error: medErr } = await supabase
+        .from('certificats_medicaux')
+        .select('parachutiste_id, date_expiration')
+        .in('parachutiste_id', paraIds)
+        .order('date_expiration', { ascending: false });
+      if (medErr) {
+        console.error('Chargement des certificats médicaux échoué :', {
+          code: medErr.code, message: medErr.message, details: medErr.details, hint: medErr.hint,
+        });
+      }
+      const medicalExp = new Map<string, string>();
+      for (const m of (medicauxData ?? [])) {
+        if (!medicalExp.has(m.parachutiste_id)) medicalExp.set(m.parachutiste_id, m.date_expiration);
+      }
+
+      // Un document NON RENSEIGNÉ n'est pas un document conforme — même
+      // définition que l'aptitude du jour et compliance.ts.
+      const anomalieDe = (id: string): string | null => {
+        const lic = licenceExp.get(id);
+        if (!lic || new Date(lic) < new Date()) return 'Licence FFP expirée ou absente';
+        const med = medicalExp.get(id);
+        if (!med || new Date(med) < new Date()) return 'Certificat médical expiré ou absent';
+        return null;
+      };
 
       const list: ParaEnAttente[] = rows.map(d => ({
         licencie_id: d.id,
@@ -413,6 +451,7 @@ export function ValidationsCarnet({ dzId, onNavigate }: { dzId: string; onNaviga
         carnet_signature_url: d.carnet_signature_url,
         carnet_tampon_url: d.carnet_tampon_url,
         carnet_motif_refus: d.carnet_motif_refus,
+        anomalie: anomalieDe(d.parachutiste_id),
         profile: {
           ...d.profiles,
           numero_licence: licenceMap.get(d.parachutiste_id) ?? d.profiles.numero_licence,
@@ -427,6 +466,43 @@ export function ValidationsCarnet({ dzId, onNavigate }: { dzId: string; onNaviga
 
   const filtered = filter === 'tous' ? paras : paras.filter(p => p.carnet_statut === filter);
   const countEn = paras.filter(p => p.carnet_statut === 'en_attente').length;
+
+  // ── P11.3 — Attestation en lot ────────────────────────────────────────────
+  const enAttente = paras.filter(p => p.carnet_statut === 'en_attente');
+  const conformes = enAttente.filter(p => !p.anomalie);
+  const aLaMain = enAttente.length - conformes.length;
+
+  const attesterConformes = async () => {
+    if (conformes.length === 0) return;
+    const nomDt = window.prompt(
+      `Attester ${conformes.length} carnet${conformes.length > 1 ? 's' : ''} conforme${conformes.length > 1 ? 's' : ''}.\n\n`
+      + `Votre nom (il sera inscrit sur chaque attestation) :`);
+    if (nomDt === null) return;               // annulation explicite
+    setLotEnCours(true);
+    const { data, error } = await supabase.rpc('attester_carnets_en_lot', {
+      p_centre_id: dzId,
+      p_licencie_ids: conformes.map(p => p.licencie_id),
+      p_nom_dt: nomDt.trim() || null,
+    });
+    setLotEnCours(false);
+    if (error) {
+      console.error('Attestation en lot — échec :', {
+        code: error.code, message: error.message, details: error.details, hint: error.hint,
+      });
+      alert('L’attestation en lot a échoué : ' + error.message);
+      return;
+    }
+    const res = data as { attestes: number; ecartes: Array<{ nom: string; anomalie: string }> };
+    const ecartes = res.ecartes ?? [];
+    alert(
+      `${res.attestes} carnet${res.attestes > 1 ? 's' : ''} attesté${res.attestes > 1 ? 's' : ''}.`
+      + (ecartes.length
+          ? `\n\n${ecartes.length} écarté${ecartes.length > 1 ? 's' : ''} car non conforme${ecartes.length > 1 ? 's' : ''} :\n`
+            + ecartes.slice(0, 8).map(e => `• ${e.nom} — ${e.anomalie}`).join('\n')
+            + (ecartes.length > 8 ? `\n… et ${ecartes.length - 8} autre(s)` : '')
+          : ''));
+    load();
+  };
 
   if (loading) {
     return (
@@ -449,6 +525,45 @@ export function ValidationsCarnet({ dzId, onNavigate }: { dzId: string; onNaviga
           )}
         </p>
       </div>
+
+      {/* ── P11.3 — Attestation en lot ──────────────────────────────────────
+          Sur une file de vingt dossiers, c'était vingt fois le même geste.
+          Le bouton n'atteste QUE les dossiers sans anomalie ; le serveur
+          revérifie lui-même chaque dossier avant d'écrire. */}
+      {enAttente.length > 0 && (
+        <div className="rounded-2xl p-4" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border-f)' }}>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <p className="text-sm font-bold" style={{ color: 'var(--c-text)' }}>
+                {enAttente.length} dossier{enAttente.length > 1 ? 's' : ''} en attente
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--c-dim)' }}>
+                <span style={{ color: '#34D399', fontWeight: 600 }}>{conformes.length} conforme{conformes.length > 1 ? 's' : ''}</span>
+                {' · '}
+                <span style={{ color: aLaMain > 0 ? '#FB923C' : 'var(--c-dim)', fontWeight: 600 }}>
+                  {aLaMain} à traiter à la main
+                </span>
+              </p>
+            </div>
+            <button
+              onClick={attesterConformes}
+              disabled={conformes.length === 0 || lotEnCours}
+              className="px-4 rounded-xl text-sm font-bold disabled:opacity-40"
+              style={{ minHeight: 44, background: '#10B981', color: '#fff' }}
+            >
+              {lotEnCours
+                ? 'Attestation en cours…'
+                : `Attester les ${conformes.length} conforme${conformes.length > 1 ? 's' : ''}`}
+            </button>
+          </div>
+          {aLaMain > 0 && (
+            <p className="text-[11px] mt-3" style={{ color: 'var(--c-dim)' }}>
+              Les dossiers portant une anomalie (licence ou certificat médical) sont
+              écartés automatiquement : ils restent à examiner un par un.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Filtre */}
       <div className="flex gap-2 flex-wrap">
