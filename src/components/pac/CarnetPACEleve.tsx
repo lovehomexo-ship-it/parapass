@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { usePacEleve, niveauComplet, rouesParDomaine, type PacNiveau, type PacProgression, type PacSaut } from '../../lib/pac';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { Check, Clock, RotateCcw, Lock, Unlock, Award, ChevronRight, PartyPopper } from 'lucide-react';
+import { LoaderParaPass } from '../LoaderParaPass';
 
 // ─── Carnet PAC — vue ÉLÈVE (3 angles : temps / compétence / parcours) ────────
 // L'appli informe ; c'est le moniteur qui valide chaque acquis.
@@ -13,7 +14,7 @@ function CarnetInner({ userId }: { userId: string }) {
   const { niveaux, prog, sauts, niveauCourant, pretPourBrevetA, loading } = usePacEleve(userId);
   const [vue, setVue] = useState<Vue>('niveaux');
 
-  if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>;
+  if (loading) return <LoaderParaPass taille={72} message={null} />;
   if (niveaux.length === 0) return <p className="text-sm text-center py-10" style={{ color: 'var(--c-dim)' }}>Référentiel PAC non chargé.</p>;
 
   return (

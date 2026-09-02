@@ -7,6 +7,7 @@ import {
 } from '../../lib/encadrement';
 import { useComplianceRules } from '../../lib/compliance';
 import { ShieldCheck, CheckCircle, AlertTriangle, X, Plus, Users, User } from 'lucide-react';
+import { LoaderParaPass } from '../../components/LoaderParaPass';
 
 const inputStyle: React.CSSProperties = {
   background: 'var(--c-border)', border: '1px solid var(--c-border-f)', color: 'white',
@@ -24,7 +25,7 @@ export function EncadrementSection({ centreId, vue }: { centreId: string; vue?: 
   const [ongletLocal, setOngletLocal] = useState<'jour' | 'annuaire'>('jour');
   const onglet = vue ?? ongletLocal;
 
-  if (enc.loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>;
+  if (enc.loading) return <LoaderParaPass taille={72} message={null} />;
 
   const seuilJours = rules.qualif_expiration_alerte_jours ?? 60;
   const limite = new Date(Date.now() + seuilJours * 86_400_000);

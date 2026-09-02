@@ -6,6 +6,7 @@ import type { ComplianceRule } from '../../lib/compliance';
 import type { CurrencyRule } from '../../lib/currency';
 import type { CanopyGuideline } from '../../lib/canopy';
 import { TYPE_BREVET_LABELS } from '../../lib/types';
+import { LoaderParaPass } from '../../components/LoaderParaPass';
 
 /** Repères de charge alaire (canopy_guidelines), par tranche de sauts. */
 function CanopyGuidelinesSection() {
@@ -266,7 +267,7 @@ export function ConformiteAdminPage() {
         )}
 
         {loading ? (
-          <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>
+          <LoaderParaPass taille={72} message={null} />
         ) : (
           <div className="space-y-3">
             {rules.map(rule => (

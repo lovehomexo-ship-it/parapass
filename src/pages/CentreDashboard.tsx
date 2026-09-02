@@ -58,6 +58,7 @@ import { FinancesSection } from './centre/FinancesSection';
 import { ValidationsCarnet } from './centre/ValidationsCarnet';
 import { RelancesSection } from './centre/RelancesSection';
 import { AcademyScoresDZ, DocumentsFFPDZ } from './centre/AcademySection';
+import { LoaderParaPass } from '../components/LoaderParaPass';
 import { PacStaff } from '../components/pac/PacStaff';
 import { ModulesSection } from './centre/ModulesSection';
 import { TandemSection } from './centre/TandemSection';
@@ -999,7 +1000,7 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
     && (filtreConformite === 'tous' || (conformiteMap[l.id] ?? 'inconnu') === filtreConformite)
   );
 
-  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>;
+  if (loading) return <LoaderParaPass taille={72} message={null} />;
 
   return (
     <div className="space-y-5">
@@ -1281,7 +1282,7 @@ function DemandesSection({ centreId, onAccepted }: { centreId: string | undefine
     setDemandes(prev => prev.filter(d => d.id !== profileId));
   };
 
-  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>;
+  if (loading) return <LoaderParaPass taille={72} message={null} />;
 
   return (
     <div className="space-y-5">
@@ -1501,7 +1502,7 @@ function SautsSection({ centreId, onNavigate }: { centreId: string | undefined; 
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-[#001A4D] border-t-transparent rounded-full animate-spin" /></div>
+        <LoaderParaPass taille={72} message={null} />
       ) : sauts.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-16 text-center text-gray-400">Aucun saut</div>
       ) : (
@@ -2103,7 +2104,7 @@ function StatsSection({ centreId }: { centreId: string | undefined }) {
   const maxMonthly = Math.max(...monthlyData.map(m => m.count), 1);
   const maxBrevet = Math.max(...brevetData.map(b => b.count), 1);
 
-  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>;
+  if (loading) return <LoaderParaPass taille={72} message={null} />;
 
   return (
     <div className="space-y-6">
@@ -2566,7 +2567,7 @@ function LicencieDrawer({
                 </div>
               </div>
               {loadingSauts ? (
-                <div className="flex justify-center py-8"><div className="w-6 h-6 border-4 border-[#001A4D] border-t-transparent rounded-full animate-spin" /></div>
+                <LoaderParaPass taille={56} message={null} />
               ) : sauts.length === 0 ? (
                 <p className="text-sm text-gray-400 text-center py-8">Aucun saut enregistré</p>
               ) : (
@@ -2756,7 +2757,7 @@ function MessagesSection({ currentUserId }: { currentUserId: string }) {
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
   const selectedConv = conversations.find(c => c.id === selectedConvId) ?? null;
 
-  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>;
+  if (loading) return <LoaderParaPass taille={72} message={null} />;
 
   return (
     <div className="h-[calc(100vh-120px)] flex gap-0 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

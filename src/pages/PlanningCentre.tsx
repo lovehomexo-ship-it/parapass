@@ -6,6 +6,7 @@ import {
   Send, Plane, BarChart2, Download, ChevronDown,
   CalendarDays,
 } from 'lucide-react';
+import { LoaderParaPass } from '../components/LoaderParaPass';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -424,7 +425,7 @@ function InscritsList({ creneau, onClose }: { creneau: Creneau; onClose: () => v
         {/* List */}
         <div className="overflow-y-auto px-5 py-3 space-y-2" style={{ maxHeight: '55vh' }}>
           {loading ? (
-            <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-[#001A4D] border-t-transparent rounded-full animate-spin" /></div>
+            <LoaderParaPass taille={56} message={null} />
           ) : filtered.length === 0 ? (
             <p className="text-center text-sm text-gray-400 py-8">Aucun inscrit dans cette catégorie</p>
           ) : (
@@ -671,9 +672,7 @@ export function PlanningCentre({ centreId }: { centreId: string }) {
       )}
 
       {loading && creneaux.length === 0 && (
-        <div className="flex justify-center py-12">
-          <div className="w-8 h-8 border-4 border-[#001A4D] border-t-transparent rounded-full animate-spin" />
-        </div>
+        <LoaderParaPass taille={72} message={null} />
       )}
 
       {/* Modals */}

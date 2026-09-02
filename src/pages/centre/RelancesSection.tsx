@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { BellRing, Send, CheckCircle2, Eye, AlertTriangle, PenLine } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { RelanceDraftModal } from '../../components/RelanceDraftModal';
+import { LoaderParaPass } from '../../components/LoaderParaPass';
 
 /** Brouillon de relance pré-rédigé (éditable avant envoi — Prompt P). */
 function buildRelanceText(items: { type_document: 'licence' | 'medical'; echeance_date: string; jours_restants: number }[], prenom: string): string {
@@ -174,7 +175,7 @@ export function RelancesSection({ centreId }: { centreId: string }) {
   const inputCls = 'w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none';
   const inputStyle = { background: 'var(--c-bg)', border: '1px solid var(--c-border)' } as const;
 
-  if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>;
+  if (loading) return <LoaderParaPass taille={72} message={null} />;
 
   return (
     <div className="space-y-6">

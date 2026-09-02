@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { GraduationCap, FileText, Trophy, Flame, AlertTriangle, Download } from 'lucide-react';
+import { LoaderParaPass } from '../../components/LoaderParaPass';
 
 // ─── Academy — vue DT ─────────────────────────────────────────────────────────
 // Assemble l'existant : moteur quiz (quiz_*) via la RPC academy_scores_centre,
@@ -38,7 +39,7 @@ export function AcademyScoresDZ({ centreId }: { centreId: string }) {
     });
   }, [centreId]);
 
-  if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>;
+  if (loading) return <LoaderParaPass taille={72} message={null} />;
   if (erreur) return (
     <div className="rounded-xl px-4 py-3 text-sm flex items-center gap-2" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
       <AlertTriangle className="w-4 h-4" /> {erreur}
@@ -245,7 +246,7 @@ export function DocumentsFFPDZ({ centreId, dtId }: { centreId: string; dtId: str
     load();
   };
 
-  if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>;
+  if (loading) return <LoaderParaPass taille={72} message={null} />;
 
   return (
     <div className="space-y-5">

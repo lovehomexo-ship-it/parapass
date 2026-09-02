@@ -3,6 +3,7 @@ import { formatHeureParis, formatDateTimeParis } from '../../lib/datetime';
 import { supabase } from '../../lib/supabase';
 import type { DzBriefing, DzCircuit } from '../../lib/briefing';
 import { CheckCircle, Clock, Download, ChevronDown, ChevronUp, PartyPopper, Megaphone } from 'lucide-react';
+import { LoaderParaPass } from '../../components/LoaderParaPass';
 
 interface Membre { id: string; nom: string; prenom: string }
 interface Ack { user_id: string; acknowledged_at: string }
@@ -71,7 +72,7 @@ export function BriefingSuiviDuJour({ centreId }: { centreId: string }) {
     return () => { supabase.removeChannel(channel); clearInterval(poll); };
   }, [briefing?.id, load]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (loading) return <div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>;
+  if (loading) return <LoaderParaPass taille={72} message={null} />;
   if (!briefing) return <p className="text-sm py-8 text-center" style={{ color: 'var(--c-dim)' }}>Aucun briefing publié aujourd'hui.</p>;
 
   // Un acquittement antérieur à la (re)publication est périmé : il ne compte pas
@@ -181,7 +182,7 @@ export function BriefingArchive({ centreId, circuits }: { centreId: string; circ
     URL.revokeObjectURL(url);
   };
 
-  if (loading) return <div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>;
+  if (loading) return <LoaderParaPass taille={72} message={null} />;
   if (briefings.length === 0) return <p className="text-sm py-8 text-center" style={{ color: 'var(--c-dim)' }}>Aucun briefing archivé.</p>;
 
   return (

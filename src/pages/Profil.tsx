@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { Layout } from '../components/Layout';
 import { Check, Upload, Globe, Users, Lock, Eye, Building2, Key, CheckCircle, AlertTriangle, Camera, PenLine, Trash2, Settings } from 'lucide-react';
 import { PhotoCropModal } from '../components/PhotoCropModal';
+import { LoaderParaPass } from '../components/LoaderParaPass';
 
 const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#001A4D]/20 focus:border-[#001A4D]';
 const selectCls = inputCls;
@@ -793,7 +794,7 @@ export function ProfilPage() {
           <p className="text-xs text-gray-500">Consultez qui a accédé à votre carte passeport.</p>
 
           {loadingLogs ? (
-            <div className="flex justify-center py-4"><div className="w-5 h-5 border-4 border-[#001A4D] border-t-transparent rounded-full animate-spin" /></div>
+            <LoaderParaPass taille={44} message={null} />
           ) : accessLogs.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-4">Aucune consultation enregistrée</p>
           ) : (

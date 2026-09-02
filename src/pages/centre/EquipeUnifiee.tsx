@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { useComplianceRules } from '../../lib/compliance';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { Shield, Package, CheckSquare, Plus, X, AlertTriangle } from 'lucide-react';
+import { LoaderParaPass } from '../../components/LoaderParaPass';
 
 // ─── Mon équipe : une personne = une carte ────────────────────────────────────
 // Rassemble par user_id les qualifications (moniteurs_qualifications), la
@@ -206,7 +207,7 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
   const inputStyle: React.CSSProperties = { background: 'var(--c-bg)', border: '1px solid var(--c-border)', color: 'white', borderRadius: 10, padding: '10px 12px', fontSize: 14, outline: 'none', width: '100%', minHeight: 44 };
   const chip = (actif: boolean) => ({ background: actif ? '#2563EB' : 'var(--c-surface)', color: actif ? 'white' : 'var(--c-muted)', border: `1px solid ${actif ? '#2563EB' : 'var(--c-border)'}`, minHeight: 40 });
 
-  if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>;
+  if (loading) return <LoaderParaPass taille={72} message={null} />;
 
   return (
     <div className="space-y-4">

@@ -3,6 +3,7 @@ import { useAuth } from '../../lib/auth';
 import { usePacStaff, usePacEleve, niveauComplet, validerObjectifPac } from '../../lib/pac';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { Check, RotateCcw, ChevronLeft, AlertTriangle, GraduationCap } from 'lucide-react';
+import { LoaderParaPass } from '../LoaderParaPass';
 
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleDateString('fr-FR') : '—');
 
@@ -13,7 +14,7 @@ function StaffInner({ centreId }: { centreId: string }) {
   const [selId, setSelId] = useState<string | null>(null);
   const [selNom, setSelNom] = useState('');
 
-  if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>;
+  if (loading) return <LoaderParaPass taille={72} message={null} />;
 
   if (selId) return <FicheEleve userId={selId} nom={selNom} centreId={centreId} onBack={() => { setSelId(null); refresh(); }} />;
 
@@ -77,7 +78,7 @@ function FicheEleve({ userId, nom, centreId, onBack }: { userId: string; nom: st
     refresh();
   };
 
-  if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>;
+  if (loading) return <LoaderParaPass taille={72} message={null} />;
 
   return (
     <div className="space-y-4">
