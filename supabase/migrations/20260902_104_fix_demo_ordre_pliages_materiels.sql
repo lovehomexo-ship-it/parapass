@@ -1,0 +1,26 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- CORRECTIF — « Générer une journée de démo » échouait au SECOND lancement.
+--
+-- generer_demo_journee supprimait les matériels de démo AVANT les pliages qui
+-- les référencent :
+--     DELETE FROM materiels ...  → 23503, violation de pliages_materiel_id_fkey
+--     DELETE FROM pliages   ...  → jamais atteint
+-- Au tout premier lancement aucun pliage n'existait, donc le défaut restait
+-- invisible ; dès le second, TOUTE la génération échouait (aucune donnée créée).
+--
+-- Correction : supprimer les ENFANTS (pliages) avant les PARENTS (matériels).
+-- retirer_demo_journee avait déjà le bon ordre, elle n'est pas modifiée.
+--
+-- Le corps complet de la fonction est redéployé à l'identique par ailleurs ;
+-- seul l'ordre de ces deux DELETE change. Voir la migration appliquée
+-- « fix_demo_journee_ordre_suppression_pliages_materiels ».
+-- ═══════════════════════════════════════════════════════════════════════════
+-- (Fonction complète déployée via l'outil de migration Supabase le 2026-09-02.)
+-- Extrait de la correction, pour mémoire :
+--
+--   -- ⚠️ ORDRE CRITIQUE : les pliages référencent les matériels.
+--   DELETE FROM pliages   WHERE centre_id = p_centre_id AND note LIKE '[DÉMO]%';
+--   DELETE FROM materiels WHERE parachutiste_id = ANY(v_ids) AND marque = 'DÉMO';
+--
+-- Vérifié en cliquant réellement le bouton en session BigAir :
+-- 4 présents, 6 sauts, 5 pliages, 3 tandems, 2 séances créés.
