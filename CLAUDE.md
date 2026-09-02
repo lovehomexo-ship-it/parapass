@@ -33,6 +33,30 @@ Avec le bon projet, TypeScript attrapait précisément le bug :
 **→ Lancer `npm run typecheck` avant tout push.** Le brancher sur `build` seulement
 quand les erreurs seront à zéro (chantier progressif, sinon le build casse).
 
+
+### ✅ Le typage est branché depuis le 2026-09-02 — via un CLIQUET
+
+`npm run build` lance désormais `scripts/typecheck-cliquet.mjs` **à la place**
+de `tsc --noEmit` (qui ne vérifiait aucun fichier).
+
+Corriger les ~100 erreurs héritées d'un coup aurait été long et risqué. Le
+cliquet tranche autrement : **le stock ne peut que diminuer.**
+
+- Une erreur **nouvelle** apparaît → ❌ build bloqué, l'erreur est nommée
+- Le stock hérité reste stable → ✅ build passe
+- Une erreur héritée est corrigée → ✅ seuil abaissé automatiquement
+
+Référence dans `typecheck-baseline.json` (signatures sans numéro de ligne :
+ajouter des lignes en haut d'un fichier ne crée pas de faux positifs).
+**Ce fichier se commite.** On abaisse le seuil, on ne le remonte jamais.
+
+Pour voir le détail : `npm run typecheck`.
+
+**Ce que ça a déjà rattrapé** : l'onglet Licence du passeport, cassé depuis le
+24 juillet (`emptyLicenceForm` supprimé, `LicenceTab` resté monté). Plus d'un
+mois en production, build vert du début à la fin.
+
+
 Règles :
 1. **« build vert » ≠ « ça marche ».** Après un gros refactor (surtout des
    remplacements scriptés multi-fichiers), CHARGER réellement les écrans modifiés

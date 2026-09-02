@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && eslint . && vite build",
+    "build": "node scripts/typecheck-cliquet.mjs && eslint . && vite build",
     "lint": "eslint .",
     "check": "tsc --noEmit && eslint .",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck:cliquet": "node scripts/typecheck-cliquet.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.106.0",

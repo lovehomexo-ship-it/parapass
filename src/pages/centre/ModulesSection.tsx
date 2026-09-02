@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { MODULES, LIVE_MODULE_IDS, PRIX_MODULES_SEPARES, ECONOMIE_STUDIO, computeActiveModules } from '../../data/modules';
 import type { Module } from '../../data/modules';
 import { Check, Loader2, Clock, Zap, Package } from 'lucide-react';
+import { ModuleIcon } from '../../design/academieIcons';
 
 interface Props {
   centreId: string;
@@ -210,7 +211,7 @@ function PackCard({ mod, active, saving, economie, prixSepares, onToggle }: {
         Le plus avantageux
       </div>
 
-      <div className="text-3xl flex-shrink-0">{mod.icon}</div>
+      <div className="flex-shrink-0"><ModuleIcon id={mod.id} label={mod.nom} className="w-8 h-8" /></div>
 
       <div className="flex-1 min-w-0">
         <p className="font-bold text-base" style={{ color: 'var(--c-text)' }}>{mod.nom}</p>
@@ -254,7 +255,7 @@ function LiveCard({ mod, active, includedInStudio, saving, onToggle }: {
       }}
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="text-2xl">{mod.icon}</span>
+        <ModuleIcon id={mod.id} label={mod.nom} className="w-6 h-6" />
         {active && (
           <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full"
             style={{ background: 'rgba(16,185,129,0.12)', color: '#10B981', border: '1px solid rgba(16,185,129,0.3)' }}>
@@ -298,7 +299,7 @@ function RoadmapCard({ mod, onWaitlist, saving, onJoin }: {
       style={{ border: '1.5px solid var(--c-border)', background: 'var(--c-surface)' }}
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="text-2xl grayscale">{mod.icon}</span>
+        <span className="grayscale"><ModuleIcon id={mod.id} label={mod.nom} className="w-6 h-6" /></span>
         <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
           style={{ background: 'rgba(100,116,139,0.12)', color: '#64748B', border: '1px solid rgba(100,116,139,0.25)' }}>
           Prochainement
