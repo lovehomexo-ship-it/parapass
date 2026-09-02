@@ -367,8 +367,11 @@ export function ValidationsCarnet({ dzId, onNavigate }: { dzId: string; onNaviga
         carnet_signature_url,
         carnet_tampon_url,
         carnet_motif_refus,
-        profiles!parachutiste_id(id, nom, prenom, email, numero_licence, photo_profil_url)
+        profiles!parachutiste_id!inner(id, nom, prenom, email, numero_licence, photo_profil_url, est_demo)
       `)
+      // Les dossiers de démonstration n'encombrent pas la file d'attestation
+      // d'un centre de production (P11.1).
+      .eq('profiles.est_demo', false)
       .eq('centre_id', dzId)
       .eq('statut', 'actif');
 

@@ -887,9 +887,12 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
     setLoading(true);
     const { data } = await supabase
       .from('licencies_centres')
-      .select(`statut, date_adhesion, profiles!parachutiste_id(id, nom, prenom, email, numero_licence, photo_profil_url, created_at, role)`)
+      // !inner + filtre est_demo : les profils de démonstration ne remontent pas
+      // dans la liste des licenciés d'un centre de production (P11.1).
+      .select(`statut, date_adhesion, profiles!parachutiste_id!inner(id, nom, prenom, email, numero_licence, photo_profil_url, created_at, role, est_demo)`)
       .eq('centre_id', centreId)
-      .eq('statut', 'actif');
+      .eq('statut', 'actif')
+      .eq('profiles.est_demo', false);
 
     if (data) {
       const list: LicencieSummary[] = data.map((d: {
@@ -2951,17 +2954,22 @@ export function CentreDashboardPage() {
       setCentre(centreData);
       setCentreId(resolvedCentreId);
 
+      // Les profils de démonstration sont EXCLUS des compteurs (P11.1) : sinon
+      // ils gonflent les chiffres du tableau de bord d'un centre de production.
+      // !inner force la jointure, ce qui rend le filtre est_demo effectif.
       const { count: licCount } = await supabase
         .from('licencies_centres')
-        .select('*', { count: 'exact', head: true })
+        .select('*, profiles!parachutiste_id!inner(est_demo)', { count: 'exact', head: true })
         .eq('centre_id', resolvedCentreId)
-        .eq('statut', 'actif');
+        .eq('statut', 'actif')
+        .eq('profiles.est_demo', false);
 
       const { count: pendingCount } = await supabase
         .from('licencies_centres')
-        .select('*', { count: 'exact', head: true })
+        .select('*, profiles!parachutiste_id!inner(est_demo)', { count: 'exact', head: true })
         .eq('centre_id', resolvedCentreId)
-        .eq('statut', 'en_attente');
+        .eq('statut', 'en_attente')
+        .eq('profiles.est_demo', false);
 
       const today = new Date().toISOString().split('T')[0];
       // Use RPC to avoid long in() list that causes 503 on HEAD requests
@@ -2986,13 +2994,16 @@ export function CentreDashboardPage() {
       if (modulesError) console.error('Chargement centre_modules échoué :', modulesError);
       setActiveModules(computeActiveModules(modulesData ?? []));
 
-      // Carnets en attente de validation
+      // Carnets en attente de validation — hors profils de démonstration (P11.1) :
+      // la file d'attestation d'un centre de production ne doit contenir que de
+      // vrais dossiers.
       const { count: carnetCount } = await supabase
         .from('licencies_centres')
-        .select('*', { count: 'exact', head: true })
+        .select('*, profiles!parachutiste_id!inner(est_demo)', { count: 'exact', head: true })
         .eq('centre_id', resolvedCentreId)
         .eq('statut', 'actif')
-        .eq('carnet_statut', 'en_attente');
+        .eq('carnet_statut', 'en_attente')
+        .eq('profiles.est_demo', false);
       setCarnetsEnAttente(carnetCount ?? 0);
     }
     setLoading(false);
@@ -3282,8 +3293,11 @@ export function CentreDashboardPage() {
                   />
                 );
               })()}
-              {/* Outil de démo PROVISOIRE — DZ uniquement (isolé, retirable). */}
-              {centreId && profile?.role === 'admin_centre' && (
+              {/* Outil de démonstration — réservé aux COMPTES INTERNES ParaPass
+                  (P11.1). Il était visible par tout administrateur de centre,
+                  y compris de vraies DZ clientes, qui pouvaient injecter des
+                  données de démonstration dans leur propre base. */}
+              {centreId && profile?.role === 'admin_centre' && profile?.compte_interne && (
                 <div className="mt-6">
                   <DemoJourneeDZ centreId={centreId} onDone={fetchCentreData} />
                 </div>

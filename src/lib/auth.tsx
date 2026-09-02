@@ -20,6 +20,10 @@ export interface Profile {
   avatar_url?: string | null;
   preferences?: Record<string, unknown> | null;
   is_demo?: boolean;
+  /** Profil créé par le générateur de journée de démo (P11.1). */
+  est_demo?: boolean;
+  /** Compte ParaPass interne : donne accès aux outils de démonstration (P11.1). */
+  compte_interne?: boolean;
   brevet?: string | null;
   total_sauts?: number | null;
   declaration_honneur_faite?: boolean | null;
