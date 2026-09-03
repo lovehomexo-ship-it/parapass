@@ -4,6 +4,7 @@ import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { LoaderParaPass } from '../../components/LoaderParaPass';
 import { CheckCheck, Send, Monitor, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useAcquittementJour, libelleAck } from '../../lib/acquittementJour';
+import { surface, SEVERITE_COULEUR, action } from '../../lib/jetons';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // P8 — Du briefing PUBLIÉ au briefing REÇU.
@@ -14,7 +15,7 @@ import { useAcquittementJour, libelleAck } from '../../lib/acquittementJour';
 //   • a acquitté une version ANTÉRIEURE → « relisez la mise à jour »
 // ═══════════════════════════════════════════════════════════════════════════
 
-function SuiviInner({ centreId }: { centreId: string }) {
+function SuiviInner({ centreId, listerManquants = true }: { centreId: string; listerManquants?: boolean }) {
   // F01 — SOURCE UNIQUE : ce composant faisait sa propre lecture (RPC +
   // comptage des présences + révision courante). Trois lectures pour un même
   // chiffre, c'était la cause de la divergence.
@@ -75,21 +76,20 @@ function SuiviInner({ centreId }: { centreId: string }) {
   const aRelire = manquants.filter(m => m.acquitte_revision_anterieure);
 
   return (
-    <div className="rounded-2xl p-4 space-y-3"
-      style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
+    <div className="p-4 space-y-3" style={surface(2)}>
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h3 className="text-sm font-bold flex items-center gap-1.5" style={{ color: 'var(--c-text)' }}>
-            <CheckCheck className="w-4 h-4" style={{ color: '#38BDF8' }} aria-hidden />
+            <CheckCheck className="w-4 h-4" style={{ color: 'var(--action-texte)' }} aria-hidden />
             {libelleAck(ack)}
             {(revision ?? 1) > 1 && (
               <span className="text-[11px] font-semibold px-1.5 rounded-full"
-                style={{ background: 'rgba(251,146,60,0.15)', color: '#FB923C' }}>
+                style={{ background: 'color-mix(in srgb, var(--sev-vigilance) 15%, transparent)', color: 'var(--sev-vigilance)' }}>
                 révision {revision}
               </span>
             )}
           </h3>
-          <p className="text-xs mt-0.5" style={{ color: 'var(--c-dim)' }}>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--c-muted)' }}>
             {manquants.length === 0
               ? 'Tous les présents l’ont acquitté.'
               : `${manquants.length} présent${manquants.length > 1 ? 's' : ''} ne l’${manquants.length > 1 ? 'ont' : 'a'} pas acquitté.`}
@@ -111,31 +111,45 @@ function SuiviInner({ centreId }: { centreId: string }) {
       {/* Jauge */}
       <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--c-border)' }}>
         <div style={{ width: `${pct}%`, height: '100%',
-          background: pct === 100 ? '#34D399' : pct >= 60 ? '#FBBF24' : '#F87171',
+          background: pct === 100 ? SEVERITE_COULEUR.conforme : pct >= 60 ? SEVERITE_COULEUR.vigilance : SEVERITE_COULEUR.critique,
           transition: 'width .3s' }} />
       </div>
 
       {manquants.length > 0 && (
         <>
+          {/* Règle 3 — un seul endroit fait autorité sur QUI manque. En mode
+              Journée, c'est le tableau « Sur le terrain », où chaque personne
+              a déjà sa ligne et son motif ; répéter les noms ici ferait
+              apparaître la même personne deux fois dans le même écran. Le
+              mode Gestion, lui, n'a pas ce tableau : il garde la liste. */}
+          {listerManquants && (
           <ul className="space-y-1">
             {manquants.map(m => (
               <li key={m.parachutiste_id} className="flex items-center gap-2 text-xs">
                 <span className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                  style={{ background: m.acquitte_revision_anterieure ? '#FB923C' : '#F87171' }} />
+                  style={{ background: m.acquitte_revision_anterieure ? SEVERITE_COULEUR.vigilance : SEVERITE_COULEUR.critique }} />
                 <span className="flex-1 min-w-0 truncate" style={{ color: 'var(--c-text2)' }}>
                   {m.prenom} {m.nom}
                 </span>
                 {m.acquitte_revision_anterieure && (
-                  <span className="flex items-center gap-1 text-[11px] flex-shrink-0" style={{ color: '#FB923C' }}>
+                  <span className="flex items-center gap-1 text-xs flex-shrink-0" style={{ color: 'var(--sev-vigilance)' }}>
                     <AlertTriangle className="w-3 h-3" aria-hidden /> version antérieure
                   </span>
                 )}
               </li>
             ))}
           </ul>
+          )}
+          {!listerManquants && (
+            <button type="button" style={action('texte')}
+              onClick={() => document.getElementById('sur-le-terrain')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+              voir lesquels, sur le terrain
+            </button>
+          )}
 
           {aRelire.length > 0 && (
-            <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
+            <p className="text-xs" style={{ color: 'var(--c-muted)' }}>
               {aRelire.length} {aRelire.length > 1 ? 'ont' : 'a'} lu une version antérieure : la relance
               leur demandera de prendre connaissance de la <strong>mise à jour</strong>.
             </p>
@@ -143,7 +157,9 @@ function SuiviInner({ centreId }: { centreId: string }) {
 
           <button onClick={relancer} disabled={relance === 'envoi'}
             className="w-full flex items-center justify-center gap-2 rounded-xl text-sm font-bold disabled:opacity-50"
-            style={{ minHeight: 44, background: relance === 'fait' ? '#10B981' : '#2563EB', color: '#fff' }}>
+            style={{ ...action('principal'), width: '100%', justifyContent: 'center',
+              // Le succès n'est pas une couleur d'action : il se dit par le libellé.
+              opacity: relance === 'fait' ? 0.7 : 1 }}>
             <Send className="w-4 h-4" aria-hidden />
             {relance === 'envoi' ? 'Envoi…'
               : relance === 'fait' ? `Relance envoyée à ${manquants.length} personne(s)`
@@ -155,6 +171,13 @@ function SuiviInner({ centreId }: { centreId: string }) {
   );
 }
 
-export function SuiviAcquittements({ centreId }: { centreId: string }) {
-  return <ErrorBoundary><SuiviInner centreId={centreId} /></ErrorBoundary>;
+/**
+ * @param listerManquants  Faux en mode Journée, où « Sur le terrain » fait
+ *   autorité sur les noms. Variante, pas modification en place : le mode
+ *   Gestion et l'écran Briefing gardent le comportement d'origine.
+ */
+export function SuiviAcquittements({ centreId, listerManquants = true }: {
+  centreId: string; listerManquants?: boolean;
+}) {
+  return <ErrorBoundary><SuiviInner centreId={centreId} listerManquants={listerManquants} /></ErrorBoundary>;
 }

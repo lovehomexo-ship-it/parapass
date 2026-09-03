@@ -3396,7 +3396,7 @@ export function CentreDashboardPage() {
                     onChangerMode={changerMode}
                     onAllerGestion={(section, sousOnglet) => { changerMode('gestion'); setActiveSection(section, sousOnglet); }}
                     briefingSlot={centreId ? <BriefingRecapDZ centreId={centreId} onOuvrir={() => setActiveSection('briefing')} /> : undefined}
-                    acquittementSlot={centreId ? <SuiviAcquittements centreId={centreId} /> : undefined}
+                    acquittementSlot={centreId ? <SuiviAcquittements centreId={centreId} listerManquants={false} /> : undefined}
                     terrainSlot={centreId ? <SurLeTerrain centreId={centreId} /> : undefined}
                     meteoSlot={centreId ? (
                       <Tiroir cle="meteo" titre="Profil de vent, prévision et point de largage"
