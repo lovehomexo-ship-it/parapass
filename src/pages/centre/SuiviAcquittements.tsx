@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { LoaderParaPass } from '../../components/LoaderParaPass';
 import { CheckCheck, Send, Monitor, RefreshCw, AlertTriangle } from 'lucide-react';
+import { useAcquittementJour, libelleAck } from '../../lib/acquittementJour';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // P8 — Du briefing PUBLIÉ au briefing REÇU.
@@ -13,45 +14,15 @@ import { CheckCheck, Send, Monitor, RefreshCw, AlertTriangle } from 'lucide-reac
 //   • a acquitté une version ANTÉRIEURE → « relisez la mise à jour »
 // ═══════════════════════════════════════════════════════════════════════════
 
-interface NonAcquitte {
-  parachutiste_id: string;
-  nom: string;
-  prenom: string;
-  acquitte_revision_anterieure: boolean;
-}
-
 function SuiviInner({ centreId }: { centreId: string }) {
-  const [manquants, setManquants] = useState<NonAcquitte[]>([]);
-  const [presents, setPresents] = useState(0);
-  const [revision, setRevision] = useState<number | null>(null);
-  const [chargement, setChargement] = useState(true);
-  const [erreur, setErreur] = useState<string | null>(null);
+  // F01 — SOURCE UNIQUE : ce composant faisait sa propre lecture (RPC +
+  // comptage des présences + révision courante). Trois lectures pour un même
+  // chiffre, c'était la cause de la divergence.
+  const ack = useAcquittementJour(centreId);
+  const { manquants, presents, revision, chargement, erreur, publie } = ack;
+  const charger = ack.recharger;
   const [relance, setRelance] = useState<'idle' | 'envoi' | 'fait'>('idle');
 
-  const charger = useCallback(async () => {
-    setChargement(true); setErreur(null);
-    const jour = new Date().toISOString().slice(0, 10);
-    const [{ data, error }, { count }, { data: b }] = await Promise.all([
-      supabase.rpc('get_non_acquittes', { p_centre_id: centreId, p_date: jour }),
-      supabase.from('dz_presences').select('*', { count: 'exact', head: true })
-        .eq('dz_id', centreId).eq('date_presence', jour),
-      supabase.from('dz_briefings').select('revision')
-        .eq('dz_id', centreId).eq('date_briefing', jour).not('published_at', 'is', null)
-        .order('revision', { ascending: false }).limit(1).maybeSingle(),
-    ]);
-    if (error) {
-      console.error('Suivi des acquittements — échec :', {
-        code: error.code, message: error.message, details: error.details, hint: error.hint,
-      });
-      setErreur(error.message); setChargement(false); return;
-    }
-    setManquants((data ?? []) as NonAcquitte[]);
-    setPresents(count ?? 0);
-    setRevision(b?.revision ?? null);
-    setChargement(false);
-  }, [centreId]);
-
-  useEffect(() => { charger(); }, [charger]);
 
   const relancer = async () => {
     if (manquants.length === 0) return;
@@ -91,7 +62,7 @@ function SuiviInner({ centreId }: { centreId: string }) {
     );
   }
 
-  if (revision === null) {
+  if (!publie) {
     return (
       <div className="rounded-2xl p-4 text-sm"
         style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', color: 'var(--c-dim)' }}>
@@ -100,8 +71,7 @@ function SuiviInner({ centreId }: { centreId: string }) {
     );
   }
 
-  const acquitte = Math.max(0, presents - manquants.length);
-  const pct = presents > 0 ? Math.round((acquitte / presents) * 100) : 100;
+  const pct = presents > 0 ? Math.round((ack.acquittes / presents) * 100) : 100;
   const aRelire = manquants.filter(m => m.acquitte_revision_anterieure);
 
   return (
@@ -111,8 +81,8 @@ function SuiviInner({ centreId }: { centreId: string }) {
         <div>
           <h3 className="text-sm font-bold flex items-center gap-1.5" style={{ color: 'var(--c-text)' }}>
             <CheckCheck className="w-4 h-4" style={{ color: '#38BDF8' }} aria-hidden />
-            Briefing reçu par {acquitte} / {presents}
-            {revision > 1 && (
+            {libelleAck(ack)}
+            {(revision ?? 1) > 1 && (
               <span className="text-[11px] font-semibold px-1.5 rounded-full"
                 style={{ background: 'rgba(251,146,60,0.15)', color: '#FB923C' }}>
                 révision {revision}

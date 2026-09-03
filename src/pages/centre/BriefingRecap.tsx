@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { formatHeureParis } from '../../lib/datetime';
 import { supabase } from '../../lib/supabase';
 import { useBriefingDuJour, sensAtterrissageDerive } from '../../lib/briefing';
+import { useAcquittementJour, libelleAck } from '../../lib/acquittementJour';
 import { BriefingScene } from '../../components/BriefingScene';
 import { Megaphone, CheckCircle, ArrowRight, RefreshCw } from 'lucide-react';
 
@@ -22,31 +23,13 @@ function FlecheVent({ dirProvenance }: { dirProvenance: number }) {
  *  publication : le circuit affiché EST celui du circuit_id publié). */
 export function BriefingRecapDZ({ centreId, onOuvrir }: { centreId: string; onOuvrir: () => void }) {
   const { settings, briefing, circuit, backgroundUrl, loading } = useBriefingDuJour(centreId);
-  const [acks, setAcks] = useState<number | null>(null);
-  const [membres, setMembres] = useState<number | null>(null);
   const [voirPlus, setVoirPlus] = useState(false);
 
-  // Compteur d'acquittements — même règle que le Suivi du jour :
-  // seuls les acquittements >= published_at comptent. Requêtes head/count légères.
-  const loadCompteur = useCallback(async () => {
-    if (!briefing) return;
-    const [{ count: nbAcks, error: aErr }, { count: nbMembres, error: mErr }] = await Promise.all([
-      supabase.from('briefing_acknowledgements')
-        .select('*', { count: 'exact', head: true })
-        .eq('briefing_id', briefing.id)
-        .gte('acknowledged_at', briefing.published_at),
-      supabase.from('licencies_centres')
-        .select('*', { count: 'exact', head: true })
-        .eq('centre_id', centreId)
-        .eq('statut', 'actif'),
-    ]);
-    if (aErr) console.error('Compteur acquittements échoué :', aErr);
-    if (mErr) console.error('Compteur membres échoué :', mErr);
-    if (nbAcks !== null) setAcks(nbAcks);
-    if (nbMembres !== null) setMembres(nbMembres);
-  }, [briefing?.id, briefing?.published_at, centreId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // F01 — SOURCE UNIQUE. Ce composant calculait son propre ratio sur les
+  // LICENCIÉS du centre (29) et sur toutes les révisions confondues, pendant
+  // que deux autres blocs en calculaient un autre sur les PRÉSENTS (4).
+  const ack = useAcquittementJour(centreId);
 
-  useEffect(() => { loadCompteur(); }, [loadCompteur]);
   // Vivant : Realtime sur les acquittements + filet 30 s (même mécanisme que le Suivi)
   useEffect(() => {
     if (!briefing) return;
@@ -54,11 +37,11 @@ export function BriefingRecapDZ({ centreId, onOuvrir }: { centreId: string; onOu
       .channel(`briefing-recap-${briefing.id}`)
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'briefing_acknowledgements', filter: `briefing_id=eq.${briefing.id}` },
-        () => loadCompteur())
+        () => ack.recharger())
       .subscribe();
-    const poll = setInterval(loadCompteur, 30_000);
+    const poll = setInterval(ack.recharger, 30_000);
     return () => { supabase.removeChannel(channel); clearInterval(poll); };
-  }, [briefing?.id, loadCompteur]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [briefing?.id, ack.recharger]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) return null;
 
@@ -134,10 +117,14 @@ export function BriefingRecapDZ({ centreId, onOuvrir }: { centreId: string; onOu
                 <RefreshCw className="w-3 h-3" /> Mis à jour à {heurePub}
               </span>
             )}
-            {acks !== null && membres !== null && (
-              <span className="inline-flex items-center gap-1" style={{ color: '#34D399' }}>
+            {/* F01 — « présents » nomme le périmètre : c'est son absence qui
+                rendait les trois compteurs incomparables. Le ratio sur les
+                LICENCIÉS du centre appartient aux statistiques, pas à la journée. */}
+            {ack.publie && (
+              <span className="inline-flex items-center gap-1"
+                style={{ color: ack.manquants.length === 0 ? '#34D399' : 'var(--c-muted)' }}>
                 <CheckCircle className="w-3.5 h-3.5" />
-                {acks} / {membres} licenciés ont pris connaissance
+                {libelleAck(ack)}
               </span>
             )}
           </div>
