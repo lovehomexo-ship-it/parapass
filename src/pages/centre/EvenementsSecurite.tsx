@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { LoaderParaPass } from '../../components/LoaderParaPass';
-import { ShieldAlert, Plus, Download, Filter } from 'lucide-react';
+import jsPDF from 'jspdf';
+import { ShieldAlert, Plus, Download, FileDown, Filter } from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // P6 — ÉVÈNEMENTS SÉCURITÉ : le registre qui protège le directeur technique.
@@ -123,6 +124,79 @@ function SecuriteInner({ centreId }: { centreId: string }) {
     URL.revokeObjectURL(a.href);
   };
 
+  const exporterPdf = async () => {
+    const annee = new Date().getFullYear();
+    const deLAnnee = evts.filter(e => new Date(e.date_jour).getFullYear() === annee);
+
+    // Nombre de sauts de l'année : le taux d'évènements ne veut rien dire sans
+    // lui. On le demande au serveur plutôt que de l'estimer.
+    const { count: nbSauts, error } = await supabase
+      .from('sauts').select('*', { count: 'exact', head: true })
+      .gte('date_saut', `${annee}-01-01`).lte('date_saut', `${annee}-12-31`)
+      .eq('is_tunnel', false);
+    if (error) {
+      console.error('Synthèse sécurité — comptage des sauts échoué :', {
+        code: error.code, message: error.message, details: error.details, hint: error.hint,
+      });
+    }
+
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const M = 15, L = 180; let y = M;
+    const ligne = (t: string, indent = 0) => {
+      if (y > 275) { doc.addPage(); y = M; }
+      for (const l of doc.splitTextToSize(t, L - indent)) { doc.text(l, M + indent, y); y += 4.8; }
+    };
+    const titre = (t: string) => {
+      y += 4; doc.setFillColor(0, 26, 77); doc.rect(M, y, L, 7, 'F');
+      doc.setTextColor(255); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+      doc.text(t, M + 2, y + 5); y += 11;
+      doc.setTextColor(30); doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+    };
+
+    doc.setFillColor(0, 26, 77); doc.rect(0, 0, 210, 26, 'F');
+    doc.setTextColor(255); doc.setFontSize(15); doc.setFont('helvetica', 'bold');
+    doc.text(`Registre des évènements sécurité — ${annee}`, M, 14);
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+    doc.text(`Édité le ${new Date().toLocaleString('fr-FR')}`, M, 20);
+    y = 34; doc.setTextColor(30); doc.setFontSize(9);
+
+    titre('SYNTHÈSE');
+    ligne(`Évènements déclarés : ${deLAnnee.length}`);
+    ligne(`Sauts sur l'année : ${nbSauts ?? 'non disponible'}`);
+    if (nbSauts && nbSauts > 0) {
+      ligne(`Taux : ${(deLAnnee.length / nbSauts * 1000).toFixed(2)} évènement(s) pour 1000 sauts`);
+    }
+
+    titre('PAR CATÉGORIE');
+    const parCat = CATEGORIES.map(([c, l]) => [l, deLAnnee.filter(e => e.categorie === c).length] as const)
+      .filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+    if (parCat.length === 0) ligne('Aucun évènement déclaré cette année.');
+    else for (const [l, n] of parCat) {
+      ligne(`${l} : ${n}`
+        + (nbSauts && nbSauts > 0 ? `  (${(n / nbSauts * 1000).toFixed(2)} / 1000 sauts)` : ''));
+    }
+
+    titre('PAR GRAVITÉ');
+    for (const [c, l] of GRAVITES.map(g => [g[0], g[1]] as const)) {
+      ligne(`${l} : ${deLAnnee.filter(e => e.gravite === c).length}`);
+    }
+
+    titre('DÉTAIL');
+    if (deLAnnee.length === 0) ligne('Aucun évènement.');
+    else for (const e of deLAnnee) {
+      ligne(`${new Date(e.date_jour).toLocaleDateString('fr-FR')} — `
+        + `${libelle(CATEGORIES, e.categorie)} — ${libelle(GRAVITES, e.gravite)}`
+        + (e.phase ? ` — ${libelle(PHASES, e.phase)}` : ''));
+      ligne(e.recit, 4);
+      ligne(`Déclaré par ${e.declarant_nom}`, 4);
+      y += 1.5;
+    }
+
+    doc.setFontSize(7); doc.setTextColor(120);
+    doc.text('Document produit par ParaPass à partir du registre des évènements sécurité du centre.', M, 288);
+    doc.save(`evenements-securite-${annee}.pdf`);
+  };
+
   if (chargement) return <LoaderParaPass taille={72} message={null} />;
 
   const filtres = filtreGravite === 'tous' ? evts : evts.filter(e => e.gravite === filtreGravite);
@@ -153,6 +227,13 @@ function SecuriteInner({ centreId }: { centreId: string }) {
               className="flex items-center gap-1.5 px-3 rounded-xl text-xs font-semibold"
               style={{ minHeight: 44, color: 'var(--c-muted)', border: '1px solid var(--c-border)' }}>
               <Download className="w-3.5 h-3.5" aria-hidden /> CSV
+            </button>
+          )}
+          {evts.length > 0 && (
+            <button onClick={exporterPdf}
+              className="flex items-center gap-1.5 px-3 rounded-xl text-xs font-semibold"
+              style={{ minHeight: 44, color: 'var(--c-muted)', border: '1px solid var(--c-border)' }}>
+              <FileDown className="w-3.5 h-3.5" aria-hidden /> Synthèse annuelle
             </button>
           )}
           <button onClick={() => setFormOuvert(v => !v)}

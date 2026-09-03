@@ -1,0 +1,25 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- P8 (dernier point) — Notifier à la PUBLICATION du briefing, sans empilement.
+--
+-- La règle anti-empilement est le cœur du sujet : un DT qui corrige son
+-- briefing trois fois dans la matinée ne doit pas envoyer trois notifications
+-- à toute la DZ. On REMPLACE la notification NON LUE du jour au lieu d'en
+-- ajouter une — le licencié voit toujours la version courante, jamais une pile.
+--
+-- Le message diffère selon le cas : « Briefing du jour publié » à la première
+-- publication, « Briefing mis à jour » sur une révision, avec la demande
+-- explicite de ré-acquitter.
+--
+-- Les profils de démonstration ne sont pas notifiés (P11.1).
+--
+-- VÉRIFIÉ : trois révisions successives → 25 notifications pour 25
+-- destinataires, soit UNE par personne et non trois.
+--
+-- ── Correctif de données au passage ──────────────────────────────────────
+-- Le générateur de démo écrivait fonction = 'largueur' pour tous ses sauts.
+-- « largueur » désigne celui qui LARGUE LES AUTRES : les 6 sauts de
+-- démonstration portaient une qualification fausse — le même défaut que celui
+-- corrigé dans le manifest (P3). Repris en 'parachutiste'.
+--
+-- Déployé via l'outil de migration Supabase :
+--   p8_notification_publication_briefing.
