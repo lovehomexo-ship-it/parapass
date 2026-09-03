@@ -178,4 +178,6 @@ export function estimePlafond(nuages: MeteoAltitudePayload['nuages'], i: number)
   return 'ciel dégagé';
 }
 
-export const kmhEnKt = (kmh: number) => Math.round(kmh * 0.539957);
+// P3 — LA conversion vit dans lib/vent.ts. Ré-export pour ne pas casser les
+// quatre écrans qui l'importent d'ici, mais il n'y en a plus qu'une.
+export { kmhEnKt } from './vent';

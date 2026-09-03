@@ -674,9 +674,17 @@ export function BriefingSection({ centreId }: { centreId: string }) {
               : 'Publier le briefing'}
           </button>
           {briefing && (
-            <p className="text-[11px] text-center" style={{ color: 'var(--c-dim)' }}>
+            <p className="text-xs text-center" style={{ color: 'var(--c-muted)' }}>
               Dernière publication : {formatHeureParis(briefing.published_at)}
-              {' — '}{circuits.find(c => c.id === briefing.circuit_id)?.nom ?? 'circuit inconnu'}
+              {/* « circuit inconnu » confondait deux situations très
+                  différentes : aucun circuit n'a été publié, ou le circuit
+                  publié a été supprimé depuis. La seconde est un incident. */}
+              {' — '}{
+                briefing.circuit_id === null
+                  ? 'aucun circuit publié'
+                  : circuits.find(c => c.id === briefing.circuit_id)?.nom
+                    ?? 'circuit supprimé depuis la publication'
+              }
             </p>
           )}
         </div>

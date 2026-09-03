@@ -2,6 +2,8 @@ import { useEffect, useState, type ComponentType } from 'react';
 import { CheckCircle2, AlertTriangle, XOctagon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { surface, enTeteSection, action, SEVERITE_COULEUR, type Severite } from '../lib/jetons';
+import { ecartVent, libelleVent, type Vent } from '../lib/vent';
+import { ymdLocal } from '../lib/datetime';
 import { ErrorBoundary } from './ErrorBoundary';
 import { useMeteoAltitude, indexHeureCourante, kmhEnKt } from '../lib/meteoAltitude';
 import { useCurrencyRules } from '../lib/currency';
@@ -94,6 +96,28 @@ function DecisionInner({ centreId }: { centreId: string }) {
       });
   }, [centreId]);
 
+  // ── P3 — Le vent du BRIEFING : une observation du DT, pas une prévision.
+  // Elle vieillit dans la journée ; c'est tout l'objet de la comparaison
+  // plus bas. Dernière révision seulement (P8 en crée une par mise à jour :
+  // un maybeSingle() casserait ici, on l'a déjà payé).
+  const [ventBriefing, setVentBriefing] = useState<Vent | null>(null);
+  useEffect(() => {
+    if (!centreId) return;
+    supabase.from('dz_briefings')
+      .select('vent_vitesse_kt, vent_direction_deg, published_at')
+      .eq('dz_id', centreId).eq('date_briefing', ymdLocal(new Date()))
+      .order('revision', { ascending: false }).limit(1)
+      .then(({ data, error }) => {
+        if (error) { console.error('Vent du briefing — lecture échouée :', error); return; }
+        const b = data?.[0];
+        if (!b?.published_at) return;
+        setVentBriefing({
+          vitesseKt: b.vent_vitesse_kt, directionDeg: b.vent_direction_deg,
+          origine: 'briefing', horodatage: b.published_at,
+        });
+      });
+  }, [centreId]);
+
   // Vent/rafales courants (kt) depuis le profil sol de l'heure en cours.
   const meteoCourante = (() => {
     if (!payload) return null;
@@ -121,6 +145,15 @@ function DecisionInner({ centreId }: { centreId: string }) {
             : (payload?.nuages.bas[iH] ?? 0) >= 40 ? 1500 : null,
     visibiliteKm: null,
   };
+  // P3 — la prévision devient un Vent comme un autre : même type, donc même
+  // libellé d'origine et d'heure. C'est ce qui rend les deux comparables.
+  const ventPrevu: Vent | null = payload ? {
+    vitesseKt: mesuresPublics.ventKt,
+    directionDeg: Math.round(payload.sol.dir[iH] ?? 0),
+    origine: 'prevision', horodatage: payload.times[iH] ?? new Date().toISOString(),
+  } : null;
+  const derive = ventBriefing && ventPrevu ? ecartVent(ventBriefing, ventPrevu) : null;
+
   const verdictsPublics = payload ? evaluerTousPublics(seuilsPublics, mesuresPublics) : [];
   const nbPraticables = verdictsPublics.filter(v => v.feu === 'vert').length;
   const pireFeu: Feu = verdictsPublics.some(v => v.feu === 'rouge') ? 'rouge'
@@ -158,6 +191,18 @@ function DecisionInner({ centreId }: { centreId: string }) {
         </span>
       </h2>
 
+      {/* P3 — l'appli n'interdit rien : elle dit que le relevé du matin a
+          vieilli, et laisse le DT décider de le reprendre. */}
+      {derive?.derive && (
+        <p role="status" className="mb-3 px-3 py-2 rounded-xl" style={{
+          fontSize: 13,
+          background: 'color-mix(in srgb, var(--sev-vigilance) 12%, transparent)',
+          borderLeft: `5px dashed ${SEVERITE_COULEUR.vigilance}`,
+          color: 'var(--c-text2)' }}>
+          {derive.message}
+        </p>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {/* Verdict météo */}
         <div className="rounded-xl p-3 sm:col-span-1" style={{ background: ui?.bg ?? 'var(--c-hover)', border: `1px solid ${ui?.border ?? 'var(--c-border-s)'}` }}>
@@ -186,6 +231,18 @@ function DecisionInner({ centreId }: { centreId: string }) {
                   </li>
                 ))}
               </ul>
+              {/* P3 — un chiffre de vent sans origine ni heure n'est pas
+                  décidable. Ces deux lignes ne sont donc jamais optionnelles. */}
+              {ventPrevu && (
+                <p className="mt-1.5" style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                  Vent {libelleVent(ventPrevu)}
+                </p>
+              )}
+              {ventBriefing && (
+                <p style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                  Relevé du jour : {libelleVent(ventBriefing)}
+                </p>
+              )}
             </>
           ) : verdict && ui ? (
             // Repli sur l'ancien feu unique tant qu'aucun seuil par public n'est

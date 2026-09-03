@@ -7,6 +7,7 @@ import { ymdLocal } from '../../lib/datetime';
 import { usePresencesDZ } from '../../lib/presence';
 import { Filter, Check } from 'lucide-react';
 import { surface, rayure, pastille, action, enTeteSection, type Severite } from '../../lib/jetons';
+import { evaluerAptitude, signalerDivergence, RANG_STATUT } from '../../lib/aptitude';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // F08 — UN SEUL TABLEAU pour la population du jour.
@@ -34,10 +35,12 @@ interface Ligne {
   voile: string | null; horaire: string | null;
 }
 
-const SEVERITE: Record<'rouge' | 'orange' | 'vert', { sev: Severite; pastille: string; rang: number }> = {
-  rouge:  { sev: 'critique',  pastille: 'À examiner',  rang: 0 },
-  orange: { sev: 'vigilance', pastille: 'Vigilance',   rang: 1 },
-  vert:   { sev: 'conforme',  pastille: 'Peut sauter', rang: 2 },
+// Le rang de tri vit dans lib/aptitude (RANG_STATUT) : il n'a pas à être
+// redéfini ici, où il finirait par diverger de la règle d'agrégation.
+const SEVERITE: Record<'rouge' | 'orange' | 'vert', { sev: Severite; pastille: string }> = {
+  rouge:  { sev: 'critique',  pastille: 'À examiner' },
+  orange: { sev: 'vigilance', pastille: 'Vigilance' },
+  vert:   { sev: 'conforme',  pastille: 'Peut sauter' },
 };
 
 const CLE_FILTRE = 'parapass.terrain.filtre';
@@ -98,13 +101,19 @@ function TerrainInner({ centreId }: { centreId: string }) {
   // Une seule ligne par personne — c'est tout l'objet de ce composant.
   const lignes: Ligne[] = aptitudes.map(a => {
     const p = presences.find(x => x.user_id === a.parachutiste_id);
+    // P5 — une seule règle d'agrégation (lib/aptitude), employée ici comme au
+    // test. Recalculer à partir des motifs permet aussi à une levée de règle
+    // de reteindre la ligne SANS aller-retour serveur. Le serveur garde
+    // l'autorité : si les deux ne disent pas la même chose, on le dit.
+    signalerDivergence(`${a.prenom} ${a.nom}`, a.statut, a.motifs);
     return {
       ...a,
+      statut: evaluerAptitude(a.motifs).statut,
       voile: p?.voile_perso_nom ?? p?.voile_perso_libre ?? null,
       horaire: p?.heure_debut ? `${p.heure_debut}${p.heure_fin ? `–${p.heure_fin}` : ''}` : null,
     };
   }).sort((a, b) =>
-    SEVERITE[a.statut].rang - SEVERITE[b.statut].rang || a.nom.localeCompare(b.nom));
+    RANG_STATUT[a.statut] - RANG_STATUT[b.statut] || a.nom.localeCompare(b.nom));
 
   const aExaminer = lignes.filter(l => l.statut !== 'vert').length;
   const affichees = seulementCeQuiCoince ? lignes.filter(l => l.statut !== 'vert') : lignes;
