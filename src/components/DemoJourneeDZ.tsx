@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useDialogues } from './useDialogues';
 import { Sparkles, Trash2, FlaskConical } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -11,12 +12,22 @@ import { ErrorBoundary } from './ErrorBoundary';
 // retirer_demo_journee. Ne touche jamais à un autre centre ni à de vraies données.
 // ═══════════════════════════════════════════════════════════════════════════
 
-function DemoJourneeInner({ centreId, onDone }: { centreId: string; onDone?: () => void }) {
+function DemoJourneeInner({ centreId, centreNom, onDone }: { centreId: string; centreNom?: string; onDone?: () => void }) {
+  const { demanderConfirmation, dialogue } = useDialogues();
   const [busy, setBusy] = useState<'gen' | 'clr' | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const run = async (mode: 'gen' | 'clr') => {
+    // F13 — ces deux boutons ÉCRIVENT EN BASE. Le jour d'une présentation
+    // fédérale, un clic malheureux coûterait cher : on nomme le centre et ce
+    // qui va être écrit avant d'agir.
+    const ok = await demanderConfirmation(
+      mode === 'gen' ? 'Générer des données de démonstration ?' : 'Retirer les données de démonstration ?',
+      mode === 'gen'
+        ? `Sur le centre « ${centreNom ?? centreId} ». Seront créés : 4 parachutistes fictifs marqués DÉMO, leurs présences, sauts, pliages, tandems et un briefing du jour. Aucune donnée réelle n\u2019est modifiée.`
+        : `Sur le centre « ${centreNom ?? centreId} ». Seront supprimés les enregistrements MARQUÉS démonstration, et eux seuls. Aucune donnée réelle n\u2019est touchée.`);
+    if (!ok) return;
     setBusy(mode); setError(null); setInfo(null);
     const fn = mode === 'gen' ? 'generer_demo_journee' : 'retirer_demo_journee';
     const { data, error: err } = await supabase.rpc(fn, { p_centre_id: centreId });
@@ -39,7 +50,7 @@ function DemoJourneeInner({ centreId, onDone }: { centreId: string; onDone?: () 
       style={{ background: 'rgba(148,163,184,0.05)', border: '1px dashed var(--c-border-f)' }}>
       <div className="flex items-center gap-1.5">
         <FlaskConical className="w-3.5 h-3.5" style={{ color: 'var(--c-dim)' }} />
-        <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Outil de démo · provisoire</span>
+        <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Zone de test — hors production</span>
       </div>
       <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
         Repeuple tous les modules DZ (présences, sauts, pliages, tandem, briefing, messages) avec des données fictives reliées (parachutistes « DÉMO »). N'affecte que ce centre.
@@ -58,6 +69,7 @@ function DemoJourneeInner({ centreId, onDone }: { centreId: string; onDone?: () 
           <Trash2 className="w-3.5 h-3.5" /> {busy === 'clr' ? 'Retrait…' : 'Retirer la démo'}
         </button>
       </div>
+      {dialogue}
       {info && <p className="text-[11px] font-medium" style={{ color: '#34D399' }}>{info}</p>}
       {error && <p role="alert" className="text-[11px] font-medium" style={{ color: '#F87171' }}>{error}</p>}
     </div>
@@ -65,7 +77,7 @@ function DemoJourneeInner({ centreId, onDone }: { centreId: string; onDone?: () 
 }
 
 /** Bouton de démo DZ — sous ErrorBoundary, ne s'affiche que si un centre est fourni. */
-export function DemoJourneeDZ({ centreId, onDone }: { centreId: string | undefined; onDone?: () => void }) {
+export function DemoJourneeDZ({ centreId, centreNom, onDone }: { centreId: string | undefined; centreNom?: string; onDone?: () => void }) {
   if (!centreId) return null;
-  return <ErrorBoundary><DemoJourneeInner centreId={centreId} onDone={onDone} /></ErrorBoundary>;
+  return <ErrorBoundary><DemoJourneeInner centreId={centreId} centreNom={centreNom} onDone={onDone} /></ErrorBoundary>;
 }

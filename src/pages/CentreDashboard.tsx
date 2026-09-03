@@ -40,8 +40,6 @@ function planLabel(plan: string | null | undefined): string {
   if (plan === 'essai') return 'Essai';
   return '—';
 }
-import { PresencesDZ } from './centre/PresencesDZ';
-import { AptitudeDuJour } from './centre/AptitudeDuJour';
 import { JournalDeBord } from './centre/JournalDeBord';
 import { SuiviAcquittements } from './centre/SuiviAcquittements';
 import { BriefingOperationnel } from './centre/BriefingOperationnel';
@@ -49,6 +47,10 @@ import { EcheancesMateriel } from './centre/EcheancesMateriel';
 import { EvenementsSecurite } from './centre/EvenementsSecurite';
 import { Rotations } from './centre/Rotations';
 import { GrilleMeteoDZ } from '../components/GrilleMeteoDZ';
+import { BasculeMode, type ModeEcran } from '../components/BasculeMode';
+import { BarreEtat } from '../components/BarreEtat';
+import { Tiroir } from '../components/Tiroir';
+import { SurLeTerrain } from './centre/SurLeTerrain';
 import { VigilanceVoileDZ } from '../components/VigilanceVoileDZ';
 import { BriefingSection } from './centre/BriefingSection';
 import { BrevetsSection } from './centre/BrevetsSection';
@@ -346,14 +348,23 @@ function ZoneTitre({ children }: { children: React.ReactNode }) {
 // ─── DashboardHome ─────────────────────────────────────────────────────────────
 
 function DashboardHome({
-  centre, stats, onNavigate, carnetsEnAttente, briefingSlot, presencesSlot, encadrementSlot, relancesSlot, vigilanceSlot,
+  centre, stats, onNavigate, carnetsEnAttente, mode,
+  briefingSlot, acquittementSlot, terrainSlot, meteoSlot, onAllerGestion, onChangerMode,
+  encadrementSlot, relancesSlot, vigilanceSlot,
 }: {
   centre: Centre | null;
   stats: DashStats;
   onNavigate: (s: string) => void;
   carnetsEnAttente: number;
-  briefingSlot?: React.ReactNode;      // Briefing du jour (zone Aujourd'hui)
-  presencesSlot?: React.ReactNode;     // Présents (compteur + liste fusionnés)
+  /** F14 — deux métiers, deux modes : le corps de l'écran en dépend. */
+  mode: ModeEcran;
+  briefingSlot?: React.ReactNode;      // Briefing du jour (mode Journée)
+  acquittementSlot?: React.ReactNode;  // F01 — carte compacte à côté du briefing
+  terrainSlot?: React.ReactNode;       // F08 — tableau unique « Sur le terrain »
+  meteoSlot?: React.ReactNode;         // F03 — tiroir replié
+  /** F07 — bascule en Gestion et ouvre la file visée. */
+  onAllerGestion: (section: string, sousOnglet?: string) => void;
+  onChangerMode: (m: ModeEcran) => void;
   encadrementSlot?: React.ReactNode;   // Encadrement des séances (zone Aujourd'hui)
   relancesSlot?: React.ReactNode;      // Échéances à relancer (zone À traiter)
   vigilanceSlot?: React.ReactNode;     // Vigilance charge alaire (zone À traiter)
@@ -504,13 +515,56 @@ function DashboardHome({
         </div>
       </div>
 
-      {/* ── DÉCISION DU JOUR — synthèse actionnable en tête ── */}
-      <DecisionDuJour centreId={centre?.id} />
+      {/* F14 — la bascule, en tête de la zone de contenu. */}
+      <div className="mb-4">
+        <BasculeMode mode={mode} onChange={onChangerMode}
+          enAttenteGestion={carnetsEnAttente + licencesExpirees + stats.demandesAttente} />
+      </div>
 
-      {/* ── 2 · AUJOURD'HUI — l'opérationnel du jour ── */}
+      {/* ══ MODE JOURNÉE — le terrain ═══════════════════════════════════════
+          F14 : deux métiers, deux modes. L'ordre suit le geste du DT —
+          ciel → décision → briefing → personnes. */}
+      {mode === 'journee' && (
+        <>
+          <DecisionDuJour centreId={centre?.id} />
+          {briefingSlot}
+          {acquittementSlot}
+          {terrainSlot}
+
+          {/* F07 + F12 — six pastilles au lieu de six rangées pleine largeur.
+              La barre est construite ICI, où licencesExpirees et alerteMedical
+              vivent déjà : les recalculer dans la page aurait créé un second
+              chiffre, ce que la règle 3 interdit.
+              Un compteur de DÉFAUT porte une gravité et une action obligatoire ;
+              un compteur d'ACTIVITÉ est neutre et ne mène nulle part. */}
+          <BarreEtat compteurs={[
+            { genre: 'defaut', cle: 'carnets', valeur: carnetsEnAttente,
+              libelle: 'carnets à valider', gravite: 'vigilance',
+              onAller: () => onAllerGestion('validations') },
+            { genre: 'defaut', cle: 'licences', valeur: licencesExpirees,
+              libelle: 'licences FFP expirées', gravite: 'critique',
+              onAller: () => onAllerGestion('licencies') },
+            { genre: 'defaut', cle: 'medical', valeur: alerteMedical,
+              libelle: 'certificats médicaux à renouveler', gravite: 'vigilance',
+              onAller: () => onAllerGestion('licencies') },
+            { genre: 'defaut', cle: 'adhesions', valeur: stats.demandesAttente,
+              libelle: 'demandes d’adhésion', gravite: 'vigilance',
+              onAller: () => onAllerGestion('demandes') },
+            { genre: 'activite', cle: 'sauts', valeur: stats.sautsAujourdhui,
+              libelle: 'sauts aujourd’hui' },
+            { genre: 'activite', cle: 'mois', valeur: sautsThisMonth,
+              libelle: 'sauts ce mois-ci' },
+          ]} />
+
+          {meteoSlot}
+        </>
+      )}
+
+      {/* ══ MODE GESTION — le centre ════════════════════════════════════════
+          Les files à traiter. Aucun bloc n'a disparu : ils sont ici. */}
+      {mode === 'gestion' && (
+      <>
       <ZoneTitre>Aujourd'hui</ZoneTitre>
-      {briefingSlot}
-      {presencesSlot}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {encadrementSlot}
         <CentreKpiCard accent="var(--c-border-f)" label="Sauts aujourd'hui" value={stats.sautsAujourdhui} sub="Sur le terrain" />
@@ -659,6 +713,8 @@ function DashboardHome({
           </div>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }
@@ -2881,6 +2937,21 @@ export function CentreDashboardPage() {
   const activeSection = sectionDepuisUrl(segmentUrl);
   const modeKiosque = searchParams.get('kiosque') === '1';
 
+  // F14 — le mode vit dans l'URL pour être partageable et compatible avec le
+  // retour arrière ; le localStorage ne sert qu'au PROCHAIN accès, jamais à
+  // contredire une URL explicite.
+  const modeUrl = searchParams.get('mode');
+  const mode: ModeEcran = modeUrl === 'gestion' ? 'gestion'
+    : modeUrl === 'journee' ? 'journee'
+    : (() => { try { return localStorage.getItem('parapass.centre.mode') === 'gestion' ? 'gestion' : 'journee'; }
+               catch { return 'journee'; } })();
+  const changerMode = useCallback((m: ModeEcran) => {
+    try { localStorage.setItem('parapass.centre.mode', m); } catch { /* mode privé */ }
+    const q = new URLSearchParams(window.location.search);
+    q.set('mode', m);
+    navigate({ pathname: window.location.pathname, search: q.toString() });
+  }, [navigate]);
+
   // Les enfants continuent d'appeler onNavigate('validations') : on traduit ici.
   const setActiveSection = useCallback((s: string, sousOnglet?: string) => {
     navigate(urlDeSection(s, sousOnglet));
@@ -2941,9 +3012,11 @@ export function CentreDashboardPage() {
 
   // Titre de l'onglet du navigateur, par écran (favoris et historique lisibles).
   useEffect(() => {
-    const libelle = LIBELLE_SECTION[activeSection] ?? 'Centre';
+    const libelle = activeSection === 'dashboard'
+      ? (mode === 'gestion' ? 'Gestion' : 'Journée')
+      : (LIBELLE_SECTION[activeSection] ?? 'Centre');
     document.title = centre?.nom ? `${libelle} — ${centre.nom} · ParaPass` : `${libelle} — ParaPass`;
-  }, [activeSection, centre?.nom]);
+  }, [activeSection, centre?.nom, mode]);
   const { totalUnread: msgUnread } = useConversations(profile?.id);
 
   useEffect(() => {
@@ -3310,16 +3383,20 @@ export function CentreDashboardPage() {
                     stats={stats}
                     onNavigate={setActiveSection}
                     carnetsEnAttente={carnetsEnAttente}
+                    mode={mode}
+                    onChangerMode={changerMode}
+                    onAllerGestion={(section, sousOnglet) => { changerMode('gestion'); setActiveSection(section, sousOnglet); }}
                     briefingSlot={centreId ? <BriefingRecapDZ centreId={centreId} onOuvrir={() => setActiveSection('briefing')} /> : undefined}
-                    presencesSlot={centreId ? (
-                      <>
-                        <PresencesDZ dzId={centreId} />
-                        {/* P2 — « celui-là, il peut y aller ? » : la question que
-                            se pose un DT toute la journée, juste sous les présents. */}
-                        <div className="mt-4"><AptitudeDuJour centreId={centreId} /></div>
-                        {/* P8 — publier ne prouve rien : qui l’a REÇU ? */}
-                        <div className="mt-4"><SuiviAcquittements centreId={centreId} /></div>
-                      </>
+                    acquittementSlot={centreId ? <SuiviAcquittements centreId={centreId} /> : undefined}
+                    terrainSlot={centreId ? <SurLeTerrain centreId={centreId} /> : undefined}
+                    meteoSlot={centreId ? (
+                      <Tiroir cle="meteo" titre="Profil de vent, prévision et point de largage"
+                        soustitre="Prévision indicative — Open-Meteo, aide à la décision, pas une source aéronautique certifiée">
+                        <div className="pt-3 space-y-4">
+                          <GrilleMeteoDZ centreId={centreId} />
+                          <MeteoAltitudeDZ dzId={centreId} />
+                        </div>
+                      </Tiroir>
                     ) : undefined}
                     encadrementSlot={centreId ? <TuileEncadrementDZ centreId={centreId} onGo={goRecap} /> : undefined}
                     relancesSlot={centreId ? <TuileRelancesDZ centreId={centreId} onGo={goRecap} /> : undefined}
@@ -3327,13 +3404,15 @@ export function CentreDashboardPage() {
                   />
                 );
               })()}
-              {/* Outil de démonstration — réservé aux COMPTES INTERNES ParaPass
-                  (P11.1). Il était visible par tout administrateur de centre,
-                  y compris de vraies DZ clientes, qui pouvaient injecter des
-                  données de démonstration dans leur propre base. */}
-              {centreId && profile?.role === 'admin_centre' && profile?.compte_interne && (
-                <div className="mt-6">
-                  <DemoJourneeDZ centreId={centreId} onDone={fetchCentreData} />
+              {/* F13 — ZONE DE TEST, dernière position du mode GESTION.
+                  Elle était au milieu du trajet du regard, dans le même langage
+                  visuel que le reste : le jour d'une présentation fédérale, un
+                  clic malheureux coûterait cher.
+                  Double garde : compte interne ParaPass (P11.1) ET mode Gestion
+                  — elle n'existe pas dans le DOM du mode Journée. */}
+              {centreId && mode === 'gestion' && profile?.role === 'admin_centre' && profile?.compte_interne && (
+                <div className="mt-8">
+                  <DemoJourneeDZ centreId={centreId} centreNom={centre?.nom} onDone={fetchCentreData} />
                 </div>
               )}
               {/* P7 — grille par public : la question du DT, « qui peut sauter ? ». */}
