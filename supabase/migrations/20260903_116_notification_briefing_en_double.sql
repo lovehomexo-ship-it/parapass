@@ -44,6 +44,19 @@ comment on function notify_briefing_published() is
 
 commit;
 
+-- ── APPLIQUÉE LE 03/09/2026, vérifiée après coup ────────────────────────────
+--   Triggers restants sur dz_briefings :
+--     trg_dz_briefings_circuit_du_meme_centre   (P4)
+--     trg_dz_briefings_message_circuit          (P4)
+--     trg_journal_briefing
+--     trg_notifier_briefing                     (P8 — le seul qui notifie)
+--   trg_notify_briefing a bien disparu ; notify_briefing_published() existe
+--   toujours, commentée : la rattacher suffirait à revenir en arrière.
+--
+--   Le nettoyage des 831 notifications historiques n'a PAS été fait : ce sont
+--   des messages que des personnes ont réellement reçus. La requête reste
+--   ci-dessous, à jouer sur décision seulement.
+--
 -- ── Vérification après application ──────────────────────────────────────────
 --   select tgname from pg_trigger
 --   where tgrelid = 'dz_briefings'::regclass and not tgisinternal;
