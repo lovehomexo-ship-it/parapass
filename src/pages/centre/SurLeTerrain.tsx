@@ -6,6 +6,7 @@ import { ModaleSaisie } from '../../components/ModaleSaisie';
 import { ymdLocal } from '../../lib/datetime';
 import { usePresencesDZ } from '../../lib/presence';
 import { Filter, Check } from 'lucide-react';
+import { surface, rayure, pastille, action, enTeteSection, type Severite } from '../../lib/jetons';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // F08 — UN SEUL TABLEAU pour la population du jour.
@@ -33,11 +34,11 @@ interface Ligne {
   voile: string | null; horaire: string | null;
 }
 
-const SEVERITE = {
-  rouge:  { rayure: '#F87171', pastille: 'À examiner',  rang: 0 },
-  orange: { rayure: '#FB923C', pastille: 'Vigilance',   rang: 1 },
-  vert:   { rayure: '#34D399', pastille: 'Peut sauter', rang: 2 },
-} as const;
+const SEVERITE: Record<'rouge' | 'orange' | 'vert', { sev: Severite; pastille: string; rang: number }> = {
+  rouge:  { sev: 'critique',  pastille: 'À examiner',  rang: 0 },
+  orange: { sev: 'vigilance', pastille: 'Vigilance',   rang: 1 },
+  vert:   { sev: 'conforme',  pastille: 'Peut sauter', rang: 2 },
+};
 
 const CLE_FILTRE = 'parapass.terrain.filtre';
 
@@ -83,10 +84,12 @@ function TerrainInner({ centreId }: { centreId: string }) {
 
   if (erreur) {
     return (
-      <div className="rounded-2xl p-4 text-sm" style={{ background: 'rgba(239,68,68,0.10)',
-        border: '1px solid rgba(239,68,68,0.35)', color: '#F87171' }}>
+      <div className="rounded-2xl p-4 text-sm" style={{
+        background: 'color-mix(in srgb, var(--sev-critique) 10%, transparent)',
+        border: '1px solid color-mix(in srgb, var(--sev-critique) 35%, transparent)',
+        color: 'var(--sev-critique)' }}>
         Terrain indisponible : {erreur}
-        <button onClick={charger} className="ml-2 underline" style={{ minHeight: 32 }}>Réessayer</button>
+        <button onClick={charger} className="ml-2" style={action('texte')}>Réessayer</button>
       </div>
     );
   }
@@ -107,11 +110,10 @@ function TerrainInner({ centreId }: { centreId: string }) {
   const affichees = seulementCeQuiCoince ? lignes.filter(l => l.statut !== 'vert') : lignes;
 
   return (
-    <section aria-label="Sur le terrain" className="rounded-2xl"
-      style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
+    <section id="sur-le-terrain" aria-label="Sur le terrain" style={surface(2)}>
       <header className="flex items-center justify-between gap-2 flex-wrap px-4 py-3"
-        style={{ borderBottom: '1px solid var(--c-border)' }}>
-        <h3 className="text-sm font-bold" style={{ color: 'var(--c-text)' }}>
+        style={{ borderBottom: '1px solid var(--n3-filet)' }}>
+        <h3 style={{ ...enTeteSection, marginBottom: 0, paddingBottom: 0, borderBottom: 'none' }}>
           Sur le terrain
           <span className="font-normal" style={{ color: 'var(--c-muted)' }}>
             {' · '}{lignes.length} présent{lignes.length > 1 ? 's' : ''}
@@ -122,9 +124,9 @@ function TerrainInner({ centreId }: { centreId: string }) {
           <button onClick={basculerFiltre} aria-pressed={seulementCeQuiCoince}
             className="flex items-center gap-1.5 px-3 rounded-full text-xs font-semibold"
             style={{ minHeight: 36,
-              background: seulementCeQuiCoince ? '#1C8CE8' : 'var(--c-bg)',
-              color: seulementCeQuiCoince ? '#fff' : 'var(--c-muted)',
-              border: `1px solid ${seulementCeQuiCoince ? '#1C8CE8' : 'var(--c-border)'}` }}>
+              background: seulementCeQuiCoince ? 'var(--action-fond)' : 'transparent',
+              color: seulementCeQuiCoince ? '#fff' : 'var(--action-texte)',
+              border: `1px solid ${seulementCeQuiCoince ? 'var(--action-fond)' : 'var(--action-texte)'}` }}>
             <Filter className="w-3.5 h-3.5" aria-hidden />
             Ne montrer que ce qui coince
           </button>
@@ -132,7 +134,7 @@ function TerrainInner({ centreId }: { centreId: string }) {
       </header>
 
       {affichees.length === 0 ? (
-        <p className="text-sm text-center py-6" style={{ color: 'var(--c-dim)' }}>
+        <p className="text-sm text-center py-6" style={{ color: 'var(--c-muted)' }}>
           {lignes.length === 0
             ? 'Aucune présence enregistrée aujourd’hui.'
             : 'Rien ne coince : tout le monde est en règle.'}
@@ -146,9 +148,9 @@ function TerrainInner({ centreId }: { centreId: string }) {
               <li key={l.parachutiste_id}
                 className="flex gap-3 px-3 py-2.5"
                 style={{
-                  borderTop: i === 0 ? 'none' : '1px solid var(--c-border)',
+                  borderTop: i === 0 ? 'none' : '1px solid var(--n3-filet)',
                   // La RAYURE porte la sévérité ; elle reste lisible en gris.
-                  borderLeft: `3px solid ${sev.rayure}`,
+                  ...rayure(sev.sev),
                 }}>
                 <div className="flex-1 min-w-0">
                   {/* Sous 900 px les colonnes se replient sous le nom. */}
@@ -156,7 +158,7 @@ function TerrainInner({ centreId }: { centreId: string }) {
                     <span className="text-sm font-bold" style={{ color: 'var(--c-text)' }}>
                       {l.prenom} {l.nom}
                     </span>
-                    <span className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
+                    <span className="text-xs" style={{ color: 'var(--c-muted)' }}>
                       {l.dernier_saut
                         ? `dernier saut ${new Date(l.dernier_saut).toLocaleDateString('fr-FR')}`
                         : 'aucun saut'}
@@ -176,8 +178,8 @@ function TerrainInner({ centreId }: { centreId: string }) {
                           {/* L'action est À CÔTÉ du motif : le DT n'a pas à
                               changer d'écran pour traiter ce qu'il lit. */}
                           <button onClick={() => setLevee({ ligne: l, motif: m })}
-                            className="text-[11px] font-semibold underline flex-shrink-0"
-                            style={{ color: '#1C8CE8', minHeight: 32 }}>
+                            className="flex-shrink-0"
+                            style={action('texte')}>
                             lever avec motif
                           </button>
                         </li>
@@ -185,15 +187,14 @@ function TerrainInner({ centreId }: { centreId: string }) {
                     </ul>
                   )}
                   {l.motifs.some(m => m.levee) && (
-                    <p className="text-[11px] mt-0.5 flex items-center gap-1" style={{ color: '#34D399' }}>
+                    <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: 'var(--sev-conforme)' }}>
                       <Check className="w-3 h-3" aria-hidden />
                       {l.motifs.filter(m => m.levee).length} règle(s) levée(s) ce jour
                     </p>
                   )}
                 </div>
 
-                <span className="text-[11px] font-semibold self-start flex-shrink-0 px-2 py-0.5 rounded-full"
-                  style={{ color: sev.rayure, background: `${sev.rayure}1A` }}>
+                <span className="self-start flex-shrink-0 whitespace-nowrap" style={pastille(sev.sev)}>
                   {sev.pastille}
                 </span>
               </li>

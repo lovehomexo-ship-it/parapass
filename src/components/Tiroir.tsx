@@ -1,5 +1,6 @@
 import { useState, useId } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { surface } from '../lib/jetons';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // F03 — Un tiroir, pour changer le NIVEAU DE LECTURE sans perdre l'information.
@@ -37,8 +38,7 @@ export function Tiroir({ titre, soustitre, cle, children, defautOuvert = false }
   };
 
   return (
-    <section className="rounded-2xl overflow-hidden"
-      style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
+    <section className="overflow-hidden" style={surface(2)}>
       <button onClick={basculer} aria-expanded={ouvert} aria-controls={id}
         className="w-full flex items-center gap-2 px-4 text-left"
         style={{ minHeight: 48 }}>
@@ -53,7 +53,7 @@ export function Tiroir({ titre, soustitre, cle, children, defautOuvert = false }
         </span>
       </button>
       {ouvert && (
-        <div id={id} className="px-4 pb-4" style={{ borderTop: '1px solid var(--c-border)' }}>
+        <div id={id} className="px-4 pb-4" style={{ borderTop: '1px solid var(--n3-filet)' }}>
           {children}
         </div>
       )}

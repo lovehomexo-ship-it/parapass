@@ -1,6 +1,7 @@
 import { useEffect, useState, type ComponentType } from 'react';
 import { CheckCircle2, AlertTriangle, XOctagon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { surface, enTeteSection, action, SEVERITE_COULEUR, type Severite } from '../lib/jetons';
 import { ErrorBoundary } from './ErrorBoundary';
 import { useMeteoAltitude, indexHeureCourante, kmhEnKt } from '../lib/meteoAltitude';
 import { useCurrencyRules } from '../lib/currency';
@@ -11,16 +12,28 @@ import {
 } from '../lib/decision';
 
 // Icônes vectorielles (famille unique) — plus d'emojis système 🟢🟠🔴.
+// P13 — les feux sont des ÉTATS : ils passent par les jetons de sévérité, qui
+// s'assombrissent en thème clair. Les teintes en dur (#34D399, #F87171…) n'y
+// faisaient que 1,7 à 2,5:1 — invisibles sur fond clair.
 const LEVEL_UI: Record<MeteoLevel, { Icon: ComponentType<{ className?: string }>; label: string; color: string; bg: string; border: string }> = {
-  vert:   { Icon: CheckCircle2,  label: 'Feu vert',    color: '#10B981', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.35)' },
-  orange: { Icon: AlertTriangle, label: 'Vigilance',   color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.35)' },
-  rouge:  { Icon: XOctagon,      label: 'Défavorable', color: '#EF4444', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.35)' },
+  vert:   { Icon: CheckCircle2,  label: 'Feu vert',    ...teinte('conforme') },
+  orange: { Icon: AlertTriangle, label: 'Vigilance',   ...teinte('vigilance') },
+  rouge:  { Icon: XOctagon,      label: 'Défavorable', ...teinte('critique') },
 };
 
-// Couleurs des feux du récapitulatif par public — mêmes teintes que la grille
-// « Qui peut sauter ? », pour que l'œil fasse le lien immédiatement.
+function teinte(s: Severite) {
+  const c = SEVERITE_COULEUR[s];
+  return {
+    color: c,
+    bg: `color-mix(in srgb, ${c} 12%, transparent)`,
+    border: `color-mix(in srgb, ${c} 35%, transparent)`,
+  };
+}
+
+// Feux du récapitulatif par public — mêmes jetons que la grille « Qui peut
+// sauter ? », pour que l'œil fasse le lien immédiatement.
 const FEU_COULEUR: Record<Feu, string> = {
-  vert: '#34D399', orange: '#FB923C', rouge: '#F87171',
+  vert: SEVERITE_COULEUR.conforme, orange: SEVERITE_COULEUR.vigilance, rouge: SEVERITE_COULEUR.critique,
 };
 
 function DecisionInner({ centreId }: { centreId: string }) {
@@ -133,16 +146,22 @@ function DecisionInner({ centreId }: { centreId: string }) {
   const ui = verdict ? LEVEL_UI[verdict.level] : null;
 
   return (
-    <div className="rounded-2xl p-4 sm:p-5" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border-s)' }}>
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Décision du jour</span>
-        <span className="text-[10px]" style={{ color: 'var(--c-muted)' }}>· l'appli informe, vous décidez</span>
-      </div>
+    <section className="p-4 sm:p-5" style={surface(1)}>
+      {/* P14.3 — 13 px / 700 / 0,08 em sur un filet qui traverse la colonne.
+          Avant : 12 px gris à 2,5:1 — la structure existait dans le code, pas
+          à l'écran. */}
+      <h2 style={enTeteSection}>
+        Décision du jour
+        <span style={{ fontSize: 12, fontWeight: 500, letterSpacing: 0, textTransform: 'none',
+                       color: 'var(--c-muted)', marginLeft: 8 }}>
+          l’appli informe, vous décidez
+        </span>
+      </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {/* Verdict météo */}
         <div className="rounded-xl p-3 sm:col-span-1" style={{ background: ui?.bg ?? 'var(--c-hover)', border: `1px solid ${ui?.border ?? 'var(--c-border-s)'}` }}>
-          <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Météo par public</div>
+          <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--c-text2)' }}>Météo par public</div>
           {meteoLoading && !verdict ? (
             <div className="text-sm mt-1" style={{ color: 'var(--c-muted)' }}>Chargement…</div>
           ) : verdictsPublics.length > 0 ? (
@@ -157,7 +176,7 @@ function DecisionInner({ centreId }: { centreId: string }) {
               </div>
               <ul className="mt-1 space-y-0.5">
                 {verdictsPublics.map(v => (
-                  <li key={v.public_cible} className="flex items-baseline gap-1.5 text-[11px]">
+                  <li key={v.public_cible} className="flex items-baseline gap-1.5 text-xs">
                     <span className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                       style={{ background: FEU_COULEUR[v.feu] }} aria-hidden />
                     <span className="flex-1 min-w-0 truncate" style={{ color: 'var(--c-text2)' }}>{v.libelle}</span>
@@ -184,35 +203,37 @@ function DecisionInner({ centreId }: { centreId: string }) {
 
         {/* Prêts vs bloqués */}
         <div className="rounded-xl p-3" style={{ background: 'var(--c-hover)', border: '1px solid var(--c-border-s)' }}>
-          <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Présents prêts</div>
+          <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--c-text2)' }}>Présents prêts</div>
           <div className="text-2xl font-extrabold mt-0.5" style={{ color: 'var(--c-text)' }}>
             {readiness.prets}<span className="text-sm font-semibold" style={{ color: 'var(--c-muted)' }}> / {readiness.presents}</span>
           </div>
-          <div className="text-xs mt-0.5" style={{ color: readiness.bloques > 0 ? '#F59E0B' : 'var(--c-muted)' }}>
+          <div className="text-xs mt-0.5" style={{ color: readiness.bloques > 0 ? 'var(--sev-vigilance)' : 'var(--c-muted)' }}>
             {readiness.bloques > 0 ? `${readiness.bloques} à vérifier` : 'aucun blocage détecté'}
           </div>
         </div>
 
         {/* Alertes bloquantes */}
         <div className="rounded-xl p-3" style={{ background: 'var(--c-hover)', border: '1px solid var(--c-border-s)' }}>
-          <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>À vérifier</div>
+          <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--c-text2)' }}>À vérifier</div>
           {readiness.bloquesDetail.length === 0 ? (
-            <div className="text-sm mt-1 font-medium" style={{ color: '#34D399' }}>Rien à vérifier</div>
+            <div className="text-sm mt-1 font-medium" style={{ color: 'var(--sev-conforme)' }}>Rien à vérifier</div>
           ) : (
-            <ul className="mt-1 space-y-0.5">
-              {readiness.bloquesDetail.slice(0, 3).map((b, i) => (
-                <li key={i} className="text-xs" style={{ color: 'var(--c-text2)' }}>
-                  <span className="font-semibold" style={{ color: 'var(--c-text)' }}>{b.nom}</span> — {b.raison}
-                </li>
-              ))}
-              {readiness.bloquesDetail.length > 3 && (
-                <li className="text-[11px]" style={{ color: 'var(--c-muted)' }}>+{readiness.bloquesDetail.length - 3} autre(s)</li>
-              )}
-            </ul>
+            <>
+              <div className="text-2xl font-extrabold mt-0.5" style={{ color: SEVERITE_COULEUR.vigilance }}>
+                {readiness.bloquesDetail.length}
+              </div>
+              {/* Règle 3 : les motifs ont UN endroit qui fait autorité, le
+                  tableau « Sur le terrain ». Ici on renvoie, on ne redit pas. */}
+              <button type="button" style={action('texte')}
+                onClick={() => document.getElementById('sur-le-terrain')
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+                voir qui, sur le terrain
+              </button>
+            </>
           )}
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 

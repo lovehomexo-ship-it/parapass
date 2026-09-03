@@ -207,3 +207,24 @@ export function useEncadrement(centreId: string | undefined) {
 
   return { seances, regles, qualifsRef, moniteursQualifs, presents, noms, loading, error, setError, ouvrirSeance, fermerSeance, refresh: load };
 }
+
+/**
+ * P15.4 — Le nombre d'exigences réglementaires NON COUVERTES sur la journée.
+ *
+ * Extrait ici parce que deux endroits l'affichent : la pastille de la barre
+ * d'état (mode Journée) et la tuile Encadrement (mode Gestion). Deux calculs
+ * parallèles auraient fini par diverger — c'est exactement ce qui avait donné
+ * une jauge de conformité à 112 %.
+ *
+ * Les règles marquées `a_verifier` sont exclues : elles demandent un contrôle
+ * humain, ce n'est pas un manquement constaté.
+ */
+export function compterExigencesNonCouvertes(
+  seances: SeanceJour[], regles: RegleEncadrement[], presents: PersonnePresente[],
+): number {
+  let n = 0;
+  for (const s of seances) {
+    n += verifierSeance(s, regles, presents).filter(e => !e.satisfaite && !e.regle.a_verifier).length;
+  }
+  return n;
+}

@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { surface, SEVERITE_COULEUR } from '../lib/jetons';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // F14 — Deux métiers, deux modes explicites.
@@ -36,7 +37,7 @@ export function BasculeMode({ mode, onChange, enAttenteGestion = 0 }: {
   return (
     <div role="group" aria-label="Mode d'affichage"
       className="inline-flex rounded-xl p-1 gap-1"
-      style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
+      style={surface(2)}>
       {modes.map((m, i) => {
         const actif = mode === m.cle;
         // La pastille ne s'affiche que sur le mode INACTIF : sur le mode courant
@@ -51,7 +52,7 @@ export function BasculeMode({ mode, onChange, enAttenteGestion = 0 }: {
             className="relative px-4 rounded-lg text-sm font-bold transition"
             style={{
               minHeight: 40,
-              background: actif ? '#1C8CE8' : 'transparent',
+              background: actif ? 'var(--action-fond)' : 'transparent',
               color: actif ? '#fff' : 'var(--c-muted)',
             }}>
             {m.label}
@@ -59,7 +60,7 @@ export function BasculeMode({ mode, onChange, enAttenteGestion = 0 }: {
               <span aria-label={`${enAttenteGestion} éléments en attente`}
                 className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full
                            text-[11px] font-bold flex items-center justify-center"
-                style={{ background: '#F59E0B', color: '#1C1917' }}>
+                style={{ background: SEVERITE_COULEUR.vigilance, color: '#1C1917' }}>
                 {enAttenteGestion > 99 ? '99+' : enAttenteGestion}
               </span>
             )}

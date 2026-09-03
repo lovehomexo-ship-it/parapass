@@ -26,6 +26,33 @@
   --c-text2:    #C8D6E8;
   --c-muted:    #7A9CC0;
   --c-dim:      rgba(255,255,255,0.3);
+
+  /* ── P12/P13/P14 — SYSTÈME VISUEL ────────────────────────────────────────
+     Trois niveaux de surface, quatre sévérités, une couleur d'action.
+     Documentation et exemples d'usage : src/lib/jetons.ts             */
+
+  /* Niveau 1 — bloc de DÉCISION. Un seul par écran. */
+  --n1-fond:   linear-gradient(160deg, rgba(28,140,232,0.10), rgba(255,255,255,0.03));
+  --n1-bord:   rgba(255,255,255,0.22);
+  --n1-ombre:  0 10px 30px rgba(0,0,0,0.35);
+  /* Niveau 2 — blocs de TRAVAIL. Plat, sans ombre. */
+  --n2-fond:   rgba(255,255,255,0.06);
+  --n2-bord:   rgba(255,255,255,0.08);
+  /* Niveau 3 — RAPPELS. Pas de conteneur, un filet. */
+  --n3-filet:  rgba(255,255,255,0.10);
+
+  /* Sévérités — la RAYURE est le signal primaire, le texte le secondaire. */
+  --sev-critique:  #F87171;   /* 6.07:1 */
+  --sev-vigilance: #FBBF24;   /* 10.06:1 */
+  --sev-conforme:  #34D399;   /* 8.73:1 */
+  --sev-neutre:    #7A9CC0;   /* 5.87:1 */
+
+  /* Action — et rien d'autre. Jamais un état. */
+  --action-fond:   #136FBC;   /* blanc dessus : 5.21:1 */
+  /* #1C8CE8 ne fait que 4,06:1 sur --c-surface : le bleu de marque éclairci
+     du minimum nécessaire pour porter du texte (4,72:1). */
+  --action-texte:  #3399EE;
+  --focus-anneau:  #7DC4FF;
 }
 
 [data-theme="light"] {
@@ -41,8 +68,27 @@
   --c-border-f: rgba(0,0,0,0.15);
   --c-text:     #0B1D3A;
   --c-text2:    #334E68;
-  --c-muted:    #627D98;
+  --c-muted:    #566E88;   /* était #627D98 — 3,87:1, sous AA */
   --c-dim:      rgba(0,0,0,0.3);
+
+  /* ── P12/P13/P14 — SYSTÈME VISUEL (clair) ────────────────────────────── */
+  --n1-fond:   linear-gradient(160deg, rgba(28,140,232,0.10), rgba(255,255,255,1));
+  --n1-bord:   rgba(11,29,58,0.20);
+  --n1-ombre:  0 8px 24px rgba(11,29,58,0.12);
+  --n2-fond:   #FFFFFF;
+  --n2-bord:   rgba(0,0,0,0.08);
+  --n3-filet:  rgba(0,0,0,0.10);
+
+  /* Les couleurs vives du thème sombre tombent à 1,5–2,5:1 sur fond clair :
+     elles ne peuvent pas porter de texte ici. Teintes assombries, même sens. */
+  --sev-critique:  #B91C1C;   /* 5.85:1 */
+  --sev-vigilance: #8A5100;   /* 5.83:1 */
+  --sev-conforme:  #047857;   /* 4.96:1 */
+  --sev-neutre:    #4B647E;
+
+  --action-fond:   #136FBC;
+  --action-texte:  #0B6BB8;   /* 4.99:1 — #1C8CE8 n'y fait que 3.18 */
+  --focus-anneau:  #0B6BB8;
 }
 
 /* Accent / semantic colors — same in both themes */
@@ -119,4 +165,12 @@ button:not(:disabled):active, [role="button"]:not([aria-disabled="true"]):active
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+}
+
+/* ── P14.5 — Focus clavier visible partout ────────────────────────────────
+   :focus-visible seulement : la souris ne déclenche pas l'anneau. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus-anneau);
+  outline-offset: 2px;
+  border-radius: 6px;
 }

@@ -20,7 +20,7 @@ import { DecisionDuJour } from '../components/DecisionDuJour';
 import { sautsToCSV } from '../lib/sautsExport';
 import { DemoJourneeDZ } from '../components/DemoJourneeDZ';
 import { useCurrencyRules, getCurrencyStatus, CURRENCY_STATUS_CONFIG } from '../lib/currency';
-import { useEncadrement, verifierSeance } from '../lib/encadrement';
+import { useEncadrement, compterExigencesNonCouvertes } from '../lib/encadrement';
 import { MeteoAltitudeDZ } from '../components/MeteoAltitudeCard';
 import { BriefingRecapDZ } from './centre/BriefingRecap';
 
@@ -292,10 +292,7 @@ const tuileRecapStyle = { background: 'var(--c-surface)', border: '1px solid var
 // Tuile Encadrement du jour (zone « Aujourd'hui »)
 function TuileEncadrementDZ({ centreId, onGo }: { centreId: string; onGo: (section: string, tab?: string) => void }) {
   const enc = useEncadrement(centreId);
-  let manque = 0;
-  for (const s of enc.seances) {
-    manque += verifierSeance(s, enc.regles, enc.presents).filter(e => !e.satisfaite && !e.regle.a_verifier).length;
-  }
+  const manque = compterExigencesNonCouvertes(enc.seances, enc.regles, enc.presents);
   return (
     <button className={tuileRecap} style={tuileRecapStyle} onClick={() => onGo('equipe', 'encadrement')}>
       <p className="text-[11px] font-bold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Encadrement des séances</p>
@@ -369,6 +366,13 @@ function DashboardHome({
   relancesSlot?: React.ReactNode;      // Échéances à relancer (zone À traiter)
   vigilanceSlot?: React.ReactNode;     // Vigilance charge alaire (zone À traiter)
 }) {
+  // P15.4 — L'encadrement manquant devient une pastille de la barre d'état,
+  // avec sa cible : le grand 7 neutre ne menait nulle part. Même calcul que la
+  // tuile du mode Gestion (compterExigencesNonCouvertes), pas un second.
+  const encJour = useEncadrement(centre?.id);
+  const exigencesNonCouvertes = compterExigencesNonCouvertes(
+    encJour.seances, encJour.regles, encJour.presents);
+
   const [alerteExpires, setAlerteExpires] = useState(0);
   const [alerteMedical, setAlerteMedical] = useState(0);
   const [recentSauts, setRecentSauts] = useState<SautSummary[]>([]);
@@ -501,17 +505,21 @@ function DashboardHome({
               </p>
             </div>
           </div>
-          {/* Chiffres clés — pleine largeur répartie sur mobile, tuiles inline sur desktop */}
+          {/* P12 — « 25 licenciés · 6 sauts / mois » sont des STATISTIQUES.
+              Elles ne pilotent pas la journée : elles ne s'affichent qu'en
+              mode Gestion, et vivent en entier dans l'écran Statistiques. */}
+          {mode === 'gestion' && (
           <div className="flex gap-2 sm:flex-shrink-0">
             <div className="flex-1 sm:flex-initial rounded-xl px-3.5 py-2 text-center" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}>
               <p style={{ color: '#60A5FA', fontSize: 24, fontWeight: 800, lineHeight: 1 }}>{stats.totalLicencies}</p>
-              <p style={{ color: 'var(--c-muted)', fontSize: 10.5, marginTop: 2 }}>licenciés</p>
+              <p style={{ color: 'var(--c-muted)', fontSize: 12, marginTop: 2 }}>licenciés</p>
             </div>
             <div className="flex-1 sm:flex-initial rounded-xl px-3.5 py-2 text-center" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}>
               <p style={{ color: '#34D399', fontSize: 24, fontWeight: 800, lineHeight: 1 }}>{sautsThisMonth}</p>
-              <p style={{ color: 'var(--c-muted)', fontSize: 10.5, marginTop: 2 }}>sauts / mois</p>
+              <p style={{ color: 'var(--c-muted)', fontSize: 12, marginTop: 2 }}>sauts / mois</p>
             </div>
           </div>
+          )}
         </div>
       </div>
 
@@ -538,22 +546,23 @@ function DashboardHome({
               Un compteur de DÉFAUT porte une gravité et une action obligatoire ;
               un compteur d'ACTIVITÉ est neutre et ne mène nulle part. */}
           <BarreEtat compteurs={[
-            { genre: 'defaut', cle: 'carnets', valeur: carnetsEnAttente,
-              libelle: 'carnets à valider', gravite: 'vigilance',
-              onAller: () => onAllerGestion('validations') },
+            { genre: 'defaut', cle: 'encadrement', valeur: exigencesNonCouvertes,
+              libelle: 'exigences d’encadrement non couvertes', gravite: 'critique',
+              onAller: () => onAllerGestion('equipe', 'encadrement') },
             { genre: 'defaut', cle: 'licences', valeur: licencesExpirees,
               libelle: 'licences FFP expirées', gravite: 'critique',
               onAller: () => onAllerGestion('licencies') },
+            { genre: 'defaut', cle: 'carnets', valeur: carnetsEnAttente,
+              libelle: 'carnets à valider', gravite: 'vigilance',
+              onAller: () => onAllerGestion('validations') },
             { genre: 'defaut', cle: 'medical', valeur: alerteMedical,
               libelle: 'certificats médicaux à renouveler', gravite: 'vigilance',
               onAller: () => onAllerGestion('licencies') },
             { genre: 'defaut', cle: 'adhesions', valeur: stats.demandesAttente,
-              libelle: 'demandes d’adhésion', gravite: 'vigilance',
+              libelle: 'demandes d’adhésion en attente', gravite: 'vigilance',
               onAller: () => onAllerGestion('demandes') },
             { genre: 'activite', cle: 'sauts', valeur: stats.sautsAujourdhui,
               libelle: 'sauts aujourd’hui' },
-            { genre: 'activite', cle: 'mois', valeur: sautsThisMonth,
-              libelle: 'sauts ce mois-ci' },
           ]} />
 
           {meteoSlot}

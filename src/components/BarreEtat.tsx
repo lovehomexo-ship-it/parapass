@@ -9,6 +9,8 @@
 // l'impose : un compteur de défaut sans cible ne compile pas.
 // ═══════════════════════════════════════════════════════════════════════════
 
+import { surface, rayure, SEVERITE_COULEUR } from '../lib/jetons';
+
 export type Gravite = 'critique' | 'vigilance' | 'neutre';
 
 /** Compteur d'activité : neutre, sans action. Ex. sauts du jour. */
@@ -34,9 +36,9 @@ interface CompteurDefaut {
 export type Compteur = CompteurActivite | CompteurDefaut;
 
 const COULEUR: Record<Gravite, string> = {
-  critique: '#F87171',   // blocage réglementaire
-  vigilance: '#FBBF24',  // manquement à traiter
-  neutre: 'var(--c-text)',
+  critique:  SEVERITE_COULEUR.critique,
+  vigilance: SEVERITE_COULEUR.vigilance,
+  neutre:    'var(--c-text)',
 };
 
 export function BarreEtat({ compteurs }: { compteurs: Compteur[] }) {
@@ -44,7 +46,7 @@ export function BarreEtat({ compteurs }: { compteurs: Compteur[] }) {
     <div
       className="grid gap-2 rounded-2xl p-2
                  grid-cols-2 md:grid-cols-3 xl:grid-cols-6"
-      style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
+      style={surface(2)}>
       {compteurs.map(c => {
         const zero = c.valeur === 0;
         const couleur = c.genre === 'defaut' && !zero ? COULEUR[c.gravite] : COULEUR.neutre;
@@ -68,12 +70,16 @@ export function BarreEtat({ compteurs }: { compteurs: Compteur[] }) {
         return cliquable ? (
           <button key={c.cle} onClick={(c as CompteurDefaut).onAller}
             className="text-left rounded-xl px-3 py-2 transition"
-            style={{ minHeight: 64, background: 'var(--c-bg)', border: '1px solid var(--c-border)' }}>
+            style={{ minHeight: 64, background: 'var(--c-bg)', border: '1px solid var(--n2-bord)',
+              ...(c.genre === 'defaut' && !zero ? rayure(c.gravite) : rayure('neutre')),
+              opacity: zero ? 0.55 : 1 }}>
             {contenu}
           </button>
         ) : (
           <div key={c.cle} className="rounded-xl px-3 py-2"
-            style={{ minHeight: 64, background: 'var(--c-bg)', border: '1px solid var(--c-border)' }}>
+            style={{ minHeight: 64, background: 'var(--c-bg)', border: '1px solid var(--n2-bord)',
+              ...(c.genre === 'defaut' && !zero ? rayure(c.gravite) : rayure('neutre')),
+              opacity: zero ? 0.55 : 1 }}>
             {contenu}
           </div>
         );
