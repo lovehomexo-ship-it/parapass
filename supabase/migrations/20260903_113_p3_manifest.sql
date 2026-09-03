@@ -1,0 +1,54 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- P3 — MANIFEST : rotations, chargements, ordre de sortie.
+--
+-- L'objet autour duquel tourne réellement la journée d'une DZ. Tant qu'il est
+-- absent, la DZ manifeste ailleurs et ParaPass reste un outil de plus.
+--
+-- Tables : aeronefs, rotations, places_rotation.
+-- Colonnes ajoutées : sauts.place_rotation_id, centres.ordre_sortie_regle.
+-- Table morte supprimée : tandem_passengers (vide, jamais lue).
+--
+-- ── LES SIX RISQUES DE LA CARTOGRAPHIE, ET LEUR TRAITEMENT ──────────────
+-- 1. DOUBLE COMPTAGE — le plus sérieux : `sauts` alimente
+--    get_regulatory_snapshot, qui gouverne les seuils de brevet. Un saut
+--    compté deux fois fausse une progression réglementaire.
+--    → sauts.place_rotation_id + index UNIQUE. PROUVÉ : première clôture
+--      3 sauts, seconde clôture 0.
+-- 2. RLS — vérifié : la seule policy d'insertion sur `sauts` est
+--    « Parachutistes can insert own sauts ». Un centre ne peut pas créer un
+--    saut pour un tiers → clôture en security definer, garde admin_centres.
+-- 3. VALIDATION — sauts créés EN_ATTENTE, jamais « valide ». Le circuit
+--    existant repose sur valide_par / validation_hash / signature_moniteur_url :
+--    créer des sauts validés par lot court-circuiterait cette chaîne de preuve.
+-- 4. AFFILIATION — résolu en amont par la fusion licencies_centres.
+-- 5. TANDEMS — places_rotation accepte SOIT parachutiste_id, SOIT
+--    tandem_booking_id, avec num_nonnulls(...) = 1 : la contrainte EFFECTIVE
+--    (leçon de materiels, dont la contrainte ne pouvait jamais être fausse).
+--    Un passager tandem n'a pas de carnet : aucun saut créé pour lui, et la
+--    clôture le dit.
+-- 6. FUSEAU — la date vient de ymdLocal côté application : une rotation de
+--    21 h basculerait au lendemain avec un cast UTC.
+--
+-- ── TROIS DÉFAUTS TROUVÉS EN EXÉCUTANT ─────────────────────────────────
+-- a. L'INSERT ... SELECT référençait la CTE a_creer SANS clause FROM :
+--    « missing FROM-clause entry for table "ac" ». La clôture aurait échoué à
+--    CHAQUE appel.
+-- b. nature_saut n'admet pas « ecole » ni « wingsuit » (entrainement,
+--    competition, manifestation, travail_aerien, nuit, largage, tandem).
+-- c. fonction ∈ (parachutiste, eleve, instructeur, largueur) — « largueur »
+--    désigne celui qui LARGUE LES AUTRES. L'employer pour un sauteur aurait
+--    mal qualifié CHAQUE saut produit par le manifest.
+--
+-- ── PARCOURS VÉRIFIÉ DE BOUT EN BOUT, EN SESSION BIGAIR ────────────────
+-- aéronef F-GTST créé → rotation 1 (4000 m, 0/4) → Chloé DÉMO inscrite
+-- MALGRÉ son certificat périmé (le motif s'affiche, rien ne bloque : doctrine
+-- respectée) → place passée à « posé » → clôture → 1 saut créé,
+-- entrainement / parachutiste / en_attente / 4000 m / 3 min estimées,
+-- porteur de place_rotation_id, et l'évènement au journal de bord.
+-- Données de test intégralement supprimées ensuite.
+--
+-- Fonctions déployées via l'outil de migration Supabase :
+--   p3_manifest_aeronefs_rotations_places,
+--   p3_ordre_sortie_et_cloture_rotation,
+--   p3_fix_cloture_rotation_from_manquant,
+--   p3_fix_vocabulaire_sauts.

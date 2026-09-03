@@ -31,6 +31,7 @@ export const URL_VERS_SECTION: Record<string, string> = {
   journal: 'journal',
   materiel: 'materiel',
   securite: 'securite',
+  rotations: 'rotations',
 };
 
 /** clé interne → segment d'URL (dérivée, pour ne jamais désynchroniser) */
@@ -59,6 +60,7 @@ export const LIBELLE_SECTION: Record<string, string> = {
   journal: 'Journal de bord',
   materiel: 'Matériel',
   securite: 'Sécurité',
+  rotations: 'Rotations',
 };
 
 /** Sous-onglets adressables, par section. Le premier est celui par défaut. */
