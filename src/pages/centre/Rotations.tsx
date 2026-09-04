@@ -48,7 +48,7 @@ interface Rotation {
   altitude_largage_m: number | null; heure_prevue: string | null;
   statut: string; aeronef_id: string | null; cloturee_le: string | null;
 }
-interface Aeronef { id: string; immatriculation: string; places: number; altitude_max_m: number | null }
+export interface Aeronef { id: string; immatriculation: string; places: number; altitude_max_m: number | null }
 interface Place {
   id: string; rotation_id: string; parachutiste_id: string | null;
   moniteur_id: string | null;
@@ -374,7 +374,7 @@ function RotationsInner({ centreId }: { centreId: string }) {
 
 // ─── Inscription d'un présent ────────────────────────────────────────────────
 
-function Inscrire({ rotationId, presents, dejaInscrits, onInscrire }: {
+export function Inscrire({ rotationId, presents, dejaInscrits, onInscrire }: {
   rotationId: string;
   presents: { id: string; nom: string; aptitude: string; motif: string | null }[];
   dejaInscrits: string[];
@@ -425,7 +425,7 @@ function Inscrire({ rotationId, presents, dejaInscrits, onInscrire }: {
 
 // ─── Aéronefs du centre ──────────────────────────────────────────────────────
 
-function AjouterAeronef({ centreId, aeronefs, onFait }: {
+export function AjouterAeronef({ centreId, aeronefs, onFait }: {
   centreId: string; aeronefs: Aeronef[]; onFait: () => void;
 }) {
   const [ouvert, setOuvert] = useState(false);

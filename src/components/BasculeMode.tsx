@@ -12,18 +12,26 @@ import { surface, SEVERITE_COULEUR } from '../lib/jetons';
 // bascule doit rester atteignable sans souris.
 // ═══════════════════════════════════════════════════════════════════════════
 
-export type ModeEcran = 'journee' | 'gestion';
+export type ModeEcran = 'journee' | 'avionnage' | 'gestion';
 
-export function BasculeMode({ mode, onChange, enAttenteGestion = 0 }: {
+export function BasculeMode({ mode, onChange, enAttenteGestion = 0, enAttenteAvionnage = 0 }: {
   mode: ModeEcran;
   onChange: (m: ModeEcran) => void;
   /** Somme des files en attente côté Gestion. La pastille disparaît à zéro. */
   enAttenteGestion?: number;
+  /** Personnes en file d'avionnage. Sa propre pastille : deux files
+   *  différentes ne se confondent pas dans un seul chiffre (règle 3). */
+  enAttenteAvionnage?: number;
 }) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  // TROIS métiers, pas deux. La règle 7 disait « deux métiers, deux modes » ;
+  // l'usage a montré un troisième, celui du chef d'avionnage — qui n'est ni le
+  // terrain (aptitude, briefing) ni la gestion (dossiers, files administratives).
+  // C'est une extension assumée de la règle, pas un glissement.
   const modes: { cle: ModeEcran; label: string }[] = [
-    { cle: 'journee', label: 'Journée' },
-    { cle: 'gestion', label: 'Gestion' },
+    { cle: 'journee',   label: 'Journée' },
+    { cle: 'avionnage', label: 'Avionnage' },
+    { cle: 'gestion',   label: 'Gestion' },
   ];
 
   const auClavier = (e: React.KeyboardEvent, i: number) => {
@@ -42,7 +50,9 @@ export function BasculeMode({ mode, onChange, enAttenteGestion = 0 }: {
         const actif = mode === m.cle;
         // La pastille ne s'affiche que sur le mode INACTIF : sur le mode courant
         // le compte est déjà lisible dans les blocs eux-mêmes.
-        const pastille = !actif && m.cle === 'gestion' && enAttenteGestion > 0;
+        const compte = m.cle === 'gestion' ? enAttenteGestion
+                     : m.cle === 'avionnage' ? enAttenteAvionnage : 0;
+        const pastille = !actif && compte > 0;
         return (
           <button key={m.cle}
             ref={el => { refs.current[i] = el; }}
@@ -57,11 +67,11 @@ export function BasculeMode({ mode, onChange, enAttenteGestion = 0 }: {
             }}>
             {m.label}
             {pastille && (
-              <span aria-label={`${enAttenteGestion} éléments en attente`}
+              <span aria-label={`${compte} en attente sur ${m.label}`}
                 className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full
                            text-[11px] font-bold flex items-center justify-center"
                 style={{ background: SEVERITE_COULEUR.vigilance, color: '#1C1917' }}>
-                {enAttenteGestion > 99 ? '99+' : enAttenteGestion}
+                {compte > 99 ? '99+' : compte}
               </span>
             )}
           </button>

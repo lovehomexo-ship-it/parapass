@@ -96,7 +96,7 @@ import { SuiviAcquittements } from './SuiviAcquittements';
 import { JournalDeBord } from './JournalDeBord';
 import { EcheancesMateriel } from './EcheancesMateriel';
 import { EvenementsSecurite } from './EvenementsSecurite';
-import { Rotations } from './Rotations';
+import { Avionnage } from './Avionnage';
 import { BriefingOperationnel } from './BriefingOperationnel';
 
 const CENTRE = '00000000-0000-0000-0000-000000000001';
@@ -108,7 +108,7 @@ const ECRANS: [string, ReactElement][] = [
   ['JournalDeBord (P4)',        <JournalDeBord centreId={CENTRE} />],
   ['EcheancesMateriel (P5)',    <EcheancesMateriel centreId={CENTRE} />],
   ['EvenementsSecurite (P6)',   <EvenementsSecurite centreId={CENTRE} />],
-  ['Rotations (P3)',            <Rotations centreId={CENTRE} />],
+  ['Avionnage (P3 + file)',     <Avionnage centreId={CENTRE} />],
   ['BriefingOperationnel (P8)', <BriefingOperationnel centreId={CENTRE} />],
 ];
 

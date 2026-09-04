@@ -15,7 +15,7 @@ import { AddSautModal } from '../components/AddSautModal';
 import { useComplianceRules, licenceStatus, getComplianceStatus, type ComplianceStatus } from '../lib/compliance';
 import { ComplianceBadge, ComplianceDot } from '../components/ComplianceBadge';
 import { ErrorBoundary } from '../components/ErrorBoundary';
-import { formatDateTimeParis } from '../lib/datetime';
+import { formatDateTimeParis, ymdLocal } from '../lib/datetime';
 import { DecisionDuJour } from '../components/DecisionDuJour';
 import { sautsToCSV } from '../lib/sautsExport';
 import { DemoJourneeDZ } from '../components/DemoJourneeDZ';
@@ -45,7 +45,7 @@ import { SuiviAcquittements } from './centre/SuiviAcquittements';
 import { BriefingOperationnel } from './centre/BriefingOperationnel';
 import { EcheancesMateriel } from './centre/EcheancesMateriel';
 import { EvenementsSecurite } from './centre/EvenementsSecurite';
-import { Rotations } from './centre/Rotations';
+import { Avionnage } from './centre/Avionnage';
 import { GrilleMeteoDZ } from '../components/GrilleMeteoDZ';
 import { BasculeMode, type ModeEcran } from '../components/BasculeMode';
 import { BarreEtat } from '../components/BarreEtat';
@@ -347,7 +347,7 @@ function ZoneTitre({ children }: { children: React.ReactNode }) {
 function DashboardHome({
   centre, stats, onNavigate, carnetsEnAttente, mode,
   briefingSlot, acquittementSlot, terrainSlot, meteoSlot, onAllerGestion, onChangerMode,
-  encadrementSlot, relancesSlot, vigilanceSlot,
+  encadrementSlot, relancesSlot, vigilanceSlot, avionnageSlot, enAttenteAvionnage = 0,
 }: {
   centre: Centre | null;
   stats: DashStats;
@@ -365,6 +365,9 @@ function DashboardHome({
   encadrementSlot?: React.ReactNode;   // Encadrement des séances (zone Aujourd'hui)
   relancesSlot?: React.ReactNode;      // Échéances à relancer (zone À traiter)
   vigilanceSlot?: React.ReactNode;     // Vigilance charge alaire (zone À traiter)
+  avionnageSlot?: React.ReactNode;     // Mode Avionnage — planches + file
+  /** Pastille de la bascule : personnes en file. Comptée UNE fois, dans la page. */
+  enAttenteAvionnage?: number;
 }) {
   // P15.4 — L'encadrement manquant devient une pastille de la barre d'état,
   // avec sa cible : le grand 7 neutre ne menait nulle part. Même calcul que la
@@ -526,7 +529,8 @@ function DashboardHome({
       {/* F14 — la bascule, en tête de la zone de contenu. */}
       <div className="mb-4">
         <BasculeMode mode={mode} onChange={onChangerMode}
-          enAttenteGestion={carnetsEnAttente + licencesExpirees + stats.demandesAttente} />
+          enAttenteGestion={carnetsEnAttente + licencesExpirees + stats.demandesAttente}
+          enAttenteAvionnage={enAttenteAvionnage} />
       </div>
 
       {/* ══ MODE JOURNÉE — le terrain ═══════════════════════════════════════
@@ -568,6 +572,10 @@ function DashboardHome({
           {meteoSlot}
         </>
       )}
+
+      {/* ══ MODE AVIONNAGE — le chef d'avionnage ══════════════════════════
+          Troisième métier. Planches à gauche, file à droite. */}
+      {mode === 'avionnage' && avionnageSlot}
 
       {/* ══ MODE GESTION — le centre ════════════════════════════════════════
           Les files à traiter. Aucun bloc n'a disparu : ils sont ici. */}
@@ -2950,10 +2958,28 @@ export function CentreDashboardPage() {
   // retour arrière ; le localStorage ne sert qu'au PROCHAIN accès, jamais à
   // contredire une URL explicite.
   const modeUrl = searchParams.get('mode');
-  const mode: ModeEcran = modeUrl === 'gestion' ? 'gestion'
-    : modeUrl === 'journee' ? 'journee'
-    : (() => { try { return localStorage.getItem('parapass.centre.mode') === 'gestion' ? 'gestion' : 'journee'; }
-               catch { return 'journee'; } })();
+  const lireMode = (v: string | null): ModeEcran | null =>
+    v === 'gestion' || v === 'avionnage' || v === 'journee' ? v : null;
+  const mode: ModeEcran = lireMode(modeUrl)
+    ?? (() => { try { return lireMode(localStorage.getItem('parapass.centre.mode')) ?? 'journee'; }
+                catch { return 'journee'; } })();
+  // Pastille « Avionnage » de la bascule : nombre de personnes en file. Lu
+  // depuis file_avionnage — la même autorité que l'écran, pas un calcul à part.
+  const [enAttenteAvionnage, setEnAttenteAvionnage] = useState(0);
+  useEffect(() => {
+    if (!centreId) return;
+    const lire = () => supabase.from('file_avionnage')
+      .select('id', { count: 'exact', head: true })
+      .eq('centre_id', centreId).eq('statut', 'attente')
+      .eq('date_jour', ymdLocal(new Date()))
+      .then(({ count }) => setEnAttenteAvionnage(count ?? 0));
+    lire();
+    const canal = supabase.channel(`pastille-avionnage-${centreId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'file_avionnage', filter: `centre_id=eq.${centreId}` }, lire)
+      .subscribe();
+    return () => { supabase.removeChannel(canal); };
+  }, [centreId]);
+
   const changerMode = useCallback((m: ModeEcran) => {
     try { localStorage.setItem('parapass.centre.mode', m); } catch { /* mode privé */ }
     const q = new URLSearchParams(window.location.search);
@@ -3022,7 +3048,7 @@ export function CentreDashboardPage() {
   // Titre de l'onglet du navigateur, par écran (favoris et historique lisibles).
   useEffect(() => {
     const libelle = activeSection === 'dashboard'
-      ? (mode === 'gestion' ? 'Gestion' : 'Journée')
+      ? (mode === 'gestion' ? 'Gestion' : mode === 'avionnage' ? 'Avionnage' : 'Journée')
       : (LIBELLE_SECTION[activeSection] ?? 'Centre');
     document.title = centre?.nom ? `${libelle} — ${centre.nom} · ParaPass` : `${libelle} — ParaPass`;
   }, [activeSection, centre?.nom, mode]);
@@ -3144,7 +3170,7 @@ export function CentreDashboardPage() {
     { key: 'briefing', label: 'Briefing du jour', icon: Megaphone },
     ...(activeModules.has('academy') ? [{ key: 'academy', label: 'Academy', icon: GraduationCap }] : []),
     { key: 'planning', label: 'Planning DZ', icon: Calendar },
-    { key: 'rotations', label: 'Rotations', icon: Plane },
+    { key: 'rotations', label: 'Avionnage', icon: Plane },
     { key: 'materiel', label: 'Matériel', icon: Wrench },
     { key: 'securite', label: 'Sécurité', icon: ShieldAlert },
     { key: 'journal', label: 'Journal de bord', icon: BookCheck },
@@ -3398,6 +3424,8 @@ export function CentreDashboardPage() {
                     briefingSlot={centreId ? <BriefingRecapDZ centreId={centreId} onOuvrir={() => setActiveSection('briefing')} /> : undefined}
                     acquittementSlot={centreId ? <SuiviAcquittements centreId={centreId} listerManquants={false} /> : undefined}
                     terrainSlot={centreId ? <SurLeTerrain centreId={centreId} /> : undefined}
+                    avionnageSlot={centreId ? <Avionnage centreId={centreId} /> : undefined}
+                    enAttenteAvionnage={enAttenteAvionnage}
                     meteoSlot={centreId ? (
                       <Tiroir cle="meteo" titre="Profil de vent, prévision et point de largage"
                         soustitre="Prévision indicative — Open-Meteo, aide à la décision, pas une source aéronautique certifiée">
@@ -3529,7 +3557,7 @@ export function CentreDashboardPage() {
             <TandemSection centreId={centreId} />
           )}
           {activeSection === 'rotations' && centreId && (
-            <Rotations centreId={centreId} />
+            <Avionnage centreId={centreId} />
           )}
           {activeSection === 'materiel' && centreId && (
             <div className="p-6 max-w-3xl"><EcheancesMateriel centreId={centreId} /></div>

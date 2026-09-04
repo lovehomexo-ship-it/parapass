@@ -219,3 +219,59 @@ export function libelleCapacite(occupes: number, total: number | null): string {
   if (restant <= 0) return `${occupes}/${total} — complet`;
   return `${occupes}/${total} · ${restant} place${restant > 1 ? 's' : ''} libre${restant > 1 ? 's' : ''}`;
 }
+
+// ── Le « call » ────────────────────────────────────────────────────────────
+// Convention reprise des manifests professionnels (Burble DZM et consorts) :
+// une planche n'est pas « à 14 h 30 », elle est « à 20 minutes ». Le chef
+// d'avionnage et les sauteurs raisonnent en temps restant, pas en heure
+// absolue — c'est le décompte qui déclenche l'habillage et le rassemblement.
+
+export type UrgenceCall = 'lointain' | 'call' | 'imminent' | 'retard' | 'parti';
+
+export interface Call {
+  /** Minutes avant décollage. Négatif = l'heure est passée. Nul si non planifié. */
+  minutes: number | null;
+  libelle: string;
+  urgence: UrgenceCall;
+}
+
+/**
+ * @example  calculerCall('2026-09-04', '14:30:00', new Date('2026-09-04T14:15:00'))
+ *           // → { minutes: 15, libelle: 'call 15 min', urgence: 'call' }
+ */
+export function calculerCall(
+  dateJour: string,
+  heurePrevue: string | null,
+  decolle: string | null,
+  maintenant: Date = new Date(),
+): Call {
+  if (decolle) return { minutes: null, libelle: 'décollé', urgence: 'parti' };
+  if (!heurePrevue) {
+    // Pas d'heure = pas de call. Afficher « 0 min » serait un chiffre inventé.
+    return { minutes: null, libelle: 'heure non fixée', urgence: 'lointain' };
+  }
+
+  const cible = new Date(`${dateJour}T${heurePrevue.slice(0, 8)}`);
+  if (Number.isNaN(cible.getTime())) {
+    return { minutes: null, libelle: 'heure non fixée', urgence: 'lointain' };
+  }
+
+  const minutes = Math.round((cible.getTime() - maintenant.getTime()) / 60000);
+
+  if (minutes < 0) {
+    return { minutes, libelle: `en retard de ${-minutes} min`, urgence: 'retard' };
+  }
+  // 5 minutes ou moins : on ne « call » plus, on embarque.
+  if (minutes <= 5) {
+    return { minutes, libelle: minutes === 0 ? 'embarquement' : `embarquement dans ${minutes} min`,
+             urgence: 'imminent' };
+  }
+  if (minutes <= 20) return { minutes, libelle: `call ${minutes} min`, urgence: 'call' };
+  return { minutes, libelle: `décollage ${heurePrevue.slice(0, 5)}`, urgence: 'lointain' };
+}
+
+/** La gravité d'un call, pour la rayure de bord (règle 5 : la forme d'abord). */
+export const SEVERITE_CALL: Record<UrgenceCall, 'critique' | 'vigilance' | 'conforme' | 'neutre'> = {
+  retard: 'critique', imminent: 'critique', call: 'vigilance',
+  parti: 'conforme', lointain: 'neutre',
+};

@@ -37,7 +37,7 @@ describe('système visuel — rendu réel', () => {
     expect(html).toContain('aria-pressed="true"');
     expect(html).toContain('Gestion');
     // La pastille n'apparaît que sur le mode INACTIF.
-    expect(html).toContain('4 éléments en attente');
+    expect(html).toContain('4 en attente sur Gestion');
   });
 
   it('Tiroir est un vrai dépliant accessible', () => {
