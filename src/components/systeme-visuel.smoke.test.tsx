@@ -4,6 +4,8 @@ import { BarreEtat } from './BarreEtat';
 import { BasculeMode } from './BasculeMode';
 import { Tiroir } from './Tiroir';
 import { surface, rayure, pastille, action, enTeteSection } from '../lib/jetons';
+import { FileAvionnage } from './FileAvionnage';
+import { FileAvionnageDZ } from '../pages/centre/FileAvionnageDZ';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Contrairement aux tests fumée d'écran, ceux-ci ont une VRAIE portée : les
@@ -54,5 +56,40 @@ describe('système visuel — rendu réel', () => {
     expect(action('principal').background).toBe('var(--action-fond)');
     expect(action('texte').background).toBe('transparent');
     expect(enTeteSection.fontSize).toBe(13);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AVIONNAGE — portée réelle et portée limitée, dites franchement.
+//
+// FileAvionnageDZ fermée rend un VRAI balisage sans qu'aucun effet ne tourne :
+// le test l'exerce entièrement. Ouverte, il ne verrait que la branche
+// « chargement », puisque renderToStaticMarkup n'exécute pas les effets.
+// ═══════════════════════════════════════════════════════════════════════════
+describe('avionnage — rendu', () => {
+  it('file fermée : la DZ voit l’interrupteur et l’explication, pas une file vide', () => {
+    const html = renderToStaticMarkup(
+      <FileAvionnageDZ centreId="c1" rotations={[]} ouvert={false}
+        onOuvrir={() => {}} onPlace={() => {}} />);
+    expect(html).toContain('Ouvrir les inscriptions');
+    expect(html).toContain('aria-checked="false"');
+    // L'état fermé doit EXPLIQUER, pas laisser croire que personne n'attend.
+    expect(html).toContain('ne voient pas l’avionnage');
+    expect(html).not.toContain('Personne en attente');
+  });
+
+  it('file ouverte : l’interrupteur reflète l’état', () => {
+    const html = renderToStaticMarkup(
+      <FileAvionnageDZ centreId="c1" rotations={[]} ouvert
+        onOuvrir={() => {}} onPlace={() => {}} />);
+    expect(html).toContain('aria-checked="true"');
+    expect(html).toContain('Inscriptions ouvertes');
+  });
+
+  it('FileAvionnage ne rend rien sans centre ni utilisateur', () => {
+    // Garde d'entrée : le composant est monté pour chaque DZ du parachutiste,
+    // y compris avant que l'identité soit chargée.
+    expect(renderToStaticMarkup(
+      <FileAvionnage centreId={undefined} userId={undefined} />)).toBe('');
   });
 });

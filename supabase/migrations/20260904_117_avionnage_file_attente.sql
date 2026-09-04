@@ -157,3 +157,9 @@ create policy aeronefs_lecture_licencie on aeronefs
     where parachutiste_id = auth.uid() and statut = 'actif'));
 
 commit;
+
+-- ── APPLIQUÉE LE 04/09/2026, vérifiée après coup ────────────────────────────
+--   file_avionnage : 12 colonnes, RLS active, 2 policies
+--   places_rotation_une_fois_par_rotation : en place
+--   trg_places_rotation_capacite : en place
+--   centres.avionnage_actif : défaut false

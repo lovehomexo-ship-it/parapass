@@ -219,3 +219,13 @@ comment on function retirer_de_rotation(uuid, boolean) is
   'Retire une place et rend à la personne SA position d''origine dans la file : elle ne repart pas en queue parce que la DZ a réorganisé.';
 
 commit;
+
+-- ── APPLIQUÉE LE 04/09/2026 ─────────────────────────────────────────────────
+--   Les cinq fonctions existent. Garde-fous PROUVÉS sans session :
+--     select rejoindre_file_avionnage(...) → 42501 « Connectez-vous pour
+--       rejoindre la file. » — refuse AVANT toute écriture
+--     select * from get_file_avionnage(...) → 42501 « Réservé au centre
+--       concerné »
+--   NON prouvé faute de session authentifiée : le refus du module fermé, le
+--   plafond de capacité, et le parcours complet file → rotation. Ils demandent
+--   une écriture en production.
