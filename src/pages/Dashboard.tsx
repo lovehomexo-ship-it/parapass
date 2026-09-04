@@ -19,6 +19,7 @@ import { useAlertes, type MaterielEcheance } from '../lib/useAlertes';
 import { useComplianceRules, getMaterielEcheance } from '../lib/compliance';
 import { MaRepriseCard } from '../components/MaRepriseCard';
 import { BriefingDuJourBlock } from '../components/BriefingDuJourCard';
+import { FileAvionnage } from '../components/FileAvionnage';
 import { MeteoAltitudeCard } from '../components/MeteoAltitudeCard';
 import { CheckInPresence } from '../components/CheckInPresence';
 import { ShareCardModal } from '../components/ShareCardModal';
@@ -714,6 +715,15 @@ export function DashboardPage() {
                   (bandeau + carte pour chaque DZ active via licencies_centres) */}
               {briefingDzs.map(dz => (
                 <BriefingDuJourBlock key={dz.id} dzId={dz.id} dzNom={dz.nom} userId={user?.id} />
+              ))}
+
+              {/* 0 bis — AVIONNAGE, juste après le briefing : c'est l'ordre du
+                  geste (je lis les consignes, puis je me manifeste). Le
+                  composant ne rend RIEN tant que la DZ n'a pas ouvert la file,
+                  donc il n'encombre pas l'écran hors journée de saut. */}
+              {briefingDzs.map(dz => (
+                <FileAvionnage key={`avionnage-${dz.id}`} centreId={dz.id}
+                  centreNom={briefingDzs.length > 1 ? dz.nom : undefined} userId={user?.id} />
               ))}
 
               {/* Note : le bandeau « Documents à jour / Brevet X » a été retiré —

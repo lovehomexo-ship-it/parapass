@@ -7,6 +7,8 @@ import {
   Plane, Plus, Users, ArrowDownUp, Lock, AlertTriangle, ShieldCheck,
   XCircle, ChevronRight, Trash2,
 } from 'lucide-react';
+import { FileAvionnageDZ } from './FileAvionnageDZ';
+import { siegesOccupes, libelleCapacite } from '../../lib/avionnage';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // P3 — MANIFEST : rotations, chargements, ordre de sortie.
@@ -49,6 +51,7 @@ interface Rotation {
 interface Aeronef { id: string; immatriculation: string; places: number; altitude_max_m: number | null }
 interface Place {
   id: string; rotation_id: string; parachutiste_id: string | null;
+  moniteur_id: string | null;
   type_saut: string; rang_sortie: number | null; statut: string; groupe_id: string | null;
   nom: string; aptitude: 'vert' | 'orange' | 'rouge' | null; motif: string | null;
 }
@@ -65,15 +68,33 @@ function RotationsInner({ centreId }: { centreId: string }) {
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [action, setAction] = useState<string | null>(null);
+  const [avionnageOuvert, setAvionnageOuvert] = useState(false);
+
+  // L'ouverture de la file est un réglage du CENTRE, pas un état d'écran :
+  // elle doit survivre au rechargement et être vue par les parachutistes.
+  const basculerAvionnage = async (v: boolean) => {
+    const precedent = avionnageOuvert;
+    setAvionnageOuvert(v);            // retour immédiat, un interrupteur doit répondre
+    const { error } = await supabase.from('centres')
+      .update({ avionnage_actif: v }).eq('id', centreId);
+    if (error) {
+      console.error('Ouverture de l’avionnage échouée :', {
+        code: error.code, message: error.message, details: error.details, hint: error.hint,
+      });
+      setAvionnageOuvert(precedent);  // on ne laisse pas l'écran mentir
+      setErreur('Impossible de ' + (v ? 'ouvrir' : 'fermer') + ' les inscriptions : ' + error.message);
+    }
+  };
 
   const charger = useCallback(async () => {
     setChargement(true); setErreur(null);
-    const [{ data: rot, error: e1 }, { data: av }, { data: apt }] = await Promise.all([
+    const [{ data: rot, error: e1 }, { data: av }, { data: apt }, { data: ctr }] = await Promise.all([
       supabase.from('rotations').select('*')
         .eq('centre_id', centreId).eq('date_jour', jour).order('numero'),
       supabase.from('aeronefs').select('id, immatriculation, places, altitude_max_m')
         .eq('centre_id', centreId).eq('actif', true).order('immatriculation'),
       supabase.rpc('get_aptitude_du_jour', { p_centre_id: centreId }),
+      supabase.from('centres').select('avionnage_actif').eq('id', centreId).maybeSingle(),
     ]);
     if (e1) {
       console.error('Rotations — chargement échoué :', {
@@ -84,6 +105,7 @@ function RotationsInner({ centreId }: { centreId: string }) {
     const rr = (rot ?? []) as Rotation[];
     setRotations(rr);
     setAeronefs((av ?? []) as Aeronef[]);
+    setAvionnageOuvert(Boolean((ctr as { avionnage_actif?: boolean } | null)?.avionnage_actif));
 
     type Apt = { parachutiste_id: string; nom: string; prenom: string; statut: string;
                  motifs: { libelle: string; levee: boolean }[] };
@@ -95,7 +117,7 @@ function RotationsInner({ centreId }: { centreId: string }) {
 
     if (rr.length > 0) {
       const { data: pl, error: e2 } = await supabase.from('places_rotation')
-        .select('id, rotation_id, parachutiste_id, type_saut, rang_sortie, statut, groupe_id, profiles!parachutiste_id(nom, prenom)')
+        .select('id, rotation_id, parachutiste_id, moniteur_id, type_saut, rang_sortie, statut, groupe_id, profiles!parachutiste_id(nom, prenom)')
         .in('rotation_id', rr.map(r => r.id)).order('rang_sortie', { nullsFirst: false });
       if (e2) {
         console.error('Places — chargement échoué :', {
@@ -201,7 +223,7 @@ function RotationsInner({ centreId }: { centreId: string }) {
         </div>
         <button onClick={nouvelleRotation} disabled={!!action || aeronefs.length === 0}
           className="flex items-center gap-1.5 px-4 rounded-xl text-sm font-bold disabled:opacity-50"
-          style={{ minHeight: 44, background: '#2563EB', color: '#fff' }}>
+          style={{ minHeight: 44, background: 'var(--action-fond)', color: '#fff' }}>
           <Plus className="w-4 h-4" aria-hidden /> Rotation
         </button>
       </div>
@@ -216,6 +238,19 @@ function RotationsInner({ centreId }: { centreId: string }) {
           n'existe pas. */}
       <AjouterAeronef centreId={centreId} aeronefs={aeronefs} onFait={charger} />
 
+      {/* La file AVANT les rotations : la journée commence par « qui attend »,
+          pas par « quels avions ». */}
+      <FileAvionnageDZ centreId={centreId} ouvert={avionnageOuvert}
+        onOuvrir={basculerAvionnage} onPlace={charger}
+        rotations={rotations
+          .filter(r => r.statut !== 'terminee' && r.statut !== 'annulee')
+          .map(r => {
+            const a = aeronefs.find(x => x.id === r.aeronef_id);
+            const occ = siegesOccupes(places.filter(p => p.rotation_id === r.id));
+            return { id: r.id, numero: r.numero,
+                     places_libres: a ? a.places - occ : null };
+          })} />
+
       {rotations.length === 0 ? (
         <p className="text-sm text-center py-10" style={{ color: 'var(--c-dim)' }}>
           Aucune rotation aujourd’hui.
@@ -225,7 +260,10 @@ function RotationsInner({ centreId }: { centreId: string }) {
           .sort((a, b) => (a.rang_sortie ?? 99) - (b.rang_sortie ?? 99));
         const av = aeronefs.find(a => a.id === r.aeronef_id);
         const s = STATUTS_ROTATION.find(([c]) => c === r.statut);
-        const complet = av ? pl.length >= av.places : false;
+        // siegesOccupes compte le moniteur accompagnant, que pl.length
+        // ignorait : « 3/4 » s'affichait sur un avion déjà plein.
+        const sieges = siegesOccupes(pl);
+        const complet = av ? sieges >= av.places : false;
         const close = r.statut === 'terminee';
 
         return (
@@ -241,7 +279,7 @@ function RotationsInner({ centreId }: { centreId: string }) {
               </span>
               <span className="text-xs" style={{ color: 'var(--c-dim)' }}>
                 {av?.immatriculation ?? 'aéronef ?'} · {r.altitude_largage_m ?? '?'} m
-                {av && ` · ${pl.length}/${av.places} places`}
+                {' · '}{libelleCapacite(sieges, av?.places ?? null)}
               </span>
               {complet && !close && (
                 <span className="flex items-center gap-1 text-[11px] font-semibold"
