@@ -7,7 +7,6 @@ import {
   Plane, Plus, Users, ArrowDownUp, Lock, AlertTriangle, ShieldCheck,
   XCircle, ChevronRight, Trash2,
 } from 'lucide-react';
-import { FileAvionnageDZ } from './FileAvionnageDZ';
 import { siegesOccupes, libelleCapacite } from '../../lib/avionnage';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -238,18 +237,6 @@ function RotationsInner({ centreId }: { centreId: string }) {
           n'existe pas. */}
       <AjouterAeronef centreId={centreId} aeronefs={aeronefs} onFait={charger} />
 
-      {/* La file AVANT les rotations : la journée commence par « qui attend »,
-          pas par « quels avions ». */}
-      <FileAvionnageDZ centreId={centreId} ouvert={avionnageOuvert}
-        onOuvrir={basculerAvionnage} onPlace={charger}
-        rotations={rotations
-          .filter(r => r.statut !== 'terminee' && r.statut !== 'annulee')
-          .map(r => {
-            const a = aeronefs.find(x => x.id === r.aeronef_id);
-            const occ = siegesOccupes(places.filter(p => p.rotation_id === r.id));
-            return { id: r.id, numero: r.numero,
-                     places_libres: a ? a.places - occ : null };
-          })} />
 
       {rotations.length === 0 ? (
         <p className="text-sm text-center py-10" style={{ color: 'var(--c-dim)' }}>

@@ -3452,16 +3452,10 @@ export function CentreDashboardPage() {
                   <DemoJourneeDZ centreId={centreId} centreNom={centre?.nom} onDone={fetchCentreData} />
                 </div>
               )}
-              {/* P7 — grille par public : la question du DT, « qui peut sauter ? ». */}
-              {centreId && (
-                <div className="mt-6"><GrilleMeteoDZ centreId={centreId} /></div>
-              )}
-              {/* Météo — toujours en dernier (prévision indicative) */}
-              {centreId && (
-                <div className="mt-6">
-                  <MeteoAltitudeDZ dzId={centreId} />
-                </div>
-              )}
+              {/* F03/P9 — la grille « Qui peut sauter ? » et le profil de vent
+                  vivaient ICI, hors de tout mode : ils apparaissaient sous
+                  l'Avionnage et la Gestion. Ils sont dans le tiroir meteoSlot
+                  du mode Journée, leur seul endroit (règle 3). */}
             </>
           )}
           {activeSection === 'licencies' && (

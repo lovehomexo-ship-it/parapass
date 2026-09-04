@@ -70,7 +70,7 @@ describe('avionnage — rendu', () => {
   it('file fermée : la DZ voit l’interrupteur et l’explication, pas une file vide', () => {
     const html = renderToStaticMarkup(
       <FileAvionnageDZ centreId="c1" rotations={[]} ouvert={false}
-        onOuvrir={() => {}} onPlace={() => {}} />);
+        onOuvrir={() => {}} onPlacer={async () => null} onOuvrirFiche={() => {}} />);
     expect(html).toContain('Ouvrir les inscriptions');
     expect(html).toContain('aria-checked="false"');
     // L'état fermé doit EXPLIQUER, pas laisser croire que personne n'attend.
@@ -81,7 +81,7 @@ describe('avionnage — rendu', () => {
   it('file ouverte : l’interrupteur reflète l’état', () => {
     const html = renderToStaticMarkup(
       <FileAvionnageDZ centreId="c1" rotations={[]} ouvert
-        onOuvrir={() => {}} onPlace={() => {}} />);
+        onOuvrir={() => {}} onPlacer={async () => null} onOuvrirFiche={() => {}} />);
     expect(html).toContain('aria-checked="true"');
     expect(html).toContain('Inscriptions ouvertes');
   });

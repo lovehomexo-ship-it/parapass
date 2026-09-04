@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { supabase } from '../../lib/supabase';
-import { Users, UserPlus, MapPin, AlertTriangle } from 'lucide-react';
+import { Users, UserPlus, MapPin, AlertTriangle, GripVertical } from 'lucide-react';
 import { surface, action, rayure, pastille, enTeteSection, type Severite } from '../../lib/jetons';
-import { useFileDZ, LIBELLE_TYPE, messageErreur, type LigneFile, type TypeSautFile } from '../../lib/avionnage';
+import { useFileDZ, LIBELLE_TYPE, type LigneFile, type TypeSautFile } from '../../lib/avionnage';
+
+/** Type MIME maison du glisser-déposer : une planche n'accepte que ça. */
+export const MIME_FILE = 'application/x-parapass-file';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // AVIONNAGE — côté DZ. La file du jour, et de quoi la vider dans les avions.
@@ -23,35 +25,30 @@ const APTITUDE: Record<LigneFile['statut_aptitude'], { sev: Severite; libelle: s
   inconnu: { sev: 'neutre',    libelle: 'Aptitude inconnue' },
 };
 
-export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlace }: {
+export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlacer, onOuvrirFiche, rechargerRef }: {
   centreId: string;
   /** Rotations non clôturées, pour proposer où placer. */
   rotations: { id: string; numero: number; places_libres: number | null }[];
   ouvert: boolean;
   onOuvrir: (v: boolean) => void;
-  onPlace: () => void;
+  /** Le placement vit dans le parent : bouton ET glisser-déposer y aboutissent. */
+  onPlacer: (fileId: string, rotationId: string) => Promise<string | null>;
+  /** Un clic sur la personne ouvre sa fiche — c'est là qu'on comprend l'anomalie. */
+  onOuvrirFiche: (parachutisteId: string) => void;
+  /** Permet au parent de recharger la file après un dépôt sur une planche. */
+  rechargerRef?: React.MutableRefObject<(() => Promise<void>) | null>;
 }) {
   const { file, chargement, erreur, recharger } = useFileDZ(centreId);
   const [action_, setAction] = useState<string | null>(null);
   const [echec, setEchec] = useState<string | null>(null);
+  if (rechargerRef) rechargerRef.current = recharger;
 
   const placer = async (fileId: string, rotationId: string) => {
     setAction(fileId); setEchec(null);
-    const { error } = await supabase.rpc('placer_depuis_file', {
-      p_file_id: fileId, p_rotation_id: rotationId,
-    });
+    const err = await onPlacer(fileId, rotationId);
     setAction(null);
-    if (error) {
-      console.error('Placement depuis la file échoué :', {
-        code: error.code, message: error.message, details: error.details, hint: error.hint,
-      });
-      // Le message vient de la base et dit quoi faire (« Créez la rotation
-      // suivante, ou laissez la personne en file »). On le montre tel quel.
-      setEchec(messageErreur(error));
-      return;
-    }
+    if (err) { setEchec(err); return; }
     await recharger();
-    onPlace();
   };
 
   return (
@@ -101,20 +98,37 @@ export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlace
           {file.map((l, i) => {
             const a = APTITUDE[l.statut_aptitude];
             return (
-              <li key={l.id} className="flex gap-3 py-2.5 px-3 flex-wrap items-start"
-                style={{ borderTop: i === 0 ? 'none' : '1px solid var(--n3-filet)', ...rayure(a.sev) }}>
+              <li key={l.id}
+                // Glisser-déposer natif : la ligne emporte l'id de la demande,
+                // une planche l'accepte. Sur écran tactile le glisser natif ne
+                // répond pas — les boutons « Rot. N » restent le chemin, et
+                // c'est voulu : au bord de la piste, un bouton se vise mieux.
+                draggable={action_ === null}
+                onDragStart={e => {
+                  e.dataTransfer.setData(MIME_FILE, l.id);
+                  e.dataTransfer.effectAllowed = 'move';
+                }}
+                className="flex gap-2 py-2.5 px-3 flex-wrap items-start"
+                style={{ borderTop: i === 0 ? 'none' : '1px solid var(--n3-filet)', ...rayure(a.sev),
+                         cursor: 'grab' }}>
+                <GripVertical className="w-4 h-4 flex-shrink-0 self-center" aria-hidden
+                  style={{ color: 'var(--c-dim)' }} />
                 <span className="font-extrabold flex-shrink-0"
                   style={{ fontSize: 15, color: 'var(--c-muted)', minWidth: 22 }}>
                   {l.position_file}
                 </span>
 
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold" style={{ fontSize: 14, color: 'var(--c-text)' }}>
+                  {/* Le nom est un bouton : un clic ouvre la fiche, où les
+                      motifs se lisent et se traitent. */}
+                  <button type="button" onClick={() => onOuvrirFiche(l.parachutiste_id)}
+                    className="font-bold text-left hover:underline"
+                    style={{ fontSize: 14, color: 'var(--c-text)', minHeight: 32 }}>
                     {l.prenom} {l.nom}
-                    <span className="font-normal" style={{ color: 'var(--c-muted)' }}>
+                    <span className="font-normal no-underline" style={{ color: 'var(--c-muted)' }}>
                       {' · '}{LIBELLE_TYPE[l.type_saut as TypeSautFile] ?? l.type_saut}
                     </span>
-                  </p>
+                  </button>
                   {l.commentaire && (
                     <p style={{ fontSize: 12, color: 'var(--c-text2)' }}>{l.commentaire}</p>
                   )}
@@ -135,9 +149,12 @@ export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlace
                   )}
                 </div>
 
-                <span className="flex-shrink-0 whitespace-nowrap self-start" style={pastille(a.sev)}>
+                <button type="button" onClick={() => onOuvrirFiche(l.parachutiste_id)}
+                  title="Ouvrir la fiche"
+                  className="flex-shrink-0 whitespace-nowrap self-start"
+                  style={{ ...pastille(a.sev), cursor: 'pointer', minHeight: 28 }}>
                   {a.libelle}
-                </span>
+                </button>
 
                 {/* Un bouton par rotation qui a encore de la place. Une rotation
                     complète ne s'affiche pas : proposer un placement que la

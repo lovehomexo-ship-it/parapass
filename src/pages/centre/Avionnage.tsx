@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { LoaderParaPass } from '../../components/LoaderParaPass';
@@ -40,6 +41,28 @@ function AvionnageInner({ centreId }: { centreId: string }) {
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [occupe, setOccupe] = useState(false);
+  const navigate = useNavigate();
+  const rechargerFile = useRef<(() => Promise<void>) | null>(null);
+
+  // Le tiroir d'une fiche a sa propre URL : un clic sur une personne y mène,
+  // et le bouton Retour ramène ici. C'est là qu'une anomalie se comprend.
+  const ouvrirFiche = useCallback((id: string) => navigate(`/centre/licencies/${id}`), [navigate]);
+
+  // UN seul chemin de placement, pour le bouton comme pour le glisser-déposer.
+  // Rend le message d'erreur (déjà écrit pour l'utilisateur par la base), ou null.
+  const placer = useCallback(async (fileId: string, rotationId: string): Promise<string | null> => {
+    const { error } = await supabase.rpc('placer_depuis_file', { p_file_id: fileId, p_rotation_id: rotationId });
+    if (error) {
+      console.error('Placement depuis la file échoué :', {
+        code: error.code, message: error.message, details: error.details, hint: error.hint,
+      });
+      return messageErreur(error);
+    }
+    await Promise.all([charger(), rechargerFile.current?.()]);
+    return null;
+  // charger est défini plus bas ; la référence est stable (useCallback).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [centreId]);
 
   const charger = useCallback(async () => {
     setErreur(null);
@@ -193,7 +216,8 @@ function AvionnageInner({ centreId }: { centreId: string }) {
             return (
               <div key={r.id} className="space-y-2">
                 <PlancheAvionnage rotation={r} places={pl} maintenant={maintenant}
-                  aeronef={aeronefs.find(a => a.id === r.aeronef_id)} onChange={charger} />
+                  aeronef={aeronefs.find(a => a.id === r.aeronef_id)} onChange={charger}
+                  onDeposer={fileId => placer(fileId, r.id)} onOuvrirFiche={ouvrirFiche} />
                 {/* Quelqu'un arrive sans être passé par la file : le chef
                     d'avionnage l'embarque directement. L'aptitude s'affiche,
                     elle n'empêche rien. */}
@@ -210,7 +234,8 @@ function AvionnageInner({ centreId }: { centreId: string }) {
         {/* ── La file ──────────────────────────────────────────────────── */}
         <div>
           <FileAvionnageDZ centreId={centreId} ouvert={ouvert}
-            onOuvrir={basculerOuverture} onPlace={charger}
+            onOuvrir={basculerOuverture} onPlacer={placer} onOuvrirFiche={ouvrirFiche}
+            rechargerRef={rechargerFile}
             rotations={ouvertes.map(r => {
               const a = aeronefs.find(x => x.id === r.aeronef_id);
               const occ = siegesOccupes(places.filter(p => p.rotation_id === r.id));

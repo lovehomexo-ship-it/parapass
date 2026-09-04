@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { MIME_FILE } from './FileAvionnageDZ';
 import { supabase } from '../../lib/supabase';
 import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff } from 'lucide-react';
 import { surface, rayure, pastille, action, SEVERITE_COULEUR } from '../../lib/jetons';
@@ -36,7 +37,7 @@ export interface AeronefVue { id: string; immatriculation: string; places: numbe
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -44,14 +45,22 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
    *  pas déclencher trente minuteurs, et surtout pas se décaler entre elles. */
   maintenant: Date;
   onChange: () => void;
+  /** Dépôt d'une demande de la file sur cette planche. Rend l'erreur, ou null. */
+  onDeposer?: (fileId: string) => Promise<string | null>;
+  onOuvrirFiche?: (parachutisteId: string) => void;
 }) {
   const [occupe, setOccupe] = useState(false);
   const [echec, setEchec] = useState<string | null>(null);
+  const [survol, setSurvol] = useState(false);
 
   const call = calculerCall(r.date_jour, r.heure_prevue, r.heure_decollage, maintenant);
   const sieges = siegesOccupes(places);
   const close = r.statut === 'terminee' || r.cloturee_le !== null;
   const sev = close ? 'conforme' : SEVERITE_CALL[call.urgence];
+  const complet = aeronef ? sieges >= aeronef.places : false;
+  // Une planche close ou pleine n'accepte pas de dépôt : elle ne s'éclaire pas
+  // au survol, plutôt que d'accueillir puis de refuser.
+  const accepteDepot = !!onDeposer && !close && !complet && !r.heure_decollage;
 
   const agir = async (nom: string, fn: () => PromiseLike<{ error: unknown }>) => {
     setOccupe(true); setEchec(null);
@@ -71,7 +80,30 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
       .update({ heure_prevue: valeur || null }).eq('id', r.id).then(x => ({ error: x.error })));
 
   return (
-    <article className="p-3.5" style={{ ...surface(2), ...rayure(sev) }}>
+    <article className="p-3.5"
+      onDragOver={e => {
+        if (!accepteDepot || !e.dataTransfer.types.includes(MIME_FILE)) return;
+        e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+        if (!survol) setSurvol(true);
+      }}
+      onDragLeave={() => setSurvol(false)}
+      onDrop={async e => {
+        setSurvol(false);
+        const id = e.dataTransfer.getData(MIME_FILE);
+        if (!accepteDepot || !id) return;
+        e.preventDefault();
+        setOccupe(true); setEchec(null);
+        const err = await onDeposer!(id);
+        setOccupe(false);
+        if (err) setEchec(err);
+      }}
+      style={{ ...surface(2), ...rayure(sev),
+               // Le survol se dit par la FORME (bordure épaissie, fond teinté),
+               // pas par une couleur d'état seule (règle 5).
+               outline: survol ? '2px dashed var(--action-texte)' : 'none',
+               outlineOffset: 2,
+               background: survol ? 'color-mix(in srgb, var(--action-texte) 8%, var(--n2-fond))' : undefined,
+               transition: 'outline-color .15s, background .15s' }}>
       {/* ── Le décompte d'abord : c'est lui qu'on lit de loin ── */}
       <div className="flex items-baseline justify-between gap-2 flex-wrap">
         <div>
@@ -114,8 +146,10 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
 
       {/* ── Qui est à bord ───────────────────────────────────────────────── */}
       {places.length === 0 ? (
-        <p className="mt-3" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
-          Personne à bord. Placez quelqu’un depuis la file.
+        <p className="mt-3 py-4 text-center rounded-xl"
+          style={{ fontSize: 13, color: 'var(--c-muted)',
+                   border: '1px dashed var(--n3-filet)' }}>
+          {accepteDepot ? 'Personne à bord — glissez quelqu’un depuis la file.' : 'Personne à bord.'}
         </p>
       ) : (
         <ul className="mt-3">
@@ -126,16 +160,33 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                 style={{ fontSize: 13, color: 'var(--c-muted)', minWidth: 20 }}>
                 {p.rang_sortie ?? '·'}
               </span>
-              <span className="flex-1 min-w-0 truncate" style={{ fontSize: 13, color: 'var(--c-text)' }}>
-                {p.nom}
-                <span style={{ color: 'var(--c-muted)' }}>
-                  {' · '}{LIBELLE_TYPE[p.type_saut as TypeSautFile] ?? p.type_saut}
+              {p.parachutiste_id && onOuvrirFiche ? (
+                <button type="button" onClick={() => onOuvrirFiche(p.parachutiste_id!)}
+                  className="flex-1 min-w-0 truncate text-left hover:underline"
+                  style={{ fontSize: 13, color: 'var(--c-text)', minHeight: 32 }}>
+                  {p.nom}
+                  <span style={{ color: 'var(--c-muted)' }}>
+                    {' · '}{LIBELLE_TYPE[p.type_saut as TypeSautFile] ?? p.type_saut}
+                  </span>
+                </button>
+              ) : (
+                <span className="flex-1 min-w-0 truncate" style={{ fontSize: 13, color: 'var(--c-text)' }}>
+                  {p.nom}
+                  <span style={{ color: 'var(--c-muted)' }}>
+                    {' · '}{LIBELLE_TYPE[p.type_saut as TypeSautFile] ?? p.type_saut}
+                  </span>
                 </span>
-              </span>
+              )}
               {p.aptitude && p.aptitude !== 'vert' && (
-                <span className="flex-shrink-0" style={pastille(p.aptitude === 'rouge' ? 'critique' : 'vigilance')}>
+                // La pastille est un bouton : « à examiner » sans moyen
+                // d'examiner est un reproche, pas une information.
+                <button type="button" title="Ouvrir la fiche"
+                  onClick={() => p.parachutiste_id && onOuvrirFiche?.(p.parachutiste_id)}
+                  className="flex-shrink-0"
+                  style={{ ...pastille(p.aptitude === 'rouge' ? 'critique' : 'vigilance'),
+                           cursor: 'pointer', minHeight: 28 }}>
                   {p.aptitude === 'rouge' ? 'à examiner' : 'vigilance'}
-                </span>
+                </button>
               )}
               {!close && (
                 <button type="button" disabled={occupe}
