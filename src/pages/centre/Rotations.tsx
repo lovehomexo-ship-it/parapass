@@ -67,33 +67,15 @@ function RotationsInner({ centreId }: { centreId: string }) {
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [action, setAction] = useState<string | null>(null);
-  const [avionnageOuvert, setAvionnageOuvert] = useState(false);
-
-  // L'ouverture de la file est un réglage du CENTRE, pas un état d'écran :
-  // elle doit survivre au rechargement et être vue par les parachutistes.
-  const basculerAvionnage = async (v: boolean) => {
-    const precedent = avionnageOuvert;
-    setAvionnageOuvert(v);            // retour immédiat, un interrupteur doit répondre
-    const { error } = await supabase.from('centres')
-      .update({ avionnage_actif: v }).eq('id', centreId);
-    if (error) {
-      console.error('Ouverture de l’avionnage échouée :', {
-        code: error.code, message: error.message, details: error.details, hint: error.hint,
-      });
-      setAvionnageOuvert(precedent);  // on ne laisse pas l'écran mentir
-      setErreur('Impossible de ' + (v ? 'ouvrir' : 'fermer') + ' les inscriptions : ' + error.message);
-    }
-  };
 
   const charger = useCallback(async () => {
     setChargement(true); setErreur(null);
-    const [{ data: rot, error: e1 }, { data: av }, { data: apt }, { data: ctr }] = await Promise.all([
+    const [{ data: rot, error: e1 }, { data: av }, { data: apt }] = await Promise.all([
       supabase.from('rotations').select('*')
         .eq('centre_id', centreId).eq('date_jour', jour).order('numero'),
       supabase.from('aeronefs').select('id, immatriculation, places, altitude_max_m')
         .eq('centre_id', centreId).eq('actif', true).order('immatriculation'),
       supabase.rpc('get_aptitude_du_jour', { p_centre_id: centreId }),
-      supabase.from('centres').select('avionnage_actif').eq('id', centreId).maybeSingle(),
     ]);
     if (e1) {
       console.error('Rotations — chargement échoué :', {
@@ -104,7 +86,6 @@ function RotationsInner({ centreId }: { centreId: string }) {
     const rr = (rot ?? []) as Rotation[];
     setRotations(rr);
     setAeronefs((av ?? []) as Aeronef[]);
-    setAvionnageOuvert(Boolean((ctr as { avionnage_actif?: boolean } | null)?.avionnage_actif));
 
     type Apt = { parachutiste_id: string; nom: string; prenom: string; statut: string;
                  motifs: { libelle: string; levee: boolean }[] };
