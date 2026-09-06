@@ -75,3 +75,5 @@ comment on function cloturer_journee_avionnage(uuid, date) is
   'Avionnage — clôt la journée : planches ayant largué clôturées (sauts créés), planches n''ayant pas volé ANNULÉES, file retirée sans suppression, inscriptions fermées. Idempotente.';
 
 commit;
+
+-- APPLIQUÉE LE 06/09/2026 après validation.

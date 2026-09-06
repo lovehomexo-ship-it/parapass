@@ -338,7 +338,7 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
 // ─── Verso card ─────────────────────────────────────────────────────────────────
 
 function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isOwner: boolean }) {
-  const { profile, licences, qrToken, dernierControle } = data;
+  const { profile, licences, qrToken } = data;
   const licence = licences[0];
 
   const numeroLicence = licence?.numero_licence || profile.numero_licence || null;
@@ -400,20 +400,6 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
                 {licence?.date_expiration ? new Date(licence.date_expiration).toLocaleDateString('fr-FR') : '—'}
               </div>
             </div>
-            <div>
-              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Contrôle DZ</div>
-              <div style={{ fontSize: 11, color: dernierControle ? '#fff' : 'rgba(255,255,255,0.3)', fontFamily: 'monospace', lineHeight: 1.3 }}>
-                {dernierControle
-                  ? `${new Date(dernierControle.controle_le).toLocaleDateString('fr-FR')}${dernierControle.centre_nom ? ` · ${dernierControle.centre_nom}` : ''}`
-                  : 'Non contrôlé'}
-              </div>
-            </div>
-            <div>
-              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Contrôlé par</div>
-              <div style={{ fontSize: 11, color: dernierControle?.controle_par_nom ? '#fff' : 'rgba(255,255,255,0.3)', fontWeight: 600, lineHeight: 1.3 }}>
-                {dernierControle?.controle_par_nom || '—'}
-              </div>
-            </div>
           </div>
         </div>
 
@@ -451,15 +437,9 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
         {/* ── Footer : badge + url + micro-mention ── */}
         <div className="flex flex-col gap-1" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 6 }}>
           <div className="flex items-center justify-between">
-            {dernierControle ? (
-              <span className="inline-flex items-center gap-1" style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', background: 'rgba(16,185,129,0.12)', color: '#34D399', border: '1px solid rgba(16,185,129,0.22)', padding: '2px 7px', borderRadius: 20 }}>
-                <Check className="w-2.5 h-2.5" /> Documents contrôlés
-              </span>
-            ) : (
               <span style={{ fontSize: 8, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.28)', border: '1px solid rgba(255,255,255,0.1)', padding: '2px 7px', borderRadius: 20 }}>
                 Non contrôlé
               </span>
-            )}
             <div style={{ fontSize: 8, fontFamily: 'monospace', color: 'rgba(255,255,255,0.28)' }}>parapass.fr</div>
           </div>
           <div style={{ fontSize: 6.5, color: 'rgba(255,255,255,0.18)', lineHeight: 1.3 }}>
@@ -613,7 +593,21 @@ async function exportCartesPDF(data: PasseportData, isOwner: boolean, nom: strin
 
 // ─── Validity summary ───────────────────────────────────────────────────────────
 
-function ValiditySummary({ data }: { data: PasseportData }) {
+/** Verdict Feu Vert du jour — rendu seulement en contexte CENTRE. */
+export interface VerdictFeuVert {
+  verdict: 'vert' | 'orange' | 'rouge' | 'gris';
+  nb_bloquants: number; nb_vigilances: number; nb_gris: number;
+  codes_rouges: string | null; codes_gris: string | null;
+}
+
+const FEU_VERT_LIBELLE: Record<VerdictFeuVert['verdict'], { texte: string; statut: 'valide' | 'expire' | 'bientot' | 'manquant' }> = {
+  vert:   { texte: 'Peut sauter',      statut: 'valide' },
+  orange: { texte: 'Vigilance',        statut: 'bientot' },
+  rouge:  { texte: 'Non conforme',     statut: 'expire' },
+  gris:   { texte: 'Donnée manquante', statut: 'manquant' },
+};
+
+function ValiditySummary({ data, feuVert }: { data: PasseportData; feuVert?: VerdictFeuVert | null }) {
   const licence = data.licences[0];
   const certif = data.certificats[0];
   const licStatus = getStatus(licence?.date_expiration);
@@ -653,15 +647,25 @@ function ValiditySummary({ data }: { data: PasseportData }) {
           <span className="text-sm text-gray-700">Validation carnet DZ</span>
           <StatusPill status={carnetValide ? 'valide' : 'manquant'} days={null} />
         </div>
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm text-gray-700">Contrôle documentaire DZ</span>
-          <div className="flex items-center gap-2">
-            {data.dernierControle && (
-              <span className="text-xs text-gray-400 font-mono">{new Date(data.dernierControle.controle_le).toLocaleDateString('fr-FR')}</span>
-            )}
-            <StatusPill status={data.dernierControle ? 'valide' : 'manquant'} days={null} />
+        {/* « Contrôle documentaire DZ » a disparu : c'était une case à cocher
+            manuelle (3 usages depuis juillet) pour attester d'avoir vu des
+            papiers. Feu Vert établit la même chose sur 14 règles, cite le
+            texte fédéral et le consigne dans un journal chaîné. Un seul acte,
+            une seule trace, opposable. La ligne n'apparaît qu'en contexte
+            CENTRE : le parachutiste voit ses validités, pas un jugement. */}
+        {feuVert && (
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm text-gray-700">Feu Vert</span>
+            <div className="flex items-center gap-2">
+              {(feuVert.codes_rouges || feuVert.codes_gris) && (
+                <span className="text-xs text-gray-400 font-mono">
+                  {feuVert.codes_rouges || feuVert.codes_gris}
+                </span>
+              )}
+              <StatusPill status={FEU_VERT_LIBELLE[feuVert.verdict].statut} days={null} />
+            </div>
           </div>
-        </div>
+        )}
       </div>
       <p className="text-[10px] text-gray-400 text-right">
         Données à jour au {data.loadedAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
@@ -723,6 +727,27 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
   const [exporting, setExporting] = useState(false);
 
   const isOwner = !adminId || adminId === userId;
+  // Contexte CENTRE : la fiche est ouverte par un admin sur quelqu'un d'autre.
+  const contexteCentre = Boolean(centreId) && !isOwner;
+  const [feuVert, setFeuVert] = useState<VerdictFeuVert | null>(null);
+
+  useEffect(() => {
+    if (!contexteCentre || !centreId) { setFeuVert(null); return; }
+    let vivant = true;
+    supabase.rpc('verdicts_du_jour', { p_centre_id: centreId, p_ids: [userId] })
+      .then(({ data: v, error }) => {
+        if (!vivant) return;
+        if (error) {
+          console.error('Feu Vert — verdict de la fiche non lu :', {
+            code: error.code, message: error.message, details: error.details, hint: error.hint,
+          });
+          // Une lecture en échec ne rend pas la fiche verte : elle ne rend rien.
+          setFeuVert(null); return;
+        }
+        setFeuVert(((v ?? []) as VerdictFeuVert[])[0] ?? null);
+      });
+    return () => { vivant = false; };
+  }, [contexteCentre, centreId, userId]);
   const rectoId = `card-recto-${userId}`;
   const versoId = `card-verso-${userId}`;
 
@@ -931,7 +956,7 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
       <FlippableCard data={displayData} isOwner={isOwner} rectoId={rectoId} versoId={versoId} />
 
       {/* Validity summary */}
-      <ValiditySummary data={displayData} />
+      <ValiditySummary data={displayData} feuVert={feuVert} />
 
       {/* Fullscreen modal */}
       {fullscreen && <FullscreenModal data={displayData} onClose={() => setFullscreen(false)} isOwner={isOwner} />}

@@ -2425,16 +2425,10 @@ function LicencieDrawer({
   const [confirmRetrait, setConfirmRetrait] = useState(false);
   const [showAddSaut, setShowAddSaut] = useState(false);
 
-  // Contrôle documentaire
-  const [controleOk, setControleOk] = useState({ licence: false, medical: false, assurance: false });
-  const [controleNote, setControleNote] = useState('');
-  const [controleSubmitting, setControleSubmitting] = useState(false);
-  const [controleSuccess, setControleSuccess] = useState(false);
-  const [controleError, setControleError] = useState<string | null>(null);
-  const [dernierControle, setDernierControle] = useState<{
-    controle_le: string; licence_ok: boolean; medical_ok: boolean; assurance_ok: boolean;
-    controle_par_nom: string | null; note: string | null;
-  } | null>(null);
+  // Le contrôle documentaire manuel a été retiré : Feu Vert établit la même
+  // chose sur 14 règles, cite le texte fédéral, et le consigne dans un
+  // journal chaîné. La table controle_documents (3 lignes, dernière le
+  // 23/07/2026) est conservée — c'est un historique, on ne réécrit pas le passé.
 
   // Conformité globale du licencié (licence + médical + matériel)
   const { rules: drawerRules } = useComplianceRules();
@@ -2488,34 +2482,6 @@ function LicencieDrawer({
     });
   }, [licencie, tab, currentProfile]);
 
-  // Charger le dernier contrôle documentaire quand on ouvre l'onglet actions
-  useEffect(() => {
-    if (!licencie || tab !== 'actions') return;
-    setControleSuccess(false);
-    setControleError(null);
-    setControleOk({ licence: false, medical: false, assurance: false });
-    setControleNote('');
-    supabase
-      .from('controle_documents')
-      .select('controle_le, licence_ok, medical_ok, assurance_ok, note, controle_par_nom')
-      .eq('licencie_id', licencie.id)
-      .eq('centre_id', centreId)
-      .order('controle_le', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!data) { setDernierControle(null); return; }
-        const d = data as Record<string, unknown>;
-        setDernierControle({
-          controle_le: d.controle_le as string,
-          licence_ok: d.licence_ok as boolean,
-          medical_ok: d.medical_ok as boolean,
-          assurance_ok: d.assurance_ok as boolean,
-          note: d.note as string | null,
-          controle_par_nom: (d.controle_par_nom as string | null) ?? null,
-        });
-      });
-  }, [licencie, tab, centreId]);
 
   const handleBatchValider = async () => {
     if (!licencie) return;
@@ -2541,44 +2507,7 @@ function LicencieDrawer({
     onClose();
   };
 
-  const handleControlerDocuments = async () => {
-    if (!licencie || !currentProfile || controleSubmitting) return;
-    setControleSubmitting(true);
-    setControleError(null);
-    const nomControleur = `${currentProfile.prenom} ${currentProfile.nom}`;
-    // Fetch centre name for denormalization
-    const { data: centreRow } = await supabase.from('centres').select('nom').eq('id', centreId).maybeSingle();
-    const { data: inserted, error } = await supabase
-      .from('controle_documents')
-      .insert({
-        licencie_id: licencie.id,
-        centre_id: centreId,
-        controle_par: currentProfile.id,
-        controle_par_nom: nomControleur,
-        centre_nom: centreRow?.nom ?? null,
-        licence_ok: controleOk.licence,
-        medical_ok: controleOk.medical,
-        assurance_ok: controleOk.assurance,
-        note: controleNote.trim() || null,
-      })
-      .select('id')
-      .single();
-    if (!error && inserted) {
-      const now = new Date().toISOString();
-      setControleSuccess(true);
-      setDernierControle({
-        controle_le: now,
-        licence_ok: controleOk.licence,
-        medical_ok: controleOk.medical,
-        assurance_ok: controleOk.assurance,
-        note: controleNote.trim() || null,
-        controle_par_nom: nomControleur,
-      });
-    } else {
-      setControleError(error?.message ?? 'Erreur lors de l\'enregistrement');
-    }
-    setControleSubmitting(false);
-  };
+  // handleControlerDocuments retiré avec le contrôle documentaire manuel.
 
   const handleGeneratePDF = async () => {
     if (!licencie) return;
@@ -2708,92 +2637,11 @@ function LicencieDrawer({
           {tab === 'actions' && (
             <div className="space-y-5">
 
-              {/* ── Contrôle documentaire ── */}
-              <div className="border border-indigo-100 rounded-xl p-4 space-y-3" style={{ background: '#F5F3FF' }}>
-                <div>
-                  <p className="text-sm font-semibold text-indigo-900 flex items-center gap-2">
-                    <Shield className="w-4 h-4" /> Contrôle documentaire
-                  </p>
-                  <p className="text-xs text-indigo-600 mt-0.5">
-                    Attester avoir vérifié les documents présentés à l'accueil
-                  </p>
-                </div>
-
-                {/* Dernier contrôle */}
-                {dernierControle && (
-                  <div className="text-xs text-indigo-700 bg-indigo-50 rounded-lg px-3 py-2 border border-indigo-100">
-                    Dernier contrôle : <strong>{new Date(dernierControle.controle_le).toLocaleDateString('fr-FR')}</strong>
-                    {dernierControle.controle_par_nom && <> par {dernierControle.controle_par_nom}</>}
-                    <span className="ml-2">
-                      {dernierControle.licence_ok ? '✓ Lic' : '✗ Lic'}
-                      {' · '}
-                      {dernierControle.medical_ok ? '✓ Méd' : '✗ Méd'}
-                      {' · '}
-                      {dernierControle.assurance_ok ? '✓ Ass' : '✗ Ass'}
-                    </span>
-                  </div>
-                )}
-
-                {controleSuccess ? (
-                  <div className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 border border-green-100 flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 flex-shrink-0" />
-                    Contrôle enregistré avec succès
-                  </div>
-                ) : (
-                  <>
-                    {/* Checkboxes */}
-                    <div className="space-y-2">
-                      {([
-                        { key: 'licence', label: 'Licence FFP présentée et conforme' },
-                        { key: 'medical', label: 'Certificat médical présenté et conforme' },
-                        { key: 'assurance', label: 'Assurance présentée et conforme' },
-                      ] as const).map(({ key, label }) => (
-                        <label key={key} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={controleOk[key]}
-                            onChange={e => setControleOk(prev => ({ ...prev, [key]: e.target.checked }))}
-                            className="w-4 h-4 rounded accent-indigo-600"
-                          />
-                          <span className="text-sm text-indigo-900">{label}</span>
-                        </label>
-                      ))}
-                    </div>
-
-                    {/* Note optionnelle */}
-                    <textarea
-                      value={controleNote}
-                      onChange={e => setControleNote(e.target.value)}
-                      placeholder="Note optionnelle…"
-                      rows={2}
-                      className="w-full text-sm border border-indigo-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                      style={{ background: 'rgba(255,255,255,0.8)' }}
-                    />
-
-                    {controleError && (
-                      <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-                        <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {controleError}
-                      </div>
-                    )}
-                    <button
-                      onClick={handleControlerDocuments}
-                      disabled={controleSubmitting}
-                      className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition disabled:opacity-50 flex items-center justify-center gap-2"
-                      style={{ background: '#4F46E5' }}
-                    >
-                      {controleSubmitting ? (
-                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      ) : (
-                        <Shield className="w-4 h-4" />
-                      )}
-                      Enregistrer le contrôle
-                    </button>
-                    <p className="text-[10px] text-indigo-400 text-center leading-tight">
-                      Contrôle documentaire uniquement — sans valeur de certification fédérale
-                    </p>
-                  </>
-                )}
-              </div>
+              {/* Le bloc « Contrôle documentaire » vivait ici : une case à
+                  cocher pour attester d'avoir vu des papiers. Retiré — Feu
+                  Vert le fait sur 14 règles, cite le texte fédéral et le
+                  consigne dans un journal chaîné. Le verdict du jour est dans
+                  l'onglet Carte, au récapitulatif des validités. */}
 
               {/* Messagerie rapide */}
               <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-center justify-between">
