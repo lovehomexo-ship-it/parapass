@@ -309,3 +309,32 @@ commit;
 --
 --   select count(*) from regles_securite where length(trim(source_texte)) = 0;  → 0
 -- ════════════════════════════════════════════════════════════════════════════
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- APPLIQUÉE LE 06/09/2026, après validation. Preuves d'acceptation OBTENUES :
+--
+--   (a) INSERT centres_options (bloquant=true, avionnage=false)
+--       → ERROR 23514 violates check constraint
+--         "centres_options_bloquant_exige_avionnage"
+--   (b) UPDATE regles_securite SET libelle=… WHERE code='LIC-001'
+--       → ERROR 23514 Une regle ne se modifie pas : inserez une nouvelle
+--         version (code LIC-001, version 2) et desactivez celle-ci.
+--   (d) 13 règles fédérales, 0 source vide, 13 en vigueur sur BigAir dont
+--       8 bloquantes.
+--   (c) QUATORZIÈME règle seedée par un simple INSERT (ci-dessous), aucune
+--       ligne de code modifiée : regles_en_vigueur(BigAir) passe de 13 à 14.
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- BRV-001 — d'après la décision du DT : des LIMITES MÉTÉO PAR BREVET, pas une
+-- grille de types de saut. Source = paramétrisation du centre (seuils météo
+-- par public), en attente d'une référence fédérale — dit tel quel plutôt
+-- qu'inventé (P2).
+insert into regles_securite
+  (code, version, libelle, source_texte, gravite, levable, habilitation_levee, effet_levee, duree_levee, portee)
+values ('BRV-001', 1,
+  'Conditions météo au-delà des limites du brevet détenu',
+  'Règle du centre — seuils météo par public paramétrés par le DT (vent, rafales, plafond), en attente de la référence fédérale',
+  'bloquant', true, 'DT',
+  'Le DT constate les conditions réelles au décollage et autorise nommément, pour cette rotation.',
+  'une_rotation', 'individu')
+on conflict do nothing;
