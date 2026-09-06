@@ -297,3 +297,32 @@ commit;
 -- point. Le test de détection se fait côté TypeScript sur un export altéré
 -- (src/lib/journalSecurite.test.ts).
 -- ════════════════════════════════════════════════════════════════════════════
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- APPLIQUÉE LE 06/09/2026 après validation. PREUVES OBTENUES, au rôle
+-- postgres — au-dessus de service_role, donc plus fort que ce que P4.3 exige :
+--
+--   truncate journal_securite;
+--   → 42501 Table journal_securite : aucune modification ni suppression n'est
+--            possible, par personne. Une correction est une NOUVELLE entrée.
+--   truncate levees;
+--   → 42501 (même trigger)
+--   truncate evaluations;
+--   → 0A000 refusé AVANT le trigger, par la clé étrangère de levees — et
+--            « truncate … cascade » retomberait sur le trigger de levees.
+--
+--   Verrous en place (mesurés) sur les trois tables :
+--     3 triggers d'inaltérabilité chacune (update, delete, truncate)
+--     has_table_privilege(authenticated, UPDATE) = false
+--     has_table_privilege(service_role, UPDATE)  = false
+--     has_table_privilege(service_role, DELETE)  = false
+--     RLS active
+--
+-- CE QUI N'EST PAS ENCORE PROUVÉ, et pourquoi : l'UPDATE et le DELETE par
+-- ligne. Les trois tables sont VIDES — un trigger de ligne ne se déclenche
+-- pas sur zéro ligne, et la preuve TRUNCATE (niveau instruction) est la seule
+-- possible sans écrire. Le premier événement réel (un changement de régime,
+-- une règle basculée depuis l'écran Référentiel) créera la première entrée ;
+-- l'UPDATE refusé sera montré à ce moment-là. verifier_chaine() exige une
+-- session admin du centre : elle se prouvera depuis l'application.
+-- ════════════════════════════════════════════════════════════════════════════
