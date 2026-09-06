@@ -85,8 +85,8 @@ export const METHODE_DE_VERIFICATION = `Chaque entrée porte hash = SHA-256 (hex
 avec « | » comme séparateur et hash_precedent remplacé par une chaîne vide pour la
 première entrée du centre. hash_precedent de chaque entrée doit être égal au hash de
 l'entrée précédente (ordre : seq croissant). Les champs horodatage_canonique et
-charge_canonique sont fournis tels que stockés : ne les reformatez pas, ne re-sérialisez
-pas charge_utile — hachez les textes fournis. Toute entrée modifiée, supprimée ou
+charge_canonique sont fournis tels que stockés : ne les reformatez pas et
+ne re-sérialisez pas charge_utile — hachez les textes fournis. Toute entrée modifiée, supprimée ou
 insérée après coup rompt la chaîne à partir d'elle. Ce fichier a été produit par le
 centre lui-même ; ParaPass ne l'a transmis à personne.`;
 
