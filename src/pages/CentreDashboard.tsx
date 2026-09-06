@@ -45,6 +45,7 @@ import { SuiviAcquittements } from './centre/SuiviAcquittements';
 import { BriefingOperationnel } from './centre/BriefingOperationnel';
 import { EcheancesMateriel } from './centre/EcheancesMateriel';
 import { EvenementsSecurite } from './centre/EvenementsSecurite';
+import { ReglesSecurite } from './centre/ReglesSecurite';
 import { Avionnage } from './centre/Avionnage';
 import { GrilleMeteoDZ } from '../components/GrilleMeteoDZ';
 import { BasculeMode, type ModeEcran } from '../components/BasculeMode';
@@ -3173,6 +3174,7 @@ export function CentreDashboardPage() {
     { key: 'rotations', label: 'Avionnage', icon: Plane },
     { key: 'materiel', label: 'Matériel', icon: Wrench },
     { key: 'securite', label: 'Sécurité', icon: ShieldAlert },
+    { key: 'regles', label: 'Référentiel Feu Vert', icon: ShieldAlert },
     { key: 'journal', label: 'Journal de bord', icon: BookCheck },
     { key: 'stats', label: 'Statistiques', icon: BarChart2 },
     { key: 'equipe', label: 'Mon équipe', icon: Shield },
@@ -3558,6 +3560,10 @@ export function CentreDashboardPage() {
           )}
           {activeSection === 'securite' && centreId && (
             <EvenementsSecurite centreId={centreId} />
+          )}
+          {/* Feu Vert · P2 — le référentiel se lit et se règle, il ne s'édite pas. */}
+          {activeSection === 'regles' && centreId && (
+            <ReglesSecurite centreId={centreId} />
           )}
           {activeSection === 'journal' && centreId && (
             <JournalDeBord centreId={centreId} />

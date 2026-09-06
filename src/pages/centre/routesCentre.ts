@@ -31,6 +31,7 @@ export const URL_VERS_SECTION: Record<string, string> = {
   journal: 'journal',
   materiel: 'materiel',
   securite: 'securite',
+  regles: 'regles',
   rotations: 'rotations',
 };
 
@@ -60,6 +61,7 @@ export const LIBELLE_SECTION: Record<string, string> = {
   journal: 'Journal de bord',
   materiel: 'Matériel',
   securite: 'Sécurité',
+  regles: 'Référentiel Feu Vert',
   rotations: 'Rotations',
 };
 
