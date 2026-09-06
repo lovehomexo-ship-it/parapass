@@ -23,6 +23,7 @@ import { ParachutisteViewPage } from './pages/ParachutisteView';
 import { PasseportPage } from './pages/Passeport';
 import { MaterielPage } from './pages/Materiel';
 import { BriefingTVPage } from './pages/BriefingTV';
+import { EmbarquementPage } from './pages/centre/Embarquement';
 import { StatsRoute } from './pages/StatsRoute';
 import { TamponAdminPage } from './pages/TamponAdmin';
 import { ProfilPage } from './pages/Profil';
@@ -193,6 +194,9 @@ function App() {
                     casser aucun favori ni lien déjà partagé. */}
                 <Route path="/centre/dashboard" element={<Navigate to="/centre/journee" replace />} />
                 <Route path="/centre" element={<Navigate to="/centre/journee" replace />} />
+                {/* Feu Vert · P5 — plein écran, une main, plein soleil. Déclarée
+                    AVANT /centre/:section, qui l'avalerait comme une section. */}
+                <Route path="/centre/embarquement" element={<ProtectedRoute roles={['admin_centre']}><EmbarquementPage /></ProtectedRoute>} />
                 <Route path="/centre/:section" element={<ProtectedRoute roles={['admin_centre']}><ErrorBoundary><CentreDashboardPage /></ErrorBoundary></ProtectedRoute>} />
                 {/* Sous-onglet (/centre/equipe/encadrement) ou fiche licencié
                     (/centre/licencies/<id>) : même page, l'URL est lue dedans. */}

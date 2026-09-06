@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { LoaderParaPass } from '../../components/LoaderParaPass';
 import { ymdLocal } from '../../lib/datetime';
-import { Plus, Plane } from 'lucide-react';
+import { Plus, Plane, ScanLine } from 'lucide-react';
 import { action, enTeteSection } from '../../lib/jetons';
 import { siegesOccupes, messageErreur } from '../../lib/avionnage';
 import { FileAvionnageDZ } from './FileAvionnageDZ';
@@ -186,6 +186,10 @@ function AvionnageInner({ centreId }: { centreId: string }) {
           </h2>
           <EnTetePlanches nb={rotations.length} enVol={enVol} />
         </div>
+        <button type="button" onClick={() => navigate('/centre/embarquement')}
+          style={{ ...action('secondaire'), marginRight: 8 }}>
+          <ScanLine className="w-4 h-4" aria-hidden /> Embarquement
+        </button>
         <button type="button" onClick={nouvellePlanche} disabled={occupe || aeronefs.length === 0}
           className="disabled:opacity-50" style={action('principal')}>
           <Plus className="w-4 h-4" aria-hidden /> Nouvelle planche
