@@ -275,3 +275,19 @@ export const SEVERITE_CALL: Record<UrgenceCall, 'critique' | 'vigilance' | 'conf
   retard: 'critique', imminent: 'critique', call: 'vigilance',
   parti: 'conforme', lointain: 'neutre',
 };
+
+/**
+ * « en retard de 501 min » est exact et illisible. Au-delà de deux heures, le
+ * chef d'avionnage lit des heures — et un retard de plus d'une journée veut
+ * dire que la planche a été oubliée, pas qu'elle décolle bientôt.
+ *
+ * @example  formaterRetard('en retard de 501 min')  // 'en retard de 8 h 21'
+ */
+export function formaterRetard(libelle: string): string {
+  const m = libelle.match(/^en retard de (\d+) min$/);
+  if (!m) return libelle;
+  const min = Number(m[1]);
+  if (min < 120) return libelle;
+  if (min >= 1440) return 'planche non décollée — à clôturer ou annuler';
+  return `en retard de ${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')}`;
+}

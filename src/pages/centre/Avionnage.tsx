@@ -4,7 +4,8 @@ import { supabase } from '../../lib/supabase';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { LoaderParaPass } from '../../components/LoaderParaPass';
 import { ymdLocal } from '../../lib/datetime';
-import { Plus, Plane, ScanLine } from 'lucide-react';
+import { Plus, Plane, ScanLine, MoonStar } from 'lucide-react';
+import { useDialogues } from '../../components/useDialogues';
 import { action, enTeteSection } from '../../lib/jetons';
 import { siegesOccupes, messageErreur } from '../../lib/avionnage';
 import { FileAvionnageDZ } from './FileAvionnageDZ';
@@ -44,6 +45,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
   const [occupe, setOccupe] = useState(false);
   const [verdictsParPersonne, setVerdictsParPersonne] = useState<Map<string, PlaceVue['aptitude']>>(new Map());
   const navigate = useNavigate();
+  const { demanderConfirmation, dialogue } = useDialogues();
   const rechargerFile = useRef<(() => Promise<void>) | null>(null);
 
   // Le tiroir d'une fiche a sa propre URL : un clic sur une personne y mène,
@@ -145,6 +147,39 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     return () => { supabase.removeChannel(canal); };
   }, [centreId, charger]);
 
+  /**
+   * Clôturer la JOURNÉE. Le geste qui manquait : on clôturait avion par avion
+   * et il restait, le soir, des planches jamais décollées et une file de gens
+   * rentrés chez eux. Le lendemain, l'écran mentait.
+   *
+   * La confirmation dit ce qui va être écrit AVANT de l'écrire — clôturer
+   * crée des sauts, ce n'est pas un geste anodin.
+   */
+  const cloturerJournee = async () => {
+    const aLarguer = rotations.filter(r => r.heure_largage && !r.cloturee_le && r.statut !== 'annulee').length;
+    const sansVol = rotations.filter(r => !r.heure_largage && r.statut !== 'annulee' && r.statut !== 'terminee').length;
+    const ok = await demanderConfirmation('Clôturer la journée d’avionnage ?',
+      `${aLarguer} avion(s) ayant largué seront clôturés et leurs sauts créés. `
+      + `${sansVol} avion(s) n'ayant pas volé seront ANNULÉS, sans créer de saut. `
+      + `Les personnes restées en file seront retirées, et les inscriptions fermées. `
+      + `Les sauts déjà créés ne sont pas touchés.`);
+    if (!ok) return;
+    setOccupe(true);
+    const { data, error } = await supabase.rpc('cloturer_journee_avionnage', { p_centre_id: centreId });
+    setOccupe(false);
+    if (error) {
+      console.error('Clôture de la journée — échec :', {
+        code: error.code, message: error.message, details: error.details, hint: error.hint,
+      });
+      setErreur(messageErreur(error)); return;
+    }
+    const r = data as { planches_cloturees: number; planches_annulees: number; sauts_crees: number; file_retiree: number };
+    setErreur(null);
+    await Promise.all([charger(), rechargerFile.current?.()]);
+    alert(`Journée clôturée — ${r.planches_cloturees} avion(s) clôturé(s), ${r.sauts_crees} saut(s) créé(s), `
+        + `${r.planches_annulees} annulé(s), ${r.file_retiree} personne(s) retirée(s) de la file.`);
+  };
+
   const basculerOuverture = async (v: boolean) => {
     const precedent = ouvert;
     setOuvert(v);
@@ -193,6 +228,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
 
   return (
     <div className="space-y-4">
+      {dialogue}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h2 style={{ ...enTeteSection, marginBottom: 4, paddingBottom: 0, borderBottom: 'none' }}>
@@ -204,6 +240,12 @@ function AvionnageInner({ centreId }: { centreId: string }) {
           style={{ ...action('secondaire'), marginRight: 8 }}>
           <ScanLine className="w-4 h-4" aria-hidden /> Embarquement
         </button>
+        {rotations.length > 0 && (
+          <button type="button" onClick={cloturerJournee} disabled={occupe}
+            style={{ ...action('secondaire'), marginRight: 8 }}>
+            <MoonStar className="w-4 h-4" aria-hidden /> Clôturer la journée
+          </button>
+        )}
         <button type="button" onClick={nouvellePlanche} disabled={occupe || aeronefs.length === 0}
           className="disabled:opacity-50" style={action('principal')}>
           <Plus className="w-4 h-4" aria-hidden /> Nouvelle planche

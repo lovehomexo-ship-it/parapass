@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff } from 'lucide-react';
 import { surface, rayure, pastille, action, SEVERITE_COULEUR, type Severite } from '../../lib/jetons';
 import {
+  formaterRetard,
   calculerCall, SEVERITE_CALL, siegesOccupes, libelleCapacite, messageErreur,
   LIBELLE_TYPE, type TypeSautFile,
 } from '../../lib/avionnage';
@@ -118,17 +119,20 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                transition: 'outline-color .15s, background .15s' }}>
       {/* ── Le décompte d'abord : c'est lui qu'on lit de loin ── */}
       <div className="flex items-baseline justify-between gap-2 flex-wrap">
-        <div>
-          <p className="font-extrabold leading-none"
-            style={{ fontSize: 20, color: close ? 'var(--c-muted)' : SEVERITE_COULEUR[sev] }}>
-            {close ? 'clôturée' : call.libelle}
+        <div className="min-w-0">
+          {/* « Avion n°N » — le nom que la DZ emploie à l'oral, et le premier
+              repère du chef d'avionnage. Il passe devant le décompte : on
+              cherche d'abord SON avion, on lit son call ensuite. */}
+          <p className="font-extrabold leading-none" style={{ fontSize: 26, color: 'var(--c-text)' }}>
+            Avion n°{r.numero}
           </p>
-          <p className="mt-1" style={{ fontSize: 13, color: 'var(--c-text)', fontWeight: 700 }}>
-            Rotation {r.numero}
-            <span style={{ fontWeight: 400, color: 'var(--c-muted)' }}>
-              {' · '}{aeronef?.immatriculation ?? 'aéronef non affecté'}
-              {r.altitude_largage_m ? ` · ${r.altitude_largage_m} m` : ''}
-            </span>
+          <p className="mt-1 font-extrabold leading-none"
+            style={{ fontSize: 17, color: close ? 'var(--c-muted)' : SEVERITE_COULEUR[sev] }}>
+            {close ? 'clôturé' : formaterRetard(call.libelle)}
+          </p>
+          <p className="mt-1" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
+            {aeronef?.immatriculation ?? 'aéronef non affecté'}
+            {r.altitude_largage_m ? ` · ${r.altitude_largage_m} m` : ''}
           </p>
         </div>
         <span style={pastille(sieges >= (aeronef?.places ?? Infinity) ? 'critique' : 'neutre')}>

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   siegesOccupes, libelleCapacite, messageErreur, LIBELLE_TYPE,
-  calculerCall, SEVERITE_CALL,
+  calculerCall, SEVERITE_CALL, formaterRetard,
 } from './avionnage';
 
 describe('avionnage — capacité', () => {
@@ -114,5 +114,27 @@ describe('avionnage — le call', () => {
     expect(SEVERITE_CALL.imminent).toBe('critique');
     expect(SEVERITE_CALL.call).toBe('vigilance');
     expect(SEVERITE_CALL.lointain).toBe('neutre');
+  });
+});
+
+describe('avionnage — lisibilité du retard', () => {
+  it('sous deux heures, les minutes restent la bonne unité', () => {
+    expect(formaterRetard('en retard de 7 min')).toBe('en retard de 7 min');
+    expect(formaterRetard('en retard de 119 min')).toBe('en retard de 119 min');
+  });
+
+  it('au-delà de deux heures, on lit des heures', () => {
+    expect(formaterRetard('en retard de 120 min')).toBe('en retard de 2 h 00');
+    expect(formaterRetard('en retard de 501 min')).toBe('en retard de 8 h 21');
+  });
+
+  it('au-delà d’une journée, ce n’est plus un retard mais un oubli', () => {
+    expect(formaterRetard('en retard de 1500 min')).toBe('planche non décollée — à clôturer ou annuler');
+  });
+
+  it('les autres libellés passent intacts', () => {
+    for (const l of ['call 15 min', 'décollage 14:30', 'embarquement', 'décollé', 'heure non fixée']) {
+      expect(formaterRetard(l)).toBe(l);
+    }
   });
 });
