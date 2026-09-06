@@ -225,15 +225,8 @@ export function VerifyPage() {
                 : 'gray'
             }
           />
-          <InfoRow
-            label="Type d'aptitude"
-            value={
-              d.certif?.type === 'aptitude_totale' ? 'Totale' :
-              d.certif?.type === 'aptitude_restrictive' ? 'Restrictive' :
-              d.certif?.type === 'inapte' ? 'Inapte' : '—'
-            }
-            last
-          />
+          {/* P5 — le type d'aptitude n'est plus exposé : un tiers qui scanne
+              ne lit qu'une validité, jamais un état de santé. */}
         </InfoCard>
 
         {/* ── ACTIVITÉ ── */}

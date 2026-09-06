@@ -659,7 +659,7 @@ function MedicalTab({ certificats, userId, onRefresh, saving, setSaving }: {
   saving: boolean;
   setSaving: (v: boolean) => void;
 }) {
-  const empty = { medecin: '', date_visite: '', date_expiration: '', type: 'aptitude_totale' as const, scan_certificat_url: null as string | null };
+  const empty = { medecin: '', date_visite: '', date_expiration: '', scan_certificat_url: null as string | null };
   const [form, setForm] = useState(empty);
   const [editing, setEditing] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -712,13 +712,9 @@ function MedicalTab({ certificats, userId, onRefresh, saving, setSaving }: {
             <FormRow label="Médecin">
               <input className={inputCls} value={form.medecin} onChange={(e) => setForm({ ...form, medecin: e.target.value })} />
             </FormRow>
-            <FormRow label="Type">
-              <select className={selectCls} value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as typeof form.type })}>
-                <option value="aptitude_totale">Aptitude totale</option>
-                <option value="aptitude_restrictive">Aptitude restrictive</option>
-                <option value="inapte">Inapte</option>
-              </select>
-            </FormRow>
+            {/* P5 — plus de « type d'aptitude » : un CACI est valide ou ne l'est pas.
+                Le formulaire proposait « restrictive » et « inapte » ; la page
+                publique du QR les affichait. C'était une donnée de santé. */}
             <FormRow label="Date de visite">
               <input type="date" className={inputCls} value={form.date_visite} onChange={(e) => setForm({ ...form, date_visite: e.target.value })} />
             </FormRow>
@@ -754,7 +750,6 @@ function MedicalTab({ certificats, userId, onRefresh, saving, setSaving }: {
             <div className="flex items-start justify-between">
               <div>
                 <div className="font-semibold text-white">{/^Dr\.?\s/i.test(c.medecin) ? c.medecin : `Dr. ${c.medecin}`}</div>
-                <div className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>{c.type.replace(/_/g, ' ')}</div>
                 <div className={`text-sm mt-1 ${expired ? 'text-red-400 font-medium' : 'text-green-400'}`}>
                   {expired ? 'Expiré' : 'Valide'} — jusqu'au {new Date(c.date_expiration).toLocaleDateString('fr-FR')}
                 </div>

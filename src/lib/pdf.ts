@@ -30,11 +30,9 @@ const TYPE_LICENCE_LABELS: Record<string, string> = {
   lj: 'LJ — Licence Jeune',
   ld: 'LD — Licence Dirigeant',
 };
-const APTITUDE_LABELS: Record<string, string> = {
-  aptitude_totale: 'Aptitude totale',
-  aptitude_restrictive: 'Aptitude restrictive',
-  inapte: 'Inapte',
-};
+// P5 — un CACI ne porte pas de « type » : c'est un certificat de non
+// contre-indication, valide ou non. Libellé unique, aucune donnée de santé.
+const LIBELLE_CACI = 'Certificat de non contre-indication';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -184,7 +182,7 @@ function addRecapPage(
     y = row(doc, 'Médecin', certif.medecin || '—', margin, y, cw, rowIdx++ % 2 === 0);
     y = row(doc, 'Date de visite', fr(certif.date_visite), margin, y, cw, rowIdx++ % 2 === 0);
     y = row(doc, "Date d'expiration", fr(certif.date_expiration), margin, y, cw, rowIdx++ % 2 === 0);
-    y = row(doc, "Type d'aptitude", APTITUDE_LABELS[certif.type] || certif.type, margin, y, cw, rowIdx++ % 2 === 0);
+    y = row(doc, "Type d'aptitude", LIBELLE_CACI, margin, y, cw, rowIdx++ % 2 === 0);
     y = row(doc, 'Statut', expired ? 'EXPIRÉ' : 'VALIDE', margin, y, cw, rowIdx++ % 2 === 0);
   } else {
     doc.setFontSize(7.5); doc.setFont('helvetica', 'italic'); doc.setTextColor(150, 150, 150);

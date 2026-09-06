@@ -157,7 +157,6 @@ export interface CertificatMedical {
   medecin: string;
   date_visite: string;
   date_expiration: string;
-  type: 'aptitude_totale' | 'aptitude_restrictive' | 'inapte';
   scan_certificat_url: string | null;
   created_at: string;
 }
