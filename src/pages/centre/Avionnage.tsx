@@ -8,7 +8,8 @@ import { Plus, Plane } from 'lucide-react';
 import { action, enTeteSection } from '../../lib/jetons';
 import { siegesOccupes, messageErreur } from '../../lib/avionnage';
 import { FileAvionnageDZ } from './FileAvionnageDZ';
-import { Inscrire, AjouterAeronef, type Aeronef } from './Rotations';
+import { AjouterAeronef, type Aeronef } from './Rotations';
+import { RechercheLicencie } from './RechercheLicencie';
 import {
   PlancheAvionnage, useHorlogeMinute, EnTetePlanches,
   type RotationVue, type PlaceVue,
@@ -212,20 +213,11 @@ function AvionnageInner({ centreId }: { centreId: string }) {
           ) : rotations.map(r => {
             const pl = places.filter(p => p.rotation_id === r.id)
               .sort((a, b) => (a.rang_sortie ?? 99) - (b.rang_sortie ?? 99));
-            const close = r.statut === 'terminee' || r.cloturee_le !== null;
             return (
               <div key={r.id} className="space-y-2">
                 <PlancheAvionnage rotation={r} places={pl} maintenant={maintenant}
                   aeronef={aeronefs.find(a => a.id === r.aeronef_id)} onChange={charger}
                   onDeposer={fileId => placer(fileId, r.id)} onOuvrirFiche={ouvrirFiche} />
-                {/* Quelqu'un arrive sans être passé par la file : le chef
-                    d'avionnage l'embarque directement. L'aptitude s'affiche,
-                    elle n'empêche rien. */}
-                {!close && (
-                  <Inscrire rotationId={r.id} presents={presents}
-                    dejaInscrits={pl.map(p => p.parachutiste_id).filter(Boolean) as string[]}
-                    onInscrire={inscrire} />
-                )}
               </div>
             );
           })}
@@ -241,6 +233,22 @@ function AvionnageInner({ centreId }: { centreId: string }) {
               const occ = siegesOccupes(places.filter(p => p.rotation_id === r.id));
               return { id: r.id, numero: r.numero, places_libres: a ? a.places - occ : null };
             })} />
+
+          {/* Quelqu'un est là, devant le DT, ni en file ni déclaré présent :
+              il vient d'arriver. Le DT tape son nom et l'embarque — sans lui
+              expliquer le téléphone. Un seul chercheur pour toutes les
+              planches, à la place d'un sélecteur par planche. */}
+          <div className="mt-4">
+            <RechercheLicencie centreId={centreId}
+              aptitudes={new Map(presents.map(p => [p.id, p.aptitude]))}
+              dejaABord={new Set(places.map(p => p.parachutiste_id).filter(Boolean) as string[])}
+              onInscrire={inscrire} onOuvrirFiche={ouvrirFiche}
+              rotations={ouvertes.map(r => {
+                const a = aeronefs.find(x => x.id === r.aeronef_id);
+                const occ = siegesOccupes(places.filter(p => p.rotation_id === r.id));
+                return { id: r.id, numero: r.numero, places_libres: a ? a.places - occ : null };
+              })} />
+          </div>
         </div>
       </div>
     </div>
