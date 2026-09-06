@@ -28,7 +28,8 @@ import {
 //
 // Une seule source pour chaque chiffre : les rotations et places viennent
 // d'ici, la file vient de son propre crochet, l'aptitude de
-// get_aptitude_du_jour. Rien n'est recalculé deux fois.
+// verdicts_du_jour (Feu Vert). L'ancien get_aptitude_du_jour a quitté cet
+// écran : deux moteurs qui se contredisent, c'est ce que P7 interdit.
 // ═══════════════════════════════════════════════════════════════════════════
 
 function AvionnageInner({ centreId }: { centreId: string }) {
@@ -37,11 +38,11 @@ function AvionnageInner({ centreId }: { centreId: string }) {
   const [rotations, setRotations] = useState<RotationVue[]>([]);
   const [places, setPlaces] = useState<PlaceVue[]>([]);
   const [aeronefs, setAeronefs] = useState<Aeronef[]>([]);
-  const [presents, setPresents] = useState<{ id: string; nom: string; aptitude: string; motif: string | null }[]>([]);
   const [ouvert, setOuvert] = useState(false);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [occupe, setOccupe] = useState(false);
+  const [verdictsParPersonne, setVerdictsParPersonne] = useState<Map<string, PlaceVue['aptitude']>>(new Map());
   const navigate = useNavigate();
   const rechargerFile = useRef<(() => Promise<void>) | null>(null);
 
@@ -67,12 +68,11 @@ function AvionnageInner({ centreId }: { centreId: string }) {
 
   const charger = useCallback(async () => {
     setErreur(null);
-    const [{ data: rot, error: e1 }, { data: av }, { data: apt }, { data: ctr }] = await Promise.all([
+    const [{ data: rot, error: e1 }, { data: av }, { data: ctr }] = await Promise.all([
       supabase.from('rotations').select('*')
         .eq('centre_id', centreId).eq('date_jour', jour).order('numero'),
       supabase.from('aeronefs').select('id, immatriculation, places, altitude_max_m')
         .eq('centre_id', centreId).eq('actif', true).order('immatriculation'),
-      supabase.rpc('get_aptitude_du_jour', { p_centre_id: centreId }),
       supabase.from('centres').select('avionnage_actif').eq('id', centreId).maybeSingle(),
     ]);
     if (e1) {
@@ -86,14 +86,6 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     setAeronefs((av ?? []) as Aeronef[]);
     setOuvert(Boolean((ctr as { avionnage_actif?: boolean } | null)?.avionnage_actif));
 
-    type Apt = { parachutiste_id: string; nom: string; prenom: string; statut: string;
-                 motifs: { libelle: string; levee: boolean }[] };
-    const aptitudes = (apt ?? []) as Apt[];
-    setPresents(aptitudes.map(a => ({
-      id: a.parachutiste_id, nom: `${a.prenom} ${a.nom}`, aptitude: a.statut,
-      motif: a.motifs.find(m => !m.levee)?.libelle ?? null,
-    })));
-
     if (rr.length === 0) { setPlaces([]); setChargement(false); return; }
     const { data: pl, error: e2 } = await supabase.from('places_rotation')
       .select('id, rotation_id, parachutiste_id, moniteur_id, type_saut, rang_sortie, statut, profiles!parachutiste_id(nom, prenom)')
@@ -104,18 +96,40 @@ function AvionnageInner({ centreId }: { centreId: string }) {
       });
     }
     type Pr = { nom: string; prenom: string };
-    setPlaces(((pl ?? []) as unknown as (Omit<PlaceVue, 'nom' | 'aptitude'> & { profiles: Pr | Pr[] | null })[])
-      .map(p => {
-        const pr = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
-        const a = aptitudes.find(x => x.parachutiste_id === p.parachutiste_id);
-        return {
-          id: p.id, rotation_id: p.rotation_id, parachutiste_id: p.parachutiste_id,
-          moniteur_id: p.moniteur_id, type_saut: p.type_saut, rang_sortie: p.rang_sortie,
-          statut: p.statut,
-          nom: pr ? `${pr.prenom} ${pr.nom}` : (p.type_saut === 'tandem' ? 'Passager tandem' : '?'),
-          aptitude: (a?.statut as PlaceVue['aptitude']) ?? null,
-        };
-      }));
+    const brutes = (pl ?? []) as unknown as (Omit<PlaceVue, 'nom' | 'aptitude'> & { profiles: Pr | Pr[] | null })[];
+
+    // Le verdict vient de FEU VERT, pour tout le monde — présent déclaré ou
+    // non. L'ancien get_aptitude_du_jour ne rendait que les présents : les
+    // autres n'avaient aucun badge, ce qui se lisait « tout va bien ».
+    const ids = brutes.map(p => p.parachutiste_id).filter(Boolean) as string[];
+    const verdicts = new Map<string, PlaceVue['aptitude']>();
+    if (ids.length > 0) {
+      const { data: vd, error: e3 } = await supabase.rpc('verdicts_du_jour', {
+        p_centre_id: centreId, p_ids: ids, p_date: jour,
+      });
+      if (e3) {
+        // Une lecture en échec ne rend pas tout vert : elle laisse tout gris.
+        console.error('Verdicts Feu Vert — lecture échouée :', {
+          code: e3.code, message: e3.message, details: e3.details, hint: e3.hint,
+        });
+      }
+      for (const v of (vd ?? []) as { parachutiste_id: string; verdict: PlaceVue['aptitude'] }[]) {
+        verdicts.set(v.parachutiste_id, v.verdict);
+      }
+    }
+    setVerdictsParPersonne(verdicts);
+
+    setPlaces(brutes.map(p => {
+      const pr = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
+      return {
+        id: p.id, rotation_id: p.rotation_id, parachutiste_id: p.parachutiste_id,
+        moniteur_id: p.moniteur_id, type_saut: p.type_saut, rang_sortie: p.rang_sortie,
+        statut: p.statut,
+        nom: pr ? `${pr.prenom} ${pr.nom}` : (p.type_saut === 'tandem' ? 'Passager tandem' : '?'),
+        // Inconnu → GRIS. Jamais l'absence de réponse traduite en vert.
+        aptitude: (p.parachutiste_id && verdicts.get(p.parachutiste_id)) || 'gris',
+      };
+    }));
     setChargement(false);
   }, [centreId, jour]);
 
@@ -244,7 +258,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
               planches, à la place d'un sélecteur par planche. */}
           <div className="mt-4">
             <RechercheLicencie centreId={centreId}
-              aptitudes={new Map(presents.map(p => [p.id, p.aptitude]))}
+              aptitudes={verdictsParPersonne}
               dejaABord={new Set(places.map(p => p.parachutiste_id).filter(Boolean) as string[])}
               onInscrire={inscrire} onOuvrirFiche={ouvrirFiche}
               rotations={ouvertes.map(r => {

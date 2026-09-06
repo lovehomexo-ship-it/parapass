@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MIME_FILE } from './FileAvionnageDZ';
 import { supabase } from '../../lib/supabase';
 import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff } from 'lucide-react';
-import { surface, rayure, pastille, action, SEVERITE_COULEUR } from '../../lib/jetons';
+import { surface, rayure, pastille, action, SEVERITE_COULEUR, type Severite } from '../../lib/jetons';
 import {
   calculerCall, SEVERITE_CALL, siegesOccupes, libelleCapacite, messageErreur,
   LIBELLE_TYPE, type TypeSautFile,
@@ -24,7 +24,10 @@ import {
 export interface PlaceVue {
   id: string; rotation_id: string; parachutiste_id: string | null;
   moniteur_id: string | null; type_saut: string; rang_sortie: number | null;
-  statut: string; nom: string; aptitude: 'vert' | 'orange' | 'rouge' | null;
+  statut: string; nom: string;
+  /** Verdict Feu Vert. JAMAIS nul : ne rien savoir est un état — le gris —
+   *  et il doit se voir. Une absence de badge se lisait « tout va bien ». */
+  aptitude: 'vert' | 'orange' | 'rouge' | 'gris';
 }
 export interface RotationVue {
   id: string; numero: number; date_jour: string;
@@ -33,6 +36,15 @@ export interface RotationVue {
   cloturee_le: string | null;
 }
 export interface AeronefVue { id: string; immatriculation: string; places: number }
+
+// Les quatre verdicts Feu Vert, avec leur forme et leur mot. Le gris dit
+// « on ne sait pas » et se traite comme un refus (P1) : il n'est pas neutre.
+export const SEV_APTITUDE: Record<PlaceVue['aptitude'], Severite> = {
+  vert: 'conforme', orange: 'vigilance', rouge: 'critique', gris: 'critique',
+};
+export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
+  vert: 'peut sauter', orange: 'vigilance', rouge: 'à examiner', gris: 'à vérifier',
+};
 
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
@@ -177,17 +189,15 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                   </span>
                 </span>
               )}
-              {p.aptitude && p.aptitude !== 'vert' && (
-                // La pastille est un bouton : « à examiner » sans moyen
-                // d'examiner est un reproche, pas une information.
-                <button type="button" title="Ouvrir la fiche"
-                  onClick={() => p.parachutiste_id && onOuvrirFiche?.(p.parachutiste_id)}
-                  className="flex-shrink-0"
-                  style={{ ...pastille(p.aptitude === 'rouge' ? 'critique' : 'vigilance'),
-                           cursor: 'pointer', minHeight: 28 }}>
-                  {p.aptitude === 'rouge' ? 'à examiner' : 'vigilance'}
-                </button>
-              )}
+              {/* TOUJOURS un badge, pour les quatre états. Ne rien afficher
+                  quand on ne sait pas laissait croire que tout allait bien —
+                  c'est le contraire du principe de sûreté. */}
+              <button type="button" title="Ouvrir la fiche"
+                onClick={() => p.parachutiste_id && onOuvrirFiche?.(p.parachutiste_id)}
+                className="flex-shrink-0 whitespace-nowrap"
+                style={{ ...pastille(SEV_APTITUDE[p.aptitude]), cursor: 'pointer', minHeight: 28 }}>
+                {LIBELLE_APTITUDE[p.aptitude]}
+              </button>
               {!close && (
                 <button type="button" disabled={occupe}
                   title="Retirer et remettre en file"
