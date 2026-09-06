@@ -29,9 +29,13 @@ begin;
 -- paramètres en P2, et c'est voulu : une règle n'est pas un réglage). Il vit
 -- dans compliance_rules, la table de réglages existante. Absent → REP-001 est
 -- indisponible, pas conforme.
-insert into compliance_rules (rule_key, value_int)
-values ('reprise_conseil_jours', 90), ('reprise_moniteur_jours', 180), ('reprise_complete_jours', 365)
-on conflict (rule_key) do nothing;
+-- (Première application refusée : compliance_rules.label est NOT NULL. Corrigé.)
+insert into compliance_rules (rule_key, value_int, label)
+select v.k, v.n, v.l from (values
+  ('reprise_conseil_jours',  90,  'Reprise — saut d''accompagnement conseillé à partir de (jours)'),
+  ('reprise_moniteur_jours', 180, 'Reprise — saut avec moniteur à partir de (jours)'),
+  ('reprise_complete_jours', 365, 'Reprise — reprise complète à partir de (jours)')) v(k, n, l)
+where not exists (select 1 from compliance_rules c where c.rule_key = v.k);
 
 -- ── 1 · Les faits ───────────────────────────────────────────────────────────
 create or replace function faits_conformite(
@@ -243,4 +247,43 @@ commit;
 --   where lc.centre_id = (select id from centres where nom = 'BigAir Rochefort')
 --     and lc.statut = 'actif'
 --   group by v.verdict;
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- APPLIQUÉE LE 06/09/2026 après validation.
+--
+-- P5 — PREUVE : colonnes restantes de certificats_medicaux =
+--   id, parachutiste_id, medecin, date_visite, date_expiration,
+--   scan_certificat_url, created_at.  Ni type, ni restrictions.
+--
+-- P3.6 — PASSAGE SUR LES DONNÉES RÉELLES · BigAir Rochefort · 25 licenciés
+-- actifs hors démo · saut solo · 06/09/2026 :
+--
+--   vert 0 · orange 0 · rouge 4 · gris 21        (8,5 règles grises / personne)
+--
+-- Motifs, par fréquence (personnes sur 25) :
+--   indisponible  BRF-001 25  aucun briefing publié ce jour (dimanche)
+--   indisponible  BRV-001 25  météo par brevet : pas de fait en base
+--   indisponible  MAT-003 25  vérification du principal : constat physique
+--   indisponible  VOI-001 25  voile / expérience : aucun seuil paramétré
+--   indisponible  MAT-001 24  aucun parachute de secours ENREGISTRÉ
+--   indisponible  MAT-002 23  aucun parachute principal ENREGISTRÉ
+--   indisponible  MIN-001 17  date de naissance absente du profil
+--   indisponible  EQP-001 13  non breveté : casque à constater
+--   indisponible  LIC-001  9  aucune licence active enregistrée
+--   indisponible  MED-001  9  aucun certificat enregistré
+--   indisponible  REP-001  8  aucun saut enregistré
+--   non_conforme  REP-001  5  interruption > 90 j
+--   non_conforme  LIC-001  2  licence expirée
+--   non_conforme  MED-001  2  certificat expiré
+--   non_conforme  MAT-001  1  pliage de secours dépassé
+--   non_conforme  MAT-002  1  pliage antérieur au dernier saut
+--
+-- LECTURE : les 4 rouges sont de VRAIS refus (licence, certificat, secours).
+-- Le gris n'est pas un bug du moteur : c'est la mesure exacte de ce que la
+-- base ne sait pas. Quatre règles sont grises pour TOUT LE MONDE parce
+-- qu'aucune donnée ne les porte (BRV, MAT-003, VOI) ou qu'il n'y a pas de
+-- briefing un dimanche (BRF). Deux le sont pour presque tous parce que le
+-- matériel n'est pas enregistré (MAT-001/002). Le DT arbitre : renseigner,
+-- désactiver chez lui, ou faire vivre la règle à l'embarquement.
 -- ════════════════════════════════════════════════════════════════════════════
