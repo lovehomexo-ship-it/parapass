@@ -52,3 +52,18 @@ comment on function resoudre_scan(uuid, text) is
   'Feu Vert · P5 — un QR de licence (jeton ou id) → le licencié du centre. Le minimum du geste : id, nom, prénom, photo. Rien sur un inconnu.';
 
 commit;
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- APPLIQUÉE LE 06/09/2026. Preuve : sans session,
+--   select * from resoudre_scan(<centre>, 'nimportequoi');
+--   → 42501 Réservé au centre concerné — refusé AVANT toute recherche.
+--
+-- DÉFAUT TROUVÉ EN PRÉPARANT LE TEST, et corrigé côté client (pas ici) :
+-- le champ de saisie manuelle annonçait « ou n° de licence », que cette
+-- fonction n'accepte pas. Mesuré : DEUX licenciés actifs de BigAir portent
+-- le numéro « 0964399 ». Un numéro de licence n'identifie donc pas quelqu'un
+-- de façon sûre. Le repli vit dans Embarquement.tsx (parNumeroLicence) et
+-- REFUSE dès qu'il y a plus d'un porteur, en les nommant — plutôt que d'en
+-- choisir un. Un homonyme embarqué à la place d'un autre serait pire que pas
+-- de repli du tout.
+-- ════════════════════════════════════════════════════════════════════════════

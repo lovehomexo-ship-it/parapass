@@ -103,29 +103,71 @@ function EmbarquementInner() {
     setActionEnCours(null); setMotif(''); setSignataire(''); setErreur(null);
   }, []);
 
+  /**
+   * Repli de saisie manuelle : un NUMÉRO DE LICENCE, lu sur la carte physique
+   * quand la caméra est morte. Il n'identifie PAS de façon sûre — mesuré :
+   * deux licenciés de BigAir partagent « 0964399 ». On refuse donc dès qu'il
+   * y a plus d'un porteur, en nommant les personnes, plutôt que d'en choisir
+   * une au hasard. Un homonyme embarqué à la place d'un autre serait pire
+   * que pas de repli du tout.
+   */
+  const parNumeroLicence = useCallback(async (numero: string): Promise<{ id?: string; erreur?: string }> => {
+    if (!centreId) return { erreur: 'Centre inconnu.' };
+    const { data, error } = await supabase.from('licencies_centres')
+      .select('parachutiste_id, profiles!parachutiste_id(id, nom, prenom, numero_licence)')
+      .eq('centre_id', centreId).eq('statut', 'actif');
+    if (error) return { erreur: messageErreur(error) };
+    type Pr = { id: string; nom: string; prenom: string; numero_licence: string | null };
+    const cible = numero.trim().toLowerCase();
+    const trouves = ((data ?? []) as unknown as { profiles: Pr | Pr[] | null }[])
+      .map(x => Array.isArray(x.profiles) ? x.profiles[0] : x.profiles)
+      .filter((pr): pr is Pr => !!pr && (pr.numero_licence ?? '').trim().toLowerCase() === cible);
+    if (trouves.length === 0) return { erreur: 'Aucun licencié actif de ce centre ne porte ce numéro.' };
+    if (trouves.length > 1) {
+      return { erreur: `Ce numéro est porté par ${trouves.length} personnes (${trouves.map(t => `${t.prenom} ${t.nom}`).join(', ')}). Scannez la carte, ou embarquez depuis l'Avionnage.` };
+    }
+    return { id: trouves[0].id };
+  }, [centreId]);
+
   // ── Le scan : résoudre, évaluer, ÉCRIRE, montrer ─────────────────────────
   const scanner = useCallback(async (brut: string) => {
     if (!centreId || occupe || personne) return;
     const lu = interpreterQr(brut);
-    if (!lu) { setErreur('Ce QR n’est pas une carte ParaPass.'); return; }
     if (!libelleRotation) { setErreur('Choisissez la rotation avant de scanner.'); return; }
+    if (!lu && !brut.trim()) return;
+    const cid = centreId;   // déjà garanti non nul ci-dessus ; capturé pour `suite`
     setOccupe(true); setErreur(null);
     try {
-      const { data: p, error: e1 } = await supabase.rpc('resoudre_scan', { p_centre_id: centreId, p_valeur: lu.valeur });
-      if (e1 || !p?.[0]) { setErreur(e1 ? messageErreur(e1) : 'Carte inconnue.'); return; }
-      const pers = p[0] as Personne;
-      const ev = await evaluerConformite(pers.parachutiste_id, centreId, { date: jour, typeSaut: 'solo', rotationId: rotationId ?? undefined });
+      // Un QR lisible passe par resoudre_scan. Sinon — ou si le jeton est
+      // inconnu — on tente le numéro de licence, qui est ce que le DT a sous
+      // les yeux quand la caméra ne répond pas.
+      let valeur = lu?.valeur ?? null;
+      if (valeur) {
+        const { data: p, error: e1 } = await supabase.rpc('resoudre_scan', { p_centre_id: centreId, p_valeur: valeur });
+        if (!e1 && p?.[0]) { await suite(p[0] as Personne); return; }
+        if (e1 && (e1 as { code?: string }).code === '42501') { setErreur(messageErreur(e1)); return; }
+        valeur = null;   // jeton inconnu : on retombe sur le numéro de licence
+      }
+      const par = await parNumeroLicence(brut);
+      if (!par.id) { setErreur(par.erreur ?? 'Carte non reconnue.'); return; }
+      const { data: p2, error: e2b } = await supabase.rpc('resoudre_scan', { p_centre_id: centreId, p_valeur: par.id });
+      if (e2b || !p2?.[0]) { setErreur(e2b ? messageErreur(e2b) : 'Carte non reconnue.'); return; }
+      await suite(p2[0] as Personne);
+    } finally { setOccupe(false); }
+
+    async function suite(pers: Personne) {
+      const ev = await evaluerConformite(pers.parachutiste_id, cid, { date: jour, typeSaut: 'solo', rotationId: rotationId ?? undefined });
 
       // Chaque scan écrit une évaluation — quel que soit le résultat.
       const { data: ins, error: e2 } = await supabase.from('evaluations').insert({
-        parachutiste_id: pers.parachutiste_id, centre_id: centreId, rotation_id: rotationId,
+        parachutiste_id: pers.parachutiste_id, centre_id: cid, rotation_id: rotationId,
         verdict: ev.verdict, motifs: ev.motifs, version_referentiel: ev.versionReferentiel, regime,
       }).select('id').single();
       if (e2) { setErreur('Évaluation non consignée : ' + messageErreur(e2)); return; }
 
       // …et une ligne d'embarquement. Un vert monte ; le reste attend une décision.
       await supabase.rpc('journaliser', {
-        p_centre_id: centreId, p_type: 'embarquement_consigne',
+        p_centre_id: cid, p_type: 'embarquement_consigne',
         p_charge: { rotation: libelleRotation, rotation_id: rotationId, parachutiste_id: pers.parachutiste_id,
                     evaluation_id: ins.id, verdict: ev.verdict,
                     decision: ev.verdict === 'vert' ? 'monte' : 'en_attente' },
@@ -136,8 +178,8 @@ function EmbarquementInner() {
       if (c.retourAutomatiqueMs) {
         retourRef.current = window.setTimeout(() => { retourAuScan(); compter(); }, c.retourAutomatiqueMs);
       }
-    } finally { setOccupe(false); }
-  }, [centreId, occupe, personne, libelleRotation, rotationId, jour, regime, retourAuScan, compter]);
+    }
+  }, [centreId, occupe, personne, libelleRotation, rotationId, jour, regime, retourAuScan, compter, parNumeroLicence]);
 
   // ── Une décision sur un verdict non vert ─────────────────────────────────
   const decider = async (a: ActionEmbarquement) => {
