@@ -31,8 +31,9 @@ export interface LigneFile {
   groupe_id: string | null;
   demande_le: string;
   position_file: number;
-  /** Issu de get_aptitude_du_jour — jamais recalculé ici. */
-  statut_aptitude: 'vert' | 'orange' | 'rouge' | 'inconnu';
+  /** Verdict FEU VERT — le même moteur que les planches et la fiche.
+   *  'gris' = une donnée n'a pas pu être lue ; il se traite comme un refus. */
+  statut_aptitude: 'vert' | 'orange' | 'rouge' | 'gris';
   motifs_bloquants: number;
   /** Se mettre en file sans s'être déclaré présent est un cas réel, pas une erreur. */
   present: boolean;

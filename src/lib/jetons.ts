@@ -85,21 +85,21 @@ export const SEVERITE_COULEUR: Record<Severite, string> = {
  * @example
  *   <li style={rayure('critique')}>Licence FFP expirée</li>
  */
-const TRAIT: Record<Severite, { px: number; style: string }> = {
-  critique:  { px: 5, style: 'solid' },
-  vigilance: { px: 5, style: 'dashed' },
-  conforme:  { px: 2, style: 'solid' },
-  neutre:    { px: 1, style: 'solid' },
+const TRAIT: Record<Severite, string> = {
+  critique:  'solid',
+  vigilance: 'dashed',
+  conforme:  'dotted',
+  neutre:    'double',
 };
 
 export function rayure(s: Severite): CSSProperties {
-  const t = TRAIT[s];
-  // La largeur totale reste constante (5 px) : les libellés restent alignés
-  // d'une ligne à l'autre, seul le trait change de poids.
-  return {
-    borderLeft: `${t.px}px ${t.style} ${SEVERITE_COULEUR[s]}`,
-    paddingLeft: 5 - t.px,
-  };
+  // LARGEUR CONSTANTE, tracé variable. La version précédente faisait varier
+  // l'épaisseur (5/5/2/1 px) et compensait par un paddingLeft — lequel
+  // ÉCRASAIT le padding du conteneur en style inline : sur la carte « Avion
+  // n°1 » (p-3.5), le texte se retrouvait collé à la rayure.
+  // Quatre tracés distincts font le même travail en gris, sans toucher à la
+  // mise en page de qui que ce soit.
+  return { borderLeft: `5px ${TRAIT[s]} ${SEVERITE_COULEUR[s]}` };
 }
 
 /**

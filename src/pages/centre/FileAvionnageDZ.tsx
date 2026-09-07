@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Users, UserPlus, MapPin, AlertTriangle, GripVertical } from 'lucide-react';
 import { surface, action, rayure, pastille, enTeteSection, type Severite } from '../../lib/jetons';
-import { useFileDZ, LIBELLE_TYPE, type LigneFile, type TypeSautFile } from '../../lib/avionnage';
+import { useFileDZ, LIBELLE_TYPE, type TypeSautFile } from '../../lib/avionnage';
 
 /** Type MIME maison du glisser-déposer : une planche n'accepte que ça. */
 export const MIME_FILE = 'application/x-parapass-file';
@@ -17,12 +17,14 @@ export const MIME_FILE = 'application/x-parapass-file';
 // finirait par contredire « Sur le terrain ».
 // ═══════════════════════════════════════════════════════════════════════════
 
-const APTITUDE: Record<LigneFile['statut_aptitude'], { sev: Severite; libelle: string }> = {
+const APTITUDE: Record<string, { sev: Severite; libelle: string }> = {
   rouge:   { sev: 'critique',  libelle: 'À examiner' },
   orange:  { sev: 'vigilance', libelle: 'Vigilance' },
   vert:    { sev: 'conforme',  libelle: 'Peut sauter' },
-  // Un dossier qu'on n'a pas pu lire n'est pas un dossier conforme.
-  inconnu: { sev: 'neutre',    libelle: 'Aptitude inconnue' },
+  // Feu Vert : « gris » veut dire qu'une donnée n'a pas pu être lue. Il se
+  // traite comme un refus (P1), pas comme un état neutre.
+  gris:    { sev: 'critique',  libelle: 'À vérifier' },
+  inconnu: { sev: 'critique',  libelle: 'À vérifier' },
 };
 
 export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlacer, onOuvrirFiche, rechargerRef }: {
@@ -96,7 +98,7 @@ export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlace
       ) : (
         <ul className="mt-3">
           {file.map((l, i) => {
-            const a = APTITUDE[l.statut_aptitude];
+            const a = APTITUDE[l.statut_aptitude] ?? APTITUDE.gris;
             return (
               <li key={l.id}
                 // Glisser-déposer natif : la ligne emporte l'id de la demande,
@@ -108,15 +110,19 @@ export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlace
                   e.dataTransfer.setData(MIME_FILE, l.id);
                   e.dataTransfer.effectAllowed = 'move';
                 }}
-                className="flex gap-2 py-2.5 px-3 flex-wrap items-start"
+                className="py-2.5 pl-2 pr-3"
                 style={{ borderTop: i === 0 ? 'none' : '1px solid var(--n3-filet)', ...rayure(a.sev),
                          cursor: 'grab' }}>
-                <GripVertical className="w-4 h-4 flex-shrink-0 self-center" aria-hidden
-                  style={{ color: 'var(--c-dim)' }} />
-                <span className="font-extrabold flex-shrink-0"
-                  style={{ fontSize: 15, color: 'var(--c-muted)', minWidth: 22 }}>
-                  {l.position_file}
-                </span>
+                {/* DEUX RANGÉES FRANCHES. En une seule, dans une colonne
+                    étroite, la pastille venait chevaucher le nom et les
+                    mentions se cassaient un mot par ligne. */}
+                <div className="flex items-start gap-2">
+                  <GripVertical className="w-4 h-4 flex-shrink-0 self-center" aria-hidden
+                    style={{ color: 'var(--c-dim)' }} />
+                  <span className="font-extrabold flex-shrink-0"
+                    style={{ fontSize: 15, color: 'var(--c-muted)', minWidth: 20 }}>
+                    {l.position_file}
+                  </span>
 
                 <div className="flex-1 min-w-0">
                   {/* Le nom est un bouton : un clic ouvre la fiche, où les
@@ -149,9 +155,12 @@ export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlace
                   )}
                 </div>
 
+                </div>
+
+                <div className="mt-1.5 flex items-center gap-2 flex-wrap" style={{ paddingLeft: 26 }}>
                 <button type="button" onClick={() => onOuvrirFiche(l.parachutiste_id)}
                   title="Ouvrir la fiche"
-                  className="flex-shrink-0 whitespace-nowrap self-start"
+                  className="flex-shrink-0 whitespace-nowrap"
                   style={{ ...pastille(a.sev), cursor: 'pointer', minHeight: 28 }}>
                   {a.libelle}
                 </button>
@@ -159,7 +168,7 @@ export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlace
                 {/* Un bouton par rotation qui a encore de la place. Une rotation
                     complète ne s'affiche pas : proposer un placement que la
                     base refusera est une promesse qu'on ne tient pas. */}
-                <div className="flex gap-1.5 flex-wrap flex-shrink-0 w-full sm:w-auto">
+                <div className="flex gap-1.5 flex-wrap">
                   {rotations.filter(r => r.places_libres === null || r.places_libres > 0).map(r => (
                     <button key={r.id} type="button" disabled={action_ !== null}
                       onClick={() => placer(l.id, r.id)}
@@ -171,9 +180,10 @@ export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlace
                   ))}
                   {rotations.length === 0 && (
                     <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>
-                      créez une rotation
+                      créez un avion
                     </span>
                   )}
+                </div>
                 </div>
               </li>
             );
