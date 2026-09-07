@@ -8,7 +8,7 @@ import { TYPE_BREVET_LABELS } from '../lib/types';
 import type { Licence, Brevet, CertificatMedical, CentreLicencie, Qualification } from '../lib/types';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCurrencyRules, getCurrencyStatus, CURRENCY_STATUS_CONFIG } from '../lib/currency';
-import { User, RefreshCw, Maximize2, X, AlertTriangle, CheckCircle, Clock, Shield, Eye, Download, RotateCcw, Check, ShieldCheck, ShieldX } from 'lucide-react';
+import { User, RefreshCw, Maximize2, X, AlertTriangle, CheckCircle, Clock, Shield, Eye, Download, RotateCcw, Check, ShieldCheck, ShieldX, Plane } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
@@ -117,6 +117,45 @@ const MOT_VALIDITE: Record<ValidityStatus, string> = {
 };
 
 export type CouleurFeu = 'vert' | 'orange' | 'rouge' | 'gris';
+
+/**
+ * Les FONCTIONS qui se voient sur la carte. Ce ne sont pas des brevets :
+ * ce sont des rôles qu'on exerce ce jour-là, et la personne à qui l'on
+ * s'adresse au pied de l'avion doit être identifiable d'un regard.
+ *
+ * Le vocabulaire est celui du CHECK de qualifications.type — minuscules.
+ * (qualifications_ref et moniteurs_qualifications emploient des MAJUSCULES :
+ *  deux vocabulaires coexistent dans la base, c'est une dette connue.)
+ */
+const FONCTIONS_VISIBLES: Record<string, { sigle: string; libelle: string; couleur: string }> = {
+  largueur:            { sigle: 'LARGUEUR',  libelle: 'Largueur — dirige le largage depuis l’avion', couleur: '#38BDF8' },
+  directeur_technique: { sigle: 'DT',        libelle: 'Directeur technique',                          couleur: '#A78BFA' },
+  moniteur_tandem:     { sigle: 'TANDEM',    libelle: 'Moniteur tandem',                              couleur: '#34D399' },
+  formateur_PAC:       { sigle: 'PAC',       libelle: 'Formateur PAC',                                couleur: '#FBBF24' },
+};
+
+/**
+ * Le sigle de fonction. Volontairement plus voyant qu'un badge de brevet :
+ * un brevet dit ce qu'on sait faire, une fonction dit ce qu'on FAIT
+ * aujourd'hui — et c'est elle qu'on cherche des yeux dans un hangar.
+ */
+function SigleFonction({ code }: { code: string }) {
+  const f = FONCTIONS_VISIBLES[code];
+  if (!f) return null;
+  return (
+    <span title={f.libelle} aria-label={f.libelle}
+      className="inline-flex items-center gap-1"
+      style={{
+        fontSize: 10, fontWeight: 900, letterSpacing: '0.08em',
+        color: f.couleur, background: `${f.couleur}22`,
+        border: `1px solid ${f.couleur}66`, borderRadius: 6,
+        padding: '3px 7px', textTransform: 'uppercase',
+      }}>
+      <Plane className="w-3 h-3" aria-hidden style={{ transform: 'rotate(45deg)' }} />
+      {f.sigle}
+    </span>
+  );
+}
 
 const LAMPES: { cle: CouleurFeu; couleur: string }[] = [
   { cle: 'rouge',  couleur: '#EF4444' },
@@ -257,6 +296,12 @@ function CardRecto({ data, id, feu, onFeuClick }: {
   // pour que la carte et le récapitulatif ne se contredisent jamais.
   const statutLicence = getStatus(licence?.date_expiration);
   const statutMedical = getStatus(certif?.date_expiration);
+  // Une fonction PÉRIMÉE ne s'affiche pas : porter « LARGUEUR » avec une
+  // qualification expirée serait pire que ne rien porter.
+  const fonctions = (data.qualifications ?? [])
+    .filter(q => FONCTIONS_VISIBLES[q.type]
+      && (!q.date_expiration || new Date(q.date_expiration) >= now))
+    .map(q => q.type);
   const brevetPrincipal = brevets[0];
   const centre = centresLicencies.find(c => c.statut === 'actif')?.centre;
   const avatar = profile.avatar_url || profile.photo_profil_url;
@@ -395,11 +440,20 @@ function CardRecto({ data, id, feu, onFeuClick }: {
               <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', fontStyle: 'italic', marginTop: 2 }}>Aucun saut enregistré</div>
             )}
           </div>
+          <div className="flex flex-col items-end gap-1.5">
+          {/* Les fonctions du jour, avant le brevet : au pied de l'avion on
+              cherche « qui est le largueur », pas « qui a un brevet D ». */}
+          {fonctions.length > 0 && (
+            <span className="flex flex-wrap gap-1 justify-end">
+              {fonctions.map(c => <SigleFonction key={c} code={c} />)}
+            </span>
+          )}
           {brevetPrincipal && (
             <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.03em', background: 'rgba(249,115,22,0.18)', color: '#FDBA74', border: '1px solid rgba(249,115,22,0.4)', padding: '5px 12px', borderRadius: 20, whiteSpace: 'nowrap' }}>
               {TYPE_BREVET_LABELS[brevetPrincipal.type_brevet] || `Brevet ${brevetPrincipal.type_brevet}`}
             </span>
           )}
+          </div>
         </div>
 
         {/* Validités — la date SEULE ne disait pas si elle était bonne :
