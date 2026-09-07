@@ -167,6 +167,9 @@ function EmbarquementInner() {
       const { data: ins, error: e2 } = await supabase.from('evaluations').insert({
         parachutiste_id: pers.parachutiste_id, centre_id: cid, rotation_id: rotationId,
         verdict: ev.verdict, motifs: ev.motifs, version_referentiel: ev.versionReferentiel, regime,
+        // La couverture voyage avec le verdict : un vert à 2 règles ne vaut
+        // pas un vert à 9, et la licence doit pouvoir le dire.
+        regles_controlees: ev.reglesControlees, regles_sans_objet: ev.reglesSansObjet,
       }).select('id').single();
       if (e2) { setErreur('Évaluation non consignée : ' + messageErreur(e2)); return; }
 

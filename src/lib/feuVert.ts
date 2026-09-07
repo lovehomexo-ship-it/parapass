@@ -16,7 +16,14 @@ import { supabase } from './supabase';
 // ═══════════════════════════════════════════════════════════════════════════
 
 export type Verdict = 'vert' | 'orange' | 'rouge' | 'gris';
-export type EtatFait = 'conforme' | 'non_conforme' | 'indisponible';
+/**
+ * 'sans_objet' : la règle ne s'applique pas à CE saut (la qualification
+ * wingsuit pour un solo, le casque pour un breveté). Elle ne compte NI comme
+ * conforme NI comme gris — sinon un verdict vert laisserait croire à dix
+ * contrôles passés là où sept n'ont rien contrôlé. Mesuré sur BigAir : 5
+ * règles contrôlent vraiment, 3 sont sans objet.
+ */
+export type EtatFait = 'conforme' | 'non_conforme' | 'indisponible' | 'sans_objet';
 export type Gravite = 'bloquant' | 'vigilance';
 
 export interface RegleEnVigueur {
@@ -59,6 +66,11 @@ export interface Motif {
 export interface Evaluation {
   verdict: Verdict;
   motifs: Motif[];
+  /** Règles ayant réellement contrôlé quelque chose — conformes ou non.
+   *  C'est la COUVERTURE : le seul chiffre qui dit ce que vaut un vert. */
+  reglesControlees: number;
+  /** Règles qui ne s'appliquaient pas à ce saut. */
+  reglesSansObjet: number;
   /** Empreinte des (code, version) en vigueur : deux évaluations ne se
    *  comparent que si elles ont été rendues sous le même référentiel. */
   versionReferentiel: string;
@@ -101,8 +113,12 @@ export function evaluer(
   const parCode = new Map(faits.map(f => [f.code, f]));
 
   const motifs: Motif[] = [];
+  let controlees = 0;
+  let sansObjet = 0;
   for (const r of individuelles) {
     const f = parCode.get(r.code);
+    // Sans objet : on passe, sans compter la règle dans la couverture.
+    if (f?.etat === 'sans_objet') { sansObjet++; continue; }
     // P1 : pas de fait, ou fait indisponible → motif « indisponible ».
     // Jamais « conforme par défaut ».
     if (!f || f.etat === 'indisponible') {
@@ -113,6 +129,7 @@ export function evaluer(
       });
       continue;
     }
+    controlees++;
     if (f.etat === 'non_conforme') {
       motifs.push({
         codeRegle: r.code, versionRegle: r.version, gravite: r.gravite,
@@ -132,7 +149,8 @@ export function evaluer(
   const rang: Record<Motif['gravite'], number> = { bloquant: 0, indisponible: 1, vigilance: 2 };
   motifs.sort((a, b) => rang[a.gravite] - rang[b.gravite] || a.codeRegle.localeCompare(b.codeRegle));
 
-  return { verdict, motifs, versionReferentiel: versionReferentiel(regles), evalueLe: maintenant };
+  return { verdict, motifs, reglesControlees: controlees, reglesSansObjet: sansObjet,
+           versionReferentiel: versionReferentiel(regles), evalueLe: maintenant };
 }
 
 /**
@@ -177,6 +195,7 @@ export async function evaluerConformite(
         libelle: 'Évaluation impossible', source: '',
         detail: `lecture des ${e1 ? 'règles' : 'faits'} en échec : ${e?.message ?? 'erreur inconnue'}`,
       }],
+      reglesControlees: 0, reglesSansObjet: 0,
       versionReferentiel: '',
       evalueLe: new Date(),
     };

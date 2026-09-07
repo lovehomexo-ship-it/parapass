@@ -142,3 +142,42 @@ describe('P3 — stabilité et référentiel', () => {
     expect(JSON.stringify(e)).not.toMatch(/regime|bloquant_actif|informatif/);
   });
 });
+
+describe('P3 — « sans objet » n’est pas « conforme »', () => {
+  it('une règle sans objet ne colore rien et n’entre pas dans la couverture', () => {
+    // QUA-001 pour un saut solo : la règle ne s'applique pas. Elle ne doit
+    // ni verdir le verdict, ni le griser, ni gonfler le nombre de contrôles.
+    const e = evaluer(REFERENTIEL, faits({ 'QUA-001': 'sans_objet', 'QUA-002': 'sans_objet' }), CTX, T0);
+    expect(e.verdict).toBe('vert');
+    expect(e.motifs).toEqual([]);
+    expect(e.reglesSansObjet).toBe(2);
+    expect(e.reglesControlees).toBe(INDIVIDUELLES.length - 2);
+  });
+
+  it('la couverture compte les non-conformes : contrôler et échouer reste contrôler', () => {
+    const e = evaluer(REFERENTIEL, faits({ 'LIC-001': 'non_conforme' }), CTX, T0);
+    expect(e.reglesControlees).toBe(INDIVIDUELLES.length);
+  });
+
+  it('une donnée indisponible n’est PAS un contrôle', () => {
+    // C'est toute la différence avec « sans objet » : ici on aurait dû
+    // contrôler et on n'a pas pu. Le gris le dit, la couverture le compte pas.
+    const e = evaluer(REFERENTIEL, faits({ 'MED-001': 'indisponible' }), CTX, T0);
+    expect(e.verdict).toBe('gris');
+    expect(e.reglesControlees).toBe(INDIVIDUELLES.length - 1);
+    expect(e.reglesSansObjet).toBe(0);
+  });
+
+  it('tout sans objet : vert, mais ZÉRO contrôle — le vert le plus creux qui soit', () => {
+    const tout = INDIVIDUELLES.map(code => ({ code, etat: 'sans_objet' as const, detail: null }));
+    const e = evaluer(REFERENTIEL, tout, CTX, T0);
+    expect(e.verdict).toBe('vert');
+    expect(e.reglesControlees).toBe(0);
+  });
+
+  it('une lecture en échec rend un gris à zéro contrôle', () => {
+    const e = evaluer(REFERENTIEL, [], CTX, T0);
+    expect(e.verdict).toBe('gris');
+    expect(e.reglesControlees).toBe(0);
+  });
+});

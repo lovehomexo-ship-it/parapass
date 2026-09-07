@@ -593,21 +593,33 @@ async function exportCartesPDF(data: PasseportData, isOwner: boolean, nom: strin
 
 // ─── Validity summary ───────────────────────────────────────────────────────────
 
-/** Verdict Feu Vert du jour — rendu seulement en contexte CENTRE. */
-export interface VerdictFeuVert {
+/**
+ * Le DERNIER CONTRÔLE Feu Vert — un acte daté, pas une couleur du moment.
+ *
+ * Une couleur instantanée se recalcule à chaque affichage et ne prouve rien :
+ * elle dit « en ce moment, les documents en base sont valides ». Un contrôle
+ * dit « le 07/09/2026, BigAir a vérifié, et voici ce qui a été constaté ».
+ * C'est le second qui est opposable — et il est chaîné au journal.
+ *
+ * Nul tant qu'aucun scan n'a eu lieu : la licence affiche alors « jamais
+ * contrôlée », ce qui est la vérité.
+ */
+export interface DernierControleFeuVert {
+  evalue_le: string;
   verdict: 'vert' | 'orange' | 'rouge' | 'gris';
-  nb_bloquants: number; nb_vigilances: number; nb_gris: number;
-  codes_rouges: string | null; codes_gris: string | null;
+  centre_nom: string | null;
+  /** Nombre de règles ayant réellement contrôlé quelque chose. */
+  regles_controlees: number | null;
 }
 
-const FEU_VERT_LIBELLE: Record<VerdictFeuVert['verdict'], { texte: string; statut: 'valide' | 'expire' | 'bientot' | 'manquant' }> = {
-  vert:   { texte: 'Peut sauter',      statut: 'valide' },
+const FEU_VERT_LIBELLE: Record<DernierControleFeuVert['verdict'], { texte: string; statut: 'valide' | 'expire' | 'bientot' | 'manquant' }> = {
+  vert:   { texte: 'Conforme',         statut: 'valide' },
   orange: { texte: 'Vigilance',        statut: 'bientot' },
   rouge:  { texte: 'Non conforme',     statut: 'expire' },
   gris:   { texte: 'Donnée manquante', statut: 'manquant' },
 };
 
-function ValiditySummary({ data, feuVert }: { data: PasseportData; feuVert?: VerdictFeuVert | null }) {
+function ValiditySummary({ data, feuVert }: { data: PasseportData; feuVert?: DernierControleFeuVert | null | 'jamais' }) {
   const licence = data.licences[0];
   const certif = data.certificats[0];
   const licStatus = getStatus(licence?.date_expiration);
@@ -654,16 +666,20 @@ function ValiditySummary({ data, feuVert }: { data: PasseportData; feuVert?: Ver
             une seule trace, opposable. La ligne n'apparaît qu'en contexte
             CENTRE : le parachutiste voit ses validités, pas un jugement. */}
         {feuVert && (
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-sm text-gray-700">Feu Vert</span>
-            <div className="flex items-center gap-2">
-              {(feuVert.codes_rouges || feuVert.codes_gris) && (
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <span className="text-sm text-gray-700">Dernier contrôle Feu Vert</span>
+            {feuVert === 'jamais' ? (
+              <StatusPill status="manquant" days={null} />
+            ) : (
+              <div className="flex items-center gap-2 flex-wrap justify-end">
                 <span className="text-xs text-gray-400 font-mono">
-                  {feuVert.codes_rouges || feuVert.codes_gris}
+                  {new Date(feuVert.evalue_le).toLocaleDateString('fr-FR')}
+                  {feuVert.centre_nom ? ` · ${feuVert.centre_nom}` : ''}
+                  {feuVert.regles_controlees !== null ? ` · ${feuVert.regles_controlees} règle(s) contrôlée(s)` : ''}
                 </span>
-              )}
-              <StatusPill status={FEU_VERT_LIBELLE[feuVert.verdict].statut} days={null} />
-            </div>
+                <StatusPill status={FEU_VERT_LIBELLE[feuVert.verdict].statut} days={null} />
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -729,22 +745,37 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
   const isOwner = !adminId || adminId === userId;
   // Contexte CENTRE : la fiche est ouverte par un admin sur quelqu'un d'autre.
   const contexteCentre = Boolean(centreId) && !isOwner;
-  const [feuVert, setFeuVert] = useState<VerdictFeuVert | null>(null);
+  const [feuVert, setFeuVert] = useState<DernierControleFeuVert | null | 'jamais'>(null);
 
   useEffect(() => {
     if (!contexteCentre || !centreId) { setFeuVert(null); return; }
     let vivant = true;
-    supabase.rpc('verdicts_du_jour', { p_centre_id: centreId, p_ids: [userId] })
-      .then(({ data: v, error }) => {
+    // On lit une TRACE, pas un calcul : la dernière évaluation écrite pour
+    // cette personne. La RLS d'evaluations donne au centre les siennes et au
+    // parachutiste les siennes ; personne ne voit celles d'un autre centre.
+    supabase.from('evaluations')
+      .select('evalue_le, verdict, regles_controlees, centres(nom)')
+      .eq('parachutiste_id', userId).eq('centre_id', centreId)
+      .order('evalue_le', { ascending: false }).limit(1)
+      .then(({ data, error }) => {
         if (!vivant) return;
         if (error) {
-          console.error('Feu Vert — verdict de la fiche non lu :', {
+          console.error('Feu Vert — dernier contrôle non lu :', {
             code: error.code, message: error.message, details: error.details, hint: error.hint,
           });
-          // Une lecture en échec ne rend pas la fiche verte : elle ne rend rien.
+          // Une lecture en échec n'affiche rien plutôt qu'un « jamais
+          // contrôlé » qui serait une affirmation, pas un constat.
           setFeuVert(null); return;
         }
-        setFeuVert(((v ?? []) as VerdictFeuVert[])[0] ?? null);
+        const e = data?.[0];
+        if (!e) { setFeuVert('jamais'); return; }
+        const c = e.centres as { nom?: string } | { nom?: string }[] | null;
+        setFeuVert({
+          evalue_le: e.evalue_le,
+          verdict: e.verdict as DernierControleFeuVert['verdict'],
+          centre_nom: (Array.isArray(c) ? c[0]?.nom : c?.nom) ?? null,
+          regles_controlees: e.regles_controlees ?? null,
+        });
       });
     return () => { vivant = false; };
   }, [contexteCentre, centreId, userId]);
