@@ -813,7 +813,11 @@ export function DashboardPage() {
                       className="flex items-center justify-center gap-2 text-white px-5 rounded-lg text-sm font-bold transition-colors shadow-lg w-full"
                       style={{
                         height: 48,
-                        background: isDemo ? 'var(--c-muted)' : '#F97316',
+                        // L'orange reste : c'est l'identité parachutiste
+                        // (onglets, carte, badges). Mais le blanc sur #F97316
+                        // ne fait que 2,80:1 — sous AA. Même teinte, assombrie
+                        // du minimum (5,18:1).
+                        background: isDemo ? 'var(--c-muted)' : 'var(--accent-fond)',
                         cursor: isDemo ? 'not-allowed' : 'pointer',
                         opacity: isDemo ? 0.6 : 1,
                       }}

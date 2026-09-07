@@ -45,6 +45,8 @@ const A_VERIFIER: { jeton: string; sur: '--c-bg' | '--c-surface'; px: number; gr
   { jeton: '--sev-conforme',   sur: '--c-surface', px: 12 },
   { jeton: '--sev-neutre',     sur: '--c-surface', px: 12 },
   { jeton: '--action-texte',   sur: '--c-surface', px: 12 },
+  { jeton: '--accent-texte',   sur: '--c-surface', px: 12 },
+  { jeton: '--accent-texte',   sur: '--c-bg',      px: 12 },
   { jeton: '--sev-critique',   sur: '--c-bg',      px: 12 },
   { jeton: '--sev-vigilance',  sur: '--c-bg',      px: 12 },
   { jeton: '--sev-conforme',   sur: '--c-bg',      px: 12 },
@@ -63,10 +65,12 @@ describe('P14 — contraste AA de la palette', () => {
       });
     }
 
-    it(`${nom} · le blanc du bouton principal atteint AA sur --action-fond`, () => {
-      const r = contraste([255, 255, 255], versRVB(jetons['--action-fond']));
-      expect(r, `${jetons['--action-fond']} → ${r.toFixed(2)}:1`).toBeGreaterThanOrEqual(seuilAA(14, true));
-    });
+    for (const fond of ['--action-fond', '--accent-fond']) {
+      it(`${nom} · le blanc du bouton principal atteint AA sur ${fond}`, () => {
+        const r = contraste([255, 255, 255], versRVB(jetons[fond]));
+        expect(r, `${jetons[fond]} → ${r.toFixed(2)}:1`).toBeGreaterThanOrEqual(seuilAA(14, true));
+      });
+    }
 
     it(`${nom} · l'anneau de focus se distingue du fond`, () => {
       const fond = versRVB(jetons['--c-bg']);
@@ -74,6 +78,11 @@ describe('P14 — contraste AA de la palette', () => {
       expect(r, `${jetons['--focus-anneau']} → ${r.toFixed(2)}:1`).toBeGreaterThanOrEqual(3);
     });
   }
+
+  it('l’orange d’accent #F97316 ne peut pas porter de texte blanc non plus', () => {
+    // 2,80:1 — pire que le bleu. C’est pourquoi --accent-fond vaut #C2410C.
+    expect(contraste([255, 255, 255], versRVB('#F97316'))).toBeLessThan(4.5);
+  });
 
   it('le bleu de marque #1C8CE8 ne peut pas porter de texte blanc — le régression-test le rappelle', () => {
     // Ce test documente POURQUOI --action-fond n'est pas #1C8CE8. Si quelqu'un

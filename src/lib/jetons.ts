@@ -130,7 +130,15 @@ export function pastille(s: Severite): CSSProperties {
  * @example  <button style={action('secondaire')}>Reporter</button>
  * @example  <button style={action('texte')}>lever avec motif</button>
  */
-export function action(rang: 'principal' | 'secondaire' | 'texte'): CSSProperties {
+export function action(
+  rang: 'principal' | 'secondaire' | 'texte',
+  /** 'marque' = le bleu ParaPass (espace Centre). 'accent' = l'orange du
+   *  côté parachutiste, qui est SON identité : onglets, carte, badges.
+   *  Une même action ne change pas de couleur selon l'écran par hasard. */
+  teinte: 'marque' | 'accent' = 'marque',
+): CSSProperties {
+  const fond = teinte === 'accent' ? 'var(--accent-fond)' : 'var(--action-fond)';
+  const texte = teinte === 'accent' ? 'var(--accent-texte)' : 'var(--action-texte)';
   const base: CSSProperties = {
     minHeight: 44, borderRadius: 12, fontWeight: 700, fontSize: 14,
     display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0 16px',
@@ -138,13 +146,12 @@ export function action(rang: 'principal' | 'secondaire' | 'texte'): CSSPropertie
   if (rang === 'principal') {
     // #136FBC et non #1C8CE8 : le blanc sur le bleu de marque ne fait que
     // 3,52:1 et échoue AA. Même bleu, assombri de ce qu'il faut (5,21:1).
-    return { ...base, background: 'var(--action-fond)', color: '#fff', border: '1px solid transparent' };
+    return { ...base, background: fond, color: '#fff', border: '1px solid transparent' };
   }
   if (rang === 'secondaire') {
-    return { ...base, background: 'transparent', color: 'var(--action-texte)',
-             border: '1px solid var(--action-texte)' };
+    return { ...base, background: 'transparent', color: texte, border: `1px solid ${texte}` };
   }
-  return { ...base, background: 'transparent', color: 'var(--action-texte)',
+  return { ...base, background: 'transparent', color: texte,
            border: 'none', padding: 0, minHeight: 32, fontSize: 13, textDecoration: 'underline' };
 }
 

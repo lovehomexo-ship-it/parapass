@@ -24,6 +24,10 @@ import {
 //   3. manifesté    → carte de niveau 1, l'avion et son call en très gros.
 //                     C'est le seul moment où ce bloc mérite de la hauteur.
 //
+// La carte vit du côté PARACHUTISTE : ses actions prennent l'accent orange,
+// qui est l'identité de cet espace. Un bouton bleu y détonnait — c'était le
+// mien, pas les autres.
+//
 // Le call est calculé par la même fonction que l'écran du chef d'avionnage
 // (lib/avionnage) : le sauteur et le chef lisent le même décompte, à la
 // seconde près. Deux calculs auraient fini par diverger.
@@ -154,7 +158,7 @@ function FileInner({ centreId, centreNom, userId }: {
             </span>
           </div>
           <button type="button" disabled={enCours} onClick={() => agir(quitter)}
-            className="disabled:opacity-50" style={action('secondaire')}>
+            className="disabled:opacity-50" style={action('secondaire', 'accent')}>
             <X className="w-4 h-4" aria-hidden /> Quitter la file
           </button>
         </div>
@@ -173,7 +177,7 @@ function FileInner({ centreId, centreNom, userId }: {
           </select>
           <button type="button" disabled={enCours}
             onClick={() => agir(() => rejoindre(type))}
-            className="disabled:opacity-50" style={action('principal')}>
+            className="disabled:opacity-50" style={action('principal', 'accent')}>
             <Plane className="w-4 h-4" aria-hidden />
             {enCours ? 'Inscription…' : 'Me mettre en file'}
           </button>

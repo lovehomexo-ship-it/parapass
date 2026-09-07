@@ -315,8 +315,11 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter, statutDocs, l
         style={{ background: 'rgba(22,163,74,0.10)', border: '1px solid rgba(22,163,74,0.28)', borderLeft: '3px solid #22C55E' }}
       >
         <ShieldCheck className="w-4 h-4 text-green-400 flex-shrink-0" />
-        <span className="text-green-400 text-sm font-medium">Documents à jour — Licence · Médical · Assurances valides</span>
-        <span className="ml-auto text-green-400/60 text-xs hidden sm:inline">Licence · Médical · Assurances ✓</span>
+        {/* La même phrase était écrite DEUX FOIS sur la même ligne, à gauche
+            en toutes lettres et à droite en abrégé. Une seule reste. */}
+        <span className="text-green-400 text-sm font-medium">
+          Documents à jour — licence, certificat médical et assurances valides
+        </span>
       </div>
     );
   }

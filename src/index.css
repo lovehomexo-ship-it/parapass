@@ -49,6 +49,11 @@
 
   /* Action — et rien d'autre. Jamais un état. */
   --action-fond:   #136FBC;   /* blanc dessus : 5.21:1 */
+  /* Accent PARACHUTISTE — l orange est son identite (onglets, carte, badges).
+     Le blanc sur #F97316 ne fait que 2,80:1 : il ne peut pas porter de texte.
+     Meme teinte, assombrie du minimum necessaire (5,18:1). */
+  --accent-fond:   #C2410C;
+  --accent-texte:  #F97316;   /* 5.99:1 sur le fond sombre */
   /* #1C8CE8 ne fait que 4,06:1 sur --c-surface : le bleu de marque éclairci
      du minimum nécessaire pour porter du texte (4,72:1). */
   --action-texte:  #3399EE;
@@ -87,6 +92,8 @@
   --sev-neutre:    #4B647E;
 
   --action-fond:   #136FBC;
+  --accent-fond:   #C2410C;
+  --accent-texte:  #C2410C;   /* 4.69:1 — #F97316 n'y fait que 2,54 */
   --action-texte:  #0B6BB8;   /* 4.99:1 — #1C8CE8 n'y fait que 3.18 */
   --focus-anneau:  #0B6BB8;
 }
