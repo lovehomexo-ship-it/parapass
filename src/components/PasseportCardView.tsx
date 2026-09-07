@@ -8,7 +8,7 @@ import { TYPE_BREVET_LABELS } from '../lib/types';
 import type { Licence, Brevet, CertificatMedical, CentreLicencie, Qualification } from '../lib/types';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCurrencyRules, getCurrencyStatus, CURRENCY_STATUS_CONFIG } from '../lib/currency';
-import { User, RefreshCw, Maximize2, X, AlertTriangle, CheckCircle, Clock, Shield, Eye, Download, RotateCcw, Check, ShieldCheck, ShieldX, Plane } from 'lucide-react';
+import { User, RefreshCw, Maximize2, X, AlertTriangle, CheckCircle, Clock, Shield, Eye, Download, RotateCcw, Check, ShieldCheck, ShieldX } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
@@ -118,45 +118,6 @@ const MOT_VALIDITE: Record<ValidityStatus, string> = {
 
 export type CouleurFeu = 'vert' | 'orange' | 'rouge' | 'gris';
 
-/**
- * Les FONCTIONS qui se voient sur la carte. Ce ne sont pas des brevets :
- * ce sont des rôles qu'on exerce ce jour-là, et la personne à qui l'on
- * s'adresse au pied de l'avion doit être identifiable d'un regard.
- *
- * Le vocabulaire est celui du CHECK de qualifications.type — minuscules.
- * (qualifications_ref et moniteurs_qualifications emploient des MAJUSCULES :
- *  deux vocabulaires coexistent dans la base, c'est une dette connue.)
- */
-const FONCTIONS_VISIBLES: Record<string, { sigle: string; libelle: string; couleur: string }> = {
-  largueur:            { sigle: 'LARGUEUR',  libelle: 'Largueur — dirige le largage depuis l’avion', couleur: '#38BDF8' },
-  directeur_technique: { sigle: 'DT',        libelle: 'Directeur technique',                          couleur: '#A78BFA' },
-  moniteur_tandem:     { sigle: 'TANDEM',    libelle: 'Moniteur tandem',                              couleur: '#34D399' },
-  formateur_PAC:       { sigle: 'PAC',       libelle: 'Formateur PAC',                                couleur: '#FBBF24' },
-};
-
-/**
- * Le sigle de fonction. Volontairement plus voyant qu'un badge de brevet :
- * un brevet dit ce qu'on sait faire, une fonction dit ce qu'on FAIT
- * aujourd'hui — et c'est elle qu'on cherche des yeux dans un hangar.
- */
-function SigleFonction({ code }: { code: string }) {
-  const f = FONCTIONS_VISIBLES[code];
-  if (!f) return null;
-  return (
-    <span title={f.libelle} aria-label={f.libelle}
-      className="inline-flex items-center gap-1"
-      style={{
-        fontSize: 10, fontWeight: 900, letterSpacing: '0.08em',
-        color: f.couleur, background: `${f.couleur}22`,
-        border: `1px solid ${f.couleur}66`, borderRadius: 6,
-        padding: '3px 7px', textTransform: 'uppercase',
-      }}>
-      <Plane className="w-3 h-3" aria-hidden style={{ transform: 'rotate(45deg)' }} />
-      {f.sigle}
-    </span>
-  );
-}
-
 const LAMPES: { cle: CouleurFeu; couleur: string }[] = [
   { cle: 'rouge',  couleur: '#EF4444' },
   { cle: 'orange', couleur: '#F59E0B' },
@@ -169,8 +130,7 @@ const LAMPES: { cle: CouleurFeu; couleur: string }[] = [
  * la POSITION de la lampe autant que sa couleur. En niveaux de gris, la
  * lampe allumée reste la seule claire.
  *
- * 'gris' = aucun contrôle enregistré : les trois lampes sont éteintes. On
- * n'allume pas le vert par défaut.
+ * Éteint (null) = on ne sait pas. On n'allume jamais le vert par défaut.
  */
 export function FeuTricolore({ etat, taille = 14, onClick, titre }: {
   etat: CouleurFeu | null; taille?: number; onClick?: () => void; titre?: string;
@@ -194,7 +154,7 @@ export function FeuTricolore({ etat, taille = 14, onClick, titre }: {
     </span>
   );
   const libelle = titre ?? (etat === null || etat === 'gris'
-    ? 'Aucun contrôle enregistré' : `Feu ${etat}`);
+    ? 'Conformité non évaluée' : `Feu ${etat}`);
   if (!onClick) return <span title={libelle} aria-label={libelle}>{lampes}</span>;
   return (
     <button type="button" onClick={onClick} title={libelle} aria-label={`${libelle} — voir le détail`}
@@ -229,6 +189,32 @@ function OuiNonBadge({ ok }: { ok: boolean }) {
  * Aucun contenu médical n'y transite (P5) : les motifs ne portent que des
  * dates et des états.
  */
+/**
+ * Le feu est allumé (état courant) mais AUCUN contrôle n'a été consigné.
+ * On le dit franchement plutôt que d'afficher un panneau vide : la couleur
+ * décrit une situation, elle n'atteste de rien tant que personne n'a scanné.
+ */
+function PanneauSansControle({ feu, onFermer }: { feu: CouleurFeu | null; onFermer: () => void }) {
+  return (
+    <div className="mt-3 rounded-xl p-4" style={{ background: 'var(--c-bg)', border: '1px solid var(--n2-bord)' }}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--c-text)' }}>
+            Aucun contrôle consigné
+          </p>
+          <p style={{ fontSize: 13, color: 'var(--c-muted)', maxWidth: 460 }}>
+            Le feu montre l’état des documents en ce moment. Il n’atteste de
+            rien tant que personne n’a scanné la licence à l’embarquement —
+            c’est le scan qui produit une trace datée et opposable.
+          </p>
+        </div>
+        <FeuTricolore etat={feu} taille={13} />
+      </div>
+      <button type="button" onClick={onFermer} className="mt-3" style={action('texte')}>Fermer</button>
+    </div>
+  );
+}
+
 function PanneauAnomalies({ controle, feu, onFermer }: {
   controle: DernierControleFeuVert; feu: CouleurFeu | null; onFermer: () => void;
 }) {
@@ -296,12 +282,9 @@ function CardRecto({ data, id, feu, onFeuClick }: {
   // pour que la carte et le récapitulatif ne se contredisent jamais.
   const statutLicence = getStatus(licence?.date_expiration);
   const statutMedical = getStatus(certif?.date_expiration);
-  // Une fonction PÉRIMÉE ne s'affiche pas : porter « LARGUEUR » avec une
-  // qualification expirée serait pire que ne rien porter.
-  const fonctions = (data.qualifications ?? [])
-    .filter(q => FONCTIONS_VISIBLES[q.type]
-      && (!q.date_expiration || new Date(q.date_expiration) >= now))
-    .map(q => q.type);
+  // Les FONCTIONS (largueur, DT…) ne s'affichent PAS ici : la licence est un
+  // document d'identité, pas un organigramme. Elles vivent dans l'Avionnage,
+  // là où la question « qui est le largueur ? » se pose vraiment.
   const brevetPrincipal = brevets[0];
   const centre = centresLicencies.find(c => c.statut === 'actif')?.centre;
   const avatar = profile.avatar_url || profile.photo_profil_url;
@@ -440,20 +423,11 @@ function CardRecto({ data, id, feu, onFeuClick }: {
               <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', fontStyle: 'italic', marginTop: 2 }}>Aucun saut enregistré</div>
             )}
           </div>
-          <div className="flex flex-col items-end gap-1.5">
-          {/* Les fonctions du jour, avant le brevet : au pied de l'avion on
-              cherche « qui est le largueur », pas « qui a un brevet D ». */}
-          {fonctions.length > 0 && (
-            <span className="flex flex-wrap gap-1 justify-end">
-              {fonctions.map(c => <SigleFonction key={c} code={c} />)}
-            </span>
-          )}
           {brevetPrincipal && (
             <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.03em', background: 'rgba(249,115,22,0.18)', color: '#FDBA74', border: '1px solid rgba(249,115,22,0.4)', padding: '5px 12px', borderRadius: 20, whiteSpace: 'nowrap' }}>
               {TYPE_BREVET_LABELS[brevetPrincipal.type_brevet] || `Brevet ${brevetPrincipal.type_brevet}`}
             </span>
           )}
-          </div>
         </div>
 
         {/* Validités — la date SEULE ne disait pas si elle était bonne :
@@ -951,10 +925,15 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
   const contexteCentre = Boolean(centreId) && !isOwner;
   const [feuVert, setFeuVert] = useState<DernierControleFeuVert | null | 'jamais'>(null);
   const [anomaliesOuvertes, setAnomalies] = useState(false);
-  // Jamais contrôlé, ou lecture en échec → feu ÉTEINT. On n'allume pas le
-  // vert par défaut : un feu éteint dit « personne n'a vérifié ».
-  const feu: CouleurFeu | null =
-    feuVert && feuVert !== 'jamais' ? feuVert.verdict : null;
+  // DEUX CHOSES DISTINCTES, et il a fallu les séparer :
+  //   • le FEU montre l'état COURANT (verdicts_du_jour). C'est lui qu'on
+  //     regarde tous les jours, et il doit être allumé même avant le premier
+  //     scan — sinon il ne sert à rien ;
+  //   • la ligne « dernier contrôle » montre l'ACTE daté, opposable.
+  // Confondre les deux laissait le feu éteint pour tout le monde.
+  const [etatCourant, setEtatCourant] = useState<CouleurFeu | null>(null);
+  // Éteint tant qu'on ne sait pas. On n'allume jamais le vert par défaut.
+  const feu: CouleurFeu | null = etatCourant;
 
   useEffect(() => {
     if (!contexteCentre || !centreId) { setFeuVert(null); return; }
@@ -962,6 +941,21 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
     // On lit une TRACE, pas un calcul : la dernière évaluation écrite pour
     // cette personne. La RLS d'evaluations donne au centre les siennes et au
     // parachutiste les siennes ; personne ne voit celles d'un autre centre.
+    // L'état courant, pour la lampe.
+    supabase.rpc('verdicts_du_jour', { p_centre_id: centreId, p_ids: [userId] })
+      .then(({ data: v, error }) => {
+        if (!vivant) return;
+        if (error) {
+          console.error('Feu Vert — état courant non lu :', {
+            code: error.code, message: error.message, details: error.details, hint: error.hint,
+          });
+          setEtatCourant(null); return;   // une panne n'allume rien
+        }
+        const r = (v ?? [])[0] as { verdict?: CouleurFeu } | undefined;
+        setEtatCourant(r?.verdict ?? null);
+      });
+
+    // L'acte daté, pour la ligne du récapitulatif et le panneau.
     supabase.from('evaluations')
       .select('evalue_le, verdict, regles_controlees, motifs, centres(nom)')
       .eq('parachutiste_id', userId).eq('centre_id', centreId)
@@ -1143,8 +1137,10 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
           feu={feu} onFeuClick={contexteCentre ? () => setAnomalies(o => !o) : undefined} />
       </div>
 
-      {anomaliesOuvertes && feuVert && feuVert !== 'jamais' && (
-        <PanneauAnomalies controle={feuVert} feu={feu} onFermer={() => setAnomalies(false)} />
+      {anomaliesOuvertes && (
+        feuVert && feuVert !== 'jamais'
+          ? <PanneauAnomalies controle={feuVert} feu={feu} onFermer={() => setAnomalies(false)} />
+          : <PanneauSansControle feu={feu} onFermer={() => setAnomalies(false)} />
       )}
       </>
     );

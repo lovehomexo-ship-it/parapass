@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { Search, UserPlus } from 'lucide-react';
 import { surface, action, pastille, enTeteSection, rayure, type Severite } from '../../lib/jetons';
 import { LIBELLE_TYPE, type TypeSautFile } from '../../lib/avionnage';
+import { SiglesFonctions } from '../../components/SigleFonction';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // AVIONNAGE — Le DT cherche un licencié PAR SON NOM et l'embarque lui-même.
@@ -28,7 +29,7 @@ const APTITUDE: Record<string, { sev: Severite; libelle: string }> = {
   inconnu: { sev: 'neutre',    libelle: 'Non déclaré présent' },
 };
 
-export function RechercheLicencie({ centreId, rotations, aptitudes, dejaABord, onInscrire, onOuvrirFiche }: {
+export function RechercheLicencie({ centreId, rotations, aptitudes, dejaABord, onInscrire, onOuvrirFiche, fonctions }: {
   centreId: string;
   /** Rotations ouvertes, avec les sièges restants (null = aéronef inconnu). */
   rotations: { id: string; numero: number; places_libres: number | null }[];
@@ -38,6 +39,7 @@ export function RechercheLicencie({ centreId, rotations, aptitudes, dejaABord, o
   dejaABord: Set<string>;
   onInscrire: (rotationId: string, parachutisteId: string, type: string) => Promise<void> | void;
   onOuvrirFiche: (parachutisteId: string) => void;
+  fonctions?: Map<string, string[]>;
 }) {
   const [texte, setTexte] = useState('');
   const [licencies, setLicencies] = useState<Licencie[]>([]);
@@ -140,6 +142,9 @@ export function RechercheLicencie({ centreId, rotations, aptitudes, dejaABord, o
                     <span className="font-normal" style={{ color: 'var(--c-muted)' }}> · {l.numero_licence}</span>
                   )}
                 </button>
+                {(fonctions?.get(l.id)?.length ?? 0) > 0 && (
+                  <SiglesFonctions codes={fonctions!.get(l.id)!} compact />
+                )}
                 <span className="flex-shrink-0" style={pastille(a.sev)}>{a.libelle}</span>
                 <div className="flex gap-1.5 flex-wrap">
                   {dispo.map(r => (

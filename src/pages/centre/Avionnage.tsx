@@ -44,6 +44,9 @@ function AvionnageInner({ centreId }: { centreId: string }) {
   const [erreur, setErreur] = useState<string | null>(null);
   const [occupe, setOccupe] = useState(false);
   const [verdictsParPersonne, setVerdictsParPersonne] = useState<Map<string, PlaceVue['aptitude']>>(new Map());
+  // Les FONCTIONS du jour (largueur, DT…). Au pied de l'avion, la question
+  // n'est pas « qui a un brevet D » mais « QUI EST LE LARGUEUR ».
+  const [fonctions, setFonctions] = useState<Map<string, string[]>>(new Map());
   // Feu Vert · P1 du cadrage : le régime est un DRAPEAU par centre. Le scan
   // d'embarquement en fait partie — il n'a de sens que si le centre a
   // souscrit Feu Vert. Le drapeau existait depuis P2 mais n'était consommé
@@ -128,6 +131,24 @@ function AvionnageInner({ centreId }: { centreId: string }) {
       }
     }
     setVerdictsParPersonne(verdicts);
+
+    if (ids.length > 0) {
+      const { data: fo, error: e4 } = await supabase.rpc('fonctions_operationnelles', {
+        p_centre_id: centreId, p_ids: ids,
+      });
+      if (e4) {
+        console.error('Fonctions opérationnelles — lecture échouée :', {
+          code: e4.code, message: e4.message, details: e4.details, hint: e4.hint,
+        });
+      }
+      const m = new Map<string, string[]>();
+      for (const f of (fo ?? []) as { parachutiste_id: string; code: string }[]) {
+        m.set(f.parachutiste_id, [...(m.get(f.parachutiste_id) ?? []), f.code]);
+      }
+      setFonctions(m);
+    } else {
+      setFonctions(new Map());
+    }
 
     setPlaces(brutes.map(p => {
       const pr = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
@@ -287,7 +308,8 @@ function AvionnageInner({ centreId }: { centreId: string }) {
               <div key={r.id} className="space-y-2">
                 <PlancheAvionnage rotation={r} places={pl} maintenant={maintenant}
                   aeronef={aeronefs.find(a => a.id === r.aeronef_id)} onChange={charger}
-                  onDeposer={fileId => placer(fileId, r.id)} onOuvrirFiche={ouvrirFiche} />
+                  onDeposer={fileId => placer(fileId, r.id)} onOuvrirFiche={ouvrirFiche}
+                  fonctions={fonctions} />
               </div>
             );
           })}
@@ -297,7 +319,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
         <div>
           <FileAvionnageDZ centreId={centreId} ouvert={ouvert}
             onOuvrir={basculerOuverture} onPlacer={placer} onOuvrirFiche={ouvrirFiche}
-            rechargerRef={rechargerFile}
+            rechargerRef={rechargerFile} fonctions={fonctions}
             rotations={ouvertes.map(r => {
               const a = aeronefs.find(x => x.id === r.aeronef_id);
               const occ = siegesOccupes(places.filter(p => p.rotation_id === r.id));
@@ -312,7 +334,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
             <RechercheLicencie centreId={centreId}
               aptitudes={verdictsParPersonne}
               dejaABord={new Set(places.map(p => p.parachutiste_id).filter(Boolean) as string[])}
-              onInscrire={inscrire} onOuvrirFiche={ouvrirFiche}
+              onInscrire={inscrire} onOuvrirFiche={ouvrirFiche} fonctions={fonctions}
               rotations={ouvertes.map(r => {
                 const a = aeronefs.find(x => x.id === r.aeronef_id);
                 const occ = siegesOccupes(places.filter(p => p.rotation_id === r.id));

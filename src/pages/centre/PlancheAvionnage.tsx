@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MIME_FILE } from './FileAvionnageDZ';
+import { SiglesFonctions } from '../../components/SigleFonction';
 import { supabase } from '../../lib/supabase';
 import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff } from 'lucide-react';
 import { surface, rayure, pastille, action, SEVERITE_COULEUR, type Severite } from '../../lib/jetons';
@@ -50,7 +51,7 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, fonctions }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -61,6 +62,8 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   /** Dépôt d'une demande de la file sur cette planche. Rend l'erreur, ou null. */
   onDeposer?: (fileId: string) => Promise<string | null>;
   onOuvrirFiche?: (parachutisteId: string) => void;
+  /** Fonctions du jour par personne : le largueur doit se voir à bord. */
+  fonctions?: Map<string, string[]>;
 }) {
   const [occupe, setOccupe] = useState(false);
   const [echec, setEchec] = useState<string | null>(null);
@@ -192,6 +195,11 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                     {' · '}{LIBELLE_TYPE[p.type_saut as TypeSautFile] ?? p.type_saut}
                   </span>
                 </span>
+              )}
+              {/* La FONCTION du jour, avant l'aptitude : au pied de l'avion,
+                  « qui est le largueur ? » se lit avant tout le reste. */}
+              {p.parachutiste_id && (fonctions?.get(p.parachutiste_id)?.length ?? 0) > 0 && (
+                <SiglesFonctions codes={fonctions!.get(p.parachutiste_id)!} compact />
               )}
               {/* TOUJOURS un badge, pour les quatre états. Ne rien afficher
                   quand on ne sait pas laissait croire que tout allait bien —
