@@ -28,6 +28,10 @@ import {
 // qui est l'identité de cet espace. Un bouton bleu y détonnait — c'était le
 // mien, pas les autres.
 //
+// ESPACEMENT : le tableau de bord n'utilise pas space-y — chaque bloc porte
+// sa propre marge basse. D'où le mb-6 sur les deux branches ; sans lui, la
+// carte touchait la licence numérique.
+//
 // Le call est calculé par la même fonction que l'écran du chef d'avionnage
 // (lib/avionnage) : le sauteur et le chef lisent le même décompte, à la
 // seconde près. Deux calculs auraient fini par diverger.
@@ -92,7 +96,7 @@ function FileInner({ centreId, centreNom, userId }: {
   // ── 3 · MANIFESTÉ — le seul état qui mérite de la hauteur ───────────────
   if (manifeste) {
     return (
-      <section aria-label="Avionnage" className="p-4" style={surface(1)}>
+      <section aria-label="Avionnage" className="p-4 mb-6" style={surface(1)}>
         {titre}
         <div className="mt-3 flex items-end justify-between gap-4 flex-wrap">
           <div>
@@ -124,7 +128,7 @@ function FileInner({ centreId, centreNom, userId }: {
 
   // ── 1 et 2 · Bande compacte : action à gauche, journée à droite ─────────
   return (
-    <section aria-label="Avionnage" className="p-3.5" style={surface(2)}>
+    <section aria-label="Avionnage" className="p-3.5 mb-6" style={surface(2)}>
       <div className="flex items-start justify-between gap-3 flex-wrap">
         {titre}
         {/* Les avions du jour comblent le vide qui était à droite du bouton,
