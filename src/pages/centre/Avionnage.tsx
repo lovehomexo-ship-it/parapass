@@ -44,6 +44,11 @@ function AvionnageInner({ centreId }: { centreId: string }) {
   const [erreur, setErreur] = useState<string | null>(null);
   const [occupe, setOccupe] = useState(false);
   const [verdictsParPersonne, setVerdictsParPersonne] = useState<Map<string, PlaceVue['aptitude']>>(new Map());
+  // Feu Vert · P1 du cadrage : le régime est un DRAPEAU par centre. Le scan
+  // d'embarquement en fait partie — il n'a de sens que si le centre a
+  // souscrit Feu Vert. Le drapeau existait depuis P2 mais n'était consommé
+  // nulle part : le bouton s'affichait pour tout le monde.
+  const [feuVertActif, setFeuVertActif] = useState(false);
   const navigate = useNavigate();
   const { demanderConfirmation, dialogue } = useDialogues();
   const rechargerFile = useRef<(() => Promise<void>) | null>(null);
@@ -70,12 +75,13 @@ function AvionnageInner({ centreId }: { centreId: string }) {
 
   const charger = useCallback(async () => {
     setErreur(null);
-    const [{ data: rot, error: e1 }, { data: av }, { data: ctr }] = await Promise.all([
+    const [{ data: rot, error: e1 }, { data: av }, { data: ctr }, { data: opt }] = await Promise.all([
       supabase.from('rotations').select('*')
         .eq('centre_id', centreId).eq('date_jour', jour).order('numero'),
       supabase.from('aeronefs').select('id, immatriculation, places, altitude_max_m')
         .eq('centre_id', centreId).eq('actif', true).order('immatriculation'),
       supabase.from('centres').select('avionnage_actif').eq('id', centreId).maybeSingle(),
+      supabase.from('centres_options').select('feu_vert_actif').eq('centre_id', centreId).maybeSingle(),
     ]);
     if (e1) {
       console.error('Avionnage — chargement échoué :', {
@@ -87,6 +93,8 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     setRotations(rr);
     setAeronefs((av ?? []) as Aeronef[]);
     setOuvert(Boolean((ctr as { avionnage_actif?: boolean } | null)?.avionnage_actif));
+    // Aucune ligne d'options = pas souscrit. On ne présume jamais l'activation.
+    setFeuVertActif(Boolean((opt as { feu_vert_actif?: boolean } | null)?.feu_vert_actif));
 
     if (rr.length === 0) { setPlaces([]); setChargement(false); return; }
     const { data: pl, error: e2 } = await supabase.from('places_rotation')
@@ -236,10 +244,12 @@ function AvionnageInner({ centreId }: { centreId: string }) {
           </h2>
           <EnTetePlanches nb={rotations.length} enVol={enVol} />
         </div>
-        <button type="button" onClick={() => navigate('/centre/embarquement')}
-          style={{ ...action('secondaire'), marginRight: 8 }}>
-          <ScanLine className="w-4 h-4" aria-hidden /> Embarquement
-        </button>
+        {feuVertActif && (
+          <button type="button" onClick={() => navigate('/centre/embarquement')}
+            style={{ ...action('secondaire'), marginRight: 8 }}>
+            <ScanLine className="w-4 h-4" aria-hidden /> Embarquement
+          </button>
+        )}
         {rotations.length > 0 && (
           <button type="button" onClick={cloturerJournee} disabled={occupe}
             style={{ ...action('secondaire'), marginRight: 8 }}>

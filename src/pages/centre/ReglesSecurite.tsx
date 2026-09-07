@@ -42,14 +42,21 @@ function ReglesInner({ centreId }: { centreId: string }) {
   const [erreur, setErreur] = useState<string | null>(null);
   const [occupe, setOccupe] = useState<string | null>(null);
   const [ouverte, setOuverte] = useState<string | null>(null);
+  // Le régime est un DRAPEAU par centre (P1 du cadrage). Il se règle ICI,
+  // pas dans le code : aucune ligne d'options = pas souscrit, et on ne
+  // présume jamais l'activation.
+  const [feuVertActif, setFeuVertActif] = useState(false);
+  const [bascule, setBascule] = useState(false);
 
   const charger = useCallback(async () => {
     setErreur(null);
-    const [{ data: v, error: e1 }, { data: toutes, error: e2 }] = await Promise.all([
+    const [{ data: v, error: e1 }, { data: toutes, error: e2 }, { data: opt }] = await Promise.all([
       supabase.rpc('regles_en_vigueur', { p_centre_id: centreId }),
       supabase.from('regles_securite').select('*')
         .eq('centre_id', centreId).eq('actif', false).order('code'),
+      supabase.from('centres_options').select('feu_vert_actif').eq('centre_id', centreId).maybeSingle(),
     ]);
+    setFeuVertActif(Boolean((opt as { feu_vert_actif?: boolean } | null)?.feu_vert_actif));
     if (e1 || e2) {
       const e = e1 ?? e2;
       console.error('Référentiel — lecture échouée :', e);
@@ -63,6 +70,26 @@ function ReglesInner({ centreId }: { centreId: string }) {
   }, [centreId]);
 
   useEffect(() => { charger(); }, [charger]);
+
+  /**
+   * Activer ou désactiver Feu Vert pour ce centre. Le changement est
+   * JOURNALISÉ par le trigger journal_apres_option — c'est le régime, il ne
+   * bascule pas sans trace.
+   */
+  const basculerFeuVert = async (v: boolean) => {
+    setBascule(true); setErreur(null);
+    const { error } = await supabase.from('centres_options')
+      .upsert({ centre_id: centreId, feu_vert_actif: v, active_le: new Date().toISOString() },
+              { onConflict: 'centre_id' });
+    setBascule(false);
+    if (error) {
+      console.error('Bascule Feu Vert échouée :', {
+        code: error.code, message: error.message, details: error.details, hint: error.hint,
+      });
+      setErreur(messageErreur(error)); return;
+    }
+    setFeuVertActif(v);
+  };
 
   const basculer = async (code: string, actif: boolean) => {
     setOccupe(code); setErreur(null);
@@ -146,6 +173,28 @@ function ReglesInner({ centreId }: { centreId: string }) {
           Aucune règle ne se crée ni ne se modifie ici.
         </p>
       </div>
+
+      {/* L'interrupteur du module. Tant qu'il est éteint, le scan
+          d'embarquement n'est ni visible ni atteignable par URL. */}
+      <section className="p-4 flex items-start justify-between gap-3 flex-wrap" style={surface(2)}>
+        <div className="min-w-0">
+          <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--c-text)' }}>
+            Module Feu Vert {feuVertActif ? 'activé' : 'désactivé'}
+          </p>
+          <p className="mt-0.5" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
+            {feuVertActif
+              ? 'Le contrôle par scan à l’embarquement est accessible depuis l’Avionnage.'
+              : 'Les règles restent consultables, mais le scan à l’embarquement est fermé.'}
+            {' '}Chaque changement est consigné au journal de sécurité.
+          </p>
+        </div>
+        <button type="button" role="switch" aria-checked={feuVertActif} disabled={bascule}
+          onClick={() => basculerFeuVert(!feuVertActif)}
+          className="flex-shrink-0 disabled:opacity-50"
+          style={feuVertActif ? action('secondaire') : action('principal')}>
+          {bascule ? '…' : feuVertActif ? 'Désactiver Feu Vert' : 'Activer Feu Vert'}
+        </button>
+      </section>
 
       {erreur && (
         <p role="alert" className="px-3 py-2 rounded-xl" style={{

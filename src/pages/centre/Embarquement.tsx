@@ -40,6 +40,10 @@ function EmbarquementInner() {
   const jour = ymdLocal(new Date());
   const [centreId, setCentreId] = useState<string | null>(null);
   const [regime, setRegime] = useState<Regime>('informatif');
+  // Cacher un bouton ne ferme pas une porte : l'URL reste tapable. L'écran
+  // vérifie donc lui-même le drapeau. 'inconnu' tant qu'on ne sait pas —
+  // on n'ouvre pas par défaut.
+  const [feuVert, setFeuVert] = useState<'inconnu' | 'actif' | 'inactif'>('inconnu');
   const [rotations, setRotations] = useState<Rotation[]>([]);
   const [rotation, setRotation] = useState<string>('');          // id, ou texte libre
   const [rotationLibre, setRotationLibre] = useState('');
@@ -70,11 +74,12 @@ function EmbarquementInner() {
       setCentreId(cid);
       if (!cid) return;
       const [{ data: opt }, { data: rot }] = await Promise.all([
-        supabase.from('centres_options').select('feu_vert_bloquant').eq('centre_id', cid).maybeSingle(),
+        supabase.from('centres_options').select('feu_vert_actif, feu_vert_bloquant').eq('centre_id', cid).maybeSingle(),
         supabase.from('rotations').select('id, numero, heure_prevue, aeronefs(immatriculation)')
           .eq('centre_id', cid).eq('date_jour', jour).neq('statut', 'annulee').order('numero'),
       ]);
       setRegime(opt?.feu_vert_bloquant ? 'bloquant' : 'informatif');
+      setFeuVert(opt?.feu_vert_actif ? 'actif' : 'inactif');
       setRotations((rot ?? []).map(r => {
         const av = r.aeronefs as { immatriculation?: string } | { immatriculation?: string }[] | null;
         return { id: r.id, numero: r.numero, heure_prevue: r.heure_prevue,
@@ -210,6 +215,27 @@ function EmbarquementInner() {
   };
 
   const c = evaluation ? comportement(evaluation.verdict, regime) : null;
+
+  if (feuVert !== 'actif') {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center"
+        style={{ background: 'var(--c-bg)', color: 'var(--c-text)' }}>
+        <p style={{ fontSize: 17, fontWeight: 700 }}>
+          {feuVert === 'inconnu' ? 'Vérification…' : 'Feu Vert n’est pas activé sur ce centre'}
+        </p>
+        {feuVert === 'inactif' && (
+          <p style={{ fontSize: 14, color: 'var(--c-muted)', maxWidth: 420 }}>
+            Le contrôle par scan à l’embarquement fait partie du module Feu Vert.
+            Il s’active depuis Gestion → Référentiel Feu Vert.
+          </p>
+        )}
+        <button type="button" onClick={() => navigate('/centre/journee?mode=avionnage')}
+          style={action('secondaire')}>
+          <ArrowLeft className="w-4 h-4" aria-hidden /> Retour à l’avionnage
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 flex flex-col" style={{ background: 'var(--c-bg)', color: 'var(--c-text)' }}>
