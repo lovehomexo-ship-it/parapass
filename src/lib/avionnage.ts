@@ -38,6 +38,17 @@ export interface LigneFile {
   present: boolean;
 }
 
+/** Un avion du jour, tel que le parachutiste peut le voir. */
+export interface AvionDuJour {
+  id: string;
+  numero: number;
+  heurePrevue: string | null;
+  immat: string | null;
+  decolle: boolean;
+  /** Nul quand l'aéronef n'est pas affecté : on n'invente pas un plafond. */
+  placesLibres: number | null;
+}
+
 /** Ce que le parachutiste voit de sa propre situation. */
 export interface MaPlaceFile {
   /** Nul quand la personne n'est pas en file. */
@@ -48,6 +59,8 @@ export interface MaPlaceFile {
   rotationNumero: number | null;
   rotationHeure: string | null;
   aeronef: string | null;
+  /** L'id de la rotation où il est placé, pour retrouver son call. */
+  rotationId: string | null;
 }
 
 // ── Erreurs : les rendre lisibles, pas les avaler ──────────────────────────
@@ -69,8 +82,13 @@ export function messageErreur(e: unknown): string {
 export function useMaFileAvionnage(centreId: string | undefined, userId: string | undefined) {
   const [ouvert, setOuvert] = useState(false);
   const [ma, setMa] = useState<MaPlaceFile>({
-    position: null, totalEnAttente: 0, rotationNumero: null, rotationHeure: null, aeronef: null,
+    position: null, totalEnAttente: 0, rotationNumero: null, rotationHeure: null,
+    aeronef: null, rotationId: null,
   });
+  // Les avions du jour. Sans eux, la carte ne répond pas à la seule question
+  // que se pose un sauteur au sol : « le prochain avion part quand ? »
+  const [avions, setAvions] = useState<AvionDuJour[]>([]);
+  const [jour, setJour] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -78,7 +96,9 @@ export function useMaFileAvionnage(centreId: string | undefined, userId: string 
     if (!centreId || !userId) { setChargement(false); return; }
     setErreur(null);
 
-    const [{ data: centre }, { data: file }] = await Promise.all([
+    const aujourdhui = new Date().toISOString().slice(0, 10);
+    setJour(aujourdhui);
+    const [{ data: centre }, { data: file }, { data: rot }] = await Promise.all([
       supabase.from('centres').select('avionnage_actif').eq('id', centreId).maybeSingle(),
       // La policy de lecture donne toute la file du centre : savoir combien de
       // monde attend devant soi est l'essentiel de l'information.
@@ -88,9 +108,31 @@ export function useMaFileAvionnage(centreId: string | undefined, userId: string 
         .eq('date_jour', new Date().toISOString().slice(0, 10))
         .in('statut', ['attente', 'placee'])
         .order('demande_le'),
+      // Lisible par tout licencié actif (policy rotations_lecture_licencie).
+      supabase.from('rotations')
+        .select('id, numero, heure_prevue, heure_decollage, statut, aeronefs(immatriculation, places)')
+        .eq('centre_id', centreId).eq('date_jour', aujourdhui)
+        .neq('statut', 'annulee').order('numero'),
     ]);
 
     setOuvert(Boolean(centre?.avionnage_actif));
+
+    // Le nombre de places occupées n'est pas lisible par un parachutiste
+    // (places_rotation ne lui montre que la sienne) : on ne prétend donc pas
+    // afficher un « il reste N places ». Mieux vaut ne rien dire que mentir.
+    type Av = { immatriculation?: string; places?: number };
+    setAvions(((rot ?? []) as unknown as {
+      id: string; numero: number; heure_prevue: string | null;
+      heure_decollage: string | null; statut: string; aeronefs: Av | Av[] | null;
+    }[]).map(r => {
+      const av = Array.isArray(r.aeronefs) ? r.aeronefs[0] : r.aeronefs;
+      return {
+        id: r.id, numero: r.numero, heurePrevue: r.heure_prevue,
+        immat: av?.immatriculation ?? null,
+        decolle: r.heure_decollage !== null || r.statut === 'terminee',
+        placesLibres: null,
+      };
+    }));
 
     const lignes = file ?? [];
     const attente = lignes.filter(l => l.statut === 'attente');
@@ -101,6 +143,7 @@ export function useMaFileAvionnage(centreId: string | undefined, userId: string 
     let rotationNumero: number | null = null;
     let rotationHeure: string | null = null;
     let aeronef: string | null = null;
+    let rotationId: string | null = null;
 
     if (moi?.statut === 'placee' && moi.place_rotation_id) {
       // Deux lectures plutôt qu'une jointure imbriquée : les policies de
@@ -109,6 +152,7 @@ export function useMaFileAvionnage(centreId: string | undefined, userId: string 
       // à quelqu'un qui EST embarqué.
       const { data: place } = await supabase.from('places_rotation')
         .select('rotation_id').eq('id', moi.place_rotation_id).maybeSingle();
+      rotationId = place?.rotation_id ?? null;
       if (place?.rotation_id) {
         const { data: rot } = await supabase.from('rotations')
           .select('numero, heure_prevue, aeronefs(immatriculation)')
@@ -123,7 +167,7 @@ export function useMaFileAvionnage(centreId: string | undefined, userId: string 
     setMa({
       position: monRang && monRang > 0 ? monRang : null,
       totalEnAttente: attente.length,
-      rotationNumero, rotationHeure, aeronef,
+      rotationNumero, rotationHeure, aeronef, rotationId,
     });
     setChargement(false);
   }, [centreId, userId]);
@@ -137,6 +181,10 @@ export function useMaFileAvionnage(centreId: string | undefined, userId: string 
     const canal = supabase.channel(`file-avionnage-${centreId}`)
       .on('postgres_changes',
           { event: '*', schema: 'public', table: 'file_avionnage', filter: `centre_id=eq.${centreId}` },
+          () => charger())
+      // Un décollage ou un changement d'heure change le call affiché.
+      .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'rotations', filter: `centre_id=eq.${centreId}` },
           () => charger())
       .subscribe();
     return () => { supabase.removeChannel(canal); };
@@ -158,7 +206,7 @@ export function useMaFileAvionnage(centreId: string | undefined, userId: string 
     return true;
   };
 
-  return { ouvert, ma, chargement, erreur, rejoindre, quitter, recharger: charger };
+  return { ouvert, ma, avions, jour, chargement, erreur, rejoindre, quitter, recharger: charger };
 }
 
 // ── Côté DZ ────────────────────────────────────────────────────────────────
