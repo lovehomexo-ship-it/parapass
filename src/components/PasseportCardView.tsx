@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { action } from '../lib/jetons';
 import { supabase } from '../lib/supabase';
 import { ParachuteIcon } from './ParachuteIcon';
 import type { TamponConfig } from './TamponDZ';
@@ -100,6 +101,70 @@ function StatusPill({ status, days }: { status: ValidityStatus; days: number | n
   );
 }
 
+/**
+ * Couleurs de validité SUR LA CARTE (fond sombre). La carte affichait une
+ * date en blanc quand elle était valide : on lisait « 30/01/2027 » sans
+ * savoir si c'était bon. Le vert le dit, l'ambre prévient, le rouge alerte.
+ */
+const COULEUR_VALIDITE: Record<ValidityStatus, string> = {
+  valide:   '#6EE7B7',
+  bientot:  '#FCD34D',
+  expire:   '#FCA5A5',
+  manquant: 'rgba(255,255,255,0.4)',
+};
+const MOT_VALIDITE: Record<ValidityStatus, string> = {
+  valide: 'valide', bientot: 'bientôt', expire: 'expiré', manquant: '—',
+};
+
+export type CouleurFeu = 'vert' | 'orange' | 'rouge' | 'gris';
+
+const LAMPES: { cle: CouleurFeu; couleur: string }[] = [
+  { cle: 'rouge',  couleur: '#EF4444' },
+  { cle: 'orange', couleur: '#F59E0B' },
+  { cle: 'vert',   couleur: '#22C55E' },
+];
+
+/**
+ * Un vrai feu : trois lampes, une seule allumée. Les deux autres restent
+ * visibles mais éteintes — c'est ce qui rend un feu lisible d'un coup d'œil,
+ * la POSITION de la lampe autant que sa couleur. En niveaux de gris, la
+ * lampe allumée reste la seule claire.
+ *
+ * 'gris' = aucun contrôle enregistré : les trois lampes sont éteintes. On
+ * n'allume pas le vert par défaut.
+ */
+export function FeuTricolore({ etat, taille = 14, onClick, titre }: {
+  etat: CouleurFeu | null; taille?: number; onClick?: () => void; titre?: string;
+}) {
+  const lampes = (
+    <span className="inline-flex items-center" style={{
+      gap: taille * 0.3, padding: taille * 0.28, borderRadius: 999,
+      background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.14)',
+    }}>
+      {LAMPES.map(l => {
+        const allumee = etat === l.cle;
+        return (
+          <span key={l.cle} aria-hidden style={{
+            width: taille, height: taille, borderRadius: '50%',
+            background: allumee ? l.couleur : 'rgba(255,255,255,0.10)',
+            boxShadow: allumee ? `0 0 ${taille * 0.7}px ${l.couleur}` : 'none',
+            border: allumee ? 'none' : '1px solid rgba(255,255,255,0.10)',
+          }} />
+        );
+      })}
+    </span>
+  );
+  const libelle = titre ?? (etat === null || etat === 'gris'
+    ? 'Aucun contrôle enregistré' : `Feu ${etat}`);
+  if (!onClick) return <span title={libelle} aria-label={libelle}>{lampes}</span>;
+  return (
+    <button type="button" onClick={onClick} title={libelle} aria-label={`${libelle} — voir le détail`}
+      style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0, lineHeight: 0 }}>
+      {lampes}
+    </button>
+  );
+}
+
 // Hauteur mini PARTAGÉE recto/verso → dimensions strictement identiques, le
 // retournement ne change pas la taille de la carte.
 const CARD_MIN_HEIGHT = 384;
@@ -117,15 +182,81 @@ function OuiNonBadge({ ok }: { ok: boolean }) {
   );
 }
 
+/**
+ * Ce que le feu cache derrière lui. C'est la pièce qui « automatise la partie
+ * décisionnelle » : le DT clique sur le feu et lit ce qui a été constaté,
+ * avec le texte fédéral qui le fonde, sans changer d'écran.
+ *
+ * Aucun contenu médical n'y transite (P5) : les motifs ne portent que des
+ * dates et des états.
+ */
+function PanneauAnomalies({ controle, feu, onFermer }: {
+  controle: DernierControleFeuVert; feu: CouleurFeu | null; onFermer: () => void;
+}) {
+  return (
+    <div className="mt-3 rounded-xl p-4" style={{ background: 'var(--c-bg)', border: '1px solid var(--n2-bord)' }}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--c-text)' }}>
+            Contrôle du {new Date(controle.evalue_le).toLocaleDateString('fr-FR')}
+            {controle.centre_nom ? ` · ${controle.centre_nom}` : ''}
+          </p>
+          <p style={{ fontSize: 13, color: 'var(--c-muted)' }}>
+            {controle.regles_controlees !== null
+              ? `${controle.regles_controlees} règle(s) réellement contrôlée(s)`
+              : 'couverture non enregistrée'}
+          </p>
+        </div>
+        <FeuTricolore etat={feu} taille={13} />
+      </div>
+
+      {controle.motifs.length === 0 ? (
+        <p className="mt-3" style={{ fontSize: 13, color: 'var(--sev-conforme)' }}>
+          Aucune anomalie constatée lors de ce contrôle.
+        </p>
+      ) : (
+        <ul className="mt-3 space-y-2">
+          {controle.motifs.map(m => (
+            <li key={m.codeRegle} className="pl-3" style={{
+              borderLeft: `5px ${m.gravite === 'indisponible' ? 'dashed' : 'solid'} ${
+                m.gravite === 'vigilance' ? 'var(--sev-vigilance)' : 'var(--sev-critique)'}` }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text)' }}>
+                <span style={{ fontFamily: 'ui-monospace, monospace', color: 'var(--c-muted)', marginRight: 6 }}>
+                  {m.codeRegle}
+                </span>
+                {m.libelle}
+              </p>
+              <p style={{ fontSize: 12, color: 'var(--c-text2)' }}>
+                {m.detail}{m.source ? <> — <em>{m.source}</em></> : null}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+      <button type="button" onClick={onFermer} className="mt-3" style={action('texte')}>Fermer</button>
+    </div>
+  );
+}
+
 // ─── Recto card ─────────────────────────────────────────────────────────────────
 
-function CardRecto({ data, id }: { data: PasseportData; id: string }) {
+function CardRecto({ data, id, feu, onFeuClick }: {
+  data: PasseportData; id: string;
+  /** Verdict du DERNIER contrôle. Nul = jamais contrôlé, feu éteint. */
+  feu?: CouleurFeu | null;
+  /** Absent lors de la capture PNG : le feu redevient une image. */
+  onFeuClick?: () => void;
+}) {
   const { profile, licences, brevets, certificats, centresLicencies, sautsCount, validSautsCount } = data;
   const now = new Date();
   const licence = licences[0];
   const certif = certificats[0];
   const licenceExp = licence?.date_expiration ? new Date(licence.date_expiration) : null;
   const certifExp = certif?.date_expiration ? new Date(certif.date_expiration) : null;
+  // Même règle que le récapitulatif du dessous : un seul calcul de statut,
+  // pour que la carte et le récapitulatif ne se contredisent jamais.
+  const statutLicence = getStatus(licence?.date_expiration);
+  const statutMedical = getStatus(certif?.date_expiration);
   const brevetPrincipal = brevets[0];
   const centre = centresLicencies.find(c => c.statut === 'actif')?.centre;
   const avatar = profile.avatar_url || profile.photo_profil_url;
@@ -271,20 +402,32 @@ function CardRecto({ data, id }: { data: PasseportData; id: string }) {
           )}
         </div>
 
-        {/* Validités — reléguées en secondaire, sur une ligne lisible */}
-        <div className="flex flex-wrap gap-x-4 gap-y-0.5" style={{ fontSize: 11 }}>
-          {licenceExp && (
-            <div>
-              <span style={{ color: 'rgba(255,255,255,0.45)' }}>Licence&nbsp;</span>
-              <span style={{ fontFamily: 'monospace', fontWeight: 600, color: licenceExp < now ? '#F87171' : '#fff' }}>{licenceExp.toLocaleDateString('fr-FR')}</span>
-            </div>
-          )}
-          {certifExp && (
-            <div>
-              <span style={{ color: 'rgba(255,255,255,0.45)' }}>Médical&nbsp;</span>
-              <span style={{ fontFamily: 'monospace', fontWeight: 600, color: certifExp < now ? '#F87171' : '#fff' }}>{certifExp.toLocaleDateString('fr-FR')}</span>
-            </div>
-          )}
+        {/* Validités — la date SEULE ne disait pas si elle était bonne :
+            « Médical 30/01/2027 » se lisait sans savoir si c'était bon. La
+            couleur et le mot le disent, le feu résume la décision. */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1" style={{ fontSize: 11 }}>
+          <div>
+            <span style={{ color: 'rgba(255,255,255,0.45)' }}>Licence&nbsp;</span>
+            <span style={{ fontFamily: 'monospace', fontWeight: 700, color: COULEUR_VALIDITE[statutLicence] }}>
+              {licenceExp ? licenceExp.toLocaleDateString('fr-FR') : '—'}
+            </span>
+            <span style={{ color: COULEUR_VALIDITE[statutLicence], fontWeight: 600 }}>
+              {' · '}{MOT_VALIDITE[statutLicence]}
+            </span>
+          </div>
+          <div>
+            <span style={{ color: 'rgba(255,255,255,0.45)' }}>Médical&nbsp;</span>
+            <span style={{ fontFamily: 'monospace', fontWeight: 700, color: COULEUR_VALIDITE[statutMedical] }}>
+              {certifExp ? certifExp.toLocaleDateString('fr-FR') : '—'}
+            </span>
+            <span style={{ color: COULEUR_VALIDITE[statutMedical], fontWeight: 600 }}>
+              {' · '}{MOT_VALIDITE[statutMedical]}
+            </span>
+          </div>
+          {/* Le feu : la décision du DT, résumée. Cliquable hors capture. */}
+          <span className="ml-auto">
+            <FeuTricolore etat={feu ?? null} onClick={onFeuClick} taille={11} />
+          </span>
         </div>
 
         {/* ── Row 4 : Assurances ── (une mention par ligne, pas de débordement) */}
@@ -454,12 +597,16 @@ function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isO
 // ─── Flippable card ─────────────────────────────────────────────────────────────
 
 function FlippableCard({
+  feu, onFeuClick,
   data, isOwner, rectoId, versoId,
 }: {
   data: PasseportData;
   isOwner: boolean;
   rectoId: string;
   versoId: string;
+  /** Verdict du dernier contrôle Feu Vert. Nul = jamais contrôlé. */
+  feu?: CouleurFeu | null;
+  onFeuClick?: () => void;
 }) {
   const [flipped, setFlipped] = useState(false);
 
@@ -483,7 +630,7 @@ function FlippableCard({
         >
           {/* Recto — face avant */}
           <div style={{ gridArea: 'card', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
-            <CardRecto data={data} id={rectoId} />
+            <CardRecto data={data} id={rectoId} feu={feu} onFeuClick={onFeuClick} />
           </div>
 
           {/* Verso — face arrière */}
@@ -610,6 +757,9 @@ export interface DernierControleFeuVert {
   centre_nom: string | null;
   /** Nombre de règles ayant réellement contrôlé quelque chose. */
   regles_controlees: number | null;
+  /** Ce qui a été constaté. Aucun contenu médical : seulement des dates et
+   *  des états (P5). C'est ce que le panneau d'anomalies affiche. */
+  motifs: { codeRegle: string; libelle: string; detail: string; source: string; gravite: string }[];
 }
 
 const FEU_VERT_LIBELLE: Record<DernierControleFeuVert['verdict'], { texte: string; statut: 'valide' | 'expire' | 'bientot' | 'manquant' }> = {
@@ -746,6 +896,11 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
   // Contexte CENTRE : la fiche est ouverte par un admin sur quelqu'un d'autre.
   const contexteCentre = Boolean(centreId) && !isOwner;
   const [feuVert, setFeuVert] = useState<DernierControleFeuVert | null | 'jamais'>(null);
+  const [anomaliesOuvertes, setAnomalies] = useState(false);
+  // Jamais contrôlé, ou lecture en échec → feu ÉTEINT. On n'allume pas le
+  // vert par défaut : un feu éteint dit « personne n'a vérifié ».
+  const feu: CouleurFeu | null =
+    feuVert && feuVert !== 'jamais' ? feuVert.verdict : null;
 
   useEffect(() => {
     if (!contexteCentre || !centreId) { setFeuVert(null); return; }
@@ -754,7 +909,7 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
     // cette personne. La RLS d'evaluations donne au centre les siennes et au
     // parachutiste les siennes ; personne ne voit celles d'un autre centre.
     supabase.from('evaluations')
-      .select('evalue_le, verdict, regles_controlees, centres(nom)')
+      .select('evalue_le, verdict, regles_controlees, motifs, centres(nom)')
       .eq('parachutiste_id', userId).eq('centre_id', centreId)
       .order('evalue_le', { ascending: false }).limit(1)
       .then(({ data, error }) => {
@@ -775,6 +930,7 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
           verdict: e.verdict as DernierControleFeuVert['verdict'],
           centre_nom: (Array.isArray(c) ? c[0]?.nom : c?.nom) ?? null,
           regles_controlees: e.regles_controlees ?? null,
+          motifs: Array.isArray(e.motifs) ? e.motifs as DernierControleFeuVert['motifs'] : [],
         });
       });
     return () => { vivant = false; };
@@ -927,9 +1083,16 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
   // Compact mode (dashboard): card only, no action buttons or validity summary
   if (compact) {
     return (
+      <>
       <div className="w-full" style={{ maxWidth: 480 }}>
-        <FlippableCard data={displayData} isOwner={isOwner} rectoId={rectoId} versoId={versoId} />
+        <FlippableCard data={displayData} isOwner={isOwner} rectoId={rectoId} versoId={versoId}
+          feu={feu} onFeuClick={contexteCentre ? () => setAnomalies(o => !o) : undefined} />
       </div>
+
+      {anomaliesOuvertes && feuVert && feuVert !== 'jamais' && (
+        <PanneauAnomalies controle={feuVert} feu={feu} onFermer={() => setAnomalies(false)} />
+      )}
+      </>
     );
   }
 
@@ -988,6 +1151,9 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
 
       {/* Validity summary */}
       <ValiditySummary data={displayData} feuVert={feuVert} />
+      {anomaliesOuvertes && feuVert && feuVert !== 'jamais' && (
+        <PanneauAnomalies controle={feuVert} feu={feu} onFermer={() => setAnomalies(false)} />
+      )}
 
       {/* Fullscreen modal */}
       {fullscreen && <FullscreenModal data={displayData} onClose={() => setFullscreen(false)} isOwner={isOwner} />}
