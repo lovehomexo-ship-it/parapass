@@ -80,6 +80,9 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   // Une planche close ou pleine n'accepte pas de dépôt : elle ne s'éclaire pas
   // au survol, plutôt que d'accueillir puis de refuser.
   const accepteDepot = !!onDeposer && !close && !complet && !r.heure_decollage;
+  // Un avion prêt à partir SANS largueur est un avion qui ne partira pas :
+  // la planche le dit par sa rayure, avant même qu'on lise le bouton.
+  const largueurManquant = !close && !r.heure_decollage && places.length > 0 && !r.largueur_id;
 
   const agir = async (nom: string, fn: () => PromiseLike<{ error: unknown }>) => {
     setOccupe(true); setEchec(null);
@@ -116,7 +119,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
         setOccupe(false);
         if (err) setEchec(err);
       }}
-      style={{ ...surface(2), ...rayure(sev),
+      style={{ ...surface(2), ...rayure(largueurManquant ? 'vigilance' : sev),
                // Le survol se dit par la FORME (bordure épaissie, fond teinté),
                // pas par une couleur d'état seule (règle 5).
                outline: survol ? '2px dashed var(--action-texte)' : 'none',
@@ -170,7 +173,10 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
           qualifiés valides — et la base refuse les autres, au cas où. */}
       {!close && onDesignerLargueur && (
         <label className="mt-2 flex items-center gap-2 flex-wrap" style={{ fontSize: 12 }}>
-          <span style={{ color: 'var(--c-muted)' }}>Largueur</span>
+          <span style={{ color: r.largueur_id ? 'var(--c-muted)' : SEVERITE_COULEUR.vigilance,
+                         fontWeight: r.largueur_id ? 400 : 700 }}>
+            Largueur{r.largueur_id ? '' : ' — obligatoire'}
+          </span>
           <select value={r.largueur_id ?? ''} disabled={occupe}
             onChange={e => onDesignerLargueur(e.target.value || null)}
             className="px-2 rounded-lg"
@@ -268,12 +274,21 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
           {!r.heure_decollage && places.length > 0 && (
             // UN SEUL bouton plein par bloc (règle 6) : c'est celui-ci tant que
             // l'avion n'est pas parti, la clôture ensuite.
-            <button type="button" disabled={occupe} style={action('principal')}
+            // Sans largueur désigné, la base refuse — on grise le bouton ET on
+            // dit pourquoi, plutôt que de laisser cliquer pour rien.
+            <button type="button" disabled={occupe || !r.largueur_id}
+              title={r.largueur_id ? undefined : 'Désignez le largueur avant le décollage'}
+              style={{ ...action('principal'), opacity: r.largueur_id ? 1 : 0.5 }}
               onClick={() => agir('Décollage', () => supabase.from('rotations')
                 .update({ heure_decollage: new Date().toISOString(), statut: 'en_vol' })
                 .eq('id', r.id).then(x => ({ error: x.error })))}>
               <PlaneTakeoff className="w-4 h-4" aria-hidden /> Décollage
             </button>
+          )}
+          {!r.heure_decollage && places.length > 0 && !r.largueur_id && (
+            <p className="w-full" style={{ fontSize: 13, color: SEVERITE_COULEUR.vigilance }}>
+              Désignez le largueur : un avion ne décolle pas sans lui.
+            </p>
           )}
           {r.heure_decollage && !r.heure_largage && (
             <button type="button" disabled={occupe} style={action('principal')}
