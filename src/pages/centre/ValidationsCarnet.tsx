@@ -358,7 +358,18 @@ function ParaCard({ para, dzId, onDone }: { para: ParaEnAttente; dzId: string; o
   );
 }
 
-export function ValidationsCarnet({ dzId, onNavigate }: { dzId: string; onNavigate?: (s: string) => void }) {
+export function ValidationsCarnet({ dzId, onNavigate, onCompteur }: {
+  dzId: string;
+  onNavigate?: (s: string) => void;
+  /**
+   * Le tableau de bord affiche le même chiffre (pastille du menu, tuile
+   * « Carnets à valider »). Il le lisait UNE FOIS au montage : après une
+   * attestation, la liste tombait à 3 et le compteur restait à 19.
+   * On ne relit pas la base une seconde fois — l'écran qui vient de compter
+   * le dit au parent. Deux lectures auraient fini par diverger.
+   */
+  onCompteur?: (enAttente: number) => void;
+}) {
   const [paras, setParas] = useState<ParaEnAttente[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'en_attente' | 'valide' | 'refuse' | 'tous'>('en_attente');
@@ -460,9 +471,12 @@ export function ValidationsCarnet({ dzId, onNavigate }: { dzId: string; onNaviga
         },
       }));
       setParas(list);
+      onCompteur?.(list.filter(p => p.carnet_statut === 'en_attente').length);
     }
+    // Lecture en échec : on ne remonte RIEN. Annoncer zéro dossier à traiter
+    // parce qu'une requête a échoué serait un faux « tout est à jour ».
     setLoading(false);
-  }, [dzId]);
+  }, [dzId, onCompteur]);
 
   useEffect(() => { load(); }, [load]);
 

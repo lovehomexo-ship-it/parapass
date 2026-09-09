@@ -3395,7 +3395,8 @@ export function CentreDashboardPage() {
             </div>
           )}
           {activeSection === 'validations' && centreId && (
-            <ValidationsCarnet dzId={centreId} onNavigate={setActiveSection} />
+            <ValidationsCarnet dzId={centreId} onNavigate={setActiveSection}
+              onCompteur={setCarnetsEnAttente} />
           )}
           {activeSection === 'tandem' && centreId && activeModules.has('tandem') && (
             <TandemSection centreId={centreId} />
