@@ -14,7 +14,8 @@ import { surface, SEVERITE_COULEUR } from '../lib/jetons';
 
 export type ModeEcran = 'journee' | 'avionnage' | 'gestion';
 
-export function BasculeMode({ mode, onChange, enAttenteGestion = 0, enAttenteAvionnage = 0 }: {
+export function BasculeMode({ mode, onChange, enAttenteGestion = 0, enAttenteAvionnage = 0,
+  avionnageDisponible = true }: {
   mode: ModeEcran;
   onChange: (m: ModeEcran) => void;
   /** Somme des files en attente côté Gestion. La pastille disparaît à zéro. */
@@ -22,6 +23,12 @@ export function BasculeMode({ mode, onChange, enAttenteGestion = 0, enAttenteAvi
   /** Personnes en file d'avionnage. Sa propre pastille : deux files
    *  différentes ne se confondent pas dans un seul chiffre (règle 3). */
   enAttenteAvionnage?: number;
+  /**
+   * Avionnage est un module optionnel : sans souscription, le troisième mode
+   * ne s'affiche pas. Défaut VRAI, pour qu'aucun appelant existant ne change
+   * de comportement du seul fait de cette prop.
+   */
+  avionnageDisponible?: boolean;
 }) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   // TROIS métiers, pas deux. La règle 7 disait « deux métiers, deux modes » ;
@@ -30,7 +37,7 @@ export function BasculeMode({ mode, onChange, enAttenteGestion = 0, enAttenteAvi
   // C'est une extension assumée de la règle, pas un glissement.
   const modes: { cle: ModeEcran; label: string }[] = [
     { cle: 'journee',   label: 'Journée' },
-    { cle: 'avionnage', label: 'Avionnage' },
+    ...(avionnageDisponible ? [{ cle: 'avionnage' as const, label: 'Avionnage' }] : []),
     { cle: 'gestion',   label: 'Gestion' },
   ];
 

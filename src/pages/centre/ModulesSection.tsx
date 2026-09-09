@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { MODULES, LIVE_MODULE_IDS, PRIX_MODULES_SEPARES, ECONOMIE_STUDIO, computeActiveModules } from '../../data/modules';
+import { MODULES, STUDIO_MODULE_IDS, PRIX_MODULES_SEPARES, ECONOMIE_STUDIO, computeActiveModules } from '../../data/modules';
 import type { Module } from '../../data/modules';
 import { Check, Loader2, Clock, Zap, Package } from 'lucide-react';
 import { ModuleIcon } from '../../design/academieIcons';
@@ -68,11 +68,16 @@ export function ModulesSection({ centreId, onActiveChange }: Props) {
     setSaving(mod.id);
     const avant = new Set(activeModules);
     const activer = !isModuleActive(mod.id);
-    // Studio = bascule globale : tous les modules live + studio, même état
-    const ids = mod.id === 'studio' ? ['studio', ...LIVE_MODULE_IDS] : [mod.id];
+    // Studio = bascule globale sur LES MODULES DU PACK. Un module hors pack
+    // (Avionnage) n'est ni allumé ni éteint par elle : il se vend seul, et une
+    // bascule qui l'emporterait au passage le donnerait ou le retirerait sans
+    // que personne ne l'ait demandé.
+    const ids = mod.id === 'studio' ? ['studio', ...STUDIO_MODULE_IDS] : [mod.id];
 
-    // un module retiré individuellement → le pack Studio n'est plus complet
-    const idsAEcrire = !activer && mod.id !== 'studio' && studioActive ? [...ids, 'studio'] : ids;
+    // un module DU PACK retiré individuellement → le pack n'est plus complet.
+    // Retirer Avionnage ne casse pas le pack : il n'en a jamais fait partie.
+    const casseLePack = !activer && mod.id !== 'studio' && studioActive && !mod.horsStudio;
+    const idsAEcrire = casseLePack ? [...ids, 'studio'] : ids;
 
     // optimiste : l'interface bascule tout de suite
     const apres = new Set(avant);
@@ -160,7 +165,7 @@ export function ModulesSection({ centreId, onActiveChange }: Props) {
               key={mod.id}
               mod={mod}
               active={isModuleActive(mod.id)}
-              includedInStudio={studioActive && isModuleActive(mod.id)}
+              includedInStudio={studioActive && isModuleActive(mod.id) && !mod.horsStudio}
               saving={saving === mod.id}
               onToggle={() => toggleModule(mod)}
             />
@@ -271,6 +276,13 @@ function LiveCard({ mod, active, includedInStudio, saving, onToggle }: {
       <div className="mt-auto flex items-center justify-between pt-1">
         <span className="font-bold text-sm" style={{ color: 'var(--c-text)' }}>
           {mod.prix?.toFixed(2).replace('.', ',')} €<span className="font-normal text-xs text-gray-500">/mois</span>
+          {/* Dit AVANT l'achat, pas après : un centre abonné Studio doit
+              comprendre que celui-ci reste à payer. */}
+          {mod.horsStudio && (
+            <span className="block font-normal text-[11px]" style={{ color: '#F97316' }}>
+              non inclus dans Studio
+            </span>
+          )}
         </span>
         <button
           onClick={onToggle}

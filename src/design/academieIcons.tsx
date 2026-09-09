@@ -46,7 +46,7 @@ const DRILL_BADGE: Record<string, Glyph> = {
 };
 const MODULE: Record<string, Glyph> = {
   pliage: Package, finances: Euro, tandem: Users, academy: GraduationCap,
-  studio: Video, materiel: Wrench, manifest: Plane, boutique: ShoppingCart,
+  studio: Video, materiel: Wrench, avionnage: Plane, boutique: ShoppingCart,
   securite: ShieldCheck, evenements: Trophy,
 };
 

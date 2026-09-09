@@ -349,6 +349,7 @@ function DashboardHome({
   centre, stats, onNavigate, carnetsEnAttente, mode,
   briefingSlot, acquittementSlot, terrainSlot, meteoSlot, onAllerGestion, onChangerMode,
   encadrementSlot, relancesSlot, vigilanceSlot, avionnageSlot, enAttenteAvionnage = 0,
+  avionnageDisponible = true,
 }: {
   centre: Centre | null;
   stats: DashStats;
@@ -369,6 +370,8 @@ function DashboardHome({
   avionnageSlot?: React.ReactNode;     // Mode Avionnage — planches + file
   /** Pastille de la bascule : personnes en file. Comptée UNE fois, dans la page. */
   enAttenteAvionnage?: number;
+  /** Module Avionnage souscrit. Défaut vrai : aucun appelant existant ne change. */
+  avionnageDisponible?: boolean;
 }) {
   // P15.4 — L'encadrement manquant devient une pastille de la barre d'état,
   // avec sa cible : le grand 7 neutre ne menait nulle part. Même calcul que la
@@ -531,7 +534,8 @@ function DashboardHome({
       <div className="mb-4">
         <BasculeMode mode={mode} onChange={onChangerMode}
           enAttenteGestion={carnetsEnAttente + licencesExpirees + stats.demandesAttente}
-          enAttenteAvionnage={enAttenteAvionnage} />
+          enAttenteAvionnage={enAttenteAvionnage}
+          avionnageDisponible={avionnageDisponible} />
       </div>
 
       {/* ══ MODE JOURNÉE — le terrain ═══════════════════════════════════════
@@ -576,7 +580,7 @@ function DashboardHome({
 
       {/* ══ MODE AVIONNAGE — le chef d'avionnage ══════════════════════════
           Troisième métier. Planches à gauche, file à droite. */}
-      {mode === 'avionnage' && avionnageSlot}
+      {mode === 'avionnage' && avionnageDisponible && avionnageSlot}
 
       {/* ══ MODE GESTION — le centre ════════════════════════════════════════
           Les files à traiter. Aucun bloc n'a disparu : ils sont ici. */}
@@ -2809,7 +2813,7 @@ export function CentreDashboardPage() {
   const modeUrl = searchParams.get('mode');
   const lireMode = (v: string | null): ModeEcran | null =>
     v === 'gestion' || v === 'avionnage' || v === 'journee' ? v : null;
-  const mode: ModeEcran = lireMode(modeUrl)
+  const modeDemande: ModeEcran = lireMode(modeUrl)
     ?? (() => { try { return lireMode(localStorage.getItem('parapass.centre.mode')) ?? 'journee'; }
                 catch { return 'journee'; } })();
   // Pastille « Avionnage » de la bascule : nombre de personnes en file. Lu
@@ -2854,6 +2858,14 @@ export function CentreDashboardPage() {
   const [notifCount, setNotifCount] = useState(0);
   const [carnetsEnAttente, setCarnetsEnAttente] = useState(0);
   const [activeModules, setActiveModules] = useState<Set<string>>(new Set());
+  // ── Avionnage : module optionnel, facturé à part ───────────────────────────
+  // Tant qu'il n'est pas souscrit, le troisième mode n'existe pas — et une URL
+  // ?mode=avionnage tapée à la main ne le fait pas apparaître non plus.
+  // Le module est le DROIT D'USAGE ; centres.avionnage_actif reste
+  // l'interrupteur du jour. Deux questions distinctes, deux réglages : un seul
+  // drapeau pour les deux nous avait déjà coûté un bouton qui ne partait pas.
+  const avionnageDisponible = activeModules.has('avionnage');
+  const mode: ModeEcran = modeDemande === 'avionnage' && !avionnageDisponible ? 'journee' : modeDemande;
   const [drawerLicencie, setDrawerLicencie] = useState<LicencieSummary | null>(null);
   const [drawerInitialTab, setDrawerInitialTab] = useState<'carte' | 'sauts' | 'messages' | 'actions'>('carte');
   // Le tiroir d'une fiche licencié a sa propre URL (/centre/licencies/<id>) :
@@ -3019,7 +3031,7 @@ export function CentreDashboardPage() {
     { key: 'briefing', label: 'Briefing du jour', icon: Megaphone },
     ...(activeModules.has('academy') ? [{ key: 'academy', label: 'Academy', icon: GraduationCap }] : []),
     { key: 'planning', label: 'Planning DZ', icon: Calendar },
-    { key: 'rotations', label: 'Avionnage', icon: Plane },
+    ...(activeModules.has('avionnage') ? [{ key: 'rotations', label: 'Avionnage', icon: Plane }] : []),
     { key: 'materiel', label: 'Matériel', icon: Wrench },
     { key: 'securite', label: 'Sécurité', icon: ShieldAlert },
     { key: 'regles', label: 'Référentiel Feu Vert', icon: ShieldAlert },
@@ -3274,7 +3286,8 @@ export function CentreDashboardPage() {
                     briefingSlot={centreId ? <BriefingRecapDZ centreId={centreId} onOuvrir={() => setActiveSection('briefing')} /> : undefined}
                     acquittementSlot={centreId ? <SuiviAcquittements centreId={centreId} listerManquants={false} /> : undefined}
                     terrainSlot={centreId ? <SurLeTerrain centreId={centreId} /> : undefined}
-                    avionnageSlot={centreId ? <Avionnage centreId={centreId} /> : undefined}
+                    avionnageSlot={centreId && avionnageDisponible ? <Avionnage centreId={centreId} /> : undefined}
+                    avionnageDisponible={avionnageDisponible}
                     enAttenteAvionnage={enAttenteAvionnage}
                     meteoSlot={centreId ? (
                       <Tiroir cle="meteo" titre="Profil de vent, prévision et point de largage"
@@ -3401,7 +3414,7 @@ export function CentreDashboardPage() {
           {activeSection === 'tandem' && centreId && activeModules.has('tandem') && (
             <TandemSection centreId={centreId} />
           )}
-          {activeSection === 'rotations' && centreId && (
+          {activeSection === 'rotations' && centreId && activeModules.has('avionnage') && (
             <Avionnage centreId={centreId} />
           )}
           {activeSection === 'materiel' && centreId && (

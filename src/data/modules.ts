@@ -6,6 +6,13 @@ export interface Module {
   desc: string;
   status: ModuleStatus;
   prix?: number; // undefined for roadmap
+  /**
+   * Le pack Studio contient-il ce module ? Décision COMMERCIALE, pas technique.
+   * Absent = oui, pour tous les modules d'avant Avionnage — leur promesse
+   * (« tous les modules, présents et à venir ») ne change pas.
+   * Un module hors pack se vend seul, et Studio ne le donne jamais.
+   */
+  horsStudio?: boolean;
   // stripe_price_id: string; // TODO: fill in after creating Stripe products
   // Placeholders:
   // pliage   → price_XXXXXXXXXXXXXXXXXXXXXXXX
@@ -44,6 +51,14 @@ export const MODULES: Module[] = [
     status: 'live',
     prix: 29.99,
   },
+  {
+    id: 'avionnage',
+    nom: 'ParaPass Avionnage',
+    desc: 'Planches horodatées, file d’attente des sauteurs, largueur désigné, clôture de journée.',
+    status: 'live',
+    prix: 49.97,
+    horsStudio: true,
+  },
   // ── PACK ──────────────────────────────────────────────────────────────────
   {
     id: 'studio',
@@ -57,12 +72,6 @@ export const MODULES: Module[] = [
     id: 'materiel',
     nom: 'ParaPass Matériel',
     desc: 'Suivi matériel, cycles de pliage secours, échéances DAA/Cypres, contrôles harnais.',
-    status: 'soon',
-  },
-  {
-    id: 'manifest',
-    nom: 'ParaPass Manifest',
-    desc: 'Rotations avion, gestion des slots, optimisation des chargements.',
     status: 'soon',
   },
   {
@@ -87,6 +96,13 @@ export const MODULES: Module[] = [
 
 export const LIVE_MODULE_IDS = MODULES.filter((m) => m.status === 'live').map((m) => m.id);
 
+/**
+ * Ce que le pack Studio ouvre RÉELLEMENT. Avionnage se vend à part : il n'est
+ * ni allumé ni éteint par la bascule du pack.
+ */
+export const STUDIO_MODULE_IDS = MODULES
+  .filter((m) => m.status === 'live' && !m.horsStudio).map((m) => m.id);
+
 // ── État des modules : règle UNIQUE ──────────────────────────────────────────
 // ligne active=true → activé ; ligne active=false → désactivé ;
 // pas de ligne → défaut du catalogue (désactivé). Même règle pour tous.
@@ -104,9 +120,13 @@ export function computeActiveModules(rows: { module_id: string; active: boolean 
   return actifs;
 }
 
-/** Prix total si achetés séparément */
+/**
+ * Prix total si achetés séparément — LES MODULES DU PACK, et eux seuls.
+ * Y compter Avionnage gonflerait l'économie affichée d'un module que Studio
+ * ne donne pas : le badge « Économisez ~X€ » deviendrait faux.
+ */
 export const PRIX_MODULES_SEPARES = MODULES
-  .filter((m) => m.status === 'live')
+  .filter((m) => m.status === 'live' && !m.horsStudio)
   .reduce((sum, m) => sum + (m.prix ?? 0), 0);
 
 export const STUDIO = MODULES.find((m) => m.id === 'studio')!;
