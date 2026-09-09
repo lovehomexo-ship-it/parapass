@@ -133,3 +133,8 @@ select distinct r.centre_id, 'avionnage', true from rotations r
 on conflict (centre_id, module_id) do update set active = true;
 
 commit;
+
+-- APPLIQUÉE LE 09/09/2026 après validation.
+-- Refus prouvés en base : ouverture de la file et création de planche
+-- refusées sur SkyDive Atlantique (abonné Studio, sans le module).
+-- Résiliation prouvée : passer le module à false a fermé la file de BigAir.
