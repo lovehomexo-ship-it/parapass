@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Users, UserPlus, MapPin, AlertTriangle, GripVertical } from 'lucide-react';
 import { surface, action, rayure, pastille, enTeteSection, type Severite } from '../../lib/jetons';
-import { SiglesFonctions } from '../../components/SigleFonction';
 import { useFileDZ, LIBELLE_TYPE, type TypeSautFile } from '../../lib/avionnage';
 
 /** Type MIME maison du glisser-déposer : une planche n'accepte que ça. */
@@ -28,7 +27,7 @@ const APTITUDE: Record<string, { sev: Severite; libelle: string }> = {
   inconnu: { sev: 'critique',  libelle: 'À vérifier' },
 };
 
-export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlacer, onOuvrirFiche, rechargerRef, fonctions }: {
+export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlacer, onOuvrirFiche, rechargerRef }: {
   centreId: string;
   /** Rotations non clôturées, pour proposer où placer. */
   rotations: { id: string; numero: number; places_libres: number | null }[];
@@ -40,8 +39,6 @@ export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlace
   onOuvrirFiche: (parachutisteId: string) => void;
   /** Permet au parent de recharger la file après un dépôt sur une planche. */
   rechargerRef?: React.MutableRefObject<(() => Promise<void>) | null>;
-  /** Fonctions du jour par personne : le largueur doit se voir dans la file. */
-  fonctions?: Map<string, string[]>;
 }) {
   const { file, chargement, erreur, recharger } = useFileDZ(centreId);
   const [action_, setAction] = useState<string | null>(null);
@@ -161,9 +158,6 @@ export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlace
                 </div>
 
                 <div className="mt-1.5 flex items-center gap-2 flex-wrap" style={{ paddingLeft: 26 }}>
-                {(fonctions?.get(l.parachutiste_id)?.length ?? 0) > 0 && (
-                  <SiglesFonctions codes={fonctions!.get(l.parachutiste_id)!} compact />
-                )}
                 <button type="button" onClick={() => onOuvrirFiche(l.parachutiste_id)}
                   title="Ouvrir la fiche"
                   className="flex-shrink-0 whitespace-nowrap"

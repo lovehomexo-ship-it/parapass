@@ -36,6 +36,8 @@ export interface RotationVue {
   heure_prevue: string | null; heure_decollage: string | null; heure_largage: string | null;
   statut: string; aeronef_id: string | null; altitude_largage_m: number | null;
   cloturee_le: string | null;
+  /** Le largueur DÉSIGNÉ de cet avion. Un seul, choisi par la DZ. */
+  largueur_id: string | null;
 }
 export interface AeronefVue { id: string; immatriculation: string; places: number }
 
@@ -51,7 +53,7 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, fonctions }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -62,8 +64,9 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   /** Dépôt d'une demande de la file sur cette planche. Rend l'erreur, ou null. */
   onDeposer?: (fileId: string) => Promise<string | null>;
   onOuvrirFiche?: (parachutisteId: string) => void;
-  /** Fonctions du jour par personne : le largueur doit se voir à bord. */
-  fonctions?: Map<string, string[]>;
+  /** Les largueurs QUALIFIÉS du centre, pour le sélecteur. */
+  largueurs?: { parachutiste_id: string; nom: string; prenom: string }[];
+  onDesignerLargueur?: (id: string | null) => void;
 }) {
   const [occupe, setOccupe] = useState(false);
   const [echec, setEchec] = useState<string | null>(null);
@@ -163,6 +166,29 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
         {r.cloturee_le && <span>clôturée {hhmm(r.cloturee_le)}</span>}
       </div>
 
+      {/* LE LARGUEUR DE CET AVION. Un seul. La liste ne propose que des
+          qualifiés valides — et la base refuse les autres, au cas où. */}
+      {!close && onDesignerLargueur && (
+        <label className="mt-2 flex items-center gap-2 flex-wrap" style={{ fontSize: 12 }}>
+          <span style={{ color: 'var(--c-muted)' }}>Largueur</span>
+          <select value={r.largueur_id ?? ''} disabled={occupe}
+            onChange={e => onDesignerLargueur(e.target.value || null)}
+            className="px-2 rounded-lg"
+            style={{ minHeight: 34, fontSize: 12, background: 'var(--c-input)',
+                     color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }}>
+            <option value="">— non désigné —</option>
+            {(largueurs ?? []).map(l => (
+              <option key={l.parachutiste_id} value={l.parachutiste_id}>{l.prenom} {l.nom}</option>
+            ))}
+          </select>
+          {(largueurs ?? []).length === 0 && (
+            <span style={{ color: 'var(--sev-vigilance)' }}>
+              aucun largueur qualifié dans ce centre
+            </span>
+          )}
+        </label>
+      )}
+
       {/* ── Qui est à bord ───────────────────────────────────────────────── */}
       {places.length === 0 ? (
         <p className="mt-3 py-4 text-center rounded-xl"
@@ -196,10 +222,11 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                   </span>
                 </span>
               )}
-              {/* La FONCTION du jour, avant l'aptitude : au pied de l'avion,
-                  « qui est le largueur ? » se lit avant tout le reste. */}
-              {p.parachutiste_id && (fonctions?.get(p.parachutiste_id)?.length ?? 0) > 0 && (
-                <SiglesFonctions codes={fonctions!.get(p.parachutiste_id)!} compact />
+              {/* Le sigle ne va QU'AU LARGUEUR DÉSIGNÉ. La qualification dit
+                  ce qu'on peut faire ; s'il y a trois largueurs sur la DZ, il
+                  n'y en a qu'UN par avion — et c'est la DZ qui le nomme. */}
+              {p.parachutiste_id && p.parachutiste_id === r.largueur_id && (
+                <SiglesFonctions codes={['largueur']} compact />
               )}
               {/* TOUJOURS un badge, pour les quatre états. Ne rien afficher
                   quand on ne sait pas laissait croire que tout allait bien —

@@ -44,14 +44,13 @@ function AvionnageInner({ centreId }: { centreId: string }) {
   const [erreur, setErreur] = useState<string | null>(null);
   const [occupe, setOccupe] = useState(false);
   const [verdictsParPersonne, setVerdictsParPersonne] = useState<Map<string, PlaceVue['aptitude']>>(new Map());
-  // Les FONCTIONS du jour (largueur, DT…). Au pied de l'avion, la question
-  // n'est pas « qui a un brevet D » mais « QUI EST LE LARGUEUR ».
-  const [fonctions, setFonctions] = useState<Map<string, string[]>>(new Map());
-  // Feu Vert · P1 du cadrage : le régime est un DRAPEAU par centre. Le scan
-  // d'embarquement en fait partie — il n'a de sens que si le centre a
-  // souscrit Feu Vert. Le drapeau existait depuis P2 mais n'était consommé
-  // nulle part : le bouton s'affichait pour tout le monde.
-  const [feuVertActif, setFeuVertActif] = useState(false);
+  // DEUX drapeaux, pas un. Je les avais confondus : le bouton était branché
+  // sur feu_vert_actif, puis activer les feux a fait revenir le bouton.
+  //   feu_vert_actif   → le moteur et les feux
+  //   embarquement_qr  → l'écran de scan. Faux par défaut.
+  const [scanOuvert, setScanOuvert] = useState(false);
+  // Les largueurs QUALIFIÉS du centre, pour le sélecteur de désignation.
+  const [largueurs, setLargueurs] = useState<{ parachutiste_id: string; nom: string; prenom: string }[]>([]);
   const navigate = useNavigate();
   const { demanderConfirmation, dialogue } = useDialogues();
   const rechargerFile = useRef<(() => Promise<void>) | null>(null);
@@ -78,13 +77,14 @@ function AvionnageInner({ centreId }: { centreId: string }) {
 
   const charger = useCallback(async () => {
     setErreur(null);
-    const [{ data: rot, error: e1 }, { data: av }, { data: ctr }, { data: opt }] = await Promise.all([
+    const [{ data: rot, error: e1 }, { data: av }, { data: ctr }, { data: opt }, { data: lg }] = await Promise.all([
       supabase.from('rotations').select('*')
         .eq('centre_id', centreId).eq('date_jour', jour).order('numero'),
       supabase.from('aeronefs').select('id, immatriculation, places, altitude_max_m')
         .eq('centre_id', centreId).eq('actif', true).order('immatriculation'),
       supabase.from('centres').select('avionnage_actif').eq('id', centreId).maybeSingle(),
-      supabase.from('centres_options').select('feu_vert_actif').eq('centre_id', centreId).maybeSingle(),
+      supabase.from('centres_options').select('embarquement_qr').eq('centre_id', centreId).maybeSingle(),
+      supabase.rpc('largueurs_disponibles', { p_centre_id: centreId }),
     ]);
     if (e1) {
       console.error('Avionnage — chargement échoué :', {
@@ -97,7 +97,8 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     setAeronefs((av ?? []) as Aeronef[]);
     setOuvert(Boolean((ctr as { avionnage_actif?: boolean } | null)?.avionnage_actif));
     // Aucune ligne d'options = pas souscrit. On ne présume jamais l'activation.
-    setFeuVertActif(Boolean((opt as { feu_vert_actif?: boolean } | null)?.feu_vert_actif));
+    setScanOuvert(Boolean((opt as { embarquement_qr?: boolean } | null)?.embarquement_qr));
+    setLargueurs((lg ?? []) as { parachutiste_id: string; nom: string; prenom: string }[]);
 
     if (rr.length === 0) { setPlaces([]); setChargement(false); return; }
     const { data: pl, error: e2 } = await supabase.from('places_rotation')
@@ -132,23 +133,8 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     }
     setVerdictsParPersonne(verdicts);
 
-    if (ids.length > 0) {
-      const { data: fo, error: e4 } = await supabase.rpc('fonctions_operationnelles', {
-        p_centre_id: centreId, p_ids: ids,
-      });
-      if (e4) {
-        console.error('Fonctions opérationnelles — lecture échouée :', {
-          code: e4.code, message: e4.message, details: e4.details, hint: e4.hint,
-        });
-      }
-      const m = new Map<string, string[]>();
-      for (const f of (fo ?? []) as { parachutiste_id: string; code: string }[]) {
-        m.set(f.parachutiste_id, [...(m.get(f.parachutiste_id) ?? []), f.code]);
-      }
-      setFonctions(m);
-    } else {
-      setFonctions(new Map());
-    }
+    // Le sigle « largueur » ne vient plus d'une qualification mais d'une
+    // DÉSIGNATION portée par la rotation (rotations.largueur_id).
 
     setPlaces(brutes.map(p => {
       const pr = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
@@ -209,6 +195,20 @@ function AvionnageInner({ centreId }: { centreId: string }) {
         + `${r.planches_annulees} annulé(s), ${r.file_retiree} personne(s) retirée(s) de la file.`);
   };
 
+  /** Désigner — ou retirer — le largueur d'un avion. Un seul par rotation. */
+  const designerLargueur = async (rotationId: string, largueurId: string | null) => {
+    const { error } = await supabase.from('rotations')
+      .update({ largueur_id: largueurId }).eq('id', rotationId);
+    if (error) {
+      console.error('Désignation du largueur échouée :', {
+        code: error.code, message: error.message, details: error.details, hint: error.hint,
+      });
+      setErreur(messageErreur(error)); return;
+    }
+    setErreur(null);
+    await charger();
+  };
+
   const basculerOuverture = async (v: boolean) => {
     const precedent = ouvert;
     setOuvert(v);
@@ -265,7 +265,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
           </h2>
           <EnTetePlanches nb={rotations.length} enVol={enVol} />
         </div>
-        {feuVertActif && (
+        {scanOuvert && (
           <button type="button" onClick={() => navigate('/centre/embarquement')}
             style={{ ...action('secondaire'), marginRight: 8 }}>
             <ScanLine className="w-4 h-4" aria-hidden /> Embarquement
@@ -309,7 +309,8 @@ function AvionnageInner({ centreId }: { centreId: string }) {
                 <PlancheAvionnage rotation={r} places={pl} maintenant={maintenant}
                   aeronef={aeronefs.find(a => a.id === r.aeronef_id)} onChange={charger}
                   onDeposer={fileId => placer(fileId, r.id)} onOuvrirFiche={ouvrirFiche}
-                  fonctions={fonctions} />
+                  largueurs={largueurs}
+                  onDesignerLargueur={id => designerLargueur(r.id, id)} />
               </div>
             );
           })}
@@ -319,7 +320,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
         <div>
           <FileAvionnageDZ centreId={centreId} ouvert={ouvert}
             onOuvrir={basculerOuverture} onPlacer={placer} onOuvrirFiche={ouvrirFiche}
-            rechargerRef={rechargerFile} fonctions={fonctions}
+            rechargerRef={rechargerFile}
             rotations={ouvertes.map(r => {
               const a = aeronefs.find(x => x.id === r.aeronef_id);
               const occ = siegesOccupes(places.filter(p => p.rotation_id === r.id));
@@ -334,7 +335,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
             <RechercheLicencie centreId={centreId}
               aptitudes={verdictsParPersonne}
               dejaABord={new Set(places.map(p => p.parachutiste_id).filter(Boolean) as string[])}
-              onInscrire={inscrire} onOuvrirFiche={ouvrirFiche} fonctions={fonctions}
+              onInscrire={inscrire} onOuvrirFiche={ouvrirFiche}
               rotations={ouvertes.map(r => {
                 const a = aeronefs.find(x => x.id === r.aeronef_id);
                 const occ = siegesOccupes(places.filter(p => p.rotation_id === r.id));
