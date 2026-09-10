@@ -28,3 +28,5 @@ comment on column dz_circuits.vent_reference_deg is
   'Vent (d''où il vient, °) pour lequel ce circuit est prévu. Condition d''emploi, PAS le vent du jour — celui-ci vit dans dz_briefings.';
 
 commit;
+
+-- APPLIQUÉE LE 10/09/2026 après validation.

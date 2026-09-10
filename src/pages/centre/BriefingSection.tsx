@@ -11,6 +11,8 @@ import { Upload, Megaphone, MapPin, Route, Shapes, Ban, Trash2, Undo2, AlertTria
 import { BriefingSuiviDuJour, BriefingArchive } from './BriefingSuivi';
 import { useMeteoAltitude, indexHeureCourante, kmhEnKt } from '../../lib/meteoAltitude';
 import { useDialogues } from '../../components/useDialogues';
+import { ecartAngulaire, SEUIL_DERIVE_DEG } from '../../lib/vent';
+import { SEVERITE_COULEUR } from '../../lib/jetons';
 
 type EditTool = 'aucun' | 'trace' | 'lz' | 'zone_evolution' | 'sock' | 'obstacle' | 'nofly';
 
@@ -380,6 +382,25 @@ export function BriefingSection({ centreId }: { centreId: string }) {
   };
 
   const circuitActif = circuits.find(c => c.id === circuitActifId) ?? null;
+
+  /**
+   * Le circuit choisi contredit-il le vent saisi ? On réutilise ecartAngulaire
+   * et le seuil de dérive du projet : un second calcul du même écart aurait
+   * fini par diverger de « Sur le terrain ».
+   * null dès qu'on ne sait pas — un circuit sans vent de référence ne se juge
+   * pas, et l'absence de déclaration n'est pas une discordance.
+   */
+  const discordanceVent = (() => {
+    if (!circuitActif || circuitActif.vent_reference_deg === null) return null;
+    const ecart = ecartAngulaire(ventDir, circuitActif.vent_reference_deg);
+    if (ecart <= SEUIL_DERIVE_DEG) return null;
+    const mieux = circuits
+      .filter(c => c.actif && c.id !== circuitActif.id && c.vent_reference_deg !== null)
+      .map(c => ({ c, e: ecartAngulaire(ventDir, c.vent_reference_deg!) }))
+      .sort((a, b) => a.e - b.e)
+      .find(x => x.e < ecart);
+    return { reference: circuitActif.vent_reference_deg, ecart, mieux: mieux?.c ?? null };
+  })();
   const sensDerive = draftCircuit ? sensAtterrissageDerive(draftCircuit.trace) : null;
 
   const tools: { key: EditTool; label: string; icon: React.ReactNode }[] = [
@@ -558,6 +579,18 @@ export function BriefingSection({ centreId }: { centreId: string }) {
                   <option value="main_droite">Main droite</option>
                 </select>
               </label>
+              {/* Condition d'emploi du circuit. Vide tant que le centre ne l'a
+                  pas déclarée : une valeur inventée vaudrait moins que rien. */}
+              <label className="text-xs flex items-center gap-2" style={{ color: 'var(--c-text2)' }}>
+                Vent de réf. (°)
+                <input type="number" min={0} max={359} value={draftCircuit.vent_reference_deg ?? ''}
+                  onChange={e => setDraftCircuit({ ...draftCircuit,
+                    vent_reference_deg: e.target.value === '' ? null
+                      : Math.max(0, Math.min(359, parseInt(e.target.value, 10) || 0)) })}
+                  placeholder="—"
+                  className="w-20 rounded-lg px-2.5 py-2 text-sm text-white text-center outline-none"
+                  style={{ background: 'var(--c-border)', border: '1px solid var(--c-border-f)' }} />
+              </label>
               <label className="text-xs flex items-center gap-2" style={{ color: 'var(--c-text2)' }}>
                 <input type="checkbox" checked={draftCircuit.actif}
                   onChange={e => setDraftCircuit({ ...draftCircuit, actif: e.target.checked })} />
@@ -677,11 +710,28 @@ export function BriefingSection({ centreId }: { centreId: string }) {
                   {c.nom}
                   <span className="block text-[10px] font-normal opacity-70">
                     {c.sens === 'main_gauche' ? 'main gauche' : 'main droite'} · début {c.altitude_debut_m} m
+                    {c.vent_reference_deg !== null && ` · vent de réf. ${c.vent_reference_deg}°`}
                   </span>
                 </button>
               ))}
               {circuits.filter(c => c.actif).length === 0 && (
                 <p className="text-xs" style={{ color: 'var(--c-dim)' }}>Aucun circuit actif — tracez-en un d'abord.</p>
+              )}
+              {/* Le vent du jour est UNE mesure ; c'est lui qui décide du
+                  circuit. On ne corrige donc rien tout seul : on dit que le
+                  circuit choisi n'est pas celui que ce vent appelle, et le DT
+                  tranche — c'est lui qui voit le terrain. */}
+              {discordanceVent !== null && (
+                <p className="flex items-start gap-1.5 mt-0.5" style={{ fontSize: 12, color: SEVERITE_COULEUR.vigilance }}>
+                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-px" aria-hidden />
+                  <span>
+                    Vent du jour {ventDir}° — ce circuit est prévu pour {discordanceVent.reference}°
+                    ({discordanceVent.ecart}° d’écart).{' '}
+                    {discordanceVent.mieux
+                      ? `« ${discordanceVent.mieux.nom} » y correspond mieux.`
+                      : 'Vérifiez avant de publier.'}
+                  </span>
+                </p>
               )}
               {circuits.filter(c => c.actif).length > 1 && (
                 <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>

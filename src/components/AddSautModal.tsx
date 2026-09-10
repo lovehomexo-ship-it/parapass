@@ -694,6 +694,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
     tunnel_flight_count: '' as string | number,
     tunnel_coach: '',
     tunnel_discipline: '',
+    type_sortie_avion: '',
     sortie_avion: null as NotationTernaire,
     retour_face_sol: null as NotationTernaire,
     vigilance_altitude: null as NotationTernaire,
@@ -737,6 +738,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
         voilure_principale: sautAEditer.voilure_principale ?? '',
         observations: sautAEditer.observations ?? '',
         observations_moniteur: sautAEditer.observations_moniteur ?? '',
+        type_sortie_avion: sautAEditer.type_sortie_avion ?? '',
         sortie_avion: sautAEditer.sortie_avion,
         retour_face_sol: sautAEditer.retour_face_sol,
         vigilance_altitude: sautAEditer.vigilance_altitude,
@@ -881,7 +883,15 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
         lieu: isTunnel ? (form.tunnel_name.trim() || form.lieu) : form.lieu,
         aeronef_immat: isTunnel ? '' : form.aeronef_immat,
         nature_saut: form.nature_saut,
-        categorie: isTunnel ? 'OA' : form.categorie,
+        // On enregistre LA CATÉGORIE CHOISIE. Cette ligne disait
+        // `isTunnel ? 'OA' : form.categorie` — or isTunnel VAUT
+        // « form.categorie === 'soufflerie' ». Elle réécrivait donc en
+        // « ouverture automatique » le choix « Soufflerie » que l'utilisateur
+        // venait de faire. Mesuré : 628 sauts en OA, ZÉRO en soufflerie.
+        // Pire, le hash de validation était calculé sur form.categorie, soit
+        // une valeur différente de celle stockée : la signature ne pouvait
+        // pas se revérifier sur ces lignes.
+        categorie: form.categorie,
         hauteur_m: isTunnel ? 0 : form.hauteur_m,
         hauteur_ouverture: isTunnel ? null : (form.hauteur_ouverture ?? null),
         fonction: isTunnel ? 'parachutiste' : form.fonction,
@@ -905,6 +915,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
           validation_timestamp: timestampUtc,
         } : {}),
         observations_moniteur: form.observations_moniteur || null,
+        type_sortie_avion: form.type_sortie_avion.trim() || null,
         sortie_avion: form.sortie_avion || null,
         retour_face_sol: form.retour_face_sol || null,
         vigilance_altitude: form.vigilance_altitude || null,
@@ -1077,7 +1088,12 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
       hauteur_ouverture: saved.hauteur_ouverture ?? 1500,
       fonction: 'parachutiste', parachute: '', programme: '',
       voilure_principale: '', observations: '',
-      observations_moniteur: '', sortie_avion: null, retour_face_sol: null,
+      // Ces six-là manquaient : après une session de soufflerie, les champs
+      // tunnel restaient remplis dans le saut SUIVANT. Le cliquet de typage l'a
+      // signalé en refusant l'objet incomplet.
+      tunnel_name: '', tunnel_flight_minutes: '', tunnel_flight_count: '',
+      tunnel_coach: '', tunnel_discipline: '', type_pliage: 'non_renseigne',
+      observations_moniteur: '', type_sortie_avion: '', sortie_avion: null, retour_face_sol: null,
       vigilance_altitude: null, ouverture_notes: null,
       position_tete: null, position_bassin: null, position_jambes: null, position_bras: null,
       exercice_chute: '', exercice_voile: '',
@@ -1473,6 +1489,22 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                       <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest" style={{ color: '#60A5FA' }}><Wind className="w-3.5 h-3.5" /> Chute libre</span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(96,165,250,0.12)', color: 'rgba(96,165,250,0.7)' }}>→ Profil Chute libre</span>
                       <span className="text-[10px] ml-auto" style={{ color: 'rgba(255,255,255,0.25)' }}>optionnel</span>
+                    </div>
+
+                    {/* TYPE de sortie — ce qui a été FAIT. La notation « Sortie
+                        avion » juste dessous dit si c'était bien fait : deux
+                        questions différentes, deux champs. Les confondre aurait
+                        cassé la progression, qui lit la notation. */}
+                    <div>
+                      <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                        Type de sortie d'avion
+                      </label>
+                      <ChipsRemplace value={form.type_sortie_avion}
+                        onChange={(v) => update('type_sortie_avion', v)}
+                        chips={['Boule', 'Arrière', 'Côté', 'Face moteur', 'Poignée step', 'Tête haute']} />
+                      <input type="text" value={form.type_sortie_avion}
+                        onChange={(e) => update('type_sortie_avion', e.target.value)}
+                        style={darkInput} placeholder="autre sortie…" />
                     </div>
 
                     {/* Éléments techniques */}

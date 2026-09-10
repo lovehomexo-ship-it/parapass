@@ -226,6 +226,15 @@ function makeSaut(
     programme,
     voilure_principale: 'Sabre 2 150',
     observations_moniteur: statut === 'valide' ? 'Bon saut, bonne maîtrise.' : null,
+    // Complété : ces champs manquaient et le type Saut les exige. Un jeu de
+    // démo incomplet finit par masquer un vrai défaut d'affichage.
+    hauteur_ouverture: 1500,
+    is_tunnel: false,
+    tunnel_flight_minutes: null,
+    tunnel_flight_count: null,
+    tunnel_coach: null,
+    tunnel_discipline: null,
+    type_sortie_avion: null,
     sortie_avion: statut === 'valide' ? 'bon' : null,
     retour_face_sol: statut === 'valide' ? 'bon' : null,
     vigilance_altitude: statut === 'valide' ? 'bon' : null,
@@ -530,6 +539,15 @@ function makeLucasSaut(
     programme,
     voilure_principale: 'Storm 135',
     observations_moniteur: statut === 'valide' ? 'Bonne maîtrise, progression régulière.' : null,
+    // Complété : ces champs manquaient et le type Saut les exige. Un jeu de
+    // démo incomplet finit par masquer un vrai défaut d'affichage.
+    hauteur_ouverture: 1500,
+    is_tunnel: false,
+    tunnel_flight_minutes: null,
+    tunnel_flight_count: null,
+    tunnel_coach: null,
+    tunnel_discipline: null,
+    type_sortie_avion: null,
     sortie_avion: statut === 'valide' ? 'bon' : null,
     retour_face_sol: statut === 'valide' ? 'bon' : null,
     vigilance_altitude: statut === 'valide' ? 'bon' : null,

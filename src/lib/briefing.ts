@@ -30,6 +30,13 @@ export interface DzCircuit {
   zone_evolution: Point[] | null;
   altitude_debut_m: number;
   actif: boolean;
+  /**
+   * Vent (d'où il vient) pour lequel ce circuit est prévu — « main droite se
+   * fait par vent d'est ». CONDITION D'EMPLOI, pas le vent du jour : celui-ci
+   * est une mesure, portée par le briefing, et c'est lui qui décide du
+   * circuit. null = le centre ne l'a pas déclaré.
+   */
+  vent_reference_deg: number | null;
 }
 
 /**
@@ -44,7 +51,7 @@ export function circuitModifie(draft: DzCircuit | null, enBase: DzCircuit | unde
   if (!draft) return false;
   if (!enBase) return true;
   const empreinte = (c: DzCircuit) => JSON.stringify([
-    c.nom, c.sens, c.altitude_debut_m, c.actif,
+    c.nom, c.sens, c.altitude_debut_m, c.actif, c.vent_reference_deg,
     c.lz_x, c.lz_y, c.trace, c.zone_evolution,
   ]);
   return empreinte(draft) !== empreinte(enBase);
@@ -146,6 +153,7 @@ function parseSettings(row: Record<string, unknown>): DzSettings {
 function parseCircuit(row: Record<string, unknown>): DzCircuit {
   return {
     ...(row as unknown as DzCircuit),
+    vent_reference_deg: (row.vent_reference_deg as number | null) ?? null,
     trace: (row.trace as Point[] | null) ?? [],
     zone_evolution: (row.zone_evolution as Point[] | null) ?? null,
   };
@@ -431,6 +439,7 @@ export function useDzCircuits(dzId: string | undefined) {
       zone_evolution: circuit.zone_evolution ?? null,
       altitude_debut_m: circuit.altitude_debut_m,
       actif: circuit.actif ?? true,
+      vent_reference_deg: circuit.vent_reference_deg ?? null,
       updated_at: new Date().toISOString(),
     };
     const { data: written, error } = circuit.id

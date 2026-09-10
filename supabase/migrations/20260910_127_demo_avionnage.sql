@@ -188,3 +188,5 @@ grant execute on function generer_demo_avionnage(uuid) to authenticated;
 grant execute on function retirer_demo_avionnage(uuid) to authenticated;
 
 commit;
+
+-- APPLIQUÉE LE 10/09/2026 après validation.

@@ -20,3 +20,5 @@ comment on column sauts.type_sortie_avion is
   'Type de sortie d''avion (flottante, plongée, tenue…). Texte libre. NE PAS confondre avec sortie_avion, qui en note la qualité.';
 
 commit;
+
+-- APPLIQUÉE LE 10/09/2026 après validation.

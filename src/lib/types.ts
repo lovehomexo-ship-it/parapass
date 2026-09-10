@@ -26,6 +26,13 @@ export interface Saut {
   programme: string | null;
   voilure_principale: string | null;
   observations_moniteur: string | null;
+  /**
+   * TYPE de sortie d'avion — boule, arrière, côté, face moteur, poignée step,
+   * tête haute… Ce qui a été FAIT. À ne pas confondre avec sortie_avion
+   * juste dessous, qui note si c'était bien fait. Deux questions, deux champs :
+   * les confondre casserait la progression, qui lit la notation.
+   */
+  type_sortie_avion: string | null;
   // Notation ternaire (a_retravailler / correct / bon)
   sortie_avion: NotationTernaire;
   retour_face_sol: NotationTernaire;
@@ -255,6 +262,13 @@ export const NATURE_SAUT_LABELS: Record<string, string> = {
 export const CATEGORIE_LABELS: Record<string, string> = {
   OC: 'OC - Ouverture Commandée',
   OA: 'OA - Ouverture Automatique',
+  // Ces trois-là étaient acceptées en base et comptées par les statistiques et
+  // le carnet PDF, mais ABSENTES du menu : 6 sauts réels les portaient et
+  // s'affichaient sous leur code brut. Le code reste devant le libellé — si
+  // ma lecture du retard est fausse, l'erreur se voit tout de suite.
+  OR30: 'OR30 - Ouverture retardée 30 s',
+  OR60: 'OR60 - Ouverture retardée 60 s',
+  OR60plus: 'OR60+ - Ouverture retardée · plus de 60 s',
   soufflerie: 'Soufflerie',
 };
 
