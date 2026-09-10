@@ -219,9 +219,16 @@ export function BriefingSection({ centreId }: { centreId: string }) {
     } else if (tool === 'zone_evolution' || tool === 'obstacle' || tool === 'nofly') {
       setPendingPolygon(p => [...p, [x, y]]);
     } else if (tool === 'sock') {
+      // Écriture immédiate, comme avant — mais DITE. Sans retour, le DT ne
+      // pouvait pas distinguer « enregistré » de « rien ne s'est passé », et
+      // concluait que la position ne se gardait pas.
       const next = { ...draftSettings, sock_x: x, sock_y: y };
       setDraftSettings(next);
-      persistSettings(next);
+      persistSettings(next).then(ok => {
+        if (!ok) return;
+        setOkMsg('Manche à air enregistrée — commune à tous les circuits.');
+        setTimeout(() => setOkMsg(null), 3000);
+      });
     }
   };
 
@@ -577,7 +584,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
             )}
             {draftSettings.sock_x != null && (
               <span className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full" style={{ background: 'rgba(226,232,240,0.08)', color: '#E2E8F0', border: '1px solid rgba(226,232,240,0.25)' }}>
-                Manche à air
+                Manche à air · commune à tous les circuits
                 <button onClick={deleteSock} aria-label="Supprimer la manche à air" style={{ minWidth: 24, minHeight: 24 }}>
                   <Trash2 className="w-3 h-3" />
                 </button>
