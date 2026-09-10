@@ -11,7 +11,7 @@ import { siegesOccupes, messageErreur } from '../../lib/avionnage';
 import { FileAvionnageDZ } from './FileAvionnageDZ';
 import { AjouterAeronef, type Aeronef } from './Rotations';
 import { RechercheLicencie } from './RechercheLicencie';
-import { DemoAvionnage } from '../../components/DemoAvionnage';
+import { ZoneDemoModule } from '../../components/ZoneDemoModule';
 import {
   PlancheAvionnage, useHorlogeMinute, EnTetePlanches,
   type RotationVue, type PlaceVue,
@@ -348,7 +348,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
 
       {/* Zone de test, EN BAS et à part : ce qui n'est pas de la production ne
           se mélange pas aux planches du jour. */}
-      <DemoAvionnage centreId={centreId} onFait={charger} />
+      <ZoneDemoModule module="avionnage" centreId={centreId} onFait={charger} />
     </div>
   );
 }

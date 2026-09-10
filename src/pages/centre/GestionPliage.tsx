@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { QRCodeSVG } from 'qrcode.react';
 import { X, Plus, Printer, Download, ChevronRight, Clock, Package, Backpack, AlertTriangle, Smartphone, Sparkles } from 'lucide-react';
+import { ZoneDemoModule } from '../../components/ZoneDemoModule';
 import { ParachuteGlyph } from '../../design/BadgeIcon';
 import { CycleHelpPanel } from '../../components/CyclePliageSchema';
 import { habilitationValide } from '../../lib/pliage';
@@ -1318,6 +1319,11 @@ type Onglet = 'jour' | 'sacs' | 'parc' | 'stats' | 'releve' | 'habilitations';
 
 export function GestionPliage({ centreId }: { centreId: string }) {
   const [onglet, setOnglet] = useState<Onglet>('jour');
+  // Chaque onglet charge ses données au montage. Après une génération de démo,
+  // on incrémente cette clé : l'onglet visible se remonte et relit. Sans elle,
+  // le bouton écrivait en base et l'écran ne bougeait pas — le DT en aurait
+  // conclu qu'il n'avait rien fait.
+  const [version, setVersion] = useState(0);
 
   const ONGLETS: { id: Onglet; label: string }[] = [
     { id: 'jour', label: 'Du jour' },
@@ -1360,12 +1366,16 @@ export function GestionPliage({ centreId }: { centreId: string }) {
         ))}
       </div>
 
-      {onglet === 'jour' && <OngletPliageDuJour centreId={centreId} />}
-      {onglet === 'parc' && <OngletParcSacs centreId={centreId} />}
-      {onglet === 'sacs' && <OngletGestionSacs centreId={centreId} />}
-      {onglet === 'stats' && <OngletStats centreId={centreId} />}
-      {onglet === 'releve' && <OngletRelevePlieurs centreId={centreId} />}
-      {onglet === 'habilitations' && <OngletHabilitations centreId={centreId} />}
+      {onglet === 'jour' && <OngletPliageDuJour key={version} centreId={centreId} />}
+      {onglet === 'parc' && <OngletParcSacs key={version} centreId={centreId} />}
+      {onglet === 'sacs' && <OngletGestionSacs key={version} centreId={centreId} />}
+      {onglet === 'stats' && <OngletStats key={version} centreId={centreId} />}
+      {onglet === 'releve' && <OngletRelevePlieurs key={version} centreId={centreId} />}
+      {onglet === 'habilitations' && <OngletHabilitations key={version} centreId={centreId} />}
+
+      {/* Zone de test, EN BAS et à part : ce qui n'est pas de la production ne
+          se mélange pas au parc réel. */}
+      <ZoneDemoModule module="pliage" centreId={centreId} onFait={() => setVersion(v => v + 1)} />
     </div>
   );
 }

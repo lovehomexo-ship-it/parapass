@@ -3041,7 +3041,7 @@ export function CentreDashboardPage() {
     { key: 'centre', label: 'Mon centre', icon: Settings },
     { key: 'messages', label: 'Messages', icon: MessageSquare, badge: msgUnread },
     { key: 'validations', label: 'Attestation de carnet', icon: BookCheck, badge: carnetsEnAttente > 0 ? carnetsEnAttente : undefined },
-    ...(activeModules.has('pliage') ? [{ key: 'pliage', label: 'Gestion pliage', icon: Shield }] : []),
+    ...(activeModules.has('pliage') ? [{ key: 'pliage', label: 'Module pliage', icon: Shield }] : []),
     ...(activeModules.has('finances') ? [{ key: 'finances', label: 'Finances', icon: Euro }] : []),
     ...(activeModules.has('tandem') ? [{ key: 'tandem', label: 'Module Tandem', icon: GraduationCap }] : []),
     { key: 'modules', label: 'Modules', icon: Puzzle },
