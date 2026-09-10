@@ -249,9 +249,12 @@ export const NATURE_SAUT_LABELS: Record<string, string> = {
   tandem: 'Tandem',
 };
 
+// L'ORDRE COMPTE : c'est celui du menu déroulant, et le premier est le défaut
+// d'un nouveau saut. L'ouverture commandée passe devant — c'est le cas courant
+// dès qu'on est breveté ; l'automatique est la progression d'école.
 export const CATEGORIE_LABELS: Record<string, string> = {
-  OA: 'OA - Ouverture Automatique',
   OC: 'OC - Ouverture Commandée',
+  OA: 'OA - Ouverture Automatique',
   soufflerie: 'Soufflerie',
 };
 

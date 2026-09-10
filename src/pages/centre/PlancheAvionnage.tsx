@@ -38,6 +38,9 @@ export interface RotationVue {
   cloturee_le: string | null;
   /** Le largueur DÉSIGNÉ de cet avion. Un seul, choisi par la DZ. */
   largueur_id: string | null;
+  /** Planche de démonstration. Se dit à l'écran : une salle de présentation ne
+   *  doit pas confondre une planche de démo avec la journée réelle. */
+  demo?: boolean;
 }
 export interface AeronefVue { id: string; immatriculation: string; places: number }
 
@@ -134,6 +137,13 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
               cherche d'abord SON avion, on lit son call ensuite. */}
           <p className="font-extrabold leading-none" style={{ fontSize: 26, color: 'var(--c-text)' }}>
             Avion n°{r.numero}
+            {r.demo && (
+              <span className="align-middle ml-2 px-1.5 py-0.5 rounded"
+                style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em',
+                         color: 'var(--c-dim)', border: '1px dashed var(--c-border-f)' }}>
+                DÉMO
+              </span>
+            )}
           </p>
           <p className="mt-1 font-extrabold leading-none"
             style={{ fontSize: 17, color: close ? 'var(--c-muted)' : SEVERITE_COULEUR[sev] }}>

@@ -224,6 +224,36 @@ function ChipTextField({ value, onChange, chips, placeholder, rows }: {
   );
 }
 
+/**
+ * Puces qui REMPLACENT la valeur, là où ChipTextField l'ajoute.
+ *
+ * Pour un programme, « PAC 3, Brevet B » n'a pas de sens : on est sur l'un OU
+ * l'autre. La puce pose la lettre, la main ajoute le chiffre — c'est
+ * exactement le geste demandé, et c'est pour ça que le champ reste libre.
+ */
+function ChipsRemplace({ value, onChange, chips }: {
+  value: string; onChange: (v: string) => void; chips: string[];
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5 mb-1.5">
+      {chips.map(c => {
+        const actif = value.trim().toLowerCase().startsWith(c.toLowerCase());
+        return (
+          <button key={c} type="button" onClick={() => onChange(c)}
+            className="px-2.5 py-1 rounded-full text-xs font-medium transition-all"
+            style={{
+              background: actif ? 'rgba(96,165,250,0.2)' : 'rgba(255,255,255,0.12)',
+              color: actif ? '#93C5FD' : 'rgba(255,255,255,0.8)',
+              border: `1px solid ${actif ? 'rgba(96,165,250,0.45)' : 'rgba(255,255,255,0.2)'}`,
+            }}>
+            {c}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Signature canvas ─────────────────────────────────────────────────────────
 function SignatureCanvas({ onSave, onClear }: { onSave: (dataUrl: string) => void; onClear: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -649,7 +679,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
     lieu: '',
     aeronef_immat: '',
     nature_saut: 'entrainement',
-    categorie: 'OA',
+    categorie: 'OC',
     hauteur_m: 4000,
     hauteur_ouverture: 1500,
     fonction: 'parachutiste',
@@ -698,7 +728,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
         lieu: sautAEditer.lieu ?? '',
         aeronef_immat: sautAEditer.aeronef_immat ?? '',
         nature_saut: sautAEditer.nature_saut ?? 'entrainement',
-        categorie: sautAEditer.categorie ?? 'OA',
+        categorie: sautAEditer.categorie ?? 'OC',
         hauteur_m: sautAEditer.hauteur_m ?? 4000,
         hauteur_ouverture: sautAEditer.hauteur_ouverture ?? 1500,
         fonction: sautAEditer.fonction ?? 'parachutiste',
@@ -1042,7 +1072,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
     const saved = (() => { try { return JSON.parse(localStorage.getItem('parapass_last_jump_values') ?? '{}'); } catch { return {}; } })();
     setForm({
       date_saut: new Date().toISOString().split('T')[0],
-      lieu: '', aeronef_immat: '', nature_saut: 'entrainement', categorie: 'OA',
+      lieu: '', aeronef_immat: '', nature_saut: 'entrainement', categorie: 'OC',
       hauteur_m: saved.hauteur_m ?? 4000,
       hauteur_ouverture: saved.hauteur_ouverture ?? 1500,
       fonction: 'parachutiste', parachute: '', programme: '',
@@ -1197,8 +1227,17 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
               </div>
               <div>
                 <label className={labelCls} style={{ color: 'rgba(255,255,255,0.7)' }}>Programme</label>
+                {/* La puce pose le programme, la main ajoute le numéro. Le champ
+                    reste LIBRE : aucune liste fermée ne couvrirait les usages
+                    de tous les centres, et une liste fausse coûte plus qu'un
+                    champ libre. */}
+                <ChipsRemplace value={form.programme} onChange={(v) => update('programme', v)}
+                  chips={['PAC', 'Brevet A', 'Brevet B', 'Brevet C', 'Brevet D', 'Solo']} />
                 <input type="text" value={form.programme} onChange={(e) => update('programme', e.target.value)}
-                  style={darkInput} placeholder="PAC 1, Solo…" />
+                  style={darkInput} placeholder="PAC 3, Brevet B2…" />
+                <p className="mt-1 text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  Choisissez le programme, puis complétez le numéro à la main — « PAC 3 », « Brevet B2 ».
+                </p>
               </div>
             </div>
             )}
@@ -1464,7 +1503,9 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                       <ChipTextField
                         value={form.exercice_chute}
                         onChange={(v) => update('exercice_chute', v)}
-                        chips={['360° gauche','360° droite','Arche stable','Lâché de mains','Loop','Tracking','Docking','Vrille','Dos','Tonneau']}
+                        chips={['360° gauche','360° droite','Arche stable','Lâché de mains',
+                                'Loop avant','Loop arrière','Tonneau gauche','Tonneau droite',
+                                'Flèche','Tracking','Docking','Vrille','Dos']}
                         placeholder="Exercices réalisés en chute libre…"
                         rows={2}
                       />
