@@ -32,6 +32,24 @@ export interface DzCircuit {
   actif: boolean;
 }
 
+/**
+ * Le brouillon diffère-t-il du circuit enregistré ?
+ *
+ * Changer de circuit remplace le brouillon : sans cette question, un tracé en
+ * cours se perd d'un clic, sans un mot. On compare les champs que l'écran sait
+ * modifier — pas l'objet entier, dont les horodatages bougent tout seuls.
+ * Pas de contrepartie en base = tout est nouveau (donc modifié).
+ */
+export function circuitModifie(draft: DzCircuit | null, enBase: DzCircuit | undefined): boolean {
+  if (!draft) return false;
+  if (!enBase) return true;
+  const empreinte = (c: DzCircuit) => JSON.stringify([
+    c.nom, c.sens, c.altitude_debut_m, c.actif,
+    c.lz_x, c.lz_y, c.trace, c.zone_evolution,
+  ]);
+  return empreinte(draft) !== empreinte(enBase);
+}
+
 export interface DzBriefing {
   id: string;
   dz_id: string;

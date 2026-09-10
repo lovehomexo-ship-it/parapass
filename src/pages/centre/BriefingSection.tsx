@@ -4,6 +4,7 @@ import { formatHeureParis } from '../../lib/datetime';
 import { BriefingScene } from '../../components/BriefingScene';
 import {
   useBriefingDuJour, useDzCircuits, dzMapPublicUrl, sensAtterrissageDerive, compressImageFond,
+  circuitModifie,
   type DzCircuit, type DzSettings, type Point, type ZonePolygone,
 } from '../../lib/briefing';
 import { Upload, Megaphone, MapPin, Route, Shapes, Ban, Trash2, Undo2, AlertTriangle, Plus, Pencil, Wind as WindIcon, ExternalLink, CheckCircle } from 'lucide-react';
@@ -269,6 +270,30 @@ export function BriefingSection({ centreId }: { centreId: string }) {
     setTool('aucun');
   };
 
+  /**
+   * Changer le circuit AFFICHÉ sur la carte.
+   *
+   * Le panneau de droite choisissait le circuit du jour sans que la carte
+   * bouge : le DT cliquait « Main gauche », voyait toujours le tracé main
+   * droite, et concluait que le bouton était mort. Il ne l'était pas — il ne
+   * montrait simplement rien.
+   *
+   * Le brouillon non enregistré est protégé au passage : sans cette question,
+   * un tracé en cours disparaissait d'un clic, ici comme dans le sélecteur
+   * d'édition. Renvoie false si le DT refuse — l'appelant ne change alors rien.
+   */
+  const changerCircuitEdite = async (id: string): Promise<boolean> => {
+    if (id === editCircuitId) return true;
+    if (circuitModifie(draftCircuit, circuits.find(c => c.id === draftCircuit?.id))) {
+      const ok = await demanderConfirmation(
+        `Abandonner les modifications de « ${draftCircuit!.nom} » ?`,
+        'Ce circuit a été modifié sans être enregistré. Changer de circuit maintenant perd ces modifications.');
+      if (!ok) return false;
+    }
+    setEditCircuitId(id);
+    return true;
+  };
+
   // ── Sauvegarde explicite du circuit ──
   const handleSaveCircuit = async () => {
     if (!draftCircuit) return;
@@ -420,7 +445,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
             <span className="text-xs ml-2 font-semibold" style={{ color: 'var(--c-text2)' }}><Pencil className="w-3 h-3 inline-block mr-1 align-[-1px]" aria-hidden /> Circuit en cours d'édition :</span>
             <select
               value={editCircuitId ?? ''}
-              onChange={e => setEditCircuitId(e.target.value || null)}
+              onChange={e => { if (e.target.value) changerCircuitEdite(e.target.value); }}
               className="text-xs rounded-lg px-2 py-2"
               style={{ background: 'var(--c-border)', color: 'white', border: '1px solid var(--c-border-f)' }}
             >
@@ -626,7 +651,8 @@ export function BriefingSection({ centreId }: { centreId: string }) {
             </label>
             <div className="flex flex-col gap-1.5">
               {circuits.filter(c => c.actif).map(c => (
-                <button key={c.id} onClick={() => setCircuitActifId(c.id)}
+                <button key={c.id} type="button" aria-pressed={circuitActifId === c.id}
+                  onClick={async () => { if (await changerCircuitEdite(c.id)) setCircuitActifId(c.id); }}
                   className="w-full py-2.5 px-3 rounded-lg text-sm font-semibold text-left transition"
                   style={{
                     background: circuitActifId === c.id ? '#2563EB' : 'var(--c-border)',
@@ -641,6 +667,11 @@ export function BriefingSection({ centreId }: { centreId: string }) {
               ))}
               {circuits.filter(c => c.actif).length === 0 && (
                 <p className="text-xs" style={{ color: 'var(--c-dim)' }}>Aucun circuit actif — tracez-en un d'abord.</p>
+              )}
+              {circuits.filter(c => c.actif).length > 1 && (
+                <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
+                  La carte affiche le circuit choisi ici : on publie ce qu’on voit.
+                </p>
               )}
             </div>
           </div>
