@@ -278,20 +278,28 @@ export function BriefingSection({ centreId }: { centreId: string }) {
    * droite, et concluait que le bouton était mort. Il ne l'était pas — il ne
    * montrait simplement rien.
    *
-   * Le brouillon non enregistré est protégé au passage : sans cette question,
-   * un tracé en cours disparaissait d'un clic, ici comme dans le sélecteur
-   * d'édition. Renvoie false si le DT refuse — l'appelant ne change alors rien.
+   * UN CLIC, UN CIRCUIT. Pas de question posée : la carte affiche aussitôt le
+   * circuit ENREGISTRÉ. Une confirmation avait été essayée ici — elle mettait
+   * une porte au milieu du geste le plus courant de l'écran, pour un cas rare.
+   * Un brouillon abandonné se dit APRÈS, en une ligne, sans rien bloquer :
+   * rien n'est perdu en base, le tracé enregistré est toujours là.
    */
-  const changerCircuitEdite = async (id: string): Promise<boolean> => {
-    if (id === editCircuitId) return true;
-    if (circuitModifie(draftCircuit, circuits.find(c => c.id === draftCircuit?.id))) {
-      const ok = await demanderConfirmation(
-        `Abandonner les modifications de « ${draftCircuit!.nom} » ?`,
-        'Ce circuit a été modifié sans être enregistré. Changer de circuit maintenant perd ces modifications.');
-      if (!ok) return false;
-    }
+  const changerCircuitEdite = (id: string) => {
+    if (id === editCircuitId) return;
+    const modifie = circuitModifie(draftCircuit, circuits.find(c => c.id === draftCircuit?.id));
+    const abandonne = modifie ? draftCircuit!.nom : null;
     setEditCircuitId(id);
-    return true;
+    // Les deux sélections n'en font plus qu'une — SAUF pour un circuit inactif :
+    // le sélecteur d'édition les propose tous, la colonne de droite n'affiche
+    // que les actifs. Publier un circuit absent de cette colonne rendrait le
+    // bouton « Publier » incompréhensible.
+    if (circuits.find(c => c.id === id)?.actif) setCircuitActifId(id);
+    setTool('aucun');            // on regarde un circuit, on ne dessine plus dans l'autre
+    setSelectedObject(null);
+    if (abandonne) {
+      setOkMsg(`Modifications non enregistrées de « ${abandonne} » abandonnées.`);
+      setTimeout(() => setOkMsg(null), 4000);
+    }
   };
 
   // ── Sauvegarde explicite du circuit ──
@@ -652,7 +660,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
             <div className="flex flex-col gap-1.5">
               {circuits.filter(c => c.actif).map(c => (
                 <button key={c.id} type="button" aria-pressed={circuitActifId === c.id}
-                  onClick={async () => { if (await changerCircuitEdite(c.id)) setCircuitActifId(c.id); }}
+                  onClick={() => changerCircuitEdite(c.id)}
                   className="w-full py-2.5 px-3 rounded-lg text-sm font-semibold text-left transition"
                   style={{
                     background: circuitActifId === c.id ? '#2563EB' : 'var(--c-border)',
@@ -670,7 +678,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
               )}
               {circuits.filter(c => c.actif).length > 1 && (
                 <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
-                  La carte affiche le circuit choisi ici : on publie ce qu’on voit.
+                  Un clic affiche le circuit enregistré sur la carte : on publie ce qu’on voit.
                 </p>
               )}
             </div>
