@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   siegesOccupes, libelleCapacite, messageErreur, LIBELLE_TYPE,
   calculerCall, SEVERITE_CALL, formaterRetard,
+  verifierPlanche, type EntreeVerification,
 } from './avionnage';
 
 describe('avionnage — capacité', () => {
@@ -136,5 +137,103 @@ describe('avionnage — lisibilité du retard', () => {
     for (const l of ['call 15 min', 'décollage 14:30', 'embarquement', 'décollé', 'heure non fixée']) {
       expect(formaterRetard(l)).toBe(l);
     }
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VÉRIFICATION DE LA PLANCHE — repris du panneau « Vérification du stick »
+// des manifests professionnels. Le Feu Vert juge une PERSONNE ; ceci juge un
+// AVION. Un avion sans largueur n'a aucun feu rouge à bord et ne part pas.
+// ═══════════════════════════════════════════════════════════════════════════
+
+const PRETE: EntreeVerification = {
+  largueurId: 'l1', heurePrevue: '14:30:00', heureDecollage: null, cloturee: false,
+  aeronefPlaces: 4,
+  places: [
+    { rangSortie: 1, aptitude: 'vert' },
+    { rangSortie: 2, aptitude: 'vert' },
+  ],
+  largueursDisponibles: 2, siegesOccupes: 2,
+};
+
+describe('verifierPlanche — une planche complète ne signale rien', () => {
+  it('verdict vert, aucune anomalie', () => {
+    const e = verifierPlanche(PRETE);
+    expect(e.verdict).toBe('vert');
+    expect(e.anomalies).toEqual([]);
+  });
+});
+
+describe('verifierPlanche — ce qui bloque', () => {
+  it('sans largueur : bloquant, et le message change si le centre n’en a aucun', () => {
+    const sans = verifierPlanche({ ...PRETE, largueurId: null });
+    expect(sans.verdict).toBe('rouge');
+    expect(sans.anomalies[0].message).toContain('Désignez le largueur');
+
+    const aucun = verifierPlanche({ ...PRETE, largueurId: null, largueursDisponibles: 0 });
+    expect(aucun.anomalies[0].message).toContain('Aucun largueur qualifié');
+  });
+
+  it('surcharge : plus de sièges occupés que de places', () => {
+    const e = verifierPlanche({ ...PRETE, siegesOccupes: 5 });
+    expect(e.verdict).toBe('rouge');
+    expect(e.anomalies.some(a => a.code === 'surcharge')).toBe(true);
+  });
+
+  it('aéronef non affecté : on ne peut PAS vérifier la capacité, donc on bloque', () => {
+    // P1 — ne pas pouvoir vérifier n'est pas « tout va bien ».
+    const e = verifierPlanche({ ...PRETE, aeronefPlaces: null });
+    expect(e.verdict).toBe('rouge');
+  });
+
+  it('le GRIS compte avec le rouge : ne pas savoir se traite comme un refus', () => {
+    const e = verifierPlanche({ ...PRETE,
+      places: [{ rangSortie: 1, aptitude: 'gris' }, { rangSortie: 2, aptitude: 'vert' }] });
+    expect(e.verdict).toBe('rouge');
+    expect(e.anomalies.find(a => a.code === 'aptitude_refus')!.message).toContain('1 personne');
+  });
+
+  it('une vigilance seule ne bloque pas, elle avertit', () => {
+    const e = verifierPlanche({ ...PRETE,
+      places: [{ rangSortie: 1, aptitude: 'orange' }, { rangSortie: 2, aptitude: 'vert' }] });
+    expect(e.verdict).toBe('orange');
+  });
+});
+
+describe('verifierPlanche — l’ordre de sortie', () => {
+  it('deux personnes au même rang : un ordre qui ne veut rien dire', () => {
+    const e = verifierPlanche({ ...PRETE,
+      places: [{ rangSortie: 1, aptitude: 'vert' }, { rangSortie: 1, aptitude: 'vert' }] });
+    expect(e.anomalies.some(a => a.code === 'rangs_doublon')).toBe(true);
+    expect(e.verdict).toBe('orange');
+  });
+
+  it('un rang manquant se signale, sans bloquer', () => {
+    const e = verifierPlanche({ ...PRETE,
+      places: [{ rangSortie: 1, aptitude: 'vert' }, { rangSortie: null, aptitude: 'vert' }] });
+    expect(e.anomalies.some(a => a.code === 'rangs_manquants')).toBe(true);
+    expect(e.verdict).toBe('orange');
+  });
+});
+
+describe('verifierPlanche — une planche partie ne se vérifie plus', () => {
+  it('décollée : rien à signaler, même sans largueur ni heure', () => {
+    // La signaler tous les soirs en rouge n'apprendrait rien à personne.
+    const e = verifierPlanche({ ...PRETE, heureDecollage: '2026-09-26T12:00:00Z',
+                                largueurId: null, heurePrevue: null });
+    expect(e.verdict).toBe('vert');
+    expect(e.anomalies).toEqual([]);
+  });
+
+  it('clôturée : idem', () => {
+    expect(verifierPlanche({ ...PRETE, cloturee: true, largueurId: null }).verdict).toBe('vert');
+  });
+});
+
+describe('verifierPlanche — un avion vide n’est pas prêt, mais ne bloque pas', () => {
+  it('signale « personne à bord » en vigilance', () => {
+    const e = verifierPlanche({ ...PRETE, places: [], siegesOccupes: 0 });
+    expect(e.anomalies.some(a => a.code === 'vide')).toBe(true);
+    expect(e.verdict).toBe('orange');
   });
 });

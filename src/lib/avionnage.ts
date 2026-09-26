@@ -340,3 +340,109 @@ export function formaterRetard(libelle: string): string {
   if (min >= 1440) return 'planche non décollée — à clôturer ou annuler';
   return `en retard de ${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')}`;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VÉRIFICATION DE LA PLANCHE — ce qui empêche CET AVION de partir.
+//
+// Le Feu Vert répond « cette PERSONNE peut-elle sauter ? ». Il ne répond pas
+// « cet AVION est-il prêt ? ». Un avion sans largueur, en surcharge, ou dont
+// les rangs de sortie sont en doublon n'a aucun feu rouge à bord et n'est
+// pourtant pas prêt. Ce sont deux questions, et il en manquait une.
+//
+// Fonction PURE : pas de React, pas de réseau, pas de date implicite. Elle ne
+// lit que ce que la planche affiche déjà — elle n'invente aucune règle et ne
+// va chercher aucune donnée de plus.
+// ═══════════════════════════════════════════════════════════════════════════
+
+export type GraviteAnomalie = 'bloquant' | 'vigilance';
+
+export interface AnomaliePlanche {
+  /** Stable, pour les tests et les clés React — jamais affiché. */
+  code: string;
+  gravite: GraviteAnomalie;
+  /** Une phrase, à la deuxième personne : ce qu'il faut FAIRE. */
+  message: string;
+}
+
+export interface EtatPlanche {
+  anomalies: AnomaliePlanche[];
+  /** rouge = quelque chose empêche ; orange = à regarder ; vert = rien à signaler. */
+  verdict: 'rouge' | 'orange' | 'vert';
+}
+
+export interface EntreeVerification {
+  largueurId: string | null;
+  heurePrevue: string | null;
+  heureDecollage: string | null;
+  cloturee: boolean;
+  aeronefPlaces: number | null;
+  /** Une entrée par place occupée. */
+  places: { rangSortie: number | null; aptitude: 'vert' | 'orange' | 'rouge' | 'gris' }[];
+  /** Nombre de largueurs qualifiés dans le centre — 0 change le message. */
+  largueursDisponibles: number;
+  siegesOccupes: number;
+}
+
+export function verifierPlanche(e: EntreeVerification): EtatPlanche {
+  const a: AnomaliePlanche[] = [];
+
+  // Une planche close ne se vérifie plus : elle est partie, ou annulée. La
+  // signaler tous les soirs en rouge n'apprendrait rien à personne.
+  if (e.cloturee || e.heureDecollage) return { anomalies: [], verdict: 'vert' };
+
+  if (e.places.length === 0) {
+    a.push({ code: 'vide', gravite: 'vigilance', message: 'Personne à bord.' });
+  }
+
+  if (!e.largueurId) {
+    a.push({
+      code: 'largueur',
+      gravite: 'bloquant',
+      message: e.largueursDisponibles === 0
+        ? 'Aucun largueur qualifié dans ce centre : la qualification se saisit dans la fiche du licencié.'
+        : 'Désignez le largueur : un avion ne décolle pas sans lui.',
+    });
+  }
+
+  if (e.aeronefPlaces === null) {
+    a.push({ code: 'aeronef', gravite: 'bloquant',
+             message: 'Aucun aéronef affecté : la capacité ne peut pas être vérifiée.' });
+  } else if (e.siegesOccupes > e.aeronefPlaces) {
+    a.push({ code: 'surcharge', gravite: 'bloquant',
+             message: `${e.siegesOccupes} places occupées pour ${e.aeronefPlaces} à bord : retirez quelqu’un.` });
+  }
+
+  // Le gris compte AVEC le rouge : ne pas savoir se traite comme un refus.
+  const refus = e.places.filter(p => p.aptitude === 'rouge' || p.aptitude === 'gris').length;
+  if (refus > 0) {
+    a.push({ code: 'aptitude_refus', gravite: 'bloquant',
+             message: `${refus} personne${refus > 1 ? 's' : ''} à bord ${refus > 1 ? 'sont' : 'est'} à examiner ou à vérifier.` });
+  }
+  const vigilance = e.places.filter(p => p.aptitude === 'orange').length;
+  if (vigilance > 0) {
+    a.push({ code: 'aptitude_vigilance', gravite: 'vigilance',
+             message: `${vigilance} personne${vigilance > 1 ? 's' : ''} à bord en vigilance.` });
+  }
+
+  if (!e.heurePrevue) {
+    a.push({ code: 'heure', gravite: 'vigilance',
+             message: 'Heure de décollage non renseignée : personne ne peut s’y préparer.' });
+  }
+
+  // Deux sauteurs au même rang, c'est un ordre de sortie qui ne veut rien dire.
+  const rangs = e.places.map(p => p.rangSortie).filter((r): r is number => r !== null);
+  const doublons = rangs.length - new Set(rangs).size;
+  if (doublons > 0) {
+    a.push({ code: 'rangs_doublon', gravite: 'vigilance',
+             message: 'Deux personnes portent le même rang de sortie.' });
+  }
+  if (e.places.length > 0 && rangs.length < e.places.length) {
+    a.push({ code: 'rangs_manquants', gravite: 'vigilance',
+             message: 'Ordre de sortie incomplet.' });
+  }
+
+  return {
+    anomalies: a,
+    verdict: a.some(x => x.gravite === 'bloquant') ? 'rouge' : a.length > 0 ? 'orange' : 'vert',
+  };
+}

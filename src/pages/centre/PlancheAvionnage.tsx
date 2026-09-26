@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { MIME_FILE } from './FileAvionnageDZ';
 import { SiglesFonctions } from '../../components/SigleFonction';
 import { supabase } from '../../lib/supabase';
-import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff } from 'lucide-react';
+import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { surface, rayure, pastille, action, SEVERITE_COULEUR, type Severite } from '../../lib/jetons';
 import {
   formaterRetard,
   calculerCall, SEVERITE_CALL, siegesOccupes, libelleCapacite, messageErreur,
   LIBELLE_TYPE, type TypeSautFile,
+  verifierPlanche,
 } from '../../lib/avionnage';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -104,6 +105,21 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
     agir('Heure de décollage prévue', () => supabase.from('rotations')
       .update({ heure_prevue: valeur || null }).eq('id', r.id).then(x => ({ error: x.error })));
 
+  // « Vérification du stick » — repris des manifests professionnels. Le Feu
+  // Vert dit si une PERSONNE peut sauter ; ceci dit si cet AVION est prêt.
+  // Deux questions différentes : un avion sans largueur n'a aucun feu rouge à
+  // bord et ne part pas.
+  const etat = verifierPlanche({
+    largueurId: r.largueur_id,
+    heurePrevue: r.heure_prevue,
+    heureDecollage: r.heure_decollage,
+    cloturee: r.cloturee_le !== null || r.statut === 'annulee',
+    aeronefPlaces: aeronef?.places ?? null,
+    places: places.map(p => ({ rangSortie: p.rang_sortie, aptitude: p.aptitude })),
+    largueursDisponibles: (largueurs ?? []).length,
+    siegesOccupes: sieges,
+  });
+
   return (
     <article className="p-3.5"
       onDragOver={e => {
@@ -178,6 +194,44 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
         {r.heure_largage && <span>largage {hhmm(r.heure_largage)}</span>}
         {r.cloturee_le && <span>clôturée {hhmm(r.cloturee_le)}</span>}
       </div>
+
+      {/* ── VÉRIFICATION DE LA PLANCHE ────────────────────────────────────
+          Ce qui empêche CET AVION de partir, en un bloc. Il se lit avant les
+          noms : savoir qu'il manque le largueur importe plus que savoir qui
+          est en n°3. Muet quand tout va bien — un panneau qui parle tout le
+          temps ne se lit plus. */}
+      {!close && etat.anomalies.length > 0 && (
+        <div className="mt-2.5 px-3 py-2 rounded-xl"
+          style={{ ...rayure(etat.verdict === 'rouge' ? 'critique' : 'vigilance'),
+                   background: `color-mix(in srgb, ${SEVERITE_COULEUR[etat.verdict === 'rouge' ? 'critique' : 'vigilance']} 9%, transparent)` }}>
+          <p className="flex items-center gap-1.5"
+            style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.06em',
+                     textTransform: 'uppercase',
+                     color: SEVERITE_COULEUR[etat.verdict === 'rouge' ? 'critique' : 'vigilance'] }}>
+            <AlertTriangle className="w-3.5 h-3.5" aria-hidden />
+            {etat.verdict === 'rouge' ? 'Cet avion ne peut pas partir' : 'À vérifier avant le départ'}
+          </p>
+          <ul className="mt-1">
+            {etat.anomalies.map(an => (
+              <li key={an.code} className="flex items-start gap-1.5"
+                style={{ fontSize: 12.5, color: 'var(--c-text2)' }}>
+                {/* La gravité se lit à la FORME, pas à la seule couleur. */}
+                <span aria-hidden style={{ fontWeight: 900, lineHeight: '1.45',
+                  color: SEVERITE_COULEUR[an.gravite === 'bloquant' ? 'critique' : 'vigilance'] }}>
+                  {an.gravite === 'bloquant' ? '■' : '▲'}
+                </span>
+                <span>{an.message}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {!close && etat.anomalies.length === 0 && places.length > 0 && (
+        <p className="mt-2.5 flex items-center gap-1.5"
+          style={{ fontSize: 12.5, fontWeight: 700, color: SEVERITE_COULEUR.conforme }}>
+          <CheckCircle2 className="w-4 h-4" aria-hidden /> Planche complète — rien à signaler.
+        </p>
+      )}
 
       {/* LE LARGUEUR DE CET AVION. Un seul. La liste ne propose que des
           qualifiés valides — et la base refuse les autres, au cas où. */}
@@ -294,11 +348,6 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                 .eq('id', r.id).then(x => ({ error: x.error })))}>
               <PlaneTakeoff className="w-4 h-4" aria-hidden /> Décollage
             </button>
-          )}
-          {!r.heure_decollage && places.length > 0 && !r.largueur_id && (
-            <p className="w-full" style={{ fontSize: 13, color: SEVERITE_COULEUR.vigilance }}>
-              Désignez le largueur : un avion ne décolle pas sans lui.
-            </p>
           )}
           {r.heure_decollage && !r.heure_largage && (
             <button type="button" disabled={occupe} style={action('principal')}
