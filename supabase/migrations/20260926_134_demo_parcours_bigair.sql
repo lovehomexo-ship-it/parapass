@@ -1,0 +1,40 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- DÉMO — des parcours crédibles sur BigAir.
+--
+-- Le centre affichait une pyramide impossible : un moniteur à 500 sauts, et
+-- vingt-cinq personnes entre 1 et 8. Personne n'a de brevet, personne n'a de
+-- qualification — donc la planche d'avionnage n'avait RIEN à montrer, et le
+-- travail sur les sigles ne se voyait pas.
+--
+-- Trois passes : les sauts, les brevets, les qualifications. Chacune déduite
+-- de la précédente, pour que l'ensemble se tienne.
+--
+-- ÉCHELLE DE DÉMONSTRATION, PAS UNE RÈGLE FÉDÉRALE. ParaPass n'affirme nulle
+-- part qu'un brevet s'obtient à N sauts — ce serait une règle sans référence,
+-- ce que P2 interdit. Ce seuil ne sert qu'à peupler un centre de démo de
+-- façon vraisemblable ; aucun code applicatif ne le lit.
+--
+-- Les sauts créés portent le statut « historique » : c'est le mécanisme prévu
+-- pour un carnet antérieur, pas une validation de complaisance. Aucun n'est
+-- signé, aucun ne prétend avoir été contrôlé par un moniteur.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- 1 · Les sauts — une pyramide : deux anciens, un ventre d'autonomes, une
+--     base d'élèves. Cible DÉTERMINISTE (rang par nombre de sauts actuel),
+--     pour que deux exécutions donnent le même centre.
+--     Voir migration appliquée « demo_parcours_credibles_bigair ».
+
+-- 2 · Les brevets suivent l'expérience :
+--     >= 500 → D ; >= 200 → C ; >= 50 → B ; >= 15 → A ; en dessous → aucun.
+
+-- 3 · Les qualifications suivent les brevets, et jamais en doublon :
+--     largueur >= 400 sauts, moniteur tandem / formateur PAC / initiateurs
+--     répartis sur les plus expérimentés. Un brevet de moniteur (BPJEPS) est
+--     posé sur ceux qui encadrent — le CHECK n'accepte que les diplômes
+--     d'État.
+--     Voir migration appliquée « demo_brevets_et_qualifications_bigair ».
+
+-- APPLIQUÉES LE 26/09/2026.
+-- Résultat mesuré : Claire DUBOIS 1150 sauts, brevet D, BPJEPS, DT + largueur
+-- + moniteur tandem. 9 personnes au brevet C ou D, 5 largueurs, une base
+-- d'élèves sans brevet.

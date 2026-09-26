@@ -103,14 +103,14 @@ function AvionnageInner({ centreId }: { centreId: string }) {
 
     if (rr.length === 0) { setPlaces([]); setChargement(false); return; }
     const { data: pl, error: e2 } = await supabase.from('places_rotation')
-      .select('id, rotation_id, parachutiste_id, moniteur_id, type_saut, rang_sortie, statut, groupe_id, masse_kg, altitude_largage_m, radio, profiles!parachutiste_id(nom, prenom, masse_kg, type_brevet_principal)')
+      .select('id, rotation_id, parachutiste_id, moniteur_id, type_saut, rang_sortie, statut, groupe_id, masse_kg, altitude_largage_m, radio, profiles!parachutiste_id(nom, prenom, masse_kg, type_brevet_principal, type_brevet_moniteur)')
       .in('rotation_id', rr.map(r => r.id)).order('rang_sortie', { nullsFirst: false });
     if (e2) {
       console.error('Places — chargement échoué :', {
         code: e2.code, message: e2.message, details: e2.details, hint: e2.hint,
       });
     }
-    type Pr = { nom: string; prenom: string; masse_kg: number | null; type_brevet_principal: string | null };
+    type Pr = { nom: string; prenom: string; masse_kg: number | null; type_brevet_principal: string | null; type_brevet_moniteur: string | null };
     const brutes = (pl ?? []) as unknown as (Omit<PlaceVue, 'nom' | 'aptitude'> & { profiles: Pr | Pr[] | null })[];
 
     // Le verdict vient de FEU VERT, pour tout le monde — présent déclaré ou
@@ -168,6 +168,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
         altitude_largage_m: (p as { altitude_largage_m?: number | null }).altitude_largage_m ?? null,
         radio: Boolean((p as { radio?: boolean }).radio),
         brevet: pr?.type_brevet_principal ?? null,
+        brevet_moniteur: pr?.type_brevet_moniteur ?? null,
         // Ce qui n'est pas saisi ne s'affiche pas : aucune qualification n'est
         // déduite d'un nombre de sauts ni d'un brevet.
         qualifications: qualifs.get(p.parachutiste_id ?? '') ?? [],

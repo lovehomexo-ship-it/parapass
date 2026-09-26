@@ -32,6 +32,21 @@ export const FONCTIONS: Record<string, {
     sigle: 'PAC', couleur: '#FBBF24', Icone: GraduationCap,
     libelle: 'Formateur PAC',
   },
+  // Les trois dernières valeurs du CHECK de qualifications.type. Elles
+  // existaient en base et ne s'affichaient NULLE PART : une qualification
+  // saisie et jamais rendue vaut une qualification perdue.
+  initiateur_VR: {
+    sigle: 'INIT VR', couleur: '#818CF8', Icone: Users,
+    libelle: 'Initiateur vol relatif',
+  },
+  initiateur_freestyle: {
+    sigle: 'INIT FS', couleur: '#818CF8', Icone: Users,
+    libelle: 'Initiateur freestyle',
+  },
+  pilote_planeur: {
+    sigle: 'PLANEUR', couleur: '#94A3B8', Icone: Plane,
+    libelle: 'Pilote planeur',
+  },
 };
 
 /**

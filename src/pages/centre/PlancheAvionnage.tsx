@@ -41,6 +41,8 @@ export interface PlaceVue {
   brevet: string | null;
   /** Qualifications valides : largueur, moniteur… Affichées telles quelles. */
   qualifications: string[];
+  /** Brevet de moniteur (BEES, BPJEPS). Dit qui encadre. */
+  brevet_moniteur: string | null;
   /** Verdict Feu Vert. JAMAIS nul : ne rien savoir est un état — le gris —
    *  et il doit se voir. Une absence de badge se lisait « tout va bien ». */
   aptitude: 'vert' | 'orange' | 'rouge' | 'gris';
@@ -401,15 +403,22 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                   style={{ fontSize: 13, color: 'var(--c-text)', minHeight: 32 }}>
                   {p.nom}
                   {/* Le brevet, comme sur un manifest : « DUPONT (C) ». */}
-                  {p.brevet && (
-                    <span style={{ color: 'var(--c-muted)', fontWeight: 400 }}> ({p.brevet})</span>
+                  {/* « DUPONT (D · BPJEPS) » — le brevet de sauteur ET celui de
+                      moniteur. Le second manquait : on ne voyait pas qui
+                      encadrait. */}
+                  {(p.brevet || p.brevet_moniteur) && (
+                    <span style={{ color: 'var(--c-muted)', fontWeight: 400 }}>
+                      {' ('}{[p.brevet, p.brevet_moniteur].filter(Boolean).join(' · ')}{')'}
+                    </span>
                   )}
                 </button>
               ) : (
                 <span className="flex-1 min-w-0 truncate" style={{ fontSize: 13, color: 'var(--c-text)' }}>
                   {p.nom}
-                  {p.brevet && (
-                    <span style={{ color: 'var(--c-muted)', fontWeight: 400 }}> ({p.brevet})</span>
+                  {(p.brevet || p.brevet_moniteur) && (
+                    <span style={{ color: 'var(--c-muted)', fontWeight: 400 }}>
+                      {' ('}{[p.brevet, p.brevet_moniteur].filter(Boolean).join(' · ')}{')'}
+                    </span>
                   )}
                 </span>
               )}
@@ -455,9 +464,17 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
 
               {/* Les qualifications, telles qu'elles sont en base. Aucune
                   n'est déduite : ce qui n'est pas saisi ne s'affiche pas. */}
-              {p.qualifications.length > 0 && (
-                <SiglesFonctions codes={p.qualifications} compact />
-              )}
+              {(() => {
+                // Claire portait DEUX fois « LARGUEUR » : une fois au titre de
+                // sa qualification, une fois au titre de sa désignation du
+                // jour. Le sigle du DÉSIGNÉ prime — il dit « c'est elle,
+                // aujourd'hui » — donc la qualification ne se répète pas.
+                const aAfficher = p.qualifications.filter(
+                  q => !(q === 'largueur' && p.parachutiste_id === r.largueur_id));
+                return aAfficher.length > 0
+                  ? <SiglesFonctions codes={aAfficher} compact />
+                  : null;
+              })()}
 
               {p.parachutiste_id && p.parachutiste_id === r.largueur_id && (
                 <SiglesFonctions codes={['largueur']} compact />
