@@ -1,0 +1,28 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 1 · LE VERDICT DIT POURQUOI.
+--
+-- « À examiner » sans motif oblige à ouvrir la fiche de chacun. verdict_conformite
+-- et verdicts_du_jour renvoient désormais `motifs` : une ligne par règle non
+-- conforme ou illisible, avec SON CODE — on peut remonter au texte qui la fonde
+-- (P2) — et le détail calculé. Le bloquant en premier.
+--
+-- 2 · POURQUOI TOUT ÉTAIT ORANGE : MAT-002, « dernier pliage tracé antérieur au
+--     dernier saut », tombait sur TOUT LE MONDE. C'est moi qui l'ai provoqué en
+--     insérant un historique de sauts jusqu'à aujourd'hui sans toucher aux
+--     pliages. Un pliage du jour est tracé pour les profils de démonstration.
+--
+-- 3 · L'AVION n°1 DOIT POUVOIR PARTIR : on n'y embarque que des dossiers
+--     complets (licence ET certificat médical en cours). L'AVION n°2 porte UNE
+--     anomalie, réelle — pas simulée à l'affichage : une personne dont le
+--     certificat a expiré. Un avion de démo qui n'a jamais rien à signaler ne
+--     montre pas ce que fait le produit.
+--
+-- Les profils marqués donnees_reelles ne sont jamais touchés.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Migrations appliquées : verdicts_avec_motifs_lisibles,
+-- demo_dossiers_a_jour_et_une_anomalie, demo_avion1_au_vert_avion2_une_anomalie.
+--
+-- APPLIQUÉES LE 26/09/2026. Mesuré après coup :
+--   avion n°1 — 7 personnes, toutes au VERT
+--   avion n°2 — Chloé DÉMO en ROUGE :
+--               « MED-001 — certificat valable jusqu'au 23/08/2026 »

@@ -118,6 +118,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     // autres n'avaient aucun badge, ce qui se lisait « tout va bien ».
     const ids = brutes.map(p => p.parachutiste_id).filter(Boolean) as string[];
     const verdicts = new Map<string, PlaceVue['aptitude']>();
+    const motifs = new Map<string, string | null>();
     if (ids.length > 0) {
       const { data: vd, error: e3 } = await supabase.rpc('verdicts_du_jour', {
         p_centre_id: centreId, p_ids: ids, p_date: jour,
@@ -128,11 +129,25 @@ function AvionnageInner({ centreId }: { centreId: string }) {
           code: e3.code, message: e3.message, details: e3.details, hint: e3.hint,
         });
       }
-      for (const v of (vd ?? []) as { parachutiste_id: string; verdict: PlaceVue['aptitude'] }[]) {
+      for (const v of (vd ?? []) as { parachutiste_id: string; verdict: PlaceVue['aptitude']; motifs: string | null }[]) {
         verdicts.set(v.parachutiste_id, v.verdict);
+        motifs.set(v.parachutiste_id, v.motifs ?? null);
       }
     }
     setVerdictsParPersonne(verdicts);
+
+    // Le nom du moniteur qui accompagne. Une lecture separee : la jointure
+    // imbriquee sur la meme table que le parachutiste rendait des colonnes
+    // ambigues, et un nom qui manque vaut mieux qu'une ligne qui ne charge pas.
+    const nomsMoniteurs = new Map<string, string>();
+    const idsMoniteurs = [...new Set(brutes.map(p => p.moniteur_id).filter(Boolean))] as string[];
+    if (idsMoniteurs.length > 0) {
+      const { data: mo } = await supabase.from('profiles')
+        .select('id, nom, prenom').in('id', idsMoniteurs);
+      for (const m of (mo ?? []) as { id: string; nom: string; prenom: string }[]) {
+        nomsMoniteurs.set(m.id, `${m.prenom} ${m.nom}`);
+      }
+    }
 
     // Les qualifications VALIDES, telles qu'elles sont en base. Une
     // qualification périmée n'est pas une qualification : elle ne s'affiche
@@ -169,6 +184,8 @@ function AvionnageInner({ centreId }: { centreId: string }) {
         radio: Boolean((p as { radio?: boolean }).radio),
         brevet: pr?.type_brevet_principal ?? null,
         brevet_moniteur: pr?.type_brevet_moniteur ?? null,
+        motifs: motifs.get(p.parachutiste_id ?? '') ?? null,
+        moniteur_nom: nomsMoniteurs.get(p.moniteur_id ?? '') ?? null,
         // Ce qui n'est pas saisi ne s'affiche pas : aucune qualification n'est
         // déduite d'un nombre de sauts ni d'un brevet.
         qualifications: qualifs.get(p.parachutiste_id ?? '') ?? [],

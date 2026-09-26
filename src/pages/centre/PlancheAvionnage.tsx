@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MIME_FILE } from './FileAvionnageDZ';
 import { SiglesFonctions } from '../../components/SigleFonction';
 import { supabase } from '../../lib/supabase';
-import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff, AlertTriangle, CheckCircle2, Fuel, Radio } from 'lucide-react';
+import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff, AlertTriangle, CheckCircle2, Fuel, Radio, ChevronDown } from 'lucide-react';
 import { surface, rayure, pastille, action, SEVERITE_COULEUR, type Severite } from '../../lib/jetons';
 import {
   formaterRetard,
@@ -43,6 +43,11 @@ export interface PlaceVue {
   qualifications: string[];
   /** Brevet de moniteur (BEES, BPJEPS). Dit qui encadre. */
   brevet_moniteur: string | null;
+  /** Ce qui n'est pas conforme, en clair, avec le code de la règle. null quand
+   *  tout va bien. « À examiner » sans motif oblige à ouvrir chaque fiche. */
+  motifs: string | null;
+  /** Le moniteur qui accompagne cette personne, quand il y en a un. */
+  moniteur_nom: string | null;
   /** Verdict Feu Vert. JAMAIS nul : ne rien savoir est un état — le gris —
    *  et il doit se voir. Une absence de badge se lisait « tout va bien ». */
   aptitude: 'vert' | 'orange' | 'rouge' | 'gris';
@@ -115,6 +120,14 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   const [survol, setSurvol] = useState(false);
   /** Sélection courante pour former un groupe. Vidée après chaque action. */
   const [selection, setSelection] = useState<Set<string>>(new Set());
+  /** Volets de détail ouverts. Fermés par défaut : la ligne doit tenir en une
+   *  phrase lisible, le reste se demande. */
+  const [detailsOuverts, setDetailsOuverts] = useState<Set<string>>(new Set());
+  const basculerDetails = (id: string) => setDetailsOuverts(s => {
+    const n = new Set(s);
+    if (n.has(id)) n.delete(id); else n.add(id);
+    return n;
+  });
   const basculer = (id: string) => setSelection(s => {
     const n = new Set(s);
     if (n.has(id)) n.delete(id); else n.add(id);
@@ -384,209 +397,205 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
               </div>
             )}
           <ul>
-          {bloc.places.map((p, i) => (
-            <li key={p.id} className="flex items-center gap-2 py-1.5"
+          {bloc.places.map((p, i) => {
+            const ouvert = detailsOuverts.has(p.id);
+            const aDire = p.aptitude !== 'vert' && p.motifs;
+            return (
+            <li key={p.id} className="py-1.5"
               style={{ borderTop: i === 0 ? 'none' : '1px solid var(--n3-filet)' }}>
-              {!close && onGrouper && (
-                <input type="checkbox" checked={selection.has(p.id)}
-                  onChange={() => basculer(p.id)}
-                  aria-label={`Sélectionner ${p.nom} pour former un groupe`}
-                  style={{ width: 16, height: 16, flexShrink: 0 }} />
-              )}
-              <span className="font-bold flex-shrink-0"
-                style={{ fontSize: 13, color: 'var(--c-muted)', minWidth: 20 }}>
-                {p.rang_sortie ?? '·'}
-              </span>
-              {p.parachutiste_id && onOuvrirFiche ? (
-                <button type="button" onClick={() => onOuvrirFiche(p.parachutiste_id!)}
-                  className="flex-1 min-w-0 truncate text-left hover:underline"
-                  style={{ fontSize: 13, color: 'var(--c-text)', minHeight: 32 }}>
-                  {p.nom}
-                  {/* Le brevet, comme sur un manifest : « DUPONT (C) ». */}
-                  {/* « DUPONT (D · BPJEPS) » — le brevet de sauteur ET celui de
-                      moniteur. Le second manquait : on ne voyait pas qui
-                      encadrait. */}
-                  {(p.brevet || p.brevet_moniteur) && (
-                    <span style={{ color: 'var(--c-muted)', fontWeight: 400 }}>
-                      {' ('}{[p.brevet, p.brevet_moniteur].filter(Boolean).join(' · ')}{')'}
-                    </span>
-                  )}
-                </button>
-              ) : (
-                <span className="flex-1 min-w-0 truncate" style={{ fontSize: 13, color: 'var(--c-text)' }}>
-                  {p.nom}
-                  {(p.brevet || p.brevet_moniteur) && (
-                    <span style={{ color: 'var(--c-muted)', fontWeight: 400 }}>
-                      {' ('}{[p.brevet, p.brevet_moniteur].filter(Boolean).join(' · ')}{')'}
-                    </span>
-                  )}
-                </span>
-              )}
-              {/* Le sigle ne va QU'AU LARGUEUR DÉSIGNÉ. La qualification dit
-                  ce qu'on peut faire ; s'il y a trois largueurs sur la DZ, il
-                  n'y en a qu'UN par avion — et c'est la DZ qui le nomme. */}
-              {/* LA DISCIPLINE, en toutes lettres et teintée. La couleur groupe,
-                  le mot renseigne : en plein soleil, et pour qui distingue mal
-                  les teintes, c'est le mot qui reste lisible. */}
-              <span className="flex-shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded"
-                style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '0.04em',
-                         color: TEINTE_DISCIPLINE[p.type_saut] ?? 'var(--c-muted)',
-                         border: `1px solid ${TEINTE_DISCIPLINE[p.type_saut] ?? 'var(--n2-bord)'}`,
-                         background: `color-mix(in srgb, ${TEINTE_DISCIPLINE[p.type_saut] ?? 'transparent'} 12%, transparent)` }}>
-                {LIBELLE_PLACE[p.type_saut] ?? p.type_saut}
-              </span>
 
-              {/* LA RADIO. Attendue en progression — quelqu'un guide au sol.
-                  Ce n'est PAS une règle fédérale : ParaPass n'en connaît
-                  aucune qui la fonde, et P2 interdit d'en inventer une. C'est
-                  un fait qu'on constate, et qui se voit quand il manque. */}
-              {onBasculerRadio && (
-                <button type="button" disabled={occupe || close}
-                  onClick={() => agir('Radio', () =>
-                    onBasculerRadio(p.id, !p.radio).then(e => ({ error: e ? { message: e } : null })))}
-                  title={p.radio ? `${p.nom} a une radio` :
-                    radioAttendue(p.type_saut)
-                      ? `${p.nom} est en progression et n'a pas de radio`
-                      : `Noter que ${p.nom} emporte une radio`}
-                  className="flex-shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded"
-                  style={{ fontSize: 10.5, fontWeight: 800, cursor: close ? 'default' : 'pointer',
-                    color: p.radio ? SEVERITE_COULEUR.conforme
-                      : radioAttendue(p.type_saut) ? SEVERITE_COULEUR.vigilance : 'var(--c-dim)',
-                    border: `1px ${p.radio ? 'solid' : 'dashed'} ${p.radio ? SEVERITE_COULEUR.conforme
-                      : radioAttendue(p.type_saut) ? SEVERITE_COULEUR.vigilance : 'var(--n2-bord)'}` }}>
-                  <Radio className="w-3 h-3 inline-block align-[-1px]" aria-hidden />
-                  <span className="sr-only">
-                    {p.radio ? 'Radio embarquée' : 'Pas de radio'} — {p.nom}
+              {/* ── LIGNE 1 : le NOM, et rien qui puisse l'écraser ──────────
+                  La version précédente mettait tout sur une seule ligne :
+                  discipline, sigles, radio, masse, altitude, verdict. Le nom,
+                  seul élément élastique, se faisait broyer — « T. » pour
+                  Thomas LAURENT. Le détail est donc passé sous un volet. */}
+              <div className="flex items-center gap-2">
+                {!close && onGrouper && (
+                  <input type="checkbox" checked={selection.has(p.id)}
+                    onChange={() => basculer(p.id)}
+                    aria-label={`Sélectionner ${p.nom} pour former un groupe`}
+                    style={{ width: 16, height: 16, flexShrink: 0 }} />
+                )}
+                <span className="font-bold flex-shrink-0"
+                  style={{ fontSize: 13, color: 'var(--c-muted)', minWidth: 18 }}>
+                  {p.type_saut === 'largueur' ? '·' : (p.rang_sortie ?? '·')}
+                </span>
+
+                <button type="button"
+                  onClick={() => p.parachutiste_id && onOuvrirFiche?.(p.parachutiste_id)}
+                  className="flex-1 min-w-0 text-left hover:underline"
+                  style={{ fontSize: 14, fontWeight: 600, color: 'var(--c-text)', minHeight: 32 }}>
+                  <span className="truncate block">
+                    {p.nom}
+                    {(p.brevet || p.brevet_moniteur) && (
+                      <span style={{ color: 'var(--c-muted)', fontWeight: 400 }}>
+                        {' ('}{[p.brevet, p.brevet_moniteur].filter(Boolean).join(' · ')}{')'}
+                      </span>
+                    )}
                   </span>
-                  {radioAttendue(p.type_saut) && !p.radio ? ' !' : ''}
                 </button>
-              )}
 
-              {/* Les qualifications, telles qu'elles sont en base. Aucune
-                  n'est déduite : ce qui n'est pas saisi ne s'affiche pas. */}
-              {(() => {
-                // Claire portait DEUX fois « LARGUEUR » : une fois au titre de
-                // sa qualification, une fois au titre de sa désignation du
-                // jour. Le sigle du DÉSIGNÉ prime — il dit « c'est elle,
-                // aujourd'hui » — donc la qualification ne se répète pas.
-                const aAfficher = p.qualifications.filter(
-                  q => !(q === 'largueur' && p.parachutiste_id === r.largueur_id));
-                return aAfficher.length > 0
-                  ? <SiglesFonctions codes={aAfficher} compact />
-                  : null;
-              })()}
-
-              {p.parachutiste_id && p.parachutiste_id === r.largueur_id && (
-                <SiglesFonctions codes={['largueur']} compact />
-              )}
-              {/* Les deux rôles se prennent et se rendent SUR LA LIGNE. Un
-                  menu déroulant séparé détachait le largueur des gens ; ici on
-                  désigne la personne qu'on regarde, avec sa masse et son feu
-                  sous les yeux. Seuls les qualifiés peuvent l'être — la base
-                  refuse les autres, au cas où. */}
-              {!close && p.parachutiste_id && onDesignerLargueur
-                && p.parachutiste_id !== r.largueur_id
-                && (largueurs ?? []).some(l => l.parachutiste_id === p.parachutiste_id) && (
-                <button type="button" disabled={occupe}
-                  title={`Désigner ${p.nom} comme largueur de cet avion`}
-                  onClick={() => onDesignerLargueur(p.parachutiste_id!)}
-                  className="flex-shrink-0 whitespace-nowrap"
-                  style={{ ...action('texte'), minHeight: 28, fontSize: 11 }}>
-                  largueur ?
-                </button>
-              )}
-              {!close && p.parachutiste_id && onDesignerChefAvion
-                && p.parachutiste_id !== r.chef_avion_id && (
-                <button type="button" disabled={occupe}
-                  title={`Désigner ${p.nom} comme chef avion`}
-                  onClick={() => onDesignerChefAvion(p.parachutiste_id!)}
-                  className="flex-shrink-0 whitespace-nowrap"
-                  style={{ ...action('texte'), minHeight: 28, fontSize: 11 }}>
-                  chef ?
-                </button>
-              )}
-              {/* La masse, saisie par le DT qui la demande à voix haute. Un
-                  champ étroit, toujours là : la masse connue se relit et se
-                  corrige, la masse inconnue se voit. */}
-              {!close && onDefinirMasse && (
-                <label className="flex-shrink-0 flex items-center gap-1"
-                  style={{ fontSize: 11, color: p.masse_kg == null ? SEVERITE_COULEUR.vigilance : 'var(--c-muted)' }}>
-                  <span className="sr-only">Masse de {p.nom}, en kilogrammes</span>
-                  <input type="number" inputMode="decimal" min={20} max={250} step={0.5}
-                    defaultValue={p.masse_kg ?? ''}
-                    disabled={occupe}
-                    placeholder="— kg"
-                    onBlur={e => {
-                      const v = e.target.value.trim();
-                      const kg = v === '' ? null : Number(v.replace(',', '.'));
-                      if (kg === (p.masse_kg ?? null)) return;
-                      agir('Saisie de la masse', () =>
-                        onDefinirMasse(p, kg).then(err => ({ error: err ? { message: err } : null })));
-                    }}
-                    className="px-1.5 rounded-lg text-right"
-                    style={{ width: 62, minHeight: 30, fontSize: 12, background: 'var(--c-input)',
-                             color: 'var(--c-text)',
-                             border: `1px solid ${p.masse_kg == null ? SEVERITE_COULEUR.vigilance : 'var(--n2-bord)'}` }} />
-                  kg
-                </label>
-              )}
-              {/* L'altitude de CE sauteur. Vide = celle de l'avion, et le
-                  repère le dit en gris : un tandem et un wingsuit ne sortent
-                  pas à la même hauteur, un seul chiffre pour dix personnes
-                  était faux dès qu'on mélangeait les disciplines. */}
-              {!close && onDefinirAltitude && (
-                <label className="flex-shrink-0 flex items-center gap-1"
-                  style={{ fontSize: 11, color: 'var(--c-muted)' }}>
-                  <span className="sr-only">Altitude de largage de {p.nom}, en mètres</span>
-                  <input type="number" inputMode="numeric" min={300} max={8000} step={100}
-                    defaultValue={p.altitude_largage_m ?? ''}
-                    disabled={occupe}
-                    placeholder={r.altitude_largage_m ? String(r.altitude_largage_m) : '— m'}
-                    onBlur={e => {
-                      const v = e.target.value.trim();
-                      const m = v === '' ? null : Number(v);
-                      if (m === (p.altitude_largage_m ?? null)) return;
-                      agir('Altitude du sauteur', () =>
-                        onDefinirAltitude(p.id, m).then(err => ({ error: err ? { message: err } : null })));
-                    }}
-                    className="px-1.5 rounded-lg text-right"
-                    style={{ width: 66, minHeight: 30, fontSize: 12, background: 'var(--c-input)',
-                             color: p.altitude_largage_m == null ? 'var(--c-muted)' : 'var(--c-text)',
-                             border: '1px solid var(--n2-bord)' }} />
-                  m
-                </label>
-              )}
-              {/* Le chef avion porte son sigle, comme le largueur. */}
-              {p.parachutiste_id && p.parachutiste_id === r.chef_avion_id && (
                 <span className="flex-shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded"
-                  style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.06em',
-                           color: 'var(--action-texte)', border: '1px solid var(--action-texte)' }}>
-                  CHEF AVION
+                  style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '0.04em',
+                           color: TEINTE_DISCIPLINE[p.type_saut] ?? 'var(--c-muted)',
+                           border: `1px solid ${TEINTE_DISCIPLINE[p.type_saut] ?? 'var(--n2-bord)'}`,
+                           background: `color-mix(in srgb, ${TEINTE_DISCIPLINE[p.type_saut] ?? 'transparent'} 12%, transparent)` }}>
+                  {LIBELLE_PLACE[p.type_saut] ?? p.type_saut}
                 </span>
-              )}
-              {/* TOUJOURS un badge, pour les quatre états. Ne rien afficher
-                  quand on ne sait pas laissait croire que tout allait bien —
-                  c'est le contraire du principe de sûreté. */}
-              <button type="button" title="Ouvrir la fiche"
-                onClick={() => p.parachutiste_id && onOuvrirFiche?.(p.parachutiste_id)}
-                className="flex-shrink-0 whitespace-nowrap"
-                style={{ ...pastille(SEV_APTITUDE[p.aptitude]), cursor: 'pointer', minHeight: 28 }}>
-                {LIBELLE_APTITUDE[p.aptitude]}
-              </button>
-              {!close && (
-                <button type="button" disabled={occupe}
-                  title="Retirer et remettre en file"
-                  onClick={() => agir('Retrait de la rotation', () =>
-                    supabase.rpc('retirer_de_rotation', { p_place_id: p.id, p_remettre_en_file: true })
-                      .then(x => ({ error: x.error })))}
-                  className="flex-shrink-0 disabled:opacity-50"
-                  style={{ ...action('texte'), minHeight: 32 }}>
-                  <UserMinus className="w-3.5 h-3.5" aria-hidden />
-                  <span className="sr-only">Retirer {p.nom}</span>
+
+                {p.parachutiste_id === r.largueur_id && <SiglesFonctions codes={['largueur']} compact />}
+                {p.parachutiste_id === r.chef_avion_id && (
+                  <span className="flex-shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded"
+                    style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.06em',
+                             color: 'var(--action-texte)', border: '1px solid var(--action-texte)' }}>
+                    CHEF
+                  </span>
+                )}
+
+                <button type="button" title="Ouvrir la fiche"
+                  onClick={() => p.parachutiste_id && onOuvrirFiche?.(p.parachutiste_id)}
+                  className="flex-shrink-0 whitespace-nowrap"
+                  style={{ ...pastille(SEV_APTITUDE[p.aptitude]), cursor: 'pointer', minHeight: 28 }}>
+                  {LIBELLE_APTITUDE[p.aptitude]}
                 </button>
+
+                {/* Le volet. Fermé, la ligne tient en une phrase lisible. */}
+                <button type="button" onClick={() => basculerDetails(p.id)}
+                  aria-expanded={ouvert}
+                  title={ouvert ? 'Masquer le détail' : 'Matériel, masse, altitude, encadrement'}
+                  className="flex-shrink-0"
+                  style={{ ...action('texte'), minHeight: 30, padding: '0 6px' }}>
+                  <ChevronDown className="w-4 h-4" aria-hidden
+                    style={{ transform: ouvert ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
+                  <span className="sr-only">Détail de {p.nom}</span>
+                </button>
+
+                {!close && (
+                  <button type="button" disabled={occupe}
+                    title="Retirer et remettre en file"
+                    onClick={() => agir('Retrait de la rotation', () =>
+                      supabase.rpc('retirer_de_rotation', { p_place_id: p.id, p_remettre_en_file: true })
+                        .then(x => ({ error: x.error })))}
+                    className="flex-shrink-0 disabled:opacity-50"
+                    style={{ ...action('texte'), minHeight: 32 }}>
+                    <UserMinus className="w-3.5 h-3.5" aria-hidden />
+                    <span className="sr-only">Retirer {p.nom}</span>
+                  </button>
+                )}
+              </div>
+
+              {/* ── LIGNE 2 : POURQUOI, quand ce n'est pas vert ─────────────
+                  « À examiner » sans motif oblige à ouvrir la fiche de chacun.
+                  Le motif porte son code : on peut remonter au texte. */}
+              {aDire && (
+                <p className="mt-0.5 ml-7 flex items-start gap-1.5"
+                  style={{ fontSize: 12, color: SEVERITE_COULEUR[SEV_APTITUDE[p.aptitude]] }}>
+                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-px" aria-hidden />
+                  <span style={{ whiteSpace: 'pre-line' }}>{p.motifs}</span>
+                </p>
+              )}
+
+              {/* L'encadrement se lit TOUJOURS : savoir qu'un élève est
+                  accompagné, et par qui, ne se cache pas sous un volet. */}
+              {p.moniteur_nom && (
+                <p className="mt-0.5 ml-7" style={{ fontSize: 12, color: 'var(--c-text2)' }}>
+                  accompagné par <strong style={{ fontWeight: 600 }}>{p.moniteur_nom}</strong>
+                </p>
+              )}
+
+              {/* ── LE VOLET : tout ce qui se saisit, rien qui encombre ───── */}
+              {ouvert && (
+                <div className="mt-1.5 ml-7 mb-1 px-2.5 py-2 rounded-xl flex items-center gap-3 flex-wrap"
+                  style={{ background: 'var(--n3-fond)', border: '1px solid var(--n3-filet)' }}>
+                  {p.qualifications.filter(q => !(q === 'largueur' && p.parachutiste_id === r.largueur_id)).length > 0 && (
+                    <SiglesFonctions compact
+                      codes={p.qualifications.filter(q => !(q === 'largueur' && p.parachutiste_id === r.largueur_id))} />
+                  )}
+
+                  {onBasculerRadio && (
+                    <button type="button" disabled={occupe || close}
+                      onClick={() => agir('Radio', () =>
+                        onBasculerRadio(p.id, !p.radio).then(e => ({ error: e ? { message: e } : null })))}
+                      className="whitespace-nowrap px-1.5 py-0.5 rounded"
+                      style={{ fontSize: 11, fontWeight: 700, cursor: close ? 'default' : 'pointer',
+                        color: p.radio ? SEVERITE_COULEUR.conforme
+                          : radioAttendue(p.type_saut) ? SEVERITE_COULEUR.vigilance : 'var(--c-dim)',
+                        border: `1px ${p.radio ? 'solid' : 'dashed'} ${p.radio ? SEVERITE_COULEUR.conforme
+                          : radioAttendue(p.type_saut) ? SEVERITE_COULEUR.vigilance : 'var(--n2-bord)'}` }}>
+                      <Radio className="w-3 h-3 inline-block align-[-1px] mr-1" aria-hidden />
+                      {p.radio ? 'radio' : radioAttendue(p.type_saut) ? 'sans radio' : 'pas de radio'}
+                    </button>
+                  )}
+
+                  {!close && onDefinirMasse && (
+                    <label className="flex items-center gap-1" style={{ fontSize: 11, color: 'var(--c-muted)' }}>
+                      <span className="sr-only">Masse de {p.nom}, en kilogrammes</span>
+                      <input type="number" inputMode="decimal" min={20} max={250} step={0.5}
+                        defaultValue={p.masse_kg ?? ''} disabled={occupe} placeholder="— kg"
+                        onBlur={e => {
+                          const v = e.target.value.trim();
+                          const kg = v === '' ? null : Number(v.replace(',', '.'));
+                          if (kg === (p.masse_kg ?? null)) return;
+                          agir('Saisie de la masse', () =>
+                            onDefinirMasse(p, kg).then(err => ({ error: err ? { message: err } : null })));
+                        }}
+                        className="px-1.5 rounded-lg text-right"
+                        style={{ width: 62, minHeight: 30, fontSize: 12, background: 'var(--c-input)',
+                                 color: 'var(--c-text)',
+                                 border: `1px solid ${p.masse_kg == null ? SEVERITE_COULEUR.vigilance : 'var(--n2-bord)'}` }} />
+                      kg
+                    </label>
+                  )}
+
+                  {!close && onDefinirAltitude && (
+                    <label className="flex items-center gap-1" style={{ fontSize: 11, color: 'var(--c-muted)' }}>
+                      <span className="sr-only">Altitude de largage de {p.nom}, en mètres</span>
+                      <input type="number" inputMode="numeric" min={300} max={8000} step={100}
+                        defaultValue={p.altitude_largage_m ?? ''} disabled={occupe}
+                        placeholder={r.altitude_largage_m ? String(r.altitude_largage_m) : '— m'}
+                        onBlur={e => {
+                          const v = e.target.value.trim();
+                          const m = v === '' ? null : Number(v);
+                          if (m === (p.altitude_largage_m ?? null)) return;
+                          agir('Altitude du sauteur', () =>
+                            onDefinirAltitude(p.id, m).then(err => ({ error: err ? { message: err } : null })));
+                        }}
+                        className="px-1.5 rounded-lg text-right"
+                        style={{ width: 66, minHeight: 30, fontSize: 12, background: 'var(--c-input)',
+                                 color: p.altitude_largage_m == null ? 'var(--c-muted)' : 'var(--c-text)',
+                                 border: '1px solid var(--n2-bord)' }} />
+                      m
+                    </label>
+                  )}
+
+                  {!close && p.parachutiste_id && onDesignerLargueur
+                    && p.parachutiste_id !== r.largueur_id
+                    && (largueurs ?? []).some(l => l.parachutiste_id === p.parachutiste_id) && (
+                    <button type="button" disabled={occupe}
+                      onClick={() => onDesignerLargueur(p.parachutiste_id!)}
+                      style={{ ...action('texte'), minHeight: 28, fontSize: 11 }}>
+                      désigner largueur
+                    </button>
+                  )}
+                  {!close && p.parachutiste_id && onDesignerChefAvion
+                    && p.parachutiste_id !== r.chef_avion_id && (
+                    <button type="button" disabled={occupe}
+                      onClick={() => onDesignerChefAvion(p.parachutiste_id!)}
+                      style={{ ...action('texte'), minHeight: 28, fontSize: 11 }}>
+                      désigner chef avion
+                    </button>
+                  )}
+
+                  {/* Vert : on le dit aussi, sinon le volet semble vide. */}
+                  {!aDire && p.aptitude === 'vert' && (
+                    <span style={{ fontSize: 11, color: SEVERITE_COULEUR.conforme }}>
+                      dossier complet
+                    </span>
+                  )}
+                </div>
               )}
             </li>
-          ))}
+          );})}
           </ul>
           </div>
           ))}
