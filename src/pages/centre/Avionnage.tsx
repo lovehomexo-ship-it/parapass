@@ -4,14 +4,16 @@ import { supabase } from '../../lib/supabase';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { LoaderParaPass } from '../../components/LoaderParaPass';
 import { ymdLocal } from '../../lib/datetime';
-import { Plus, Plane, ScanLine, MoonStar } from 'lucide-react';
+import { Plus, Plane, ScanLine, MoonStar, Sunset, Settings2 } from 'lucide-react';
 import { useDialogues } from '../../components/useDialogues';
-import { action, enTeteSection } from '../../lib/jetons';
+import { action, enTeteSection, SEVERITE_COULEUR } from '../../lib/jetons';
 import { siegesOccupes, messageErreur, type Discipline } from '../../lib/avionnage';
 import { FileAvionnageDZ } from './FileAvionnageDZ';
 import { AjouterAeronef, type Aeronef } from './Rotations';
 import { RechercheLicencie } from './RechercheLicencie';
 import { ZoneDemoModule } from '../../components/ZoneDemoModule';
+import { ReglagesAvionnage } from './ReglagesAvionnage';
+import { coucherSoleil, libelleCoucher } from '../../lib/soleil';
 import {
   PlancheAvionnage, useHorlogeMinute, EnTetePlanches,
   type RotationVue, type PlaceVue,
@@ -54,6 +56,9 @@ function AvionnageInner({ centreId }: { centreId: string }) {
   const [largueurs, setLargueurs] = useState<{ parachutiste_id: string; nom: string; prenom: string }[]>([]);
   /** Le référentiel des disciplines du centre. Lu, jamais écrit en dur. */
   const [disciplines, setDisciplines] = useState<Discipline[]>([]);
+  const [reglagesOuverts, setReglagesOuverts] = useState(false);
+  /** Coordonnées du centre — sans elles, pas d'heure de coucher, et on le tait. */
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const navigate = useNavigate();
   const { demanderConfirmation, dialogue } = useDialogues();
   const rechargerFile = useRef<(() => Promise<void>) | null>(null);
@@ -85,7 +90,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
         .eq('centre_id', centreId).eq('date_jour', jour).order('numero'),
       supabase.from('aeronefs').select('id, immatriculation, places, altitude_max_m, masse_max_kg')
         .eq('centre_id', centreId).eq('actif', true).order('immatriculation'),
-      supabase.from('centres').select('avionnage_actif').eq('id', centreId).maybeSingle(),
+      supabase.from('centres').select('avionnage_actif, latitude, longitude').eq('id', centreId).maybeSingle(),
       supabase.from('centres_options').select('embarquement_qr').eq('centre_id', centreId).maybeSingle(),
       supabase.rpc('largueurs_disponibles', { p_centre_id: centreId }),
     ]);
@@ -99,6 +104,9 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     setRotations(rr);
     setAeronefs((av ?? []) as Aeronef[]);
     setOuvert(Boolean((ctr as { avionnage_actif?: boolean } | null)?.avionnage_actif));
+    const c = ctr as { latitude?: number | null; longitude?: number | null } | null;
+    setCoords(c?.latitude != null && c?.longitude != null
+      ? { lat: Number(c.latitude), lon: Number(c.longitude) } : null);
     // Aucune ligne d'options = pas souscrit. On ne présume jamais l'activation.
     setScanOuvert(Boolean((opt as { embarquement_qr?: boolean } | null)?.embarquement_qr));
     setLargueurs((lg ?? []) as { parachutiste_id: string; nom: string; prenom: string }[]);
@@ -507,6 +515,33 @@ function AvionnageInner({ centreId }: { centreId: string }) {
           </h2>
           <EnTetePlanches nb={rotations.length} enVol={enVol} />
         </div>
+        {/* LE COUCHER DU SOLEIL — la borne de la journee. Sur un manifest
+            professionnel elle est toujours a l'ecran : en septembre elle bouge
+            de deux minutes par jour, personne ne la devine. Aucune regle
+            derriere : ParaPass ne connait pas de texte fixant une marge, et
+            n'en invente pas. On affiche l'heure, le DT decide. */}
+        {(() => {
+          const l = coords ? libelleCoucher(coucherSoleil(maintenant, coords.lat, coords.lon), maintenant) : null;
+          if (!l) return null;
+          return (
+            <span className="flex items-center gap-1.5 flex-shrink-0"
+              title="Dernier décollage avant le coucher du soleil"
+              style={{ fontSize: 13, marginRight: 8,
+                       color: l.urgent ? SEVERITE_COULEUR.vigilance : 'var(--c-muted)',
+                       fontWeight: l.urgent ? 700 : 400 }}>
+              <Sunset className="w-4 h-4" aria-hidden />
+              Coucher {l.heure} · {l.reste}
+            </span>
+          );
+        })()}
+
+        <button type="button" onClick={() => setReglagesOuverts(true)}
+          title="Réglages de l’avionnage — disciplines, charge alaire"
+          style={{ ...action('texte'), marginRight: 8 }}>
+          <Settings2 className="w-4 h-4" aria-hidden />
+          <span className="sr-only">Réglages de l’avionnage</span>
+        </button>
+
         {scanOuvert && (
           <button type="button" onClick={() => navigate('/centre/embarquement')}
             style={{ ...action('secondaire'), marginRight: 8 }}>
@@ -595,6 +630,11 @@ function AvionnageInner({ centreId }: { centreId: string }) {
       {/* Zone de test, EN BAS et à part : ce qui n'est pas de la production ne
           se mélange pas aux planches du jour. */}
       <ZoneDemoModule module="avionnage" centreId={centreId} onFait={charger} />
+
+      {reglagesOuverts && (
+        <ReglagesAvionnage centreId={centreId}
+          onFermer={() => setReglagesOuverts(false)} onChange={charger} />
+      )}
     </div>
   );
 }

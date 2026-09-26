@@ -1,0 +1,19 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- RÉGLAGES DE L'AVIONNAGE — l'abaque, sa source, et le saut plage.
+--
+-- L'ABAQUE DE CHARGE ALAIRE EXISTAIT DÉJÀ (canopy_guidelines), et chaque ligne
+-- porte « À VÉRIFIER — recommandations fédérales / manuels constructeurs ».
+-- Elle n'est donc fondée sur AUCUN texte identifié. P2 est formel : une règle
+-- porte la référence qui la fonde, ou elle n'en est pas une.
+--
+-- On ajoute donc la colonne qui manquait — source_texte — et un rattachement
+-- par centre. Tant qu'aucune source n'est saisie, l'écran présente ces seuils
+-- comme un REPÈRE DU CENTRE, jamais comme une règle fédérale. Le jour où le
+-- texte FFP est connu, il s'inscrit ici et le libellé change partout.
+--
+-- Modifier un seuil commun crée une copie propre au centre : un centre ne
+-- réécrit pas l'abaque des autres, et l'original reste lisible.
+--
+-- Ajout de la discipline « Saut plage ».
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Migration appliquée : abaque_voile_source_et_saut_plage. LE 26/09/2026.
