@@ -1,0 +1,36 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- LA DT 48 VÉRIFIAIT LA MAUVAISE VOILE.
+--
+-- Constat : Thomas LAURENT, verdict calculé sur 179 ft² — « conforme, minimum
+-- 169 » — pendant que l'écran affichait son équipement du jour : « Katana 150 ».
+-- Deux voiles pour un seul homme, et le contrôle portait sur celle qu'il ne
+-- vole pas.
+--
+-- La règle lisait materiels.taille_voile_ft2, la voile ENREGISTRÉE. Quelqu'un
+-- qui saute avec une voile empruntée plus petite passait le contrôle sur la
+-- sienne. C'est précisément le contournement que la DT 48 existe pour empêcher.
+--
+-- ORDRE DE LECTURE, du plus proche du terrain au plus lointain :
+--   1. la voile DÉCLARÉE ce jour et rattachée à un matériel connu → sa surface ;
+--   2. une déclaration du jour SANS surface connue (texte libre, location) →
+--      INDISPONIBLE, avec le minimum exigé affiché à côté. On ne lit pas « 150 »
+--      dans « Katana 150 » pour fonder une règle bloquante : deviner un chiffre
+--      dans du texte libre est exactement ce que P1 interdit ;
+--   3. aucune déclaration du jour → la voile enregistrée, en le disant.
+--
+-- Le verdict NOMME toujours sa source : « · voile declaree ce jour »,
+-- « · voile enregistree (aucune declaration du jour) ». On sait sur quoi on a
+-- été jugé.
+--
+-- CE QUI RESTE OUVERT : une voile de LOCATION n'a pas de surface en base. Les
+-- sacs du parc (sacs_parachute) ne portent pas taille_voile_ft2. Tant que le
+-- lien n'existe pas, un loueur est « indisponible » — donc gris, donc refusé.
+-- C'est le bon défaut, mais c'est un manque à combler.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Migration appliquée : dt48_lit_la_voile_du_jour. LE 26/09/2026.
+--
+-- Démo remise en cohérence : le libellé du matériel porte désormais sa surface
+-- (« Katana 169 »), et la déclaration du jour POINTE sur ce matériel. Une
+-- voile réellement sous le minimum a été posée sur l'avion n°2 — Chloé DÉMO,
+-- 135 ft² pour un minimum de 198 — pour que l'écran montre l'erreur qu'il sert
+-- à attraper.
