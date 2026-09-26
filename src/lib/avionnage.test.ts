@@ -518,30 +518,63 @@ describe('verifierPlanche — voile et PAC', () => {
   });
 });
 
-describe('libelleDT48 — le détail vient de la base, pas d’une reformulation', () => {
+describe('libelleDT48 — court sur la ligne, complet en infobulle', () => {
   const base = {
-    nbSauts: 120, poidsNuKg: 80, poidsDeduit: false, surfaceDeclareeFt2: 190,
-    surfaceMinFt2: 207, surfaceRetenueFt2: 207, amenagement: false,
-    libelleTranche: '100 a 249 sauts', poidsEcrete: false, horsTableauSauts: false,
+    nbSauts: 120, poidsNuKg: 80, poidsDeduit: false, surfaceDeclareeFt2: 195,
+    surfaceMinFt2: 185, surfaceRetenueFt2: 185, amenagement: false,
+    libelleTranche: '0 a 99 sauts', poidsEcrete: false, horsTableauSauts: false,
+    detail: 'texte long de la base',
   };
 
-  it('non conforme → bloque', () => {
-    const l = libelleDT48({ ...base, etat: 'non_conforme',
-      detail: '190 ft2 SOUS le minimum de 207 ft2 (100 a 249 sauts)' })!;
+  it('conforme : ce qu’il porte, puis ce qu’il faut — rien d’autre', () => {
+    const l = libelleDT48({ ...base, etat: 'conforme' })!;
+    expect(l.texte).toBe('195 ft²');
+    expect(l.suite).toBe('mini 185 ft²');
+    // La tranche et l'origine ne sont PAS sur la ligne : elles se lisent au
+    // survol. Cinq informations ne se lisent pas au pied d'un avion.
+    expect(l.suite).not.toContain('sauts');
+    expect(l.detail).toBe('texte long de la base');
+  });
+
+  it('aménagement accordé : on le dit, c’est une décision humaine', () => {
+    const l = libelleDT48({ ...base, etat: 'conforme', amenagement: true,
+      surfaceRetenueFt2: 164.7 })!;
+    expect(l.suite).toContain('−11 % accordé');
+  });
+
+  it('sous le minimum mais rattrapable : la porte est nommée', () => {
+    const l = libelleDT48({ ...base, etat: 'non_conforme', surfaceDeclareeFt2: 170,
+      surfaceMinFt2: 185, surfaceRetenueFt2: 185 })!;
     expect(l.bloque).toBe(true);
-    expect(l.texte).toContain('SOUS le minimum');
+    expect(l.suite).toContain('−11 % possible');
   });
 
-  it('poids absent → inconnu, jamais conforme par défaut', () => {
-    // P1 : ne pas pouvoir lire la DT 48 n'est pas « la voile est bonne ».
-    const l = libelleDT48({ ...base, etat: 'indisponible',
-      detail: 'poids non renseigne — la DT 48 ne se lit pas sans lui' })!;
-    expect(l.inconnu).toBe(true);
-    expect(l.bloque).toBe(false);
+  it('sous la tolérance : aucune porte, et on ne le laisse pas croire', () => {
+    const l = libelleDT48({ ...base, etat: 'non_conforme', surfaceDeclareeFt2: 135,
+      surfaceMinFt2: 198, surfaceRetenueFt2: 198 })!;
+    expect(l.suite).toContain('trop petite');
+    expect(l.suite).not.toContain('possible');
   });
 
-  it('la source est nommée une seule fois, au même endroit', () => {
+  it('indisponible : ce qui MANQUE d’abord, c’est la seule action possible', () => {
+    const sansPoids = libelleDT48({ ...base, etat: 'indisponible', poidsNuKg: null,
+      surfaceMinFt2: null, surfaceRetenueFt2: null })!;
+    expect(sansPoids.texte).toBe('poids manquant');
+    expect(sansPoids.inconnu).toBe(true);
+    expect(sansPoids.bloque).toBe(false);
+
+    const sansVoile = libelleDT48({ ...base, etat: 'indisponible',
+      surfaceDeclareeFt2: null })!;
+    expect(sansVoile.texte).toBe('surface inconnue');
+    expect(sansVoile.suite).toBe('mini 185 ft²');
+  });
+});
+
+
+describe('SOURCE_DT48 — la référence est nommée une seule fois', () => {
+  it('porte le texte et sa date, pour qu’une infobulle puisse la citer', () => {
     expect(SOURCE_DT48).toContain('Directive Technique n° 48');
+    expect(SOURCE_DT48).toContain('08/02/2024');
     expect(SOURCE_DT48).toContain('24.0113');
   });
 });

@@ -777,12 +777,22 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                       && v.surfaceDeclareeFt2 >= Math.round(v.surfaceMinFt2 * 0.89 * 10) / 10;
                     return (
                       <span className="flex items-center gap-1.5 flex-wrap">
-                        <span title={SOURCE_DT48} style={{ fontSize: 11,
-                          color: l.bloque ? SEVERITE_COULEUR.critique
-                               : l.inconnu ? 'var(--c-dim)' : 'var(--c-text2)',
-                          fontWeight: l.bloque ? 700 : 400 }}>
+                        {/* COURT sur la ligne, complet au survol. L'infobulle
+                            porte la tranche, l'origine de la voile et les
+                            réserves — ça ne se lit pas au pied d'un avion. */}
+                        <span title={`${l.detail}\n\n${SOURCE_DT48}`}
+                          className="whitespace-nowrap"
+                          style={{ fontSize: 11,
+                            color: l.bloque ? SEVERITE_COULEUR.critique
+                                 : l.inconnu ? 'var(--c-dim)' : 'var(--c-text2)',
+                            fontWeight: l.bloque ? 700 : 400 }}>
                           <Scale className="w-3 h-3 inline-block align-[-1px] mr-1" aria-hidden />
-                          DT 48 · {l.texte}
+                          {l.texte}
+                          {l.suite && (
+                            <span style={{ color: l.bloque ? 'inherit' : 'var(--c-dim)', fontWeight: 400 }}>
+                              {' · '}{l.suite}
+                            </span>
+                          )}
                         </span>
                         {!close && onAmenagementDT48 && (rattrapable || v.amenagement) && (
                           <button type="button" disabled={occupe}
@@ -803,12 +813,23 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                     );
                   })()}
 
-                  {!p.passager_nom && (
-                    <span style={{ fontSize: 11, color: p.equipement ? 'var(--c-text2)' : 'var(--c-dim)' }}>
-                      <Package className="w-3 h-3 inline-block align-[-1px] mr-1" aria-hidden />
-                      {p.equipement ?? 'équipement non déclaré'}
-                    </span>
-                  )}
+                  {/* « perso · voile perso » disait deux fois la même chose.
+                      On garde le nom de la voile quand il en dit plus que la
+                      provenance ; sinon la provenance seule suffit. */}
+                  {!p.passager_nom && (() => {
+                    const brut = p.equipement ?? null;
+                    const court = brut === null ? 'équipement non déclaré'
+                      : brut.replace(/^(perso|location DZ) · (voile perso|voile du centre)$/,
+                                     (_, provenance) => provenance);
+                    return (
+                      <span className="whitespace-nowrap"
+                        title={brut ?? undefined}
+                        style={{ fontSize: 11, color: brut ? 'var(--c-text2)' : 'var(--c-dim)' }}>
+                        <Package className="w-3 h-3 inline-block align-[-1px] mr-1" aria-hidden />
+                        {court}
+                      </span>
+                    );
+                  })()}
 
                   {/* Vert : on le dit aussi, sinon le volet semble vide. */}
                   {!aDire && p.aptitude === 'vert' && (

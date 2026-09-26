@@ -409,15 +409,52 @@ export interface VerdictDT48 {
 export const SOURCE_DT48 =
   'FFP — Directive Technique n° 48, CA du 08/02/2024, applicable au 09/02/2024, réf. 24.0113';
 
-/** Ce que la ligne affiche. Le détail vient de la base : il n'est pas réécrit ici. */
+/**
+ * Ce que la LIGNE affiche : court. Le détail complet — tranche d'expérience,
+ * origine de la voile, réserves sur le poids — reste dans `v.detail` et part
+ * en infobulle.
+ *
+ * La ligne disait tout à la fois : « 195 ft2 — minimum 185 ft2 (0 a 99
+ * sauts), tolerance -11 % : 164.7 ft2 · voile declaree ce jour ». Cinq
+ * informations pour une question qui en appelle deux : ce qu'il porte, ce
+ * qu'il faut. Le reste ne se lit pas au pied d'un avion.
+ */
 export function libelleDT48(v: VerdictDT48 | undefined): {
-  texte: string; bloque: boolean; inconnu: boolean;
+  texte: string; suite: string | null; bloque: boolean; inconnu: boolean; detail: string;
 } | null {
   if (!v) return null;
+  const bloque = v.etat === 'non_conforme';
+  const inconnu = v.etat === 'indisponible';
+
+  if (inconnu) {
+    // Ce qui manque d'abord : c'est la seule action possible.
+    const quoi = v.poidsNuKg === null ? 'poids manquant' : 'surface inconnue';
+    return {
+      texte: quoi,
+      suite: v.surfaceMinFt2 !== null ? `mini ${v.surfaceMinFt2} ft²` : null,
+      bloque: false, inconnu: true, detail: v.detail,
+    };
+  }
+
+  const porte = v.surfaceDeclareeFt2 !== null ? `${v.surfaceDeclareeFt2} ft²` : '—';
+  const mini = v.surfaceRetenueFt2 !== null ? `mini ${v.surfaceRetenueFt2} ft²` : null;
+
+  if (!bloque) {
+    return {
+      texte: porte,
+      suite: [mini, v.amenagement ? '−11 % accordé' : null].filter(Boolean).join(' · ') || null,
+      bloque: false, inconnu: false, detail: v.detail,
+    };
+  }
+
+  // Sous le minimum : dire s'il reste une porte, et laquelle.
+  const tolerance = v.surfaceMinFt2 !== null ? Math.round(v.surfaceMinFt2 * 0.89 * 10) / 10 : null;
+  const rattrapable = !v.amenagement && tolerance !== null
+    && v.surfaceDeclareeFt2 !== null && v.surfaceDeclareeFt2 >= tolerance;
   return {
-    texte: v.detail,
-    bloque: v.etat === 'non_conforme',
-    inconnu: v.etat === 'indisponible',
+    texte: porte,
+    suite: `${mini ?? ''} — ${rattrapable ? '−11 % possible' : 'trop petite'}`.trim(),
+    bloque: true, inconnu: false, detail: v.detail,
   };
 }
 
