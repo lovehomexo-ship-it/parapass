@@ -69,6 +69,13 @@ function FileInner({ centreId, centreNom, userId }: {
     useMaFileAvionnage(centreId, userId);
   const maintenant = useMinute();
   const [type, setType] = useState<TypeSautFile>('solo');
+  /**
+   * La voile DE CE SAUT, en ft². C'est le seul moment où quelqu'un peut dire
+   * qu'il emprunte une voile : sans ce champ, la DT 48 vérifie celle qui est
+   * enregistrée, pas celle qu'il vole. Facultatif — une inscription en file
+   * ne se refuse pas faute de chiffre ; c'est alors le DT qui le saisira.
+   */
+  const [surfaceVoile, setSurfaceVoile] = useState('');
   const [enCours, setEnCours] = useState(false);
 
   // La file fermée n'est pas une erreur : c'est l'état normal hors journée de
@@ -179,8 +186,19 @@ function FileInner({ centreId, centreNom, userId }: {
               <option key={t} value={t}>{LIBELLE_TYPE[t]}</option>
             ))}
           </select>
+          <label className="flex items-center gap-1.5" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
+            <span className="sr-only">Surface de votre voile, en pieds carrés</span>
+            <input type="number" inputMode="numeric" min={50} max={500} step={1}
+              value={surfaceVoile} onChange={e => setSurfaceVoile(e.target.value)}
+              placeholder="voile"
+              className="px-2 rounded-xl text-right"
+              style={{ width: 88, minHeight: 44, fontSize: 14, background: 'var(--c-input)',
+                       color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
+            ft²
+          </label>
           <button type="button" disabled={enCours}
-            onClick={() => agir(() => rejoindre(type))}
+            onClick={() => agir(() => rejoindre(type, undefined,
+              surfaceVoile.trim() === '' ? null : Number(surfaceVoile)))}
             className="disabled:opacity-50" style={action('principal', 'accent')}>
             <Plane className="w-4 h-4" aria-hidden />
             {enCours ? 'Inscription…' : 'Me mettre en file'}

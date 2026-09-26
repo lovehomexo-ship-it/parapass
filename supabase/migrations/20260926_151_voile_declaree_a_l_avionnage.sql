@@ -1,0 +1,31 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- LE SAUTEUR DÉCLARE SA VOILE QUAND IL S'AVIONNE.
+--
+-- Jusqu'ici la surface venait du matériel ENREGISTRÉ ou de la déclaration de
+-- présence. Personne ne la disait au moment qui compte : celui où l'on monte
+-- dans l'avion. Un sauteur qui emprunte une voile pour UN saut n'avait aucun
+-- endroit pour le dire — et la DT 48 vérifiait la mauvaise.
+--
+-- Elle se saisit donc à l'inscription en file (`file_avionnage`), et SUIT la
+-- personne jusqu'à sa place (`places_rotation`) par un trigger : sans ce
+-- report, elle se perdait au moment précis où elle sert.
+--
+-- ORDRE DE LECTURE, du plus proche du geste au plus lointain :
+--   1. la surface déclarée À L'AVIONNAGE, portée par la place ;
+--   2. celle déclarée en file, s'il n'est pas encore embarqué ;
+--   3. le sac du parc pris ce jour ;
+--   4. la voile perso rattachée à la déclaration de présence ;
+--   5. faute de tout cela, la voile enregistrée — en le disant.
+-- Chaque niveau est plus proche de ce qui est RÉELLEMENT sous le sauteur.
+--
+-- FACULTATIF côté sauteur : une inscription en file ne se refuse pas faute de
+-- chiffre. C'est alors le DT qui le saisit sur la ligne, à côté du minimum
+-- exigé — les deux chiffres se lisent ensemble.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Migrations appliquées LE 26/09/2026 : surface_voile_declaree_a_l_avionnage,
+-- dt48_lit_la_voile_declaree_a_l_avionnage.
+--
+-- Recette : voile de 150 ft² déclarée à l'avionnage pour Antoine BERGER
+-- (minimum 185) → « 150.0 ft2 SOUS le minimum […] · declaree a l'avionnage ».
+-- Elle a bien primé sur son matériel enregistré de 195 ft². Remise à null
+-- ensuite : avion n°1 au vert (8/8), avion n°2 avec ses 2 anomalies.

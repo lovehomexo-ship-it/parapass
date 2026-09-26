@@ -38,6 +38,8 @@ export interface PlaceVue {
   altitude_largage_m: number | null;
   /** Emporte une radio. Fait constaté par la DZ, pas une règle. */
   radio: boolean;
+  /** La voile de CE saut, en ft², déclarée à l'avionnage. */
+  surface_voile_ft2: number | null;
   /** Brevet principal (A, B, C, D) — ce que PAPA met entre parenthèses. */
   brevet: string | null;
   /** Qualifications valides : largueur, moniteur… Affichées telles quelles. */
@@ -95,7 +97,7 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines, dt48, onValiderEmbarquement, onAmenagementDT48 }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines, dt48, onValiderEmbarquement, onAmenagementDT48, onDefinirSurfaceVoile }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -132,6 +134,8 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   onChangerDiscipline?: (placeId: string, code: string) => Promise<string | null>;
   /** Accorder ou retirer l'aménagement DT 48 de −11 %. */
   onAmenagementDT48?: (parachutisteId: string, accorde: boolean) => Promise<string | null>;
+  /** La voile de ce saut. Le DT la saisit quand le sauteur ne l'a pas fait. */
+  onDefinirSurfaceVoile?: (placeId: string, ft2: number | null) => Promise<string | null>;
   /** Le référentiel du centre. Vide = on retombe sur les libellés connus. */
   disciplines?: Discipline[];
   /** Verdict DT 48 par parachutiste. Absent = non calculé, et on le dit. */
@@ -765,6 +769,31 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                       règle fédérale. Et quand elle n'est pas calculable, elle
                       NOMME ce qui manque — une case vide se lirait « tout va
                       bien », et ce serait faux. */}
+                  {/* LA VOILE DE CE SAUT. Le sauteur la déclare en se mettant
+                      en file ; le DT la corrige ou la saisit ici, à côté du
+                      minimum exigé — les deux chiffres se lisent ensemble. */}
+                  {!close && !p.passager_nom && onDefinirSurfaceVoile && (
+                    <label className="flex items-center gap-1"
+                      style={{ fontSize: 11,
+                               color: p.surface_voile_ft2 == null ? 'var(--c-dim)' : 'var(--c-muted)' }}>
+                      <span className="sr-only">Surface de la voile de {p.nom}, en ft²</span>
+                      <input type="number" inputMode="numeric" min={50} max={500} step={1}
+                        defaultValue={p.surface_voile_ft2 ?? ''} disabled={occupe}
+                        placeholder="voile"
+                        onBlur={e => {
+                          const v = e.target.value.trim();
+                          const ft2 = v === '' ? null : Number(v);
+                          if (ft2 === (p.surface_voile_ft2 ?? null)) return;
+                          agir('Surface de voile', () =>
+                            onDefinirSurfaceVoile(p.id, ft2).then(err => ({ error: err ? { message: err } : null })));
+                        }}
+                        className="px-1.5 rounded-lg text-right"
+                        style={{ width: 72, minHeight: 30, fontSize: 12, background: 'var(--c-input)',
+                                 color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
+                      ft²
+                    </label>
+                  )}
+
                   {!p.passager_nom && p.parachutiste_id && (() => {
                     const v = dt48?.get(p.parachutiste_id);
                     const l = libelleDT48(v);

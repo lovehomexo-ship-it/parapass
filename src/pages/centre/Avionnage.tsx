@@ -126,7 +126,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
 
     if (rr.length === 0) { setPlaces([]); setChargement(false); return; }
     const { data: pl, error: e2 } = await supabase.from('places_rotation')
-      .select('id, rotation_id, parachutiste_id, moniteur_id, type_saut, rang_sortie, statut, groupe_id, masse_kg, altitude_largage_m, radio, passager_nom, video_option, profiles!parachutiste_id(nom, prenom, masse_kg, type_brevet_principal, type_brevet_moniteur)')
+      .select('id, rotation_id, parachutiste_id, moniteur_id, type_saut, rang_sortie, statut, groupe_id, masse_kg, altitude_largage_m, radio, passager_nom, video_option, surface_voile_ft2, profiles!parachutiste_id(nom, prenom, masse_kg, type_brevet_principal, type_brevet_moniteur)')
       .in('rotation_id', rr.map(r => r.id)).order('rang_sortie', { nullsFirst: false });
     if (e2) {
       console.error('Places — chargement échoué :', {
@@ -300,6 +300,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
         equipement: equipements.get(p.parachutiste_id ?? '') ?? null,
         passager_nom: (p as { passager_nom?: string | null }).passager_nom ?? null,
         video_option: Boolean((p as { video_option?: boolean }).video_option),
+        surface_voile_ft2: (p as { surface_voile_ft2?: number | null }).surface_voile_ft2 ?? null,
         // Ce qui n'est pas saisi ne s'affiche pas : aucune qualification n'est
         // déduite d'un nombre de sauts ni d'un brevet.
         qualifications: qualifs.get(p.parachutiste_id ?? '') ?? [],
@@ -549,6 +550,19 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     return null;
   };
 
+  /**
+   * La voile de CE saut. Le sauteur la declare en se mettant en file ; le DT
+   * la corrige ou la saisit ici. Elle prime sur le materiel enregistre —
+   * c'est celle qu'il vole.
+   */
+  const definirSurfaceVoile = async (placeId: string, ft2: number | null): Promise<string | null> => {
+    const { error } = await supabase.from('places_rotation')
+      .update({ surface_voile_ft2: ft2 }).eq('id', placeId);
+    if (error) return messageErreur(error);
+    await charger();
+    return null;
+  };
+
   /** L'option video se vend au comptoir : l'ecran ne fait que la constater. */
   const basculerVideo = async (placeId: string, vendue: boolean): Promise<string | null> => {
     const { error } = await supabase.from('places_rotation')
@@ -682,7 +696,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
                   onBasculerRadio={basculerRadio} onAjouterPassager={ajouterPassager} onBasculerVideo={basculerVideo}
                   onChangerDiscipline={changerDiscipline} disciplines={disciplines} dt48={dt48}
                   onValiderEmbarquement={v => validerEmbarquement(r.id, v)}
-                  onAmenagementDT48={amenagementDT48}
+                  onAmenagementDT48={amenagementDT48} onDefinirSurfaceVoile={definirSurfaceVoile}
                   aeronef={aeronefs.find(a => a.id === r.aeronef_id)} onChange={charger}
                   onDeposer={fileId => placer(fileId, r.id)} onOuvrirFiche={ouvrirFiche}
                   largueurs={largueurs}

@@ -200,9 +200,15 @@ export function useMaFileAvionnage(centreId: string | undefined, userId: string 
     return () => { supabase.removeChannel(canal); };
   }, [centreId, charger]);
 
-  const rejoindre = async (type: TypeSautFile, commentaire?: string) => {
+  /**
+   * `surfaceFt2` est la voile DE CE SAUT. Elle prime sur le matériel
+   * enregistré : un sauteur qui emprunte une voile pour un saut n'avait aucun
+   * endroit où le dire, et la DT 48 vérifiait la mauvaise.
+   */
+  const rejoindre = async (type: TypeSautFile, commentaire?: string, surfaceFt2?: number | null) => {
     const { error } = await supabase.rpc('rejoindre_file_avionnage', {
       p_centre_id: centreId, p_type_saut: type, p_commentaire: commentaire ?? null,
+      p_surface_voile_ft2: surfaceFt2 ?? null,
     });
     if (error) { setErreur(messageErreur(error)); return false; }
     await charger();
