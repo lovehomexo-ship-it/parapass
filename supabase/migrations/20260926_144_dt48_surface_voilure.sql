@@ -1,0 +1,47 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- DIRECTIVE TECHNIQUE N° 48 — la surface de voilure minimale devient une RÈGLE.
+--
+-- SOURCE : FFP, Directive Technique n° 48, modifiée par le conseil
+-- d'administration du 8 février 2024, applicable au 9 février 2024,
+-- réf. 24.0113 — « Réglementation relative à l'utilisation des voilures ».
+-- Le PDF est archivé dans docs/.
+--
+-- C'EST LE TOURNANT. Jusqu'ici ParaPass n'avait qu'un abaque de charge alaire
+-- portant « À VÉRIFIER », fondé sur rien. Il y a maintenant un texte, avec sa
+-- date, sa référence et sa phrase : « Hors aménagement, aucune surface de
+-- voilure inférieure ne peut être utilisée. » VOI-001 passe donc de
+-- « vigilance » à « BLOQUANT ».
+--
+-- LES 459 VALEURS ONT ÉTÉ EXTRAITES DU PDF PAR PROGRAMME, jamais recopiées à
+-- la main, et vérifiées par structure : 51 poids contigus de 60 à 110 kg, et
+-- surfaces strictement décroissantes à mesure que l'expérience augmente.
+-- Témoins recontrôlés après insertion : 60 kg/0-99 = 175, 80 kg/0-99 = 225,
+-- 90 kg/600-799 = 171, 110 kg/1400-1600 = 120.
+--
+-- CE QUE LE TEXTE DIT, ET QUE LE CODE RESPECTE :
+--   • le tableau se lit avec le POIDS NU — « auxquels le tableur rajoute 10 kg
+--     pour l'équipement ». D'où profils_prives.poids_nu_kg ; à défaut on déduit
+--     poids_tout_equipe − 10 EN LE DISANT, car un sac plus lourd fausserait.
+--   • poids hors 60-110 kg : « se référer aux valeurs extrêmes ». On écrête, et
+--     on le signale — un DT doit savoir qu'il lit une valeur extrême.
+--   • aménagement de -11 % maximum, par palier, accordé par un DT ou un
+--     initiateur BI5/B5, « il n'est pas possible d'aller au-delà ».
+--     Table dt48_amenagements : qui l'accorde, quand. Une dérogation sans
+--     auteur n'est pas une dérogation (P3).
+--
+-- CE QUE LE TEXTE NE DIT PAS, ET QUE LE CODE NE PRÉTEND PAS SAVOIR :
+--   au-delà de 1600 sauts, le tableau ne publie aucune valeur. On applique la
+--   dernière colonne — lecture prudente de notre part — et l'écran l'annonce.
+--
+-- L'AMÉNAGEMENT N'EST PAS UNE LEVÉE DE RÈGLE : il change le seuil. Le schéma a
+-- refusé « levable sans durée » et il avait raison — une levée a une fin, un
+-- aménagement n'en a pas. VOI-001 v2 est donc non levable ; c'est le minimum
+-- qui baisse de 11 %.
+--
+-- LE RÉFÉRENTIEL EST IMMUABLE : la v1 n'a pas été modifiée, elle a été
+-- désactivée, et la v2 publiée à côté. Le trigger a refusé mon UPDATE — la
+-- garantie posée en septembre a fonctionné contre moi, ce qui est le but.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Migrations appliquées LE 26/09/2026 :
+--   dt48_surface_voilure_minimale, dt48_lecture_et_amenagement,
+--   dt48_verdict_par_personne, voi001_v2_dt48_bloquante.
