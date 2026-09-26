@@ -1,0 +1,37 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 1 · L'ALTITUDE DE L'AVION EST LE DÉFAUT, ET LE PLAFOND.
+--
+-- Tout le monde saute au plus haut. C'est pourquoi places_rotation
+-- .altitude_largage_m reste NULL : null veut dire « celle de l'avion », donc si
+-- le DT change l'altitude de la planche, tout le monde suit sans qu'on recopie
+-- rien. Recopier la valeur sur chaque place aurait figé des chiffres qui
+-- auraient cessé de suivre — c'est le piège classique de la dénormalisation.
+--
+-- Une altitude propre ne sert donc qu'à sortir PLUS BAS. Plus haut que l'avion
+-- n'a aucun sens physique : un trigger refuse. Refus prouvé en base :
+--   update places_rotation set altitude_largage_m = 5000  (avion à 4000)
+--   → 23514 Altitude 5000 m superieure au largage de l'avion (4000 m).
+--      HINT: Une altitude propre sert a sortir PLUS BAS.
+--
+-- Et baisser l'altitude de l'avion rabaisse ceux qui étaient au-dessus : les
+-- laisser plus haut produirait une planche qui se contredit elle-même.
+--
+-- 2 · LA TOLÉRANCE DES -11 % S'AFFICHE TOUJOURS.
+--
+-- Le DT a besoin des DEUX chiffres pour se faire un avis : le minimum du
+-- tableau, et jusqu'où il pourrait descendre s'il accordait l'aménagement.
+-- N'afficher que le minimum le laissait calculer un pourcentage de tête.
+--
+-- Trois messages, selon où l'on se trouve :
+--   • au-dessus du minimum      → « minimum 235 ft², tolérance -11 % : 209.2 »
+--   • sous le minimum MAIS dans la tolérance
+--                               → « un aménagement DT le rendrait conforme »
+--   • sous la tolérance         → « aucun aménagement ne peut la rattraper »
+-- Le troisième est le seul qui ne laisse aucune porte : le DT doit le savoir
+-- tout de suite, pas après avoir cherché son formulaire d'aménagement.
+--
+-- Le texte : « Il n'est pas possible d'aller au-delà de -11 %. » C'est un
+-- PLAFOND de dérogation, pas un second seuil, et l'écran le présente ainsi.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Migrations appliquées LE 26/09/2026 :
+--   altitude_place_jamais_au_dessus_de_l_avion, dt48_affiche_la_tolerance_11.

@@ -662,11 +662,20 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                     </label>
                   )}
 
+                  {/* L'ALTITUDE DE L'AVION EST LE DÉFAUT, ET LE PLAFOND. Vide =
+                      « celle de l'avion », affichée en gris : si le DT change
+                      l'altitude de la planche, tout le monde suit sans qu'on
+                      recopie rien. Une valeur propre ne sert qu'à sortir PLUS
+                      BAS — la base refuse plus haut. */}
                   {!close && onDefinirAltitude && (
-                    <label className="flex items-center gap-1" style={{ fontSize: 11, color: 'var(--c-muted)' }}>
+                    <label className="flex items-center gap-1" style={{ fontSize: 11, color: 'var(--c-muted)' }}
+                      title={r.altitude_largage_m
+                        ? `Vide = ${r.altitude_largage_m} m, l'altitude de l'avion. Une valeur propre ne peut être que plus basse.`
+                        : 'Altitude de largage propre à cette personne'}>
                       <span className="sr-only">Altitude de largage de {p.nom}, en mètres</span>
-                      <input type="number" inputMode="numeric" min={300} max={8000} step={100}
+                      <input type="number" inputMode="numeric" min={300} step={100}
                         defaultValue={p.altitude_largage_m ?? ''} disabled={occupe}
+                        max={r.altitude_largage_m ?? 8000}
                         placeholder={r.altitude_largage_m ? String(r.altitude_largage_m) : '— m'}
                         onBlur={e => {
                           const v = e.target.value.trim();
