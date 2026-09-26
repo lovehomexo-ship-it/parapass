@@ -528,6 +528,27 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     return null;
   };
 
+  /**
+   * L'AMENAGEMENT DT 48 de -11 %. Le texte : « une seule autorisation
+   * d'amenagement, par palier, sur autorisation d'un DT ou d'un initiateur
+   * BI5 ou B5 ». La base enregistre QUI l'accorde et QUAND — une derogation
+   * sans auteur n'est pas une derogation — et ne cumule jamais deux
+   * autorisations sur le meme palier.
+   */
+  const amenagementDT48 = async (parachutisteId: string, accorde: boolean): Promise<string | null> => {
+    const { error } = await supabase.rpc('dt48_accorder_amenagement', {
+      p_parachutiste_id: parachutisteId, p_centre_id: centreId, p_accorde: accorde,
+    });
+    if (error) {
+      console.error('Amenagement DT 48 echoue :', {
+        code: error.code, message: error.message, details: error.details, hint: error.hint,
+      });
+      return messageErreur(error);
+    }
+    await charger();
+    return null;
+  };
+
   /** L'option video se vend au comptoir : l'ecran ne fait que la constater. */
   const basculerVideo = async (placeId: string, vendue: boolean): Promise<string | null> => {
     const { error } = await supabase.from('places_rotation')
@@ -661,6 +682,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
                   onBasculerRadio={basculerRadio} onAjouterPassager={ajouterPassager} onBasculerVideo={basculerVideo}
                   onChangerDiscipline={changerDiscipline} disciplines={disciplines} dt48={dt48}
                   onValiderEmbarquement={v => validerEmbarquement(r.id, v)}
+                  onAmenagementDT48={amenagementDT48}
                   aeronef={aeronefs.find(a => a.id === r.aeronef_id)} onChange={charger}
                   onDeposer={fileId => placer(fileId, r.id)} onOuvrirFiche={ouvrirFiche}
                   largueurs={largueurs}

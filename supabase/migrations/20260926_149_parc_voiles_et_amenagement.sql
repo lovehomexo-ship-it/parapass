@@ -1,0 +1,41 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 1 · LE PARC DE VOILES DU CENTRE — il existait déjà.
+--
+-- C'est `sacs_parachute`. Il vivait DANS le module Pliage, alors qu'un centre
+-- peut acheter l'Avionnage sans le Pliage. Le module Pliage gouverne le
+-- TRAVAIL de pliage — plieurs, paiements, QR ; l'inventaire, lui, appartient
+-- au centre. Une seule table, deux lectures : dupliquer le parc aurait garanti
+-- deux inventaires qui divergent au premier sac ajouté.
+--
+-- Il lui manquait la SURFACE (taille_voile_ft2) : sans elle, la DT 48 ne peut
+-- rien vérifier sur un sauteur en location.
+--
+-- Et une policy : l'admin du centre pouvait LIRE et CRÉER ses sacs, pas les
+-- MODIFIER — aucune règle UPDATE ne le prévoyait. Il ne pouvait donc pas
+-- saisir la surface qu'on venait d'ajouter.
+--
+-- dz_presences.sac_ref rattache la location du jour à un sac du parc. Le champ
+-- texte restait du texte : la DT 48 ne lit pas une surface dans « Navigator 260 ».
+--
+-- 2 · L'AMÉNAGEMENT −11 %, ACCORDÉ DEPUIS LA PLANCHE.
+--
+-- Le texte : « Une seule autorisation d'aménagement, par palier, de −11 % […]
+-- sur autorisation d'un DT ou d'un initiateur BI5 ou B5. »
+--
+-- dt48_accorder_amenagement enregistre QUI accorde et QUAND — une dérogation
+-- sans auteur n'est pas une dérogation (P3) — et désactive l'autorisation
+-- précédente au lieu de l'empiler : « une seule par palier ».
+--
+-- Retirer DÉSACTIVE, ne supprime pas : qui a accordé quoi reste lisible.
+--
+-- LE BOUTON NE S'AFFICHE QUE S'IL CHANGE QUELQUE CHOSE. Sous la tolérance,
+-- l'aménagement ne rattrape rien : proposer le bouton laisserait croire qu'un
+-- clic règle le problème.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Migrations appliquées LE 26/09/2026 : parc_voiles_du_centre_et_surface,
+-- dt48_lit_le_sac_de_location.
+--
+-- Recette : aménagement accordé à Lea BONNET (230 ft² pour un minimum de 253)
+-- → conforme, « amenagement -11 % accorde : 225.2 ft2 », auteur enregistré.
+-- Retiré ensuite → non conforme de nouveau. Chloé DÉMO (135 pour 198) reste
+-- non conforme dans les deux cas : sous la tolérance, rien ne la rattrape.

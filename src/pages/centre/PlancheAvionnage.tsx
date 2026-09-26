@@ -95,7 +95,7 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines, dt48, onValiderEmbarquement }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines, dt48, onValiderEmbarquement, onAmenagementDT48 }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -130,6 +130,8 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   onBasculerVideo?: (placeId: string, vendue: boolean) => Promise<string | null>;
   /** Ce que fait la personne se change jusqu'à la dernière minute. */
   onChangerDiscipline?: (placeId: string, code: string) => Promise<string | null>;
+  /** Accorder ou retirer l'aménagement DT 48 de −11 %. */
+  onAmenagementDT48?: (parachutisteId: string, accorde: boolean) => Promise<string | null>;
   /** Le référentiel du centre. Vide = on retombe sur les libellés connus. */
   disciplines?: Discipline[];
   /** Verdict DT 48 par parachutiste. Absent = non calculé, et on le dit. */
@@ -764,15 +766,39 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                       NOMME ce qui manque — une case vide se lirait « tout va
                       bien », et ce serait faux. */}
                   {!p.passager_nom && p.parachutiste_id && (() => {
-                    const l = libelleDT48(dt48?.get(p.parachutiste_id));
-                    if (!l) return null;
+                    const v = dt48?.get(p.parachutiste_id);
+                    const l = libelleDT48(v);
+                    if (!l || !v) return null;
+                    // L'AMÉNAGEMENT NE SE PROPOSE QUE S'IL CHANGE QUELQUE CHOSE.
+                    // Sous la tolérance, il ne rattrape rien : offrir le bouton
+                    // laisserait croire qu'un clic règle le problème.
+                    const rattrapable = v.etat === 'non_conforme' && !v.amenagement
+                      && v.surfaceDeclareeFt2 !== null && v.surfaceMinFt2 !== null
+                      && v.surfaceDeclareeFt2 >= Math.round(v.surfaceMinFt2 * 0.89 * 10) / 10;
                     return (
-                      <span title={SOURCE_DT48} style={{ fontSize: 11,
-                        color: l.bloque ? SEVERITE_COULEUR.critique
-                             : l.inconnu ? 'var(--c-dim)' : 'var(--c-text2)',
-                        fontWeight: l.bloque ? 700 : 400 }}>
-                        <Scale className="w-3 h-3 inline-block align-[-1px] mr-1" aria-hidden />
-                        DT 48 · {l.texte}
+                      <span className="flex items-center gap-1.5 flex-wrap">
+                        <span title={SOURCE_DT48} style={{ fontSize: 11,
+                          color: l.bloque ? SEVERITE_COULEUR.critique
+                               : l.inconnu ? 'var(--c-dim)' : 'var(--c-text2)',
+                          fontWeight: l.bloque ? 700 : 400 }}>
+                          <Scale className="w-3 h-3 inline-block align-[-1px] mr-1" aria-hidden />
+                          DT 48 · {l.texte}
+                        </span>
+                        {!close && onAmenagementDT48 && (rattrapable || v.amenagement) && (
+                          <button type="button" disabled={occupe}
+                            title={v.amenagement
+                              ? 'Retirer l’aménagement −11 % accordé à cette personne'
+                              : 'Accorder l’aménagement DT 48 de −11 % — réservé au DT ou à un initiateur BI5/B5'}
+                            onClick={() => agir('Aménagement DT 48', () =>
+                              onAmenagementDT48(p.parachutiste_id!, !v.amenagement)
+                                .then(e => ({ error: e ? { message: e } : null })))}
+                            className="whitespace-nowrap px-1.5 py-0.5 rounded"
+                            style={{ fontSize: 10.5, fontWeight: 800,
+                              color: v.amenagement ? SEVERITE_COULEUR.vigilance : 'var(--action-texte)',
+                              border: `1px solid ${v.amenagement ? SEVERITE_COULEUR.vigilance : 'var(--action-texte)'}` }}>
+                            {v.amenagement ? 'retirer −11 %' : 'accorder −11 %'}
+                          </button>
+                        )}
                       </span>
                     );
                   })()}
