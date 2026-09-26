@@ -8,7 +8,7 @@ import {
   formaterRetard,
   calculerCall, SEVERITE_CALL, siegesOccupes, libelleCapacite, messageErreur,
   libelleDiscipline, teinteDiscipline, radioAttendue, type Discipline,
-  libelleCharge, type ChargeAlaire,
+  libelleDT48, type VerdictDT48, SOURCE_DT48, type AnomaliePlanche,
   verifierPlanche, blocsDePlanche, masseEmbarquee, libelleMasse,
 } from '../../lib/avionnage';
 
@@ -95,7 +95,7 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines, charges, onValiderEmbarquement }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines, dt48, onValiderEmbarquement }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -132,8 +132,8 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   onChangerDiscipline?: (placeId: string, code: string) => Promise<string | null>;
   /** Le référentiel du centre. Vide = on retombe sur les libellés connus. */
   disciplines?: Discipline[];
-  /** Charge alaire par parachutiste. Absente = non calculée, et on le dit. */
-  charges?: Map<string, ChargeAlaire>;
+  /** Verdict DT 48 par parachutiste. Absent = non calculé, et on le dit. */
+  dt48?: Map<string, VerdictDT48>;
 }) {
   const [occupe, setOccupe] = useState(false);
   const [echec, setEchec] = useState<string | null>(null);
@@ -217,7 +217,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
       // drapeau dit que c'est vendu, le groupe dit QUI filme.
       aSonVideaste: p.groupe_id !== null
         && places.some(q => q.type_saut === 'video' && q.groupe_id === p.groupe_id),
-      chargeDepasse: libelleCharge(charges?.get(p.parachutiste_id ?? ''))?.depasse ?? false,
+      sousMinimumDT48: libelleDT48(dt48?.get(p.parachutiste_id ?? ''))?.bloque ?? false,
       // Une PAC est accompagnée : soit un moniteur nommé, soit quelqu'un du
       // même groupe. Sans ni l'un ni l'autre, personne ne sait qui saute avec.
       pacSansMoniteur: radioAttendue(p.type_saut, disciplines) && !p.moniteur_nom
@@ -358,7 +358,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
             {etat.verdict === 'rouge' ? 'Cet avion ne peut pas partir' : 'À vérifier avant le départ'}
           </p>
           <ul className="mt-1">
-            {etat.anomalies.map(an => (
+            {etat.anomalies.map((an: AnomaliePlanche) => (
               <li key={an.code} className="flex items-start gap-1.5"
                 style={{ fontSize: 12.5, color: 'var(--c-text2)' }}>
                 {/* La gravité se lit à la FORME, pas à la seule couleur. */}
@@ -755,15 +755,15 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                       NOMME ce qui manque — une case vide se lirait « tout va
                       bien », et ce serait faux. */}
                   {!p.passager_nom && p.parachutiste_id && (() => {
-                    const l = libelleCharge(charges?.get(p.parachutiste_id));
+                    const l = libelleDT48(dt48?.get(p.parachutiste_id));
                     if (!l) return null;
                     return (
-                      <span style={{ fontSize: 11,
-                        color: l.depasse ? SEVERITE_COULEUR.vigilance
+                      <span title={SOURCE_DT48} style={{ fontSize: 11,
+                        color: l.bloque ? SEVERITE_COULEUR.critique
                              : l.inconnu ? 'var(--c-dim)' : 'var(--c-text2)',
-                        fontWeight: l.depasse ? 700 : 400 }}>
+                        fontWeight: l.bloque ? 700 : 400 }}>
                         <Scale className="w-3 h-3 inline-block align-[-1px] mr-1" aria-hidden />
-                        {l.texte}
+                        DT 48 · {l.texte}
                       </span>
                     );
                   })()}

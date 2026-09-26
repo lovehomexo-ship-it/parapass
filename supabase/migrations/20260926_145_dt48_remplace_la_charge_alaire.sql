@@ -1,0 +1,30 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- LA DT 48 REMPLACE LA CHARGE ALAIRE — un seul repère, celui qui a une source.
+--
+-- L'abaque de charge alaire (lb/ft²) portait « À VÉRIFIER » et n'était fondé
+-- sur rien. La DT 48 donne directement la SURFACE MINIMALE par poids nu et
+-- tranche d'expérience, et elle a une référence. Garder les deux aurait donné
+-- deux chiffres pour une seule question — et le jour où ils se contredisent,
+-- personne ne sait lequel croire.
+--
+-- Ce qui change à l'écran :
+--   • la ligne de planche affiche « DT 48 · 190 ft² — minimum 178 ft² (…) » ;
+--   • une voile sous le minimum est une anomalie BLOQUANTE de la planche ;
+--   • les réglages portent un CALCULATEUR : poids nu + nombre de sauts → la
+--     surface minimale, et le minimum aménagé à −11 %.
+--
+-- LE CALCULATEUR INTERROGE LA MÊME FONCTION SQL que le pare-feu de
+-- l'avionnage. Refaire le calcul en JavaScript aurait donné deux vérités le
+-- jour où le tableau change.
+--
+-- vigilance_charge_alaire et canopy_guidelines restent en base : l'écran
+-- « Vigilance charge alaire » du tableau de bord les lit encore. Ils ne sont
+-- plus la référence de l'avionnage.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Migration appliquée : dt48_verdicts_en_lot. LE 26/09/2026.
+--
+-- Données de démonstration mises en cohérence : poids nu des témoins, et
+-- voiles portées à leur minimum DT 48 + 10 ft². Avant : 13 personnes sous le
+-- minimum (toutes les voiles de démo étaient à 190 ft², sans rapport avec le
+-- poids ni l'expérience). Après : 27 conformes, 2 indisponibles.
+-- Aucune écriture sur un profil marqué donnees_reelles.

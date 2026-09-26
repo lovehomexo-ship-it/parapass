@@ -365,47 +365,6 @@ export function formaterRetard(libelle: string): string {
 
 export type GraviteAnomalie = 'bloquant' | 'vigilance';
 
-/**
- * La charge alaire d'une place — mesure, pas jugement.
- *
- * `charge` et `seuil` peuvent être nuls : on ne sait pas toujours. Ce qui
- * manque est NOMMÉ (`manque`), parce qu'une case vide se lit « tout va bien »
- * et que c'est faux.
- */
-export interface ChargeAlaire {
-  nbSauts: number;
-  masseKg: number | null;
-  surfaceFt2: number | null;
-  charge: number | null;
-  seuil: number | null;
-  /** Référence du texte. null = repère du centre, PAS une règle fédérale. */
-  sourceTexte: string | null;
-  manque: string | null;
-}
-
-/**
- * Le libellé d'une charge alaire. Il DIT d'où vient le seuil : sans référence
- * saisie, « repère du centre » — jamais « règle fédérale ». P2.
- */
-export function libelleCharge(c: ChargeAlaire | undefined): {
-  texte: string; depasse: boolean; inconnu: boolean;
-} | null {
-  if (!c) return null;
-  if (c.charge === null) {
-    return { texte: `charge alaire — ${c.manque ?? 'non calculable'}`, depasse: false, inconnu: true };
-  }
-  const base = `${c.charge.toFixed(2)} lb/ft²`;
-  if (c.seuil === null) return { texte: base, depasse: false, inconnu: false };
-  const depasse = c.charge > c.seuil;
-  const origine = c.sourceTexte ? c.sourceTexte : 'repère du centre, sans référence fédérale';
-  return {
-    texte: depasse
-      ? `${base} — au-dessus de ${c.seuil} pour ${c.nbSauts} sauts (${origine})`
-      : `${base} · max ${c.seuil}`,
-    depasse, inconnu: false,
-  };
-}
-
 export interface AnomaliePlanche {
   /** Stable, pour les tests et les clés React — jamais affiché. */
   code: string;
@@ -418,6 +377,48 @@ export interface EtatPlanche {
   anomalies: AnomaliePlanche[];
   /** rouge = quelque chose empêche ; orange = à regarder ; vert = rien à signaler. */
   verdict: 'rouge' | 'orange' | 'vert';
+}
+
+/**
+ * Le verdict DT 48 d'une personne — la SURFACE minimale, pas une charge alaire.
+ *
+ * ParaPass avait un abaque de charge alaire en lb/ft² qui portait « À
+ * VÉRIFIER » et ne s'appuyait sur aucun texte. Il est remplacé par la
+ * Directive Technique n° 48, qui donne une surface minimale par poids nu et
+ * tranche de sauts, et qui a une référence. Un seul repère, le bon.
+ */
+export interface VerdictDT48 {
+  nbSauts: number;
+  poidsNuKg: number | null;
+  /** Le poids nu a été déduit du poids tout équipé (−10 kg) : à dire. */
+  poidsDeduit: boolean;
+  surfaceDeclareeFt2: number | null;
+  surfaceMinFt2: number | null;
+  /** Le minimum réellement appliqué : −11 % si un aménagement est accordé. */
+  surfaceRetenueFt2: number | null;
+  amenagement: boolean;
+  libelleTranche: string | null;
+  /** Poids hors 60–110 kg : valeur extrême appliquée, comme le prévoit le texte. */
+  poidsEcrete: boolean;
+  /** Au-delà de 1600 sauts le tableau ne publie rien : lecture prudente. */
+  horsTableauSauts: boolean;
+  etat: 'conforme' | 'non_conforme' | 'indisponible';
+  detail: string;
+}
+
+export const SOURCE_DT48 =
+  'FFP — Directive Technique n° 48, CA du 08/02/2024, applicable au 09/02/2024, réf. 24.0113';
+
+/** Ce que la ligne affiche. Le détail vient de la base : il n'est pas réécrit ici. */
+export function libelleDT48(v: VerdictDT48 | undefined): {
+  texte: string; bloque: boolean; inconnu: boolean;
+} | null {
+  if (!v) return null;
+  return {
+    texte: v.detail,
+    bloque: v.etat === 'non_conforme',
+    inconnu: v.etat === 'indisponible',
+  };
 }
 
 export interface EntreeVerification {
@@ -444,8 +445,8 @@ export interface EntreeVerification {
     videoVendue: boolean;
     /** Quelqu'un filme ce groupe : une place « vidéo » y est présente. */
     aSonVideaste: boolean;
-    /** Charge alaire au-dessus du repère retenu pour son expérience. */
-    chargeDepasse: boolean;
+    /** Voile SOUS le minimum DT 48. Règle fédérale : c'est bloquant. */
+    sousMinimumDT48: boolean;
     /** Une PAC sans moniteur nommé : personne ne sait qui l'accompagne. */
     pacSansMoniteur: boolean;
   }[];
@@ -520,12 +521,13 @@ export function verifierPlanche(e: EntreeVerification): EtatPlanche {
              message: `${tandemsIncomplets} tandem${tandemsIncomplets > 1 ? 's' : ''} sans passager saisi : la masse embarquée est incomplète.` });
   }
 
-  // LA VOILE TROP PETITE POUR L'EXPÉRIENCE. C'est le point de vigilance le
-  // plus lourd de la liste : il ne se répare pas en vol.
-  const chargesHautes = juges.filter(p => p.chargeDepasse).length;
-  if (chargesHautes > 0) {
-    a.push({ code: 'charge_alaire', gravite: 'vigilance',
-             message: `${chargesHautes} charge${chargesHautes > 1 ? 's' : ''} alaire${chargesHautes > 1 ? 's' : ''} au-dessus du repère retenu pour l’expérience — voir le détail sur la ligne.` });
+  // LA VOILE TROP PETITE. Ce n'est plus un repère maison : la DT 48 dit
+  // « hors aménagement, aucune surface de voilure inférieure ne peut être
+  // utilisée ». C'est donc bloquant, et ça ne se répare pas en vol.
+  const sousMinimum = juges.filter(p => p.sousMinimumDT48).length;
+  if (sousMinimum > 0) {
+    a.push({ code: 'dt48_surface', gravite: 'bloquant',
+             message: `${sousMinimum} voile${sousMinimum > 1 ? 's' : ''} sous le minimum DT 48 — voir le détail sur la ligne.` });
   }
 
   // Une PAC dont personne ne sait qui l'accompagne.

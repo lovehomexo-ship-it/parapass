@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { X, Settings2, BookOpen, AlertTriangle } from 'lucide-react';
+import { X, Settings2, BookOpen, Calculator } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
-import { surface, action, pastille, enTeteSection, SEVERITE_COULEUR } from '../../lib/jetons';
-import { messageErreur, type Discipline } from '../../lib/avionnage';
+import { surface, action, enTeteSection, SEVERITE_COULEUR } from '../../lib/jetons';
+import { messageErreur, type Discipline, SOURCE_DT48 } from '../../lib/avionnage';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // RÉGLAGES DE L'AVIONNAGE — ce que le centre décide lui-même.
@@ -24,34 +24,53 @@ import { messageErreur, type Discipline } from '../../lib/avionnage';
 // est pas une. Le champ « source » existe pour le jour où le texte est connu.
 // ═══════════════════════════════════════════════════════════════════════════
 
-interface Seuil {
-  id: string; sauts_min: number; sauts_max: number | null;
-  charge_max_recommandee: number; source_texte: string | null; centre_id: string | null;
-}
-
 function Inner({ centreId, onFermer, onChange }: {
   centreId: string; onFermer: () => void; onChange: () => void;
 }) {
   const [catalogue, setCatalogue] = useState<Discipline[]>([]);
   const [retirees, setRetirees] = useState<Set<string>>(new Set());
-  const [seuils, setSeuils] = useState<Seuil[]>([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [occupe, setOccupe] = useState(false);
+  const [poids, setPoids] = useState('80');
+  const [sauts, setSauts] = useState('120');
+  const [resultat, setResultat] = useState<{
+    surface_ft2: number; libelle_tranche: string; amenagee: number | null;
+    poids_ecrete: boolean; hors_tableau_sauts: boolean;
+  } | null>(null);
+
+  /**
+   * Le calculateur interroge la MÊME fonction SQL que le pare-feu de
+   * l'avionnage. Refaire le calcul en JavaScript aurait donné deux vérités le
+   * jour où le tableau change.
+   */
+  const calculer = async () => {
+    setOccupe(true); setErreur(null);
+    const { data, error } = await supabase.rpc('dt48_surface_minimale', {
+      p_poids_nu: Number(poids.replace(',', '.')), p_nb_sauts: Number(sauts),
+    });
+    setOccupe(false);
+    if (error) { setErreur(messageErreur(error)); setResultat(null); return; }
+    const r = (data ?? [])[0] as {
+      surface_ft2: number; libelle_tranche: string;
+      poids_ecrete: boolean; hors_tableau_sauts: boolean;
+    } | undefined;
+    setResultat(r ? {
+      surface_ft2: r.surface_ft2, libelle_tranche: r.libelle_tranche,
+      amenagee: Math.round(r.surface_ft2 * 0.89 * 10) / 10,
+      poids_ecrete: r.poids_ecrete, hors_tableau_sauts: r.hors_tableau_sauts,
+    } : null);
+  };
 
   const charger = async () => {
-    const [{ data: d }, { data: cd }, { data: cg }] = await Promise.all([
+    const [{ data: d }, { data: cd }] = await Promise.all([
       supabase.from('disciplines_saut')
         .select('code, libelle, ordre, equipage, radio_attendue, teinte')
         .eq('actif', true).order('ordre'),
       supabase.from('centres_disciplines').select('code, actif').eq('centre_id', centreId),
-      supabase.from('canopy_guidelines')
-        .select('id, sauts_min, sauts_max, charge_max_recommandee, source_texte, centre_id')
-        .or(`centre_id.is.null,centre_id.eq.${centreId}`).order('sauts_min'),
     ]);
     setCatalogue((d ?? []) as Discipline[]);
     setRetirees(new Set((cd ?? []).filter(x => !x.actif).map(x => x.code)));
-    setSeuils((cg ?? []) as Seuil[]);
     setChargement(false);
   };
   useEffect(() => { charger(); /* eslint-disable-next-line */ }, [centreId]);
@@ -66,33 +85,6 @@ function Inner({ centreId, onFermer, onChange }: {
     onChange();
   };
 
-  /**
-   * Modifier un seuil COMMUN ne se fait pas : on en crée une copie propre au
-   * centre. Un centre ne réécrit pas l'abaque des autres, et la version
-   * d'origine reste lisible pour comparaison.
-   */
-  const ecrireSeuil = async (s: Seuil, champ: 'charge_max_recommandee' | 'source_texte', valeur: string) => {
-    setOccupe(true); setErreur(null);
-    const patch = champ === 'charge_max_recommandee'
-      ? { charge_max_recommandee: Number(valeur.replace(',', '.')) }
-      : { source_texte: valeur.trim() || null };
-    const { error } = s.centre_id
-      ? await supabase.from('canopy_guidelines').update(patch).eq('id', s.id)
-      : await supabase.from('canopy_guidelines').insert({
-          centre_id: centreId, sauts_min: s.sauts_min, sauts_max: s.sauts_max,
-          charge_max_recommandee: s.charge_max_recommandee, source_texte: s.source_texte,
-          ...patch,
-        });
-    setOccupe(false);
-    if (error) { setErreur(messageErreur(error)); return; }
-    await charger();
-    onChange();
-  };
-
-  // L'abaque du centre prime sur le commun, seuil par seuil.
-  const abaque = seuils.filter(s =>
-    s.centre_id !== null || !seuils.some(a => a.centre_id !== null && a.sauts_min === s.sauts_min));
-  const sansSource = abaque.filter(s => !s.source_texte).length;
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-auto"
@@ -146,66 +138,69 @@ function Inner({ centreId, onFermer, onChange }: {
               </div>
             </section>
 
-            {/* ── L'abaque de charge alaire ─────────────────────────────── */}
+            {/* ── LA DT 48, ET SON CALCULATEUR ──────────────────────────── */}
             <section>
               <h3 style={{ ...enTeteSection, marginBottom: 6 }}>
-                Charge alaire — repères par expérience
+                Surface de voilure minimale — DT 48
               </h3>
+              <p className="mb-2 flex items-start gap-1.5" style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                <BookOpen className="w-3.5 h-3.5 flex-shrink-0 mt-px" aria-hidden />
+                <span>
+                  {SOURCE_DT48}. Le tableau se lit avec le <strong>poids nu</strong> :
+                  le tableur fédéral ajoute lui-même 10 kg d’équipement.
+                </span>
+              </p>
 
-              {sansSource > 0 && (
-                <p className="px-3 py-2 rounded-xl mb-2 flex items-start gap-1.5"
-                  style={{ fontSize: 12.5, color: 'var(--c-text2)',
-                           borderLeft: `5px solid ${SEVERITE_COULEUR.vigilance}`,
-                           background: `color-mix(in srgb, ${SEVERITE_COULEUR.vigilance} 9%, transparent)` }}>
-                  <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-px" aria-hidden />
-                  <span>
-                    <strong>{sansSource} seuil{sansSource > 1 ? 's' : ''} sans référence.</strong>{' '}
-                    ParaPass les présente comme un repère de votre centre, jamais comme
-                    une règle fédérale — une règle porte le texte qui la fonde, ou elle
-                    n’en est pas une. Saisissez la référence de l’abaque FFP et le
-                    libellé changera partout.
-                  </span>
-                </p>
-              )}
+              {/* Le calculateur : on entre un poids et un nombre de sauts, on lit
+                  la surface. Il interroge la MÊME fonction que le pare-feu de
+                  l’avionnage — deux calculs auraient fini par diverger. */}
+              <div className="flex items-end gap-2 flex-wrap px-2 py-2 rounded-xl"
+                style={{ background: 'var(--n3-fond)', border: '1px solid var(--n3-filet)' }}>
+                <label style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                  Poids nu (kg)
+                  <input type="number" min={30} max={160} step={1} value={poids}
+                    onChange={e => setPoids(e.target.value)}
+                    className="block px-2 rounded-lg mt-1"
+                    style={{ width: 90, minHeight: 32, fontSize: 13, background: 'var(--c-input)',
+                             color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
+                </label>
+                <label style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                  Nombre de sauts
+                  <input type="number" min={0} max={20000} step={10} value={sauts}
+                    onChange={e => setSauts(e.target.value)}
+                    className="block px-2 rounded-lg mt-1"
+                    style={{ width: 110, minHeight: 32, fontSize: 13, background: 'var(--c-input)',
+                             color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
+                </label>
+                <button type="button" onClick={calculer} disabled={occupe}
+                  style={{ ...action('secondaire'), minHeight: 34 }}>
+                  <Calculator className="w-4 h-4" aria-hidden /> Calculer
+                </button>
 
-              <ul className="space-y-1.5">
-                {abaque.map(s => (
-                  <li key={s.id} className="flex items-center gap-2 flex-wrap px-2 py-1.5 rounded-xl"
-                    style={{ background: 'var(--n3-fond)', border: '1px solid var(--n3-filet)' }}>
-                    <span style={{ fontSize: 12, color: 'var(--c-text)', minWidth: 110 }}>
-                      {s.sauts_min}{s.sauts_max === null ? ' sauts et +' : `–${s.sauts_max} sauts`}
-                    </span>
-                    <label className="flex items-center gap-1" style={{ fontSize: 12, color: 'var(--c-muted)' }}>
-                      max
-                      <input type="number" step={0.05} min={0.3} max={3}
-                        defaultValue={s.charge_max_recommandee} disabled={occupe}
-                        onBlur={e => { if (Number(e.target.value) !== Number(s.charge_max_recommandee))
-                          ecrireSeuil(s, 'charge_max_recommandee', e.target.value); }}
-                        className="px-1.5 rounded-lg text-right"
-                        style={{ width: 70, minHeight: 30, fontSize: 12, background: 'var(--c-input)',
-                                 color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
-                      lb/ft²
-                    </label>
-                    <label className="flex items-center gap-1 flex-1 min-w-[200px]"
-                      style={{ fontSize: 12, color: 'var(--c-muted)' }}>
-                      <BookOpen className="w-3.5 h-3.5 flex-shrink-0" aria-hidden />
-                      <input type="text" defaultValue={s.source_texte ?? ''} disabled={occupe}
-                        placeholder="référence du texte — ex. « FFP, manuel du DT, §… »"
-                        onBlur={e => { if (e.target.value.trim() !== (s.source_texte ?? ''))
-                          ecrireSeuil(s, 'source_texte', e.target.value); }}
-                        className="flex-1 min-w-0 px-2 rounded-lg"
-                        style={{ minHeight: 30, fontSize: 12, background: 'var(--c-input)',
-                                 color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
-                    </label>
-                    <span style={pastille(s.centre_id ? 'neutre' : 'conforme')}>
-                      {s.centre_id ? 'votre centre' : 'commun'}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                {resultat && (
+                  <p className="flex-1 min-w-[220px]" style={{ fontSize: 13, color: 'var(--c-text)' }}>
+                    <strong style={{ fontSize: 18 }}>{resultat.surface_ft2} ft²</strong>{' '}
+                    minimum — {resultat.libelle_tranche}
+                    {resultat.amenagee !== null && (
+                      <span style={{ color: 'var(--c-muted)' }}>
+                        {' · '}avec aménagement −11 % : <strong>{resultat.amenagee} ft²</strong>
+                      </span>
+                    )}
+                    {(resultat.poids_ecrete || resultat.hors_tableau_sauts) && (
+                      <span className="block" style={{ fontSize: 11.5, color: SEVERITE_COULEUR.vigilance }}>
+                        {resultat.poids_ecrete && 'Poids hors fourchette 60–110 kg : valeur extrême appliquée, comme le prévoit le texte. '}
+                        {resultat.hors_tableau_sauts && 'Au-delà de 1600 sauts le tableau ne publie rien : dernière colonne appliquée — c’est une lecture prudente, pas une règle écrite.'}
+                      </span>
+                    )}
+                  </p>
+                )}
+              </div>
+
               <p className="mt-1.5" style={{ fontSize: 11.5, color: 'var(--c-dim)' }}>
-                Modifier un seuil commun en crée une copie propre à votre centre :
-                un centre ne réécrit pas l’abaque des autres.
+                Le pare-feu de l’avionnage applique ce même tableau avant
+                l’embarquement : une voile sous le minimum bloque la planche.
+                L’aménagement de −11 % s’accorde par licencié, et ParaPass
+                enregistre qui l’a accordé.
               </p>
             </section>
           </div>

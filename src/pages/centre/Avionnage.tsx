@@ -7,7 +7,7 @@ import { ymdLocal } from '../../lib/datetime';
 import { Plus, Plane, ScanLine, MoonStar, Sunset, Settings2 } from 'lucide-react';
 import { useDialogues } from '../../components/useDialogues';
 import { action, enTeteSection, SEVERITE_COULEUR } from '../../lib/jetons';
-import { siegesOccupes, messageErreur, type Discipline, type ChargeAlaire } from '../../lib/avionnage';
+import { siegesOccupes, messageErreur, type Discipline, type VerdictDT48 } from '../../lib/avionnage';
 import { FileAvionnageDZ } from './FileAvionnageDZ';
 import { AjouterAeronef, type Aeronef } from './Rotations';
 import { RechercheLicencie } from './RechercheLicencie';
@@ -59,7 +59,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
   const [reglagesOuverts, setReglagesOuverts] = useState(false);
   /** Coordonnées du centre — sans elles, pas d'heure de coucher, et on le tait. */
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
-  const [charges, setCharges] = useState<Map<string, ChargeAlaire>>(new Map());
+  const [dt48, setDt48] = useState<Map<string, VerdictDT48>>(new Map());
   const navigate = useNavigate();
   const { demanderConfirmation, dialogue } = useDialogues();
   const rechargerFile = useRef<(() => Promise<void>) | null>(null);
@@ -193,33 +193,36 @@ function AvionnageInner({ centreId }: { centreId: string }) {
       }
     }
 
-    // La charge alaire : masse tout equipe / surface de voile, comparee au
-    // repere retenu pour l'experience. Lecture serveur — les sauts et le poids
-    // ne sont pas lisibles par le client.
-    const cs = new Map<string, ChargeAlaire>();
+    // LA DT 48 : surface minimale par poids nu et tranche de sauts. Lecture
+    // serveur — ni les sauts ni le poids ne sont lisibles par le client.
+    const d48 = new Map<string, VerdictDT48>();
     if (ids.length > 0) {
-      const { data: ca, error: eC } = await supabase.rpc('charge_alaire_places', {
+      const { data: dv, error: eD } = await supabase.rpc('dt48_verdicts', {
         p_centre_id: centreId, p_ids: ids,
       });
-      if (eC) {
-        console.error('Charge alaire — lecture échouée :', {
-          code: eC.code, message: eC.message, details: eC.details, hint: eC.hint,
+      if (eD) {
+        console.error('DT 48 — lecture échouée :', {
+          code: eD.code, message: eD.message, details: eD.details, hint: eD.hint,
         });
       }
-      for (const c of (ca ?? []) as {
-        parachutiste_id: string; nb_sauts: number; masse_kg: number | null;
-        surface_ft2: number | null; charge: number | null; seuil: number | null;
-        source_texte: string | null; manque: string | null;
-      }[]) {
-        cs.set(c.parachutiste_id, {
-          nbSauts: c.nb_sauts, masseKg: c.masse_kg, surfaceFt2: c.surface_ft2,
-          charge: c.charge === null ? null : Number(c.charge),
-          seuil: c.seuil === null ? null : Number(c.seuil),
-          sourceTexte: c.source_texte, manque: c.manque,
+      for (const v of (dv ?? []) as Record<string, unknown>[]) {
+        d48.set(v.parachutiste_id as string, {
+          nbSauts: Number(v.nb_sauts ?? 0),
+          poidsNuKg: v.poids_nu_kg === null ? null : Number(v.poids_nu_kg),
+          poidsDeduit: Boolean(v.poids_deduit),
+          surfaceDeclareeFt2: v.surface_declaree_ft2 === null ? null : Number(v.surface_declaree_ft2),
+          surfaceMinFt2: v.surface_min_ft2 === null ? null : Number(v.surface_min_ft2),
+          surfaceRetenueFt2: v.surface_retenue_ft2 === null ? null : Number(v.surface_retenue_ft2),
+          amenagement: Boolean(v.amenagement),
+          libelleTranche: (v.libelle_tranche as string | null) ?? null,
+          poidsEcrete: Boolean(v.poids_ecrete),
+          horsTableauSauts: Boolean(v.hors_tableau_sauts),
+          etat: v.etat as VerdictDT48['etat'],
+          detail: (v.detail as string) ?? '',
         });
       }
     }
-    setCharges(cs);
+    setDt48(d48);
 
     const nomsMoniteurs = new Map<string, string>();
     const idsMoniteurs = [...new Set(brutes.map(p => p.moniteur_id).filter(Boolean))] as string[];
@@ -631,7 +634,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
                   onDefinirAltitude={definirAltitude}
                   onDefinirCarburant={l => definirCarburant(r.id, l)}
                   onBasculerRadio={basculerRadio} onAjouterPassager={ajouterPassager} onBasculerVideo={basculerVideo}
-                  onChangerDiscipline={changerDiscipline} disciplines={disciplines} charges={charges}
+                  onChangerDiscipline={changerDiscipline} disciplines={disciplines} dt48={dt48}
                   onValiderEmbarquement={v => validerEmbarquement(r.id, v)}
                   aeronef={aeronefs.find(a => a.id === r.aeronef_id)} onChange={charger}
                   onDeposer={fileId => placer(fileId, r.id)} onOuvrirFiche={ouvrirFiche}
