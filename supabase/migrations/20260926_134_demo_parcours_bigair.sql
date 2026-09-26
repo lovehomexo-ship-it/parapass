@@ -38,3 +38,16 @@
 -- Résultat mesuré : Claire DUBOIS 1150 sauts, brevet D, BPJEPS, DT + largueur
 -- + moniteur tandem. 9 personnes au brevet C ou D, 5 largueurs, une base
 -- d'élèves sans brevet.
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- CORRECTION DU 26/09/2026 — cette migration a écrit sur un profil RÉEL.
+--
+-- Le filtre « tous les licenciés actifs de BigAir » ne distinguait pas les
+-- témoins de démonstration des vraies personnes. 501 sauts d'historique, un
+-- brevet D et un BPJEPS ont été posés sur un profil à jour qui avait 24 sauts.
+-- Réparé à l'identique le jour même.
+--
+-- TOUTE reprise de ce script doit exclure les profils marqués :
+--     and p.donnees_reelles = false
+-- Voir migration 135.
+-- ───────────────────────────────────────────────────────────────────────────
