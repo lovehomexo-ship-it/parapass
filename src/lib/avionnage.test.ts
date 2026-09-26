@@ -3,7 +3,7 @@ import {
   siegesOccupes, libelleCapacite, messageErreur, LIBELLE_TYPE,
   calculerCall, SEVERITE_CALL, formaterRetard,
   verifierPlanche, type EntreeVerification, blocsDePlanche,
-  masseEmbarquee, libelleMasse,
+  masseEmbarquee, libelleMasse, radioAttendue, TEINTE_DISCIPLINE,
 } from './avionnage';
 
 describe('avionnage — capacité', () => {
@@ -369,5 +369,40 @@ describe('verifierPlanche — le largueur est À BORD', () => {
     const e = verifierPlanche({ ...PRETE, largueurId: null, largueurABord: false });
     expect(e.anomalies.some(a => a.code === 'largueur')).toBe(true);
     expect(e.anomalies.some(a => a.code === 'largueur_absent')).toBe(false);
+  });
+});
+
+describe('radioAttendue — un fait d’exploitation, pas une règle inventée', () => {
+  it('attendue en école et en accompagné : quelqu’un guide au sol', () => {
+    expect(radioAttendue('ecole')).toBe(true);
+    expect(radioAttendue('accompagne')).toBe(true);
+  });
+
+  it('pas ailleurs — et surtout PAS sur un seuil de sauts', () => {
+    // ParaPass ne connaît aucun texte fédéral fixant un nombre de sauts.
+    // P2 interdit d'en inventer un : la fonction ne prend donc pas ce chiffre.
+    for (const t of ['solo', 'groupe', 'wingsuit', 'video', 'tandem', 'largueur']) {
+      expect(radioAttendue(t)).toBe(false);
+    }
+    expect(radioAttendue.length).toBe(1);
+  });
+});
+
+describe('TEINTE_DISCIPLINE — grouper, jamais alerter', () => {
+  it('ne réemploie aucune couleur de sévérité', () => {
+    // Un saut d'école n'est ni un danger ni une alerte. Réutiliser le rouge
+    // ou l'ambre ferait dire à la couleur deux choses sur le même écran.
+    const severites = ['#F87171', '#FBBF24', '#34D399', '#EF4444', '#F59E0B',
+                       '#10B981', '#F97316'];
+    for (const teinte of Object.values(TEINTE_DISCIPLINE)) {
+      expect(severites).not.toContain(teinte.toUpperCase());
+    }
+  });
+
+  it('couvre toutes les places affichables', () => {
+    for (const t of ['ecole', 'accompagne', 'solo', 'groupe', 'wingsuit',
+                     'video', 'tandem', 'largueur']) {
+      expect(TEINTE_DISCIPLINE[t]).toBeDefined();
+    }
   });
 });

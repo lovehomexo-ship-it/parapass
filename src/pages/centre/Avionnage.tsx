@@ -103,14 +103,14 @@ function AvionnageInner({ centreId }: { centreId: string }) {
 
     if (rr.length === 0) { setPlaces([]); setChargement(false); return; }
     const { data: pl, error: e2 } = await supabase.from('places_rotation')
-      .select('id, rotation_id, parachutiste_id, moniteur_id, type_saut, rang_sortie, statut, groupe_id, masse_kg, altitude_largage_m, profiles!parachutiste_id(nom, prenom, masse_kg)')
+      .select('id, rotation_id, parachutiste_id, moniteur_id, type_saut, rang_sortie, statut, groupe_id, masse_kg, altitude_largage_m, radio, profiles!parachutiste_id(nom, prenom, masse_kg, type_brevet_principal)')
       .in('rotation_id', rr.map(r => r.id)).order('rang_sortie', { nullsFirst: false });
     if (e2) {
       console.error('Places — chargement échoué :', {
         code: e2.code, message: e2.message, details: e2.details, hint: e2.hint,
       });
     }
-    type Pr = { nom: string; prenom: string; masse_kg: number | null };
+    type Pr = { nom: string; prenom: string; masse_kg: number | null; type_brevet_principal: string | null };
     const brutes = (pl ?? []) as unknown as (Omit<PlaceVue, 'nom' | 'aptitude'> & { profiles: Pr | Pr[] | null })[];
 
     // Le verdict vient de FEU VERT, pour tout le monde — présent déclaré ou
@@ -134,6 +134,25 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     }
     setVerdictsParPersonne(verdicts);
 
+    // Les qualifications VALIDES, telles qu'elles sont en base. Une
+    // qualification périmée n'est pas une qualification : elle ne s'affiche
+    // pas — un sigle est une autorisation, pas un souvenir.
+    const qualifs = new Map<string, string[]>();
+    if (ids.length > 0) {
+      const { data: qs, error: eQ } = await supabase.from('qualifications')
+        .select('parachutiste_id, type, date_expiration').in('parachutiste_id', ids);
+      if (eQ) {
+        console.error('Qualifications — lecture échouée :', {
+          code: eQ.code, message: eQ.message, details: eQ.details, hint: eQ.hint,
+        });
+      }
+      const aujourdhui = new Date().toISOString().slice(0, 10);
+      for (const q of (qs ?? []) as { parachutiste_id: string; type: string; date_expiration: string | null }[]) {
+        if (q.date_expiration && q.date_expiration < aujourdhui) continue;
+        qualifs.set(q.parachutiste_id, [...(qualifs.get(q.parachutiste_id) ?? []), q.type]);
+      }
+    }
+
     // Le sigle « largueur » ne vient plus d'une qualification mais d'une
     // DÉSIGNATION portée par la rotation (rotations.largueur_id).
 
@@ -147,6 +166,11 @@ function AvionnageInner({ centreId }: { centreId: string }) {
         // de profil, et une place peut porter une masse ponctuelle.
         masse_kg: (p as { masse_kg?: number | null }).masse_kg ?? pr?.masse_kg ?? null,
         altitude_largage_m: (p as { altitude_largage_m?: number | null }).altitude_largage_m ?? null,
+        radio: Boolean((p as { radio?: boolean }).radio),
+        brevet: pr?.type_brevet_principal ?? null,
+        // Ce qui n'est pas saisi ne s'affiche pas : aucune qualification n'est
+        // déduite d'un nombre de sauts ni d'un brevet.
+        qualifications: qualifs.get(p.parachutiste_id ?? '') ?? [],
         nom: pr ? `${pr.prenom} ${pr.nom}` : (p.type_saut === 'tandem' ? 'Passager tandem' : '?'),
         // Inconnu → GRIS. Jamais l'absence de réponse traduite en vert.
         aptitude: (p.parachutiste_id && verdicts.get(p.parachutiste_id)) || 'gris',
@@ -310,6 +334,15 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     return null;
   };
 
+  /** La radio se constate d'un clic : elle est sur la personne, ou elle ne l'est pas. */
+  const basculerRadio = async (placeId: string, radio: boolean): Promise<string | null> => {
+    const { error } = await supabase.from('places_rotation')
+      .update({ radio }).eq('id', placeId);
+    if (error) return messageErreur(error);
+    await charger();
+    return null;
+  };
+
   /** Carburant embarqué. Donnée de l'avion, saisie dans l'entête de planche. */
   const definirCarburant = async (rotationId: string, litres: number | null): Promise<string | null> => {
     const { error } = await supabase.from('rotations')
@@ -410,6 +443,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
                   onDefinirAltitude={definirAltitude}
                   onDesignerChefAvion={id => designerChefAvion(r.id, id)}
                   onDefinirCarburant={l => definirCarburant(r.id, l)}
+                  onBasculerRadio={basculerRadio}
                   aeronef={aeronefs.find(a => a.id === r.aeronef_id)} onChange={charger}
                   onDeposer={fileId => placer(fileId, r.id)} onOuvrirFiche={ouvrirFiche}
                   largueurs={largueurs}

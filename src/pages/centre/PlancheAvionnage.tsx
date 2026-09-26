@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { MIME_FILE } from './FileAvionnageDZ';
 import { SiglesFonctions } from '../../components/SigleFonction';
 import { supabase } from '../../lib/supabase';
-import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff, AlertTriangle, CheckCircle2, Fuel } from 'lucide-react';
+import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff, AlertTriangle, CheckCircle2, Fuel, Radio } from 'lucide-react';
 import { surface, rayure, pastille, action, SEVERITE_COULEUR, type Severite } from '../../lib/jetons';
 import {
   formaterRetard,
   calculerCall, SEVERITE_CALL, siegesOccupes, libelleCapacite, messageErreur,
-  LIBELLE_PLACE,
+  LIBELLE_PLACE, TEINTE_DISCIPLINE, radioAttendue,
   verifierPlanche, blocsDePlanche, masseEmbarquee, libelleMasse,
 } from '../../lib/avionnage';
 
@@ -35,6 +35,12 @@ export interface PlaceVue {
   masse_kg: number | null;
   /** Altitude de largage de CE sauteur. null = celle de l'avion, pas zéro. */
   altitude_largage_m: number | null;
+  /** Emporte une radio. Fait constaté par la DZ, pas une règle. */
+  radio: boolean;
+  /** Brevet principal (A, B, C, D) — ce que PAPA met entre parenthèses. */
+  brevet: string | null;
+  /** Qualifications valides : largueur, moniteur… Affichées telles quelles. */
+  qualifications: string[];
   /** Verdict Feu Vert. JAMAIS nul : ne rien savoir est un état — le gris —
    *  et il doit se voir. Une absence de badge se lisait « tout va bien ». */
   aptitude: 'vert' | 'orange' | 'rouge' | 'gris';
@@ -72,7 +78,7 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDesignerChefAvion, onDefinirCarburant }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDesignerChefAvion, onDefinirCarburant, onBasculerRadio }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -97,6 +103,8 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   onDefinirAltitude?: (placeId: string, metres: number | null) => Promise<string | null>;
   /** Carburant embarqué, en litres. */
   onDefinirCarburant?: (litres: number | null) => Promise<string | null>;
+  /** La radio se constate d'un clic : elle est sur la personne, ou elle ne l'est pas. */
+  onBasculerRadio?: (placeId: string, radio: boolean) => Promise<string | null>;
   /** Le chef avion se choisit PARMI LES GENS À BORD — la base l'exige aussi. */
   onDesignerChefAvion?: (id: string | null) => void;
 }) {
@@ -392,21 +400,65 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                   className="flex-1 min-w-0 truncate text-left hover:underline"
                   style={{ fontSize: 13, color: 'var(--c-text)', minHeight: 32 }}>
                   {p.nom}
-                  <span style={{ color: 'var(--c-muted)' }}>
-                    {' · '}{LIBELLE_PLACE[p.type_saut] ?? p.type_saut}
-                  </span>
+                  {/* Le brevet, comme sur un manifest : « DUPONT (C) ». */}
+                  {p.brevet && (
+                    <span style={{ color: 'var(--c-muted)', fontWeight: 400 }}> ({p.brevet})</span>
+                  )}
                 </button>
               ) : (
                 <span className="flex-1 min-w-0 truncate" style={{ fontSize: 13, color: 'var(--c-text)' }}>
                   {p.nom}
-                  <span style={{ color: 'var(--c-muted)' }}>
-                    {' · '}{LIBELLE_PLACE[p.type_saut] ?? p.type_saut}
-                  </span>
+                  {p.brevet && (
+                    <span style={{ color: 'var(--c-muted)', fontWeight: 400 }}> ({p.brevet})</span>
+                  )}
                 </span>
               )}
               {/* Le sigle ne va QU'AU LARGUEUR DÉSIGNÉ. La qualification dit
                   ce qu'on peut faire ; s'il y a trois largueurs sur la DZ, il
                   n'y en a qu'UN par avion — et c'est la DZ qui le nomme. */}
+              {/* LA DISCIPLINE, en toutes lettres et teintée. La couleur groupe,
+                  le mot renseigne : en plein soleil, et pour qui distingue mal
+                  les teintes, c'est le mot qui reste lisible. */}
+              <span className="flex-shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded"
+                style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '0.04em',
+                         color: TEINTE_DISCIPLINE[p.type_saut] ?? 'var(--c-muted)',
+                         border: `1px solid ${TEINTE_DISCIPLINE[p.type_saut] ?? 'var(--n2-bord)'}`,
+                         background: `color-mix(in srgb, ${TEINTE_DISCIPLINE[p.type_saut] ?? 'transparent'} 12%, transparent)` }}>
+                {LIBELLE_PLACE[p.type_saut] ?? p.type_saut}
+              </span>
+
+              {/* LA RADIO. Attendue en progression — quelqu'un guide au sol.
+                  Ce n'est PAS une règle fédérale : ParaPass n'en connaît
+                  aucune qui la fonde, et P2 interdit d'en inventer une. C'est
+                  un fait qu'on constate, et qui se voit quand il manque. */}
+              {onBasculerRadio && (
+                <button type="button" disabled={occupe || close}
+                  onClick={() => agir('Radio', () =>
+                    onBasculerRadio(p.id, !p.radio).then(e => ({ error: e ? { message: e } : null })))}
+                  title={p.radio ? `${p.nom} a une radio` :
+                    radioAttendue(p.type_saut)
+                      ? `${p.nom} est en progression et n'a pas de radio`
+                      : `Noter que ${p.nom} emporte une radio`}
+                  className="flex-shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded"
+                  style={{ fontSize: 10.5, fontWeight: 800, cursor: close ? 'default' : 'pointer',
+                    color: p.radio ? SEVERITE_COULEUR.conforme
+                      : radioAttendue(p.type_saut) ? SEVERITE_COULEUR.vigilance : 'var(--c-dim)',
+                    border: `1px ${p.radio ? 'solid' : 'dashed'} ${p.radio ? SEVERITE_COULEUR.conforme
+                      : radioAttendue(p.type_saut) ? SEVERITE_COULEUR.vigilance : 'var(--n2-bord)'}` }}>
+                  <Radio className="w-3 h-3 inline-block align-[-1px]" aria-hidden />
+                  <span className="sr-only">
+                    {p.radio ? 'Radio embarquée' : 'Pas de radio'} — {p.nom}
+                  </span>
+                  {radioAttendue(p.type_saut) && !p.radio ? ' !' : ''}
+                </button>
+              )}
+
+              {/* Les qualifications, telles qu'elles sont en base. Aucune
+                  n'est déduite : ce qui n'est pas saisi ne s'affiche pas. */}
+              {p.qualifications.length > 0 && (
+                <SiglesFonctions codes={p.qualifications} compact />
+              )}
+
               {p.parachutiste_id && p.parachutiste_id === r.largueur_id && (
                 <SiglesFonctions codes={['largueur']} compact />
               )}

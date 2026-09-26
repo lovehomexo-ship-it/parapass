@@ -590,3 +590,42 @@ export function libelleMasse(m: MasseEmbarquee, maxKg: number | null): string | 
   if (m.complet) return base + plafond;
   return `${base}${plafond} — ${m.inconnues} masse${m.inconnues > 1 ? 's' : ''} inconnue${m.inconnues > 1 ? 's' : ''}`;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LIRE UNE LIGNE D'UN COUP D'ŒIL — la discipline, et la radio.
+//
+// Sur une planche, dix noms se ressemblent. Le chef d'avionnage doit voir
+// SANS LIRE qui est en progression, qui part en tandem, qui est équipage.
+//
+// LES TEINTES DE DISCIPLINE NE SONT PAS DES ÉTATS. Elles ne réemploient
+// aucune couleur de sévérité : un saut d'école n'est ni un danger ni une
+// alerte. Elles portent un LIBELLÉ, jamais une couleur seule — sur un écran
+// en plein soleil, et pour qui distingue mal les teintes, c'est le mot qui
+// renseigne, la couleur ne fait que grouper.
+// ═══════════════════════════════════════════════════════════════════════════
+
+export const TEINTE_DISCIPLINE: Record<string, string> = {
+  ecole:      '#A78BFA',   // violet — la progression
+  accompagne: '#A78BFA',
+  tandem:     '#2DD4BF',   // turquoise — le passager
+  video:      '#38BDF8',   // ciel — l'image
+  largueur:   '#94A3B8',   // ardoise — l'équipage, pas un sauteur
+  groupe:     '#818CF8',   // indigo — on sort ensemble
+  wingsuit:   '#818CF8',
+  solo:       '#94A3B8',
+};
+
+/**
+ * La radio est-elle ATTENDUE sur cette place ?
+ *
+ * Fondée sur la DISCIPLINE, pas sur un nombre de sauts : ParaPass ne connaît
+ * aucun texte fédéral fixant un seuil, et P2 interdit d'en inventer un. Un
+ * élève guidé au sol porte une radio parce que quelqu'un le guide — c'est un
+ * fait d'exploitation, et l'écran le présente comme tel.
+ *
+ * Si la fédération fixe un seuil, il devra venir du référentiel, avec sa
+ * référence, comme toutes les autres règles.
+ */
+export function radioAttendue(typeSaut: string): boolean {
+  return typeSaut === 'ecole' || typeSaut === 'accompagne';
+}
