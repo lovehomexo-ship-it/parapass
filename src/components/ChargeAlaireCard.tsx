@@ -9,7 +9,9 @@ import { useJumpCounts } from '../lib/useJumpCount';
  *  Le poids équipé reste privé (table owner-only), jamais affiché ailleurs. */
 export function ChargeAlaireCard({ userId, tailleVoileFt2 }: { userId: string | undefined; tailleVoileFt2: number | null }) {
   const guidelines = useCanopyGuidelines();
-  const { poidsKg, save } = usePoidsEquipe(userId);
+  const { poidsKg, save, poidsNuKg, saveNu } = usePoidsEquipe(userId);
+  const [editNu, setEditNu] = useState(false);
+  const [draftNu, setDraftNu] = useState('');
   const { valid: sautsCount } = useJumpCounts(userId);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
@@ -111,6 +113,41 @@ export function ChargeAlaireCard({ userId, tailleVoileFt2 }: { userId: string | 
           </button>
         )}
         {saveError && <span className="text-xs" style={{ color: '#FCA5A5' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {saveError}</span>}
+      </div>
+
+      {/* LE POIDS NU — celui que lit la DT 48. Le tableau fédéral ajoute
+          lui-même 10 kg d'équipement : deux poids coexistent, et ils ne sont
+          pas interchangeables. Renseigné ici une fois, il évite d'être
+          redemandé à chaque avionnage. */}
+      <div className="flex items-center gap-2 flex-wrap mt-1.5">
+        {editNu ? (
+          <>
+            <input type="number" min={30} max={160} step={0.5} value={draftNu}
+              onChange={e => setDraftNu(e.target.value)} autoFocus
+              className="w-24 px-2 py-1 rounded-lg text-xs"
+              style={{ background: 'rgba(255,255,255,0.08)', color: '#fff',
+                       border: '1px solid rgba(255,255,255,0.15)' }} />
+            <button
+              onClick={async () => {
+                const err = await saveNu(draftNu.trim() === '' ? null : parseFloat(draftNu.replace(',', '.')));
+                if (!err) setEditNu(false);
+              }}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg text-white"
+              style={{ background: '#2563EB' }}>OK</button>
+            <button onClick={() => setEditNu(false)} className="text-xs px-2 py-1.5"
+              style={{ color: 'rgba(255,255,255,0.5)' }}>Annuler</button>
+          </>
+        ) : (
+          <button
+            onClick={() => { setEditNu(true); setDraftNu(poidsNuKg != null ? String(poidsNuKg) : ''); }}
+            className="text-xs font-medium underline underline-offset-2"
+            style={{ color: 'rgba(147,197,253,0.8)', background: 'none', border: 'none',
+                     cursor: 'pointer', padding: 0 }}>
+            {poidsNuKg != null
+              ? `Poids nu : ${poidsNuKg} kg — modifier`
+              : '+ Renseigner mon poids nu (surface de voilure DT 48)'}
+          </button>
+        )}
       </div>
 
       <p className="text-[10px] mt-2 leading-relaxed" style={{ color: 'rgba(255,255,255,0.3)' }}>

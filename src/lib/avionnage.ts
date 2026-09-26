@@ -101,6 +101,13 @@ export function useMaFileAvionnage(centreId: string | undefined, userId: string 
   const [jour, setJour] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
+  /**
+   * La voile PERSO enregistrée — celle qu'on propose par défaut à l'avionnage.
+   * Elle est déjà saisie dans « Mon matériel » : la redemander à chaque saut
+   * ferait ressaisir une donnée qu'on a déjà, et on sait ce qu'il advient des
+   * champs qu'on remplit vingt fois — ils finissent faux.
+   */
+  const [voilePerso, setVoilePerso] = useState<{ surface: number; libelle: string } | null>(null);
 
   const charger = useCallback(async () => {
     if (!centreId || !userId) { setChargement(false); return; }
@@ -184,6 +191,26 @@ export function useMaFileAvionnage(centreId: string | undefined, userId: string 
 
   useEffect(() => { charger(); }, [charger]);
 
+  // La voile enregistrée, lue une fois : elle ne change pas dans la journée.
+  useEffect(() => {
+    if (!userId) return;
+    let vivant = true;
+    supabase.from('materiels')
+      .select('marque, modele, taille_voile_ft2')
+      .eq('parachutiste_id', userId).eq('type', 'parachute_principal')
+      .eq('statut', 'actif').not('taille_voile_ft2', 'is', null)
+      .order('created_at', { ascending: false }).limit(1)
+      .then(({ data, error }) => {
+        if (!vivant || error) return;
+        const m = (data ?? [])[0] as { marque: string | null; modele: string | null; taille_voile_ft2: number } | undefined;
+        if (m) setVoilePerso({
+          surface: Number(m.taille_voile_ft2),
+          libelle: [m.marque, m.modele].filter(Boolean).join(' ') || 'voile perso',
+        });
+      });
+    return () => { vivant = false; };
+  }, [userId]);
+
   // Temps réel : la file bouge sans cesse un jour de beau temps. Sans ça, le
   // sauteur regarde une position périmée et rate son avion.
   useEffect(() => {
@@ -222,7 +249,8 @@ export function useMaFileAvionnage(centreId: string | undefined, userId: string 
     return true;
   };
 
-  return { ouvert, ma, avions, jour, chargement, erreur, rejoindre, quitter, recharger: charger };
+  return { ouvert, ma, avions, jour, chargement, erreur, rejoindre, quitter,
+           voilePerso, recharger: charger };
 }
 
 // ── Côté DZ ────────────────────────────────────────────────────────────────

@@ -65,7 +65,7 @@ function CallAvion({ avion, jour, maintenant, gros = false }: {
 function FileInner({ centreId, centreNom, userId }: {
   centreId: string; centreNom?: string; userId: string;
 }) {
-  const { ouvert, ma, avions, jour, chargement, erreur, rejoindre, quitter } =
+  const { ouvert, ma, avions, jour, chargement, erreur, rejoindre, quitter, voilePerso } =
     useMaFileAvionnage(centreId, userId);
   const maintenant = useMinute();
   const [type, setType] = useState<TypeSautFile>('solo');
@@ -76,6 +76,11 @@ function FileInner({ centreId, centreNom, userId }: {
    * ne se refuse pas faute de chiffre ; c'est alors le DT qui le saisira.
    */
   const [surfaceVoile, setSurfaceVoile] = useState('');
+  // Pré-rempli avec la voile enregistrée : il n'a plus qu'à valider, ou à
+  // corriger le jour où il en emprunte une autre.
+  useEffect(() => {
+    if (voilePerso && surfaceVoile === '') setSurfaceVoile(String(voilePerso.surface));
+  }, [voilePerso]); // eslint-disable-line react-hooks/exhaustive-deps
   const [enCours, setEnCours] = useState(false);
 
   // La file fermée n'est pas une erreur : c'est l'état normal hors journée de
@@ -191,11 +196,19 @@ function FileInner({ centreId, centreNom, userId }: {
             <input type="number" inputMode="numeric" min={50} max={500} step={1}
               value={surfaceVoile} onChange={e => setSurfaceVoile(e.target.value)}
               placeholder="voile"
+              title={voilePerso
+                ? `Votre voile enregistrée : ${voilePerso.libelle} — corrigez si vous en empruntez une autre`
+                : 'Surface de la voile que vous emportez'}
               className="px-2 rounded-xl text-right"
               style={{ width: 88, minHeight: 44, fontSize: 14, background: 'var(--c-input)',
                        color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
             ft²
           </label>
+          {voilePerso && surfaceVoile === String(voilePerso.surface) && (
+            <span className="w-full" style={{ fontSize: 12, color: 'var(--c-dim)' }}>
+              Votre voile enregistrée ({voilePerso.libelle}) — corrigez si vous en empruntez une autre.
+            </span>
+          )}
           <button type="button" disabled={enCours}
             onClick={() => agir(() => rejoindre(type, undefined,
               surfaceVoile.trim() === '' ? null : Number(surfaceVoile)))}

@@ -83,35 +83,56 @@ export function useCanopyGuidelines(): CanopyGuideline[] {
 export function usePoidsEquipe(userId: string | undefined): {
   poidsKg: number | null;
   save: (poids: number | null) => Promise<string | null>; // renvoie un message d'erreur ou null
+  /**
+   * Poids NU — celui que lit la DT 48. Le tableau fédéral ajoute lui-même
+   * 10 kg d'équipement, c'est donc bien le poids nu qu'on lui donne. Deux
+   * poids coexistent, et ils ne sont pas interchangeables : l'équipé sert au
+   * chargement de l'avion, le nu à la surface de voilure minimale.
+   */
+  poidsNuKg: number | null;
+  saveNu: (poids: number | null) => Promise<string | null>;
 } {
   const [poidsKg, setPoidsKg] = useState<number | null>(null);
+  const [poidsNuKg, setPoidsNuKg] = useState<number | null>(null);
 
   useEffect(() => {
     if (!userId) return;
     supabase
       .from('profils_prives')
-      .select('poids_tout_equipe_kg')
+      .select('poids_tout_equipe_kg, poids_nu_kg')
       .eq('profile_id', userId)
       .maybeSingle()
       .then(({ data, error }) => {
-        if (error) { console.error('Chargement poids équipé échoué :', error); return; }
+        if (error) { console.error('Chargement poids échoué :', error); return; }
         setPoidsKg(data?.poids_tout_equipe_kg ?? null);
+        setPoidsNuKg(data?.poids_nu_kg ?? null);
       });
   }, [userId]);
 
-  const save = async (poids: number | null): Promise<string | null> => {
+  const ecrire = async (champ: 'poids_tout_equipe_kg' | 'poids_nu_kg', poids: number | null) => {
     if (!userId) return 'Utilisateur inconnu';
     const { data: written, error } = await supabase
       .from('profils_prives')
-      .upsert({ profile_id: userId, poids_tout_equipe_kg: poids, updated_at: new Date().toISOString() })
+      .upsert({ profile_id: userId, [champ]: poids, updated_at: new Date().toISOString() })
       .select('profile_id');
     if (error || !written || written.length === 0) {
-      console.error('Écriture poids équipé échouée :', error);
+      console.error(`Écriture ${champ} échouée :`, error);
       return error?.message ?? 'Écriture refusée';
     }
-    setPoidsKg(poids);
     return null;
   };
 
-  return { poidsKg, save };
+  const save = async (poids: number | null): Promise<string | null> => {
+    const err = await ecrire('poids_tout_equipe_kg', poids);
+    if (!err) setPoidsKg(poids);
+    return err;
+  };
+
+  const saveNu = async (poids: number | null): Promise<string | null> => {
+    const err = await ecrire('poids_nu_kg', poids);
+    if (!err) setPoidsNuKg(poids);
+    return err;
+  };
+
+  return { poidsKg, save, poidsNuKg, saveNu };
 }
