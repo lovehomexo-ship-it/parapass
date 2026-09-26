@@ -310,6 +310,15 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     return null;
   };
 
+  /** Carburant embarqué. Donnée de l'avion, saisie dans l'entête de planche. */
+  const definirCarburant = async (rotationId: string, litres: number | null): Promise<string | null> => {
+    const { error } = await supabase.from('rotations')
+      .update({ carburant_litres: litres }).eq('id', rotationId);
+    if (error) return messageErreur(error);
+    await charger();
+    return null;
+  };
+
   /** Altitude propre à un sauteur. Vide = il reprend celle de l'avion. */
   const definirAltitude = async (placeId: string, metres: number | null): Promise<string | null> => {
     const { error } = await supabase.from('places_rotation')
@@ -400,6 +409,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
                   onGrouper={grouper} onDegrouper={degrouper} onDefinirMasse={definirMasse}
                   onDefinirAltitude={definirAltitude}
                   onDesignerChefAvion={id => designerChefAvion(r.id, id)}
+                  onDefinirCarburant={l => definirCarburant(r.id, l)}
                   aeronef={aeronefs.find(a => a.id === r.aeronef_id)} onChange={charger}
                   onDeposer={fileId => placer(fileId, r.id)} onOuvrirFiche={ouvrirFiche}
                   largueurs={largueurs}

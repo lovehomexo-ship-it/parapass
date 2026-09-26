@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MIME_FILE } from './FileAvionnageDZ';
 import { SiglesFonctions } from '../../components/SigleFonction';
 import { supabase } from '../../lib/supabase';
-import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff, AlertTriangle, CheckCircle2, Fuel } from 'lucide-react';
 import { surface, rayure, pastille, action, SEVERITE_COULEUR, type Severite } from '../../lib/jetons';
 import {
   formaterRetard,
@@ -48,6 +48,8 @@ export interface RotationVue {
   largueur_id: string | null;
   /** Le chef avion — responsable du stick à bord. DISTINCT du largueur. */
   chef_avion_id: string | null;
+  /** Carburant embarqué, en litres. null = non renseigné, jamais zéro. */
+  carburant_litres: number | null;
   /** Planche de démonstration. Se dit à l'écran : une salle de présentation ne
    *  doit pas confondre une planche de démo avec la journée réelle. */
   demo?: boolean;
@@ -70,7 +72,7 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDesignerChefAvion }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDesignerChefAvion, onDefinirCarburant }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -93,6 +95,8 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   onDefinirMasse?: (place: PlaceVue, kg: number | null) => Promise<string | null>;
   /** Altitude propre à un sauteur. null = il reprend celle de l'avion. */
   onDefinirAltitude?: (placeId: string, metres: number | null) => Promise<string | null>;
+  /** Carburant embarqué, en litres. */
+  onDefinirCarburant?: (litres: number | null) => Promise<string | null>;
   /** Le chef avion se choisit PARMI LES GENS À BORD — la base l'exige aussi. */
   onDesignerChefAvion?: (id: string | null) => void;
 }) {
@@ -237,6 +241,31 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
         {/* Les heures RÉELLES ne sont pas modifiables : elles sont relevées au
             moment du geste. Une heure de décollage qu'on peut retaper le soir
             n'est plus une trace. */}
+        {/* Le carburant se lit dans l'entête, comme sur un manifest : c'est une
+            donnée de l'avion, au même titre que son immatriculation. Vide =
+            non renseigné, affiché tel quel — « 0 L » serait un chiffre faux. */}
+        {!close && onDefinirCarburant && (
+          <label className="flex items-center gap-1">
+            <Fuel className="w-3.5 h-3.5" aria-hidden />
+            <span className="sr-only">Carburant embarqué, en litres — avion n°{r.numero}</span>
+            <input type="number" inputMode="numeric" min={0} max={5000} step={10}
+              defaultValue={r.carburant_litres ?? ''}
+              disabled={occupe}
+              placeholder="— L"
+              onBlur={e => {
+                const v = e.target.value.trim();
+                const l = v === '' ? null : Number(v);
+                if (l === (r.carburant_litres ?? null)) return;
+                agir('Carburant', () =>
+                  onDefinirCarburant(l).then(err => ({ error: err ? { message: err } : null })));
+              }}
+              className="px-1.5 rounded-lg text-right"
+              style={{ width: 70, minHeight: 32, fontSize: 12, background: 'var(--c-input)',
+                       color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
+            L
+          </label>
+        )}
+        {close && r.carburant_litres !== null && <span>{r.carburant_litres} L</span>}
         {r.heure_decollage && <span>décollage {hhmm(r.heure_decollage)}</span>}
         {r.heure_largage && <span>largage {hhmm(r.heure_largage)}</span>}
         {r.cloturee_le && <span>clôturée {hhmm(r.cloturee_le)}</span>}
