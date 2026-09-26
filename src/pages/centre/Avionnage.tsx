@@ -7,7 +7,7 @@ import { ymdLocal } from '../../lib/datetime';
 import { Plus, Plane, ScanLine, MoonStar } from 'lucide-react';
 import { useDialogues } from '../../components/useDialogues';
 import { action, enTeteSection } from '../../lib/jetons';
-import { siegesOccupes, messageErreur } from '../../lib/avionnage';
+import { siegesOccupes, messageErreur, type Discipline } from '../../lib/avionnage';
 import { FileAvionnageDZ } from './FileAvionnageDZ';
 import { AjouterAeronef, type Aeronef } from './Rotations';
 import { RechercheLicencie } from './RechercheLicencie';
@@ -52,6 +52,8 @@ function AvionnageInner({ centreId }: { centreId: string }) {
   const [scanOuvert, setScanOuvert] = useState(false);
   // Les largueurs QUALIFIÉS du centre, pour le sélecteur de désignation.
   const [largueurs, setLargueurs] = useState<{ parachutiste_id: string; nom: string; prenom: string }[]>([]);
+  /** Le référentiel des disciplines du centre. Lu, jamais écrit en dur. */
+  const [disciplines, setDisciplines] = useState<Discipline[]>([]);
   const navigate = useNavigate();
   const { demanderConfirmation, dialogue } = useDialogues();
   const rechargerFile = useRef<(() => Promise<void>) | null>(null);
@@ -100,6 +102,17 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     // Aucune ligne d'options = pas souscrit. On ne présume jamais l'activation.
     setScanOuvert(Boolean((opt as { embarquement_qr?: boolean } | null)?.embarquement_qr));
     setLargueurs((lg ?? []) as { parachutiste_id: string; nom: string; prenom: string }[]);
+
+    // Le référentiel des disciplines, filtré par ce que CE centre propose.
+    // Absence de ligne d'activation = le défaut du catalogue.
+    const [{ data: dRef }, { data: dCentre }] = await Promise.all([
+      supabase.from('disciplines_saut')
+        .select('code, libelle, ordre, equipage, radio_attendue, teinte')
+        .eq('actif', true).order('ordre'),
+      supabase.from('centres_disciplines').select('code, actif').eq('centre_id', centreId),
+    ]);
+    const retirees = new Set((dCentre ?? []).filter(x => !x.actif).map(x => x.code));
+    setDisciplines(((dRef ?? []) as Discipline[]).filter(d => !retirees.has(d.code)));
 
     if (rr.length === 0) { setPlaces([]); setChargement(false); return; }
     const { data: pl, error: e2 } = await supabase.from('places_rotation')
@@ -423,6 +436,19 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     return null;
   };
 
+  /**
+   * Ce que fait la personne se change jusqu'a la derniere minute : un sauteur
+   * decide au pied de l'avion qu'il part en VR, un videaste renonce a filmer.
+   * La planche doit suivre, sinon elle ment dans les cinq minutes.
+   */
+  const changerDiscipline = async (placeId: string, code: string): Promise<string | null> => {
+    const { error } = await supabase.from('places_rotation')
+      .update({ type_saut: code }).eq('id', placeId);
+    if (error) return messageErreur(error);
+    await charger();
+    return null;
+  };
+
   /** L'option video se vend au comptoir : l'ecran ne fait que la constater. */
   const basculerVideo = async (placeId: string, vendue: boolean): Promise<string | null> => {
     const { error } = await supabase.from('places_rotation')
@@ -527,6 +553,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
                   onDefinirAltitude={definirAltitude}
                   onDefinirCarburant={l => definirCarburant(r.id, l)}
                   onBasculerRadio={basculerRadio} onAjouterPassager={ajouterPassager} onBasculerVideo={basculerVideo}
+                  onChangerDiscipline={changerDiscipline} disciplines={disciplines}
                   aeronef={aeronefs.find(a => a.id === r.aeronef_id)} onChange={charger}
                   onDeposer={fileId => placer(fileId, r.id)} onOuvrirFiche={ouvrirFiche}
                   largueurs={largueurs}

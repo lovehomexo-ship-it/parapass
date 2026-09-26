@@ -1,0 +1,27 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- LES DISCIPLINES — un RÉFÉRENTIEL, plus une liste figée dans le code.
+--
+-- Le CHECK de places_rotation.type_saut enfermait huit valeurs décidées par
+-- moi. Un centre qui fait du free fly, du VR, du suivi vidéo ou de l'init PAC
+-- ne pouvait pas le dire. Le CHECK devient une CLÉ ÉTRANGÈRE vers le
+-- référentiel : on garde la garantie — pas de discipline inventée à la volée —
+-- en gagnant l'extensibilité.
+--
+-- Catalogue COMMUN + activation PAR CENTRE. Les codes sont partagés (on ne
+-- veut pas dix orthographes de « wingsuit » en base), chaque centre choisit ce
+-- qu'il propose. Désactiver ne supprime rien : les sauts passés gardent leur
+-- discipline, et le sélecteur continue de proposer celle en cours même si le
+-- centre l'a retirée — on n'efface pas un fait.
+--
+-- 18 disciplines au départ, reprises du manifest de référence : solo, groupe,
+-- free fly, VR, wingsuit, tracking, vidéo, suivi vidéo, tandem, PAC, init PAC,
+-- 1er PAC, post PAC, accompagné, init VR, init FF, init WS, largueur.
+--
+-- Deux attributs portent du sens métier :
+--   • equipage      — « largueur » n'est pas un saut : la personne occupe un
+--                     siège et pèse, aucune règle de saut ne la vise.
+--   • radio_attendue — FAIT d'exploitation, PAS une règle fédérale. Aucun texte
+--                     connu de ParaPass ne l'impose (P2) ; il sert à signaler
+--                     une absence, jamais à interdire.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Migration appliquée : referentiel_disciplines_saut. LE 26/09/2026.

@@ -645,6 +645,24 @@ export function libelleMasse(m: MasseEmbarquee, maxKg: number | null): string | 
 // renseigne, la couleur ne fait que grouper.
 // ═══════════════════════════════════════════════════════════════════════════
 
+/**
+ * Une discipline, telle qu'elle vit dans le référentiel.
+ *
+ * Elle ne vient plus d'une liste écrite dans le code : le centre l'ajoute et
+ * la retire lui-même. Le code n'en connaît donc aucune — il les affiche.
+ */
+export interface Discipline {
+  code: string;
+  libelle: string;
+  ordre: number;
+  /** « largueur » : la personne est d'équipage, elle ne saute pas. */
+  equipage: boolean;
+  /** Fait d'exploitation, pas une règle fédérale : signale une absence. */
+  radio_attendue: boolean;
+  teinte: string | null;
+}
+
+/** Repli quand le référentiel n'a pas encore répondu. Jamais une autorité. */
 export const TEINTE_DISCIPLINE: Record<string, string> = {
   ecole:      '#A78BFA',   // violet — la progression
   accompagne: '#A78BFA',
@@ -667,6 +685,22 @@ export const TEINTE_DISCIPLINE: Record<string, string> = {
  * Si la fédération fixe un seuil, il devra venir du référentiel, avec sa
  * référence, comme toutes les autres règles.
  */
-export function radioAttendue(typeSaut: string): boolean {
+export function radioAttendue(typeSaut: string, referentiel?: Discipline[]): boolean {
+  const d = referentiel?.find(x => x.code === typeSaut);
+  if (d) return d.radio_attendue;
+  // Sans référentiel chargé, on retombe sur ce que le produit savait avant —
+  // et on ne prétend pas savoir pour une discipline qu'on ne connaît pas.
   return typeSaut === 'ecole' || typeSaut === 'accompagne';
+}
+
+/** Le libellé d'une discipline : le référentiel d'abord, le repli ensuite. */
+export function libelleDiscipline(code: string, referentiel?: Discipline[]): string {
+  return referentiel?.find(d => d.code === code)?.libelle
+    ?? LIBELLE_PLACE[code] ?? code;
+}
+
+/** Sa teinte. Elle groupe, elle n'alerte pas : aucune couleur de sévérité. */
+export function teinteDiscipline(code: string, referentiel?: Discipline[]): string {
+  return referentiel?.find(d => d.code === code)?.teinte
+    ?? TEINTE_DISCIPLINE[code] ?? 'var(--c-muted)';
 }

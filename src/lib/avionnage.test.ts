@@ -4,6 +4,7 @@ import {
   calculerCall, SEVERITE_CALL, formaterRetard,
   verifierPlanche, type EntreeVerification, blocsDePlanche,
   masseEmbarquee, libelleMasse, radioAttendue, TEINTE_DISCIPLINE,
+  libelleDiscipline, teinteDiscipline,
 } from './avionnage';
 
 describe('avionnage — capacité', () => {
@@ -378,7 +379,10 @@ describe('radioAttendue — un fait d’exploitation, pas une règle inventée',
     for (const t of ['solo', 'groupe', 'wingsuit', 'video', 'tandem', 'largueur']) {
       expect(radioAttendue(t)).toBe(false);
     }
-    expect(radioAttendue.length).toBe(1);
+    // La fonction ne prend pas de nombre de sauts : son second paramètre est
+    // le RÉFÉRENTIEL. Aucun seuil n'existe dans ParaPass, et P2 interdit d'en
+    // inventer un.
+    expect(radioAttendue('solo', [])).toBe(false);
   });
 });
 
@@ -466,5 +470,29 @@ describe('verifierPlanche — l’option vidéo', () => {
     const e = verifierPlanche({ ...PRETE,
       places: [{ ...base, typeSaut: 'video', aSonPassager: false }] });
     expect(e.anomalies.some(a => a.code === 'video_sans_videaste')).toBe(false);
+  });
+});
+
+describe('le référentiel des disciplines prime sur le repli', () => {
+  const ref = [{ code: 'ff', libelle: 'Free fly', ordre: 30, equipage: false,
+                 radio_attendue: false, teinte: '#111111' },
+               { code: 'init_pac', libelle: 'Init PAC', ordre: 91, equipage: false,
+                 radio_attendue: true, teinte: '#222222' }];
+
+  it('le libellé et la teinte viennent du référentiel', () => {
+    expect(libelleDiscipline('ff', ref)).toBe('Free fly');
+    expect(teinteDiscipline('ff', ref)).toBe('#111111');
+  });
+
+  it('la radio suit le référentiel, pas une liste écrite dans le code', () => {
+    // « init_pac » n'existait nulle part côté code : sans référentiel, on ne
+    // peut pas le savoir ; avec, on le sait.
+    expect(radioAttendue('init_pac')).toBe(false);
+    expect(radioAttendue('init_pac', ref)).toBe(true);
+  });
+
+  it('une discipline inconnue ne casse rien : on affiche son code', () => {
+    expect(libelleDiscipline('saut_plage', ref)).toBe('saut_plage');
+    expect(radioAttendue('saut_plage', ref)).toBe(false);
   });
 });

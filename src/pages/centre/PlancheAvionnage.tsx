@@ -7,7 +7,7 @@ import { surface, rayure, pastille, action, SEVERITE_COULEUR, type Severite } fr
 import {
   formaterRetard,
   calculerCall, SEVERITE_CALL, siegesOccupes, libelleCapacite, messageErreur,
-  LIBELLE_PLACE, TEINTE_DISCIPLINE, radioAttendue,
+  libelleDiscipline, teinteDiscipline, radioAttendue, type Discipline,
   verifierPlanche, blocsDePlanche, masseEmbarquee, libelleMasse,
 } from '../../lib/avionnage';
 
@@ -92,7 +92,7 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onBasculerRadio, onAjouterPassager, onBasculerVideo }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -123,6 +123,10 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   onAjouterPassager?: (placeMoniteur: PlaceVue, nom: string, kg: number | null) => Promise<string | null>;
   /** L'option vidéo se vend ou s'annule d'un clic. */
   onBasculerVideo?: (placeId: string, vendue: boolean) => Promise<string | null>;
+  /** Ce que fait la personne se change jusqu'à la dernière minute. */
+  onChangerDiscipline?: (placeId: string, code: string) => Promise<string | null>;
+  /** Le référentiel du centre. Vide = on retombe sur les libellés connus. */
+  disciplines?: Discipline[];
 }) {
   const [occupe, setOccupe] = useState(false);
   const [echec, setEchec] = useState<string | null>(null);
@@ -459,13 +463,40 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                   </span>
                 </button>
 
-                <span className="flex-shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded"
-                  style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '0.04em',
-                           color: TEINTE_DISCIPLINE[p.type_saut] ?? 'var(--c-muted)',
-                           border: `1px solid ${TEINTE_DISCIPLINE[p.type_saut] ?? 'var(--n2-bord)'}`,
-                           background: `color-mix(in srgb, ${TEINTE_DISCIPLINE[p.type_saut] ?? 'transparent'} 12%, transparent)` }}>
-                  {LIBELLE_PLACE[p.type_saut] ?? p.type_saut}
-                </span>
+                {/* CE QUE FAIT LA PERSONNE, et ça se change. Un sauteur decide
+                    au pied de l'avion qu'il part en VR plutot qu'en solo ; un
+                    videaste renonce a filmer. La planche doit suivre, sinon
+                    elle ment dans les cinq minutes. Le contenu vient du
+                    REFERENTIEL du centre, pas d'une liste ecrite ici. */}
+                {!close && onChangerDiscipline && !p.passager_nom ? (
+                  <select value={p.type_saut} disabled={occupe}
+                    onChange={e => agir('Changement de discipline', () =>
+                      onChangerDiscipline(p.id, e.target.value)
+                        .then(err => ({ error: err ? { message: err } : null })))}
+                    aria-label={`Ce que fait ${p.nom}`}
+                    className="flex-shrink-0 px-1.5 rounded"
+                    style={{ fontSize: 11, fontWeight: 700, minHeight: 28,
+                             color: teinteDiscipline(p.type_saut, disciplines),
+                             background: `color-mix(in srgb, ${teinteDiscipline(p.type_saut, disciplines)} 12%, transparent)`,
+                             border: `1px solid ${teinteDiscipline(p.type_saut, disciplines)}` }}>
+                    {(disciplines ?? []).map(d => (
+                      <option key={d.code} value={d.code}>{d.libelle}</option>
+                    ))}
+                    {/* La discipline actuelle reste proposée même si le centre
+                        l'a retirée du catalogue : on n'efface pas un fait. */}
+                    {!(disciplines ?? []).some(d => d.code === p.type_saut) && (
+                      <option value={p.type_saut}>{libelleDiscipline(p.type_saut, disciplines)}</option>
+                    )}
+                  </select>
+                ) : (
+                  <span className="flex-shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded"
+                    style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '0.04em',
+                             color: teinteDiscipline(p.type_saut, disciplines),
+                             border: `1px solid ${teinteDiscipline(p.type_saut, disciplines)}`,
+                             background: `color-mix(in srgb, ${teinteDiscipline(p.type_saut, disciplines)} 12%, transparent)` }}>
+                    {libelleDiscipline(p.type_saut, disciplines)}
+                  </span>
+                )}
 
                 {/* LA RADIO SE VOIT SANS OUVRIR. Plein = elle est la ; tirete
                     ambre avec un « ! » = la personne est en progression et ne
@@ -475,19 +506,19 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                     onClick={() => agir('Radio', () =>
                       onBasculerRadio(p.id, !p.radio).then(e => ({ error: e ? { message: e } : null })))}
                     title={p.radio ? `${p.nom} a une radio`
-                      : radioAttendue(p.type_saut) ? `${p.nom} est en PAC et n'a pas de radio`
+                      : radioAttendue(p.type_saut, disciplines) ? `${p.nom} est en PAC et n'a pas de radio`
                       : `Noter que ${p.nom} emporte une radio`}
                     className="flex-shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded"
                     style={{ fontSize: 10.5, fontWeight: 800, cursor: close ? 'default' : 'pointer',
                       color: p.radio ? SEVERITE_COULEUR.conforme
-                        : radioAttendue(p.type_saut) ? SEVERITE_COULEUR.vigilance : 'var(--c-dim)',
+                        : radioAttendue(p.type_saut, disciplines) ? SEVERITE_COULEUR.vigilance : 'var(--c-dim)',
                       border: `1px ${p.radio ? 'solid' : 'dashed'} ${p.radio ? SEVERITE_COULEUR.conforme
-                        : radioAttendue(p.type_saut) ? SEVERITE_COULEUR.vigilance : 'var(--n2-bord)'}` }}>
+                        : radioAttendue(p.type_saut, disciplines) ? SEVERITE_COULEUR.vigilance : 'var(--n2-bord)'}` }}>
                     <Radio className="w-3 h-3 inline-block align-[-1px]" aria-hidden />
                     <span className="sr-only">
                       {p.radio ? 'Radio embarquée' : 'Pas de radio'} — {p.nom}
                     </span>
-                    {radioAttendue(p.type_saut) && !p.radio ? ' !' : ''}
+                    {radioAttendue(p.type_saut, disciplines) && !p.radio ? ' !' : ''}
                   </button>
                 )}
                 {/* L'OPTION VIDÉO. Plein = vendue et quelqu'un filme ; ambre
@@ -501,8 +532,8 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                       title={porteur ? `Vidéo — filmée par ${porteur.nom}`
                                      : 'Vidéo vendue — aucun porteur vidéo à bord'}
                       style={{ fontSize: 10.5, fontWeight: 800,
-                        color: porteur ? TEINTE_DISCIPLINE.video : SEVERITE_COULEUR.vigilance,
-                        border: `1px ${porteur ? 'solid' : 'dashed'} ${porteur ? TEINTE_DISCIPLINE.video : SEVERITE_COULEUR.vigilance}` }}>
+                        color: porteur ? teinteDiscipline('video', disciplines) : SEVERITE_COULEUR.vigilance,
+                        border: `1px ${porteur ? 'solid' : 'dashed'} ${porteur ? teinteDiscipline('video', disciplines) : SEVERITE_COULEUR.vigilance}` }}>
                       <Video className="w-3 h-3 inline-block align-[-1px]" aria-hidden />
                       <span className="sr-only">
                         {porteur ? `Vidéo filmée par ${porteur.nom}` : 'Vidéo vendue, sans porteur vidéo'}
@@ -511,7 +542,12 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                     </span>
                   );
                 })()}
-                {p.parachutiste_id === r.largueur_id && <SiglesFonctions codes={['largueur']} compact />}
+                {/* Le sigle ne double PLUS la puce : quand la discipline est
+                    « largueur », la ligne le dit deja. Claire portait deux
+                    fois la mention. */}
+                {p.parachutiste_id === r.largueur_id && p.type_saut !== 'largueur' && (
+                  <SiglesFonctions codes={['largueur']} compact />
+                )}
 
                 {/* UN PASSAGER N'A PAS DE VERDICT. Il n'a pas de licence : lui
                     coller « à vérifier » reprocherait à un civil de ne pas
@@ -568,7 +604,8 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
 
               {/* L'encadrement se lit TOUJOURS : savoir qu'un élève est
                   accompagné, et par qui, ne se cache pas sous un volet. */}
-              {p.moniteur_nom && (
+              {p.moniteur_nom && !(p.groupe_id && places.some(q =>
+                 q.parachutiste_id === p.moniteur_id && q.groupe_id === p.groupe_id)) && (
                 <p className="mt-0.5 ml-7" style={{ fontSize: 12, color: 'var(--c-text2)' }}>
                   accompagné par <strong style={{ fontWeight: 600 }}>{p.moniteur_nom}</strong>
                 </p>
@@ -643,8 +680,8 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                         onBasculerVideo(p.id, !p.video_option).then(e => ({ error: e ? { message: e } : null })))}
                       className="whitespace-nowrap px-1.5 py-0.5 rounded"
                       style={{ fontSize: 11, fontWeight: 700,
-                        color: p.video_option ? TEINTE_DISCIPLINE.video : 'var(--c-dim)',
-                        border: `1px ${p.video_option ? 'solid' : 'dashed'} ${p.video_option ? TEINTE_DISCIPLINE.video : 'var(--n2-bord)'}` }}>
+                        color: p.video_option ? teinteDiscipline('video', disciplines) : 'var(--c-dim)',
+                        border: `1px ${p.video_option ? 'solid' : 'dashed'} ${p.video_option ? teinteDiscipline('video', disciplines) : 'var(--n2-bord)'}` }}>
                       <Video className="w-3 h-3 inline-block align-[-1px] mr-1" aria-hidden />
                       {p.video_option ? 'vidéo vendue' : 'pas de vidéo'}
                     </button>
