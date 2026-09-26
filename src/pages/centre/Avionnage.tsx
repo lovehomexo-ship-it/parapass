@@ -81,7 +81,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     const [{ data: rot, error: e1 }, { data: av }, { data: ctr }, { data: opt }, { data: lg }] = await Promise.all([
       supabase.from('rotations').select('*')
         .eq('centre_id', centreId).eq('date_jour', jour).order('numero'),
-      supabase.from('aeronefs').select('id, immatriculation, places, altitude_max_m')
+      supabase.from('aeronefs').select('id, immatriculation, places, altitude_max_m, masse_max_kg')
         .eq('centre_id', centreId).eq('actif', true).order('immatriculation'),
       supabase.from('centres').select('avionnage_actif').eq('id', centreId).maybeSingle(),
       supabase.from('centres_options').select('embarquement_qr').eq('centre_id', centreId).maybeSingle(),
@@ -103,14 +103,14 @@ function AvionnageInner({ centreId }: { centreId: string }) {
 
     if (rr.length === 0) { setPlaces([]); setChargement(false); return; }
     const { data: pl, error: e2 } = await supabase.from('places_rotation')
-      .select('id, rotation_id, parachutiste_id, moniteur_id, type_saut, rang_sortie, statut, groupe_id, profiles!parachutiste_id(nom, prenom)')
+      .select('id, rotation_id, parachutiste_id, moniteur_id, type_saut, rang_sortie, statut, groupe_id, masse_kg, profiles!parachutiste_id(nom, prenom, masse_kg)')
       .in('rotation_id', rr.map(r => r.id)).order('rang_sortie', { nullsFirst: false });
     if (e2) {
       console.error('Places — chargement échoué :', {
         code: e2.code, message: e2.message, details: e2.details, hint: e2.hint,
       });
     }
-    type Pr = { nom: string; prenom: string };
+    type Pr = { nom: string; prenom: string; masse_kg: number | null };
     const brutes = (pl ?? []) as unknown as (Omit<PlaceVue, 'nom' | 'aptitude'> & { profiles: Pr | Pr[] | null })[];
 
     // Le verdict vient de FEU VERT, pour tout le monde — présent déclaré ou
@@ -143,6 +143,9 @@ function AvionnageInner({ centreId }: { centreId: string }) {
         id: p.id, rotation_id: p.rotation_id, parachutiste_id: p.parachutiste_id,
         moniteur_id: p.moniteur_id, type_saut: p.type_saut, rang_sortie: p.rang_sortie,
         statut: p.statut, groupe_id: p.groupe_id,
+        // La masse de la PLACE prime sur celle du profil : un tandem n'a pas
+        // de profil, et une place peut porter une masse ponctuelle.
+        masse_kg: (p as { masse_kg?: number | null }).masse_kg ?? pr?.masse_kg ?? null,
         nom: pr ? `${pr.prenom} ${pr.nom}` : (p.type_saut === 'tandem' ? 'Passager tandem' : '?'),
         // Inconnu → GRIS. Jamais l'absence de réponse traduite en vert.
         aptitude: (p.parachutiste_id && verdicts.get(p.parachutiste_id)) || 'gris',
@@ -268,6 +271,23 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     return null;
   };
 
+  /**
+   * Le DT demande la masse à voix haute et la saisit.
+   *
+   * Elle part sur le PROFIL quand il y en a un : c'est la masse de la
+   * personne, pas celle du jour, et la retenir évite de redemander demain.
+   * Sans profil (tandem), elle reste sur la place — elle n'appartient à
+   * personne d'autre que ce saut-là.
+   */
+  const definirMasse = async (place: PlaceVue, kg: number | null): Promise<string | null> => {
+    const { error } = place.parachutiste_id
+      ? await supabase.from('profiles').update({ masse_kg: kg }).eq('id', place.parachutiste_id)
+      : await supabase.from('places_rotation').update({ masse_kg: kg }).eq('id', place.id);
+    if (error) return messageErreur(error);
+    await charger();
+    return null;
+  };
+
   const inscrire = async (rotationId: string, parachutisteId: string, type: string) => {
     const { error } = await supabase.from('places_rotation')
       .insert({ rotation_id: rotationId, parachutiste_id: parachutisteId, type_saut: type });
@@ -332,7 +352,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
             return (
               <div key={r.id} className="space-y-2">
                 <PlancheAvionnage rotation={r} places={pl} maintenant={maintenant}
-                  onGrouper={grouper} onDegrouper={degrouper}
+                  onGrouper={grouper} onDegrouper={degrouper} onDefinirMasse={definirMasse}
                   aeronef={aeronefs.find(a => a.id === r.aeronef_id)} onChange={charger}
                   onDeposer={fileId => placer(fileId, r.id)} onOuvrirFiche={ouvrirFiche}
                   largueurs={largueurs}

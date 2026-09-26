@@ -513,3 +513,52 @@ export function blocsDePlanche<P extends {
   }
   return blocs;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LA MASSE EMBARQUÉE — un avion se remplit par la masse avant les sièges.
+//
+// Dix personnes légères passent là où huit lourdes ne passent pas. Les
+// manifests professionnels affichent « 875 kg, 10/10 pax » : les deux
+// chiffres, parce qu'aucun des deux ne suffit.
+//
+// LE TOTAL DIT CE QU'IL IGNORE. Un total calculé sur 6 masses connues et 4
+// inconnues n'est pas « la masse de l'avion » : c'est un minimum. L'afficher
+// sans le dire ferait croire à de la marge là où il n'y en a peut-être pas —
+// et c'est exactement le genre de silence que P1 interdit.
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface MasseEmbarquee {
+  /** Somme des masses CONNUES. Jamais « la masse totale ». */
+  total: number;
+  connues: number;
+  inconnues: number;
+  /** true quand tout le monde est pesé — seul cas où le total est un total. */
+  complet: boolean;
+}
+
+export function masseEmbarquee(masses: (number | null | undefined)[]): MasseEmbarquee {
+  let total = 0, connues = 0, inconnues = 0;
+  for (const m of masses) {
+    if (typeof m === 'number' && Number.isFinite(m) && m > 0) { total += m; connues++; }
+    else inconnues++;
+  }
+  return {
+    total: Math.round(total * 10) / 10,
+    connues, inconnues,
+    complet: inconnues === 0 && connues > 0,
+  };
+}
+
+/**
+ * Ce que la planche écrit à côté du nombre de sièges.
+ *
+ * Sans aucune masse connue, on ne dit RIEN plutôt que « 0 kg » : zéro est un
+ * chiffre, et celui-là serait faux.
+ */
+export function libelleMasse(m: MasseEmbarquee, maxKg: number | null): string | null {
+  if (m.connues === 0) return null;
+  const base = `${m.total} kg`;
+  const plafond = maxKg ? ` / ${maxKg} kg` : '';
+  if (m.complet) return base + plafond;
+  return `${base}${plafond} — ${m.inconnues} masse${m.inconnues > 1 ? 's' : ''} inconnue${m.inconnues > 1 ? 's' : ''}`;
+}

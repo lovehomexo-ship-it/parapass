@@ -30,6 +30,16 @@ export interface CheckInInput {
   voile_perso_ref?: string | null;
   voile_perso_libre?: string | null;
   voile_location_ref?: string | null;
+  /**
+   * Masse opérationnelle, en kg. Elle vit sur le PROFIL, pas sur la présence :
+   * on ne la redemande pas chaque matin. Facultative — une présence ne se
+   * refuse pas parce qu'on n'a pas dit son poids.
+   *
+   * Ce n'est pas une donnée de santé (P5) : ni diagnostic, ni motif, ni
+   * aptitude. C'est la donnée de chargement de l'avion, et aucune règle de
+   * conformité ne la lit.
+   */
+  masse_kg?: number | null;
 }
 
 const today = () => new Date().toISOString().substring(0, 10);
@@ -81,6 +91,14 @@ export function useMaPresence(dzId: string | undefined, userId: string | undefin
       return false;
     }
     setPresence(written[0] as DzPresence);
+
+    // Écrite APRÈS la présence, et son échec n'annule pas le check-in : être
+    // présent ne dépend pas d'avoir donné son poids.
+    if (input.masse_kg !== undefined) {
+      const { error: eM } = await supabase.from('profiles')
+        .update({ masse_kg: input.masse_kg }).eq('id', userId);
+      if (eM) console.error('Enregistrement de la masse échoué :', eM);
+    }
     return true;
   };
 

@@ -3,6 +3,7 @@ import {
   siegesOccupes, libelleCapacite, messageErreur, LIBELLE_TYPE,
   calculerCall, SEVERITE_CALL, formaterRetard,
   verifierPlanche, type EntreeVerification, blocsDePlanche,
+  masseEmbarquee, libelleMasse,
 } from './avionnage';
 
 describe('avionnage — capacité', () => {
@@ -288,5 +289,53 @@ describe('blocsDePlanche', () => {
     const sorties = blocsDePlanche(entree).flatMap(b => b.places);
     expect(sorties).toHaveLength(entree.length);
     expect(new Set(sorties.map(p => p.rang_sortie)).size).toBe(4);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LA MASSE — le total doit dire ce qu'il ignore. Un total calculé sur six
+// masses connues et quatre inconnues n'est pas « la masse de l'avion ».
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('masseEmbarquee', () => {
+  it('additionne ce qui est connu et compte ce qui ne l’est pas', () => {
+    const m = masseEmbarquee([80, 95, null, 72]);
+    expect(m.total).toBe(247);
+    expect(m.connues).toBe(3);
+    expect(m.inconnues).toBe(1);
+    expect(m.complet).toBe(false);
+  });
+
+  it('n’est « complet » que si TOUT le monde est pesé', () => {
+    expect(masseEmbarquee([80, 95]).complet).toBe(true);
+    expect(masseEmbarquee([80, null]).complet).toBe(false);
+    // Personne à bord : rien à déclarer complet, il n'y a rien.
+    expect(masseEmbarquee([]).complet).toBe(false);
+  });
+
+  it('ignore les valeurs qui ne sont pas des masses', () => {
+    const m = masseEmbarquee([80, undefined, 0, NaN, -5]);
+    expect(m.connues).toBe(1);
+    expect(m.inconnues).toBe(4);
+  });
+});
+
+describe('libelleMasse', () => {
+  it('sans aucune masse connue, on ne dit RIEN — pas « 0 kg »', () => {
+    // Zéro est un chiffre, et celui-là serait faux.
+    expect(libelleMasse(masseEmbarquee([null, null]), 875)).toBeNull();
+  });
+
+  it('complet : le total et le plafond', () => {
+    expect(libelleMasse(masseEmbarquee([80, 95]), 875)).toBe('175 kg / 875 kg');
+  });
+
+  it('incomplet : le total NOMME ce qui manque', () => {
+    expect(libelleMasse(masseEmbarquee([80, null, null]), 875))
+      .toBe('80 kg / 875 kg — 2 masses inconnues');
+  });
+
+  it('sans plafond connu, pas de plafond inventé', () => {
+    expect(libelleMasse(masseEmbarquee([80]), null)).toBe('80 kg');
   });
 });

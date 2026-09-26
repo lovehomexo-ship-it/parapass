@@ -8,7 +8,7 @@ import {
   formaterRetard,
   calculerCall, SEVERITE_CALL, siegesOccupes, libelleCapacite, messageErreur,
   LIBELLE_TYPE, type TypeSautFile,
-  verifierPlanche, blocsDePlanche,
+  verifierPlanche, blocsDePlanche, masseEmbarquee, libelleMasse,
 } from '../../lib/avionnage';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -30,6 +30,9 @@ export interface PlaceVue {
   statut: string; nom: string;
   /** Les gens d'un même groupe SORTENT ENSEMBLE. null = seul. */
   groupe_id: string | null;
+  /** Masse retenue pour CETTE place : celle de la place si elle en porte une,
+   *  sinon celle du profil. null = inconnue — jamais zéro. */
+  masse_kg: number | null;
   /** Verdict Feu Vert. JAMAIS nul : ne rien savoir est un état — le gris —
    *  et il doit se voir. Une absence de badge se lisait « tout va bien ». */
   aptitude: 'vert' | 'orange' | 'rouge' | 'gris';
@@ -45,7 +48,11 @@ export interface RotationVue {
    *  doit pas confondre une planche de démo avec la journée réelle. */
   demo?: boolean;
 }
-export interface AeronefVue { id: string; immatriculation: string; places: number }
+export interface AeronefVue {
+  id: string; immatriculation: string; places: number;
+  /** Masse maximale au décollage. null = inconnue, donc aucun plafond affiché. */
+  masse_max_kg?: number | null;
+}
 
 // Les quatre verdicts Feu Vert, avec leur forme et leur mot. Le gris dit
 // « on ne sait pas » et se traite comme un refus (P1) : il n'est pas neutre.
@@ -59,7 +66,7 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -78,6 +85,8 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   /** Défait un groupe. Ne retire personne de l'avion : c'est le lien qu'on
    *  coupe, pas les gens. */
   onDegrouper?: (groupeId: string) => Promise<string | null>;
+  /** Le DT demande la masse à voix haute et la saisit. null = effacer. */
+  onDefinirMasse?: (place: PlaceVue, kg: number | null) => Promise<string | null>;
 }) {
   const [occupe, setOccupe] = useState(false);
   const [echec, setEchec] = useState<string | null>(null);
@@ -123,6 +132,8 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   // Vert dit si une PERSONNE peut sauter ; ceci dit si cet AVION est prêt.
   // Deux questions différentes : un avion sans largueur n'a aucun feu rouge à
   // bord et ne part pas.
+  const masse = masseEmbarquee(places.map(p => p.masse_kg));
+
   const etat = verifierPlanche({
     largueurId: r.largueur_id,
     heurePrevue: r.heure_prevue,
@@ -184,9 +195,21 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
             {r.altitude_largage_m ? ` · ${r.altitude_largage_m} m` : ''}
           </p>
         </div>
-        <span style={pastille(sieges >= (aeronef?.places ?? Infinity) ? 'critique' : 'neutre')}>
-          {libelleCapacite(sieges, aeronef?.places ?? null)}
-        </span>
+        <div className="flex flex-col items-end gap-1">
+          <span style={pastille(sieges >= (aeronef?.places ?? Infinity) ? 'critique' : 'neutre')}>
+            {libelleCapacite(sieges, aeronef?.places ?? null)}
+          </span>
+          {/* Un avion se remplit par la MASSE avant les sièges. Le libellé dit
+              ce qu'il ignore : un total sur six masses connues et quatre
+              inconnues n'est pas la masse de l'avion, c'est un minimum. */}
+          {libelleMasse(masse, aeronef?.masse_max_kg ?? null) && (
+            <span style={pastille(
+              aeronef?.masse_max_kg && masse.total > aeronef.masse_max_kg ? 'critique'
+                : masse.complet ? 'conforme' : 'neutre')}>
+              {libelleMasse(masse, aeronef?.masse_max_kg ?? null)}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* ── L'horodatage, complet et visible ──────────────────────────────── */}
@@ -343,6 +366,31 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                   n'y en a qu'UN par avion — et c'est la DZ qui le nomme. */}
               {p.parachutiste_id && p.parachutiste_id === r.largueur_id && (
                 <SiglesFonctions codes={['largueur']} compact />
+              )}
+              {/* La masse, saisie par le DT qui la demande à voix haute. Un
+                  champ étroit, toujours là : la masse connue se relit et se
+                  corrige, la masse inconnue se voit. */}
+              {!close && onDefinirMasse && (
+                <label className="flex-shrink-0 flex items-center gap-1"
+                  style={{ fontSize: 11, color: p.masse_kg == null ? SEVERITE_COULEUR.vigilance : 'var(--c-muted)' }}>
+                  <span className="sr-only">Masse de {p.nom}, en kilogrammes</span>
+                  <input type="number" inputMode="decimal" min={20} max={250} step={0.5}
+                    defaultValue={p.masse_kg ?? ''}
+                    disabled={occupe}
+                    placeholder="— kg"
+                    onBlur={e => {
+                      const v = e.target.value.trim();
+                      const kg = v === '' ? null : Number(v.replace(',', '.'));
+                      if (kg === (p.masse_kg ?? null)) return;
+                      agir('Saisie de la masse', () =>
+                        onDefinirMasse(p, kg).then(err => ({ error: err ? { message: err } : null })));
+                    }}
+                    className="px-1.5 rounded-lg text-right"
+                    style={{ width: 62, minHeight: 30, fontSize: 12, background: 'var(--c-input)',
+                             color: 'var(--c-text)',
+                             border: `1px solid ${p.masse_kg == null ? SEVERITE_COULEUR.vigilance : 'var(--n2-bord)'}` }} />
+                  kg
+                </label>
               )}
               {/* TOUJOURS un badge, pour les quatre états. Ne rien afficher
                   quand on ne sait pas laissait croire que tout allait bien —

@@ -58,6 +58,9 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
   const [voilePersoLibre, setVoilePersoLibre] = useState('');
   const [voileLocation, setVoileLocation] = useState('');
   const [okMsg, setOkMsg] = useState(false);
+  // Masse : lue sur le profil, pas sur la présence — on ne la redemande pas
+  // chaque matin. Chaîne vide = « je ne dis pas », et c'est un choix valide.
+  const [masse, setMasse] = useState('');
 
   // Voiles perso du module matériel — optionnel, jamais bloquant
   useEffect(() => {
@@ -72,6 +75,17 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
         const list = (data ?? []) as Materiel[];
         setVoilesPerso(list);
         if (list.length > 0) setVoilePersoRef(list[0].id);
+      });
+  }, [userId]);
+
+  // La masse déjà connue : on la propose, on ne la redemande pas.
+  useEffect(() => {
+    if (!userId) return;
+    supabase.from('profiles').select('masse_kg').eq('id', userId).maybeSingle()
+      .then(({ data, error }) => {
+        if (error) { console.error('Lecture de la masse échouée :', error); return; }
+        const m = (data as { masse_kg?: number | null } | null)?.masse_kg;
+        if (m != null) setMasse(String(m));
       });
   }, [userId]);
 
@@ -107,6 +121,10 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
       voile_perso_ref: materielType === 'perso' ? voilePersoRef : null,
       voile_perso_libre: materielType === 'perso' && !voilePersoRef ? (voilePersoLibre.trim() || null) : null,
       voile_location_ref: materielType === 'location' ? (voileLocation.trim() || null) : null,
+      // Laissé vide = on ne touche pas au profil. Effacer volontairement sa
+      // masse reste possible en la remettant à vide APRÈS l'avoir saisie :
+      // on écrit null, ce qui est différent de « ne rien dire ».
+      masse_kg: masse.trim() === '' ? null : Number(masse.replace(',', '.')),
     });
     if (ok) {
       setOuvert(false);
@@ -176,6 +194,22 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
           <label className="block text-xs font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.6)' }}>À</label>
           <input type="time" value={fin} onChange={e => setFin(e.target.value)} style={timeInputStyle} />
         </div>
+      </div>
+
+      {/* La masse sert au chargement de l'avion : le chef d'avionnage remplit
+          par les kilos avant de remplir par les sièges. Facultative — une
+          présence ne se refuse pas parce qu'on n'a pas dit son poids. */}
+      <div>
+        <label className="block text-xs font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.6)' }}>
+          Masse équipée (kg) <span style={{ fontWeight: 400, opacity: 0.6 }}>— facultatif</span>
+        </label>
+        <input type="number" inputMode="decimal" min={20} max={250} step={0.5}
+          value={masse} onChange={e => setMasse(e.target.value)}
+          placeholder="ex : 82"
+          style={timeInputStyle} />
+        <p className="text-[11px] mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          Sert au chargement de l’avion. Retenue pour les prochaines fois.
+        </p>
       </div>
 
       <div>
