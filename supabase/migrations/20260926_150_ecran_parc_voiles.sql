@@ -1,0 +1,25 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- L'ÉCRAN DU PARC DE VOILES — dans l'avionnage, sans le module Pliage.
+--
+-- Rien de nouveau en base : l'écran lit `sacs_parachute`, la même table que le
+-- module Pliage. C'est le point de la demande — un centre peut acheter
+-- l'Avionnage seul, et il doit quand même tenir son parc. Le module Pliage ne
+-- gouverne que le TRAVAIL de pliage (plieurs, paiements, QR) ; l'inventaire
+-- appartient au centre.
+--
+-- Une seconde table aurait garanti deux inventaires divergents au premier sac
+-- ajouté. Une seule liste, deux écrans, aucune synchronisation à écrire.
+--
+-- LE JETON QR EST GÉNÉRÉ MÊME SANS LE MODULE PLIAGE : la colonne l'exige, et
+-- le jour où le centre souscrit le Pliage, ses sacs sont déjà prêts. Rien à
+-- reprendre.
+--
+-- La surface est ce que lit la DT 48 pour un sauteur en location. Sans elle,
+-- il reste « surface non renseignee dans l'inventaire », donc gris, donc
+-- refusé — le bon défaut, mais c'est au DT de le combler.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Aucune migration : écran seul, sur les colonnes de la 149.
+--
+-- État du parc BigAir au 26/09/2026 : 6 sacs réels SANS surface (Icon 5,
+-- Javelin 2, Mirage 3, Sac bleu/rouge, Vector 1, Wings 4) et 6 sacs de démo
+-- renseignés. Les six réels sont à saisir depuis l'écran.

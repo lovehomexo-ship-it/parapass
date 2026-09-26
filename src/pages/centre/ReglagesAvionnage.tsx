@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Settings2, BookOpen, Calculator } from 'lucide-react';
+import { X, Settings2, BookOpen, Calculator, Plus } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { surface, action, enTeteSection, SEVERITE_COULEUR } from '../../lib/jetons';
@@ -24,6 +24,17 @@ import { messageErreur, type Discipline, SOURCE_DT48 } from '../../lib/avionnage
 // est pas une. Le champ « source » existe pour le jour où le texte est connu.
 // ═══════════════════════════════════════════════════════════════════════════
 
+/**
+ * Un sac du PARC DU CENTRE. C'est la même table que le module Pliage
+ * (`sacs_parachute`) : l'inventaire appartient au centre, le module Pliage ne
+ * gouverne que le travail de pliage. Une seconde table aurait garanti deux
+ * inventaires divergents au premier sac ajouté.
+ */
+interface SacParc {
+  id: string; nom_court: string | null; marque: string | null; modele: string | null;
+  numero_serie: string | null; taille_voile_ft2: number | null; statut: string; actif: boolean | null;
+}
+
 function Inner({ centreId, onFermer, onChange }: {
   centreId: string; onFermer: () => void; onChange: () => void;
 }) {
@@ -32,6 +43,9 @@ function Inner({ centreId, onFermer, onChange }: {
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [occupe, setOccupe] = useState(false);
+  const [sacs, setSacs] = useState<SacParc[]>([]);
+  const [nouveauNom, setNouveauNom] = useState('');
+  const [nouvelleSurface, setNouvelleSurface] = useState('');
   const [poids, setPoids] = useState('80');
   const [sauts, setSauts] = useState('120');
   const [resultat, setResultat] = useState<{
@@ -44,6 +58,40 @@ function Inner({ centreId, onFermer, onChange }: {
    * l'avionnage. Refaire le calcul en JavaScript aurait donné deux vérités le
    * jour où le tableau change.
    */
+  /** La surface d'un sac : c'est elle que lit la DT 48 pour un sauteur en location. */
+  const ecrireSurface = async (sacId: string, valeur: string) => {
+    setOccupe(true); setErreur(null);
+    const { error } = await supabase.from('sacs_parachute')
+      .update({ taille_voile_ft2: valeur.trim() === '' ? null : Number(valeur.replace(',', '.')) })
+      .eq('id', sacId);
+    setOccupe(false);
+    if (error) { setErreur(messageErreur(error)); return; }
+    await charger();
+    onChange();
+  };
+
+  /**
+   * Ajouter un sac au parc. Le jeton QR est généré même sans le module Pliage :
+   * la colonne l'exige, et le jour où le centre souscrit le Pliage, ses sacs
+   * sont déjà prêts. Rien à reprendre.
+   */
+  const ajouterSac = async () => {
+    if (!nouveauNom.trim()) return;
+    setOccupe(true); setErreur(null);
+    const { error } = await supabase.from('sacs_parachute').insert({
+      centre_id: centreId,
+      nom_court: nouveauNom.trim(),
+      qr_code_token: crypto.randomUUID(),
+      taille_voile_ft2: nouvelleSurface.trim() === '' ? null : Number(nouvelleSurface.replace(',', '.')),
+      actif: true, statut: 'en_service',
+    });
+    setOccupe(false);
+    if (error) { setErreur(messageErreur(error)); return; }
+    setNouveauNom(''); setNouvelleSurface('');
+    await charger();
+    onChange();
+  };
+
   const calculer = async () => {
     setOccupe(true); setErreur(null);
     const { data, error } = await supabase.rpc('dt48_surface_minimale', {
@@ -63,14 +111,18 @@ function Inner({ centreId, onFermer, onChange }: {
   };
 
   const charger = async () => {
-    const [{ data: d }, { data: cd }] = await Promise.all([
+    const [{ data: d }, { data: cd }, { data: sp }] = await Promise.all([
       supabase.from('disciplines_saut')
         .select('code, libelle, ordre, equipage, radio_attendue, teinte')
         .eq('actif', true).order('ordre'),
       supabase.from('centres_disciplines').select('code, actif').eq('centre_id', centreId),
+      supabase.from('sacs_parachute')
+        .select('id, nom_court, marque, modele, numero_serie, taille_voile_ft2, statut, actif')
+        .eq('centre_id', centreId).order('nom_court'),
     ]);
     setCatalogue((d ?? []) as Discipline[]);
     setRetirees(new Set((cd ?? []).filter(x => !x.actif).map(x => x.code)));
+    setSacs((sp ?? []) as SacParc[]);
     setChargement(false);
   };
   useEffect(() => { charger(); /* eslint-disable-next-line */ }, [centreId]);
@@ -135,6 +187,91 @@ function Inner({ centreId, onFermer, onChange }: {
                     </button>
                   );
                 })}
+              </div>
+            </section>
+
+            {/* ── LE PARC DE VOILES DU CENTRE ───────────────────────────── */}
+            <section>
+              <h3 style={{ ...enTeteSection, marginBottom: 6 }}>
+                Parc de voiles du centre
+              </h3>
+              <p className="mb-2" style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                C’est le <strong>même inventaire</strong> que le module Pliage : une seule
+                liste, deux écrans. Vous n’avez pas besoin du module Pliage pour
+                tenir votre parc — il ne gouverne que le travail de pliage.
+                <br />
+                <strong>La surface est ce que lit la DT 48</strong> pour un sauteur en
+                location : sans elle, il reste « surface inconnue », donc refusé.
+              </p>
+
+              {sacs.length === 0 ? (
+                <p style={{ fontSize: 13, color: 'var(--c-dim)' }}>
+                  Aucun sac au parc. Ajoutez-en un ci-dessous.
+                </p>
+              ) : (
+                <ul className="space-y-1.5">
+                  {sacs.map(s => (
+                    <li key={s.id} className="flex items-center gap-2 flex-wrap px-2 py-1.5 rounded-xl"
+                      style={{ background: 'var(--n3-fond)', border: '1px solid var(--n3-filet)' }}>
+                      <span className="flex-1 min-w-[140px]" style={{ fontSize: 13, color: 'var(--c-text)' }}>
+                        <strong>{s.nom_court ?? 'sans nom'}</strong>
+                        {(s.marque || s.modele) && (
+                          <span style={{ color: 'var(--c-muted)', fontWeight: 400 }}>
+                            {' · '}{[s.marque, s.modele].filter(Boolean).join(' ')}
+                          </span>
+                        )}
+                        {s.numero_serie && (
+                          <span style={{ color: 'var(--c-dim)', fontWeight: 400, fontSize: 11 }}>
+                            {' · n° '}{s.numero_serie}
+                          </span>
+                        )}
+                      </span>
+                      <label className="flex items-center gap-1"
+                        style={{ fontSize: 12,
+                                 color: s.taille_voile_ft2 == null ? SEVERITE_COULEUR.vigilance : 'var(--c-muted)' }}>
+                        <span className="sr-only">Surface de {s.nom_court ?? 'ce sac'}, en ft²</span>
+                        <input type="number" min={50} max={500} step={1}
+                          defaultValue={s.taille_voile_ft2 ?? ''} disabled={occupe}
+                          placeholder="— ft²"
+                          onBlur={e => {
+                            if (Number(e.target.value || 0) !== Number(s.taille_voile_ft2 ?? 0))
+                              ecrireSurface(s.id, e.target.value);
+                          }}
+                          className="px-1.5 rounded-lg text-right"
+                          style={{ width: 78, minHeight: 30, fontSize: 12, background: 'var(--c-input)',
+                                   color: 'var(--c-text)',
+                                   border: `1px solid ${s.taille_voile_ft2 == null ? SEVERITE_COULEUR.vigilance : 'var(--n2-bord)'}` }} />
+                        ft²
+                      </label>
+                      {s.statut !== 'en_service' && (
+                        <span style={{ fontSize: 11, color: 'var(--c-dim)' }}>{s.statut}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <div className="flex items-end gap-2 flex-wrap mt-2">
+                <label style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                  Nouveau sac
+                  <input type="text" value={nouveauNom} onChange={e => setNouveauNom(e.target.value)}
+                    placeholder="ex : Club 39" disabled={occupe}
+                    className="block px-2 rounded-lg mt-1"
+                    style={{ width: 160, minHeight: 32, fontSize: 13, background: 'var(--c-input)',
+                             color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
+                </label>
+                <label style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                  Surface (ft²)
+                  <input type="number" min={50} max={500} step={1} value={nouvelleSurface}
+                    onChange={e => setNouvelleSurface(e.target.value)} disabled={occupe}
+                    className="block px-2 rounded-lg mt-1"
+                    style={{ width: 100, minHeight: 32, fontSize: 13, background: 'var(--c-input)',
+                             color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
+                </label>
+                <button type="button" onClick={ajouterSac} disabled={occupe || !nouveauNom.trim()}
+                  className="disabled:opacity-50" style={{ ...action('secondaire'), minHeight: 34 }}>
+                  <Plus className="w-4 h-4" aria-hidden /> Ajouter au parc
+                </button>
               </div>
             </section>
 
