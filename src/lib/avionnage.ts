@@ -16,7 +16,7 @@ import { supabase } from './supabase';
 export type TypeSautFile = 'ecole' | 'accompagne' | 'solo' | 'groupe' | 'wingsuit' | 'video';
 
 export const LIBELLE_TYPE: Record<TypeSautFile, string> = {
-  solo: 'Solo', accompagne: 'Accompagné', ecole: 'École',
+  solo: 'Solo', accompagne: 'Accompagné', ecole: 'PAC',
   groupe: 'Groupe', wingsuit: 'Wingsuit', video: 'Vidéo',
 };
 
@@ -424,13 +424,11 @@ export function verifierPlanche(e: EntreeVerification): EtatPlanche {
              message: 'Le largueur désigné n’est pas dans la liste des personnes à bord.' });
   }
 
-  // Le chef avion n'est pas le largueur : l'un dirige le largage, l'autre
-  // répond du stick à bord. Sur un avion vide la question ne se pose pas —
-  // il n'y a pas de stick dont répondre.
-  if (!e.chefAvionId && e.places.length > 0) {
-    a.push({ code: 'chef_avion', gravite: 'bloquant',
-             message: 'Aucun chef avion désigné : choisissez-le parmi les personnes à bord.' });
-  }
+  // LE CHEF AVION SUIT LE LARGUEUR. On avait fait deux rôles distincts ; sur
+  // le terrain c'est la même personne, et deux désignations différentes sur un
+  // seul avion se contredisent. La colonne chef_avion_id existe toujours —
+  // l'histoire d'un avion parti ne se réécrit pas — mais elle n'est plus ni
+  // choisie ni vérifiée à part.
 
   if (e.aeronefPlaces === null) {
     a.push({ code: 'aeronef', gravite: 'bloquant',

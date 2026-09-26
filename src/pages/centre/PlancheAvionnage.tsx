@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MIME_FILE } from './FileAvionnageDZ';
 import { SiglesFonctions } from '../../components/SigleFonction';
 import { supabase } from '../../lib/supabase';
-import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff, AlertTriangle, CheckCircle2, Fuel, Radio, ChevronDown } from 'lucide-react';
+import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff, AlertTriangle, CheckCircle2, Fuel, Radio, ChevronDown, Package } from 'lucide-react';
 import { surface, rayure, pastille, action, SEVERITE_COULEUR, type Severite } from '../../lib/jetons';
 import {
   formaterRetard,
@@ -48,6 +48,9 @@ export interface PlaceVue {
   motifs: string | null;
   /** Le moniteur qui accompagne cette personne, quand il y en a un. */
   moniteur_nom: string | null;
+  /** Le parachute porté, tel qu'il est DÉCLARÉ : « perso · Sabre 2 170 » ou
+   *  « location DZ · Navigator 260 ». null = rien de déclaré, et on le dit. */
+  equipement: string | null;
   /** Verdict Feu Vert. JAMAIS nul : ne rien savoir est un état — le gris —
    *  et il doit se voir. Une absence de badge se lisait « tout va bien ». */
   aptitude: 'vert' | 'orange' | 'rouge' | 'gris';
@@ -85,7 +88,7 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDesignerChefAvion, onDefinirCarburant, onBasculerRadio }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onBasculerRadio }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -112,8 +115,6 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   onDefinirCarburant?: (litres: number | null) => Promise<string | null>;
   /** La radio se constate d'un clic : elle est sur la personne, ou elle ne l'est pas. */
   onBasculerRadio?: (placeId: string, radio: boolean) => Promise<string | null>;
-  /** Le chef avion se choisit PARMI LES GENS À BORD — la base l'exige aussi. */
-  onDesignerChefAvion?: (id: string | null) => void;
 }) {
   const [occupe, setOccupe] = useState(false);
   const [echec, setEchec] = useState<string | null>(null);
@@ -443,14 +444,30 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                   {LIBELLE_PLACE[p.type_saut] ?? p.type_saut}
                 </span>
 
-                {p.parachutiste_id === r.largueur_id && <SiglesFonctions codes={['largueur']} compact />}
-                {p.parachutiste_id === r.chef_avion_id && (
-                  <span className="flex-shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded"
-                    style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.06em',
-                             color: 'var(--action-texte)', border: '1px solid var(--action-texte)' }}>
-                    CHEF
-                  </span>
+                {/* LA RADIO SE VOIT SANS OUVRIR. Plein = elle est la ; tirete
+                    ambre avec un « ! » = la personne est en progression et ne
+                    l'a pas. Le clic la bascule. */}
+                {onBasculerRadio && (
+                  <button type="button" disabled={occupe || close}
+                    onClick={() => agir('Radio', () =>
+                      onBasculerRadio(p.id, !p.radio).then(e => ({ error: e ? { message: e } : null })))}
+                    title={p.radio ? `${p.nom} a une radio`
+                      : radioAttendue(p.type_saut) ? `${p.nom} est en PAC et n'a pas de radio`
+                      : `Noter que ${p.nom} emporte une radio`}
+                    className="flex-shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded"
+                    style={{ fontSize: 10.5, fontWeight: 800, cursor: close ? 'default' : 'pointer',
+                      color: p.radio ? SEVERITE_COULEUR.conforme
+                        : radioAttendue(p.type_saut) ? SEVERITE_COULEUR.vigilance : 'var(--c-dim)',
+                      border: `1px ${p.radio ? 'solid' : 'dashed'} ${p.radio ? SEVERITE_COULEUR.conforme
+                        : radioAttendue(p.type_saut) ? SEVERITE_COULEUR.vigilance : 'var(--n2-bord)'}` }}>
+                    <Radio className="w-3 h-3 inline-block align-[-1px]" aria-hidden />
+                    <span className="sr-only">
+                      {p.radio ? 'Radio embarquée' : 'Pas de radio'} — {p.nom}
+                    </span>
+                    {radioAttendue(p.type_saut) && !p.radio ? ' !' : ''}
+                  </button>
                 )}
+                {p.parachutiste_id === r.largueur_id && <SiglesFonctions codes={['largueur']} compact />}
 
                 <button type="button" title="Ouvrir la fiche"
                   onClick={() => p.parachutiste_id && onOuvrirFiche?.(p.parachutiste_id)}
@@ -512,21 +529,6 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                       codes={p.qualifications.filter(q => !(q === 'largueur' && p.parachutiste_id === r.largueur_id))} />
                   )}
 
-                  {onBasculerRadio && (
-                    <button type="button" disabled={occupe || close}
-                      onClick={() => agir('Radio', () =>
-                        onBasculerRadio(p.id, !p.radio).then(e => ({ error: e ? { message: e } : null })))}
-                      className="whitespace-nowrap px-1.5 py-0.5 rounded"
-                      style={{ fontSize: 11, fontWeight: 700, cursor: close ? 'default' : 'pointer',
-                        color: p.radio ? SEVERITE_COULEUR.conforme
-                          : radioAttendue(p.type_saut) ? SEVERITE_COULEUR.vigilance : 'var(--c-dim)',
-                        border: `1px ${p.radio ? 'solid' : 'dashed'} ${p.radio ? SEVERITE_COULEUR.conforme
-                          : radioAttendue(p.type_saut) ? SEVERITE_COULEUR.vigilance : 'var(--n2-bord)'}` }}>
-                      <Radio className="w-3 h-3 inline-block align-[-1px] mr-1" aria-hidden />
-                      {p.radio ? 'radio' : radioAttendue(p.type_saut) ? 'sans radio' : 'pas de radio'}
-                    </button>
-                  )}
-
                   {!close && onDefinirMasse && (
                     <label className="flex items-center gap-1" style={{ fontSize: 11, color: 'var(--c-muted)' }}>
                       <span className="sr-only">Masse de {p.nom}, en kilogrammes</span>
@@ -577,14 +579,15 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                       désigner largueur
                     </button>
                   )}
-                  {!close && p.parachutiste_id && onDesignerChefAvion
-                    && p.parachutiste_id !== r.chef_avion_id && (
-                    <button type="button" disabled={occupe}
-                      onClick={() => onDesignerChefAvion(p.parachutiste_id!)}
-                      style={{ ...action('texte'), minHeight: 28, fontSize: 11 }}>
-                      désigner chef avion
-                    </button>
-                  )}
+
+                  {/* L'ÉQUIPEMENT, tel qu'il est DÉCLARÉ — jamais deviné. La
+                      source est ce que le sauteur a saisi en se déclarant
+                      présent (perso ou location), ou à défaut son matériel
+                      enregistré. Rien n'est affiché qui ne vienne de là. */}
+                  <span style={{ fontSize: 11, color: p.equipement ? 'var(--c-text2)' : 'var(--c-dim)' }}>
+                    <Package className="w-3 h-3 inline-block align-[-1px] mr-1" aria-hidden />
+                    {p.equipement ?? 'équipement non déclaré'}
+                  </span>
 
                   {/* Vert : on le dit aussi, sinon le volet semble vide. */}
                   {!aDire && p.aptitude === 'vert' && (

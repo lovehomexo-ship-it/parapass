@@ -139,6 +139,38 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     // Le nom du moniteur qui accompagne. Une lecture separee : la jointure
     // imbriquee sur la meme table que le parachutiste rendait des colonnes
     // ambigues, et un nom qui manque vaut mieux qu'une ligne qui ne charge pas.
+    // L'ÉQUIPEMENT DÉCLARÉ. Deux sources, dans cet ordre : ce que le sauteur
+    // a saisi en se déclarant présent aujourd'hui (perso / location DZ), puis
+    // son matériel enregistré. Rien n'est deviné : sans déclaration, on écrit
+    // « non déclaré » plutôt que d'inventer une voile.
+    const equipements = new Map<string, string>();
+    if (ids.length > 0) {
+      const [{ data: pres }, { data: mats }] = await Promise.all([
+        supabase.from('dz_presences')
+          .select('user_id, materiel_type, voile_perso_ref, voile_perso_libre, voile_location_ref')
+          .eq('dz_id', centreId).eq('date_presence', jour).in('user_id', ids),
+        supabase.from('materiels')
+          .select('parachutiste_id, marque, modele, taille_voile_ft2')
+          .eq('type', 'parachute_principal').eq('statut', 'actif').in('parachutiste_id', ids),
+      ]);
+      const parMateriel = new Map<string, string>();
+      for (const m of (mats ?? []) as { parachutiste_id: string; marque: string | null; modele: string | null; taille_voile_ft2: number | null }[]) {
+        const libelle = [m.marque, m.modele, m.taille_voile_ft2 ? `${m.taille_voile_ft2} ft²` : null]
+          .filter(Boolean).join(' ');
+        if (libelle && !parMateriel.has(m.parachutiste_id)) parMateriel.set(m.parachutiste_id, libelle);
+      }
+      for (const pr of (pres ?? []) as { user_id: string; materiel_type: string; voile_perso_libre: string | null; voile_location_ref: string | null }[]) {
+        const detail = pr.materiel_type === 'location'
+          ? (pr.voile_location_ref ?? 'voile du centre')
+          : (pr.voile_perso_libre ?? parMateriel.get(pr.user_id) ?? 'voile perso');
+        equipements.set(pr.user_id, `${pr.materiel_type === 'location' ? 'location DZ' : 'perso'} · ${detail}`);
+      }
+      // Pas de déclaration du jour : on retombe sur le matériel enregistré.
+      for (const [id, libelle] of parMateriel) {
+        if (!equipements.has(id)) equipements.set(id, `perso · ${libelle}`);
+      }
+    }
+
     const nomsMoniteurs = new Map<string, string>();
     const idsMoniteurs = [...new Set(brutes.map(p => p.moniteur_id).filter(Boolean))] as string[];
     if (idsMoniteurs.length > 0) {
@@ -186,6 +218,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
         brevet_moniteur: pr?.type_brevet_moniteur ?? null,
         motifs: motifs.get(p.parachutiste_id ?? '') ?? null,
         moniteur_nom: nomsMoniteurs.get(p.moniteur_id ?? '') ?? null,
+        equipement: equipements.get(p.parachutiste_id ?? '') ?? null,
         // Ce qui n'est pas saisi ne s'affiche pas : aucune qualification n'est
         // déduite d'un nombre de sauts ni d'un brevet.
         qualifications: qualifs.get(p.parachutiste_id ?? '') ?? [],
@@ -265,8 +298,12 @@ function AvionnageInner({ centreId }: { centreId: string }) {
         }
       }
     }
+    // LE CHEF AVION SUIT LE LARGUEUR. Deux designations differentes sur un
+    // meme avion se contredisent : sur le terrain, c'est la meme personne.
+    // La colonne reste — l'histoire d'un avion parti ne se reecrit pas — mais
+    // elle n'est plus choisie a part.
     const { error } = await supabase.from('rotations')
-      .update({ largueur_id: largueurId }).eq('id', rotationId);
+      .update({ largueur_id: largueurId, chef_avion_id: largueurId }).eq('id', rotationId);
     if (error) {
       console.error('Désignation du largueur échouée :', {
         code: error.code, message: error.message, details: error.details, hint: error.hint,
@@ -379,20 +416,6 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     return null;
   };
 
-  /** Chef avion. La base vérifie qu'il est à bord — l'écran ne fait que
-   *  proposer les bonnes personnes. */
-  const designerChefAvion = async (rotationId: string, id: string | null) => {
-    const { error } = await supabase.from('rotations')
-      .update({ chef_avion_id: id }).eq('id', rotationId);
-    if (error) {
-      console.error('Désignation du chef avion échouée :', {
-        code: error.code, message: error.message, details: error.details, hint: error.hint,
-      });
-      setErreur(messageErreur(error)); return;
-    }
-    await charger();
-  };
-
   const inscrire = async (rotationId: string, parachutisteId: string, type: string) => {
     const { error } = await supabase.from('places_rotation')
       .insert({ rotation_id: rotationId, parachutiste_id: parachutisteId, type_saut: type });
@@ -459,7 +482,6 @@ function AvionnageInner({ centreId }: { centreId: string }) {
                 <PlancheAvionnage rotation={r} places={pl} maintenant={maintenant}
                   onGrouper={grouper} onDegrouper={degrouper} onDefinirMasse={definirMasse}
                   onDefinirAltitude={definirAltitude}
-                  onDesignerChefAvion={id => designerChefAvion(r.id, id)}
                   onDefinirCarburant={l => definirCarburant(r.id, l)}
                   onBasculerRadio={basculerRadio}
                   aeronef={aeronefs.find(a => a.id === r.aeronef_id)} onChange={charger}

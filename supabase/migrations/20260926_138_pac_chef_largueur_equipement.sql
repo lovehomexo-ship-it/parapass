@@ -1,0 +1,36 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- AVIONNAGE — PAC, rôle unique, équipement déclaré.
+--
+-- 1 · L'INCOHÉRENCE : le moniteur qui accompagnait un PAC sautait en tandem
+--     sur le même avion. Une personne ne fait pas les deux. La seule qualifiée
+--     en formateur PAC cumulait « moniteur tandem » ; les deux rôles vivent
+--     désormais sur deux personnes, et la démo choisit un formateur PAC QUI
+--     N'EST PAS moniteur tandem.
+--
+-- 2 · « PAC » EST LE TERME. Le libellé « École » devient « PAC » — c'est le mot
+--     du terrain, celui qu'on lit sur un manifest.
+--
+-- 3 · LE CHEF AVION SUIT LE LARGUEUR. On avait fait deux rôles ; sur le terrain
+--     c'est la même personne, et deux désignations sur un seul avion se
+--     contredisent. Le mot « chef » disparaît de l'écran ; la colonne reste,
+--     mise à jour avec le largueur — l'histoire d'un avion parti ne se réécrit
+--     pas. Le trigger impose que le chef soit à bord, donc il se pose APRÈS les
+--     places, pas à la création de la planche.
+--
+-- 4 · L'ÉQUIPEMENT est DÉCLARÉ, jamais deviné : ce que le sauteur a saisi en se
+--     déclarant présent (perso / location DZ), à défaut son matériel
+--     enregistré. Sans déclaration, l'écran écrit « équipement non déclaré ».
+--
+-- Aucune écriture sur un profil marqué donnees_reelles.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Migrations appliquées : demo_pac_coherent_chef_egal_largueur,
+-- demo_avionnage_chef_apres_places.
+--
+-- APPLIQUÉES LE 26/09/2026. Avion n°1 mesuré :
+--   Thomas LAURENT  accompagné  radio     ← accompagne le PAC
+--   Lucas BERNARD   tandem
+--   Marie Dupont    groupe
+--   Antoine BERGER  PAC         radio     ← accompagné par Thomas LAURENT
+--   Alice DÉMO      solo
+--   Alexandre Dupont groupe
+--   Claire DUBOIS   largueur              ← et chef avion

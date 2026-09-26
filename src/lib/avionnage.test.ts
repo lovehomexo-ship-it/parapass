@@ -340,19 +340,13 @@ describe('libelleMasse', () => {
   });
 });
 
-describe('verifierPlanche — le chef avion', () => {
-  it('non désigné : bloquant, et distinct du largueur', () => {
+describe('verifierPlanche — le chef avion suit le largueur', () => {
+  it('ne produit plus d’anomalie propre : deux désignations se contrediraient', () => {
+    // Sur le terrain, le chef avion EST le largueur. On avait fait deux rôles
+    // distincts ; c'était une invention, pas un besoin.
     const e = verifierPlanche({ ...PRETE, chefAvionId: null });
-    expect(e.verdict).toBe('rouge');
-    expect(e.anomalies.some(a => a.code === 'chef_avion')).toBe(true);
-    // Le largueur EST désigné : les deux rôles ne se confondent pas.
-    expect(e.anomalies.some(a => a.code === 'largueur')).toBe(false);
-  });
-
-  it('sur un avion vide, la question ne se pose pas', () => {
-    // Il n'y a pas de stick dont répondre.
-    const e = verifierPlanche({ ...PRETE, chefAvionId: null, places: [], siegesOccupes: 0 });
     expect(e.anomalies.some(a => a.code === 'chef_avion')).toBe(false);
+    expect(e.verdict).toBe('vert');
   });
 });
 
