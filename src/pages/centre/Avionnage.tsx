@@ -201,7 +201,28 @@ function AvionnageInner({ centreId }: { centreId: string }) {
   };
 
   /** Désigner — ou retirer — le largueur d'un avion. Un seul par rotation. */
+  /**
+   * Désigner le largueur, c'est L'EMBARQUER.
+   *
+   * Il était choisi dans un menu à part : le seul homme de l'avion dont on ne
+   * voyait ni la masse ni le feu. Or il pèse — l'avion se charge par les kilos
+   * — et il doit être en règle. On lui crée donc une place, de type
+   * « largueur » : il occupe un siège, il ne saute pas.
+   */
   const designerLargueur = async (rotationId: string, largueurId: string | null) => {
+    if (largueurId) {
+      const dejaLa = places.some(p => p.rotation_id === rotationId && p.parachutiste_id === largueurId);
+      if (!dejaLa) {
+        const { error: eP } = await supabase.from('places_rotation')
+          .insert({ rotation_id: rotationId, parachutiste_id: largueurId, type_saut: 'largueur' });
+        if (eP) {
+          console.error('Embarquement du largueur échoué :', {
+            code: eP.code, message: eP.message, details: eP.details, hint: eP.hint,
+          });
+          setErreur(messageErreur(eP)); return;
+        }
+      }
+    }
     const { error } = await supabase.from('rotations')
       .update({ largueur_id: largueurId }).eq('id', rotationId);
     if (error) {

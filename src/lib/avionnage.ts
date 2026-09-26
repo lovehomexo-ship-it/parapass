@@ -20,6 +20,15 @@ export const LIBELLE_TYPE: Record<TypeSautFile, string> = {
   groupe: 'Groupe', wingsuit: 'Wingsuit', video: 'Vidéo',
 };
 
+/**
+ * Libellé d'un type de place À BORD. Il couvre LIBELLE_TYPE et y ajoute le
+ * largueur, qui n'est PAS un type de file : on ne s'inscrit pas en file comme
+ * largueur, on est désigné par la DZ.
+ */
+export const LIBELLE_PLACE: Record<string, string> = {
+  ...LIBELLE_TYPE, tandem: 'Tandem', largueur: 'Largueur',
+};
+
 /** Une ligne de file, vue par la DZ. */
 export interface LigneFile {
   id: string;
@@ -374,6 +383,8 @@ export interface EntreeVerification {
   largueurId: string | null;
   /** Responsable du stick à bord. DISTINCT du largueur. */
   chefAvionId: string | null;
+  /** Le largueur désigné occupe-t-il une place ? Il pèse et il doit être vu. */
+  largueurABord: boolean;
   heurePrevue: string | null;
   heureDecollage: string | null;
   cloturee: boolean;
@@ -404,6 +415,13 @@ export function verifierPlanche(e: EntreeVerification): EtatPlanche {
         ? 'Aucun largueur qualifié dans ce centre : la qualification se saisit dans la fiche du licencié.'
         : 'Désignez le largueur : un avion ne décolle pas sans lui.',
     });
+  }
+
+  // Un largueur désigné mais absent de la liste est un mensonge tranquille :
+  // on croit l'avion pourvu, et personne ne voit ni sa masse ni son feu.
+  if (e.largueurId && !e.largueurABord) {
+    a.push({ code: 'largueur_absent', gravite: 'bloquant',
+             message: 'Le largueur désigné n’est pas dans la liste des personnes à bord.' });
   }
 
   // Le chef avion n'est pas le largueur : l'un dirige le largage, l'autre

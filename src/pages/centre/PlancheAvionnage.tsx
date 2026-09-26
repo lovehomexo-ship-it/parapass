@@ -7,7 +7,7 @@ import { surface, rayure, pastille, action, SEVERITE_COULEUR, type Severite } fr
 import {
   formaterRetard,
   calculerCall, SEVERITE_CALL, siegesOccupes, libelleCapacite, messageErreur,
-  LIBELLE_TYPE, type TypeSautFile,
+  LIBELLE_PLACE,
   verifierPlanche, blocsDePlanche, masseEmbarquee, libelleMasse,
 } from '../../lib/avionnage';
 
@@ -145,6 +145,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   const etat = verifierPlanche({
     largueurId: r.largueur_id,
     chefAvionId: r.chef_avion_id,
+    largueurABord: places.some(p => p.parachutiste_id === r.largueur_id),
     heurePrevue: r.heure_prevue,
     heureDecollage: r.heure_decollage,
     cloturee: r.cloturee_le !== null || r.statut === 'annulee',
@@ -281,18 +282,22 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
 
       {/* LE LARGUEUR DE CET AVION. Un seul. La liste ne propose que des
           qualifiés valides — et la base refuse les autres, au cas où. */}
-      {!close && onDesignerLargueur && (
+      {/* EMBARQUER LE LARGUEUR. Ce sélecteur ne « désigne » plus dans le vide :
+          il met le largueur DANS L'AVION, à sa place dans la liste. Il y pèse,
+          il y porte son feu — la version précédente en faisait le seul homme
+          de l'avion dont on ne voyait ni la masse ni le verdict.
+          Une fois à bord, il se désigne depuis sa ligne comme tout le monde. */}
+      {!close && onDesignerLargueur && !places.some(p => p.parachutiste_id === r.largueur_id) && (
         <label className="mt-2 flex items-center gap-2 flex-wrap" style={{ fontSize: 12 }}>
-          <span style={{ color: r.largueur_id ? 'var(--c-muted)' : SEVERITE_COULEUR.vigilance,
-                         fontWeight: r.largueur_id ? 400 : 700 }}>
-            Largueur{r.largueur_id ? '' : ' — obligatoire'}
+          <span style={{ color: SEVERITE_COULEUR.vigilance, fontWeight: 700 }}>
+            Largueur — à embarquer
           </span>
-          <select value={r.largueur_id ?? ''} disabled={occupe}
-            onChange={e => onDesignerLargueur(e.target.value || null)}
+          <select value="" disabled={occupe}
+            onChange={e => { if (e.target.value) onDesignerLargueur(e.target.value); }}
             className="px-2 rounded-lg"
             style={{ minHeight: 34, fontSize: 12, background: 'var(--c-input)',
                      color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }}>
-            <option value="">— non désigné —</option>
+            <option value="">— choisir —</option>
             {(largueurs ?? []).map(l => (
               <option key={l.parachutiste_id} value={l.parachutiste_id}>{l.prenom} {l.nom}</option>
             ))}
@@ -302,30 +307,6 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
               aucun largueur qualifié dans ce centre
             </span>
           )}
-        </label>
-      )}
-
-      {/* LE CHEF AVION — responsable du stick à bord. Ce n'est PAS le largueur :
-          l'un dirige le largage, l'autre répond de ce qui se passe dans la
-          cabine. La liste ne propose que des gens EMBARQUÉS, et la base refuse
-          les autres : désigner un absent produirait un responsable qui n'y est
-          pas, ce qui est pire que pas de responsable du tout. */}
-      {!close && onDesignerChefAvion && places.length > 0 && (
-        <label className="mt-2 flex items-center gap-2 flex-wrap" style={{ fontSize: 12 }}>
-          <span style={{ color: r.chef_avion_id ? 'var(--c-muted)' : SEVERITE_COULEUR.vigilance,
-                         fontWeight: r.chef_avion_id ? 400 : 700 }}>
-            Chef avion{r.chef_avion_id ? '' : ' — à désigner'}
-          </span>
-          <select value={r.chef_avion_id ?? ''} disabled={occupe}
-            onChange={e => onDesignerChefAvion(e.target.value || null)}
-            className="px-2 rounded-lg"
-            style={{ minHeight: 34, fontSize: 12, background: 'var(--c-input)',
-                     color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }}>
-            <option value="">— non désigné —</option>
-            {places.filter(p => p.parachutiste_id).map(p => (
-              <option key={p.id} value={p.parachutiste_id!}>{p.nom}</option>
-            ))}
-          </select>
         </label>
       )}
 
@@ -383,14 +364,14 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                   style={{ fontSize: 13, color: 'var(--c-text)', minHeight: 32 }}>
                   {p.nom}
                   <span style={{ color: 'var(--c-muted)' }}>
-                    {' · '}{LIBELLE_TYPE[p.type_saut as TypeSautFile] ?? p.type_saut}
+                    {' · '}{LIBELLE_PLACE[p.type_saut] ?? p.type_saut}
                   </span>
                 </button>
               ) : (
                 <span className="flex-1 min-w-0 truncate" style={{ fontSize: 13, color: 'var(--c-text)' }}>
                   {p.nom}
                   <span style={{ color: 'var(--c-muted)' }}>
-                    {' · '}{LIBELLE_TYPE[p.type_saut as TypeSautFile] ?? p.type_saut}
+                    {' · '}{LIBELLE_PLACE[p.type_saut] ?? p.type_saut}
                   </span>
                 </span>
               )}
@@ -399,6 +380,32 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                   n'y en a qu'UN par avion — et c'est la DZ qui le nomme. */}
               {p.parachutiste_id && p.parachutiste_id === r.largueur_id && (
                 <SiglesFonctions codes={['largueur']} compact />
+              )}
+              {/* Les deux rôles se prennent et se rendent SUR LA LIGNE. Un
+                  menu déroulant séparé détachait le largueur des gens ; ici on
+                  désigne la personne qu'on regarde, avec sa masse et son feu
+                  sous les yeux. Seuls les qualifiés peuvent l'être — la base
+                  refuse les autres, au cas où. */}
+              {!close && p.parachutiste_id && onDesignerLargueur
+                && p.parachutiste_id !== r.largueur_id
+                && (largueurs ?? []).some(l => l.parachutiste_id === p.parachutiste_id) && (
+                <button type="button" disabled={occupe}
+                  title={`Désigner ${p.nom} comme largueur de cet avion`}
+                  onClick={() => onDesignerLargueur(p.parachutiste_id!)}
+                  className="flex-shrink-0 whitespace-nowrap"
+                  style={{ ...action('texte'), minHeight: 28, fontSize: 11 }}>
+                  largueur ?
+                </button>
+              )}
+              {!close && p.parachutiste_id && onDesignerChefAvion
+                && p.parachutiste_id !== r.chef_avion_id && (
+                <button type="button" disabled={occupe}
+                  title={`Désigner ${p.nom} comme chef avion`}
+                  onClick={() => onDesignerChefAvion(p.parachutiste_id!)}
+                  className="flex-shrink-0 whitespace-nowrap"
+                  style={{ ...action('texte'), minHeight: 28, fontSize: 11 }}>
+                  chef ?
+                </button>
               )}
               {/* La masse, saisie par le DT qui la demande à voix haute. Un
                   champ étroit, toujours là : la masse connue se relit et se

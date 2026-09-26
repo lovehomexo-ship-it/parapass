@@ -148,7 +148,7 @@ describe('avionnage — lisibilité du retard', () => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const PRETE: EntreeVerification = {
-  largueurId: 'l1', chefAvionId: 'c1', heurePrevue: '14:30:00', heureDecollage: null, cloturee: false,
+  largueurId: 'l1', chefAvionId: 'c1', largueurABord: true, heurePrevue: '14:30:00', heureDecollage: null, cloturee: false,
   aeronefPlaces: 4,
   places: [
     { rangSortie: 1, aptitude: 'vert' },
@@ -353,5 +353,21 @@ describe('verifierPlanche — le chef avion', () => {
     // Il n'y a pas de stick dont répondre.
     const e = verifierPlanche({ ...PRETE, chefAvionId: null, places: [], siegesOccupes: 0 });
     expect(e.anomalies.some(a => a.code === 'chef_avion')).toBe(false);
+  });
+});
+
+describe('verifierPlanche — le largueur est À BORD', () => {
+  it('désigné mais absent de la liste : bloquant', () => {
+    // Un largueur désigné et débarqué est un mensonge tranquille : on croit
+    // l'avion pourvu, et personne ne voit ni sa masse ni son feu.
+    const e = verifierPlanche({ ...PRETE, largueurABord: false });
+    expect(e.verdict).toBe('rouge');
+    expect(e.anomalies.some(a => a.code === 'largueur_absent')).toBe(true);
+  });
+
+  it('pas de largueur du tout : c’est l’autre anomalie, pas celle-ci', () => {
+    const e = verifierPlanche({ ...PRETE, largueurId: null, largueurABord: false });
+    expect(e.anomalies.some(a => a.code === 'largueur')).toBe(true);
+    expect(e.anomalies.some(a => a.code === 'largueur_absent')).toBe(false);
   });
 });
