@@ -399,6 +399,10 @@ export interface EntreeVerification {
     /** Ce tandem a-t-il son passager saisi ? */
     aSonPassager: boolean;
     masseKg: number | null;
+    /** L'option vidéo a été vendue sur cette place. */
+    videoVendue: boolean;
+    /** Quelqu'un filme ce groupe : une place « vidéo » y est présente. */
+    aSonVideaste: boolean;
   }[];
   /** Nombre de largueurs qualifiés dans le centre — 0 change le message. */
   largueursDisponibles: number;
@@ -469,6 +473,14 @@ export function verifierPlanche(e: EntreeVerification): EtatPlanche {
   if (tandemsIncomplets > 0) {
     a.push({ code: 'tandem_sans_passager', gravite: 'vigilance',
              message: `${tandemsIncomplets} tandem${tandemsIncomplets > 1 ? 's' : ''} sans passager saisi : la masse embarquée est incomplète.` });
+  }
+
+  // Une vidéo vendue que personne ne filme : c'est le cas qui coûte, et il ne
+  // se voit qu'en croisant deux informations — le drapeau et le groupe.
+  const videosSansPorteur = e.places.filter(p => p.videoVendue && !p.aSonVideaste).length;
+  if (videosSansPorteur > 0) {
+    a.push({ code: 'video_sans_videaste', gravite: 'vigilance',
+             message: `${videosSansPorteur} vidéo${videosSansPorteur > 1 ? 's' : ''} vendue${videosSansPorteur > 1 ? 's' : ''} sans porteur vidéo à bord.` });
   }
 
   // Une masse manquante sur un passager est pire qu'ailleurs : personne ne

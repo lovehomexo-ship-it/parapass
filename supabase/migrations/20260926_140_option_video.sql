@@ -1,0 +1,24 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- L'OPTION VIDÉO — et qui la porte.
+--
+-- DEUX FAITS DISTINCTS, deux endroits :
+--   • la vidéo a-t-elle été VENDUE ?  → un drapeau sur la place du saut.
+--   • QUI filme ?                      → une place de type « vidéo » dans le
+--                                        MÊME GROUPE que le saut filmé.
+--
+-- Les confondre — un simple champ « vidéaste » sur la place — aurait empêché
+-- de voir le cas qui coûte : la vidéo VENDUE que PERSONNE ne filme. Elle est
+-- promise au client, facturée, et n'existera pas. C'est une anomalie de la
+-- planche, pas une donnée manquante.
+--
+-- Le porteur vidéo appartient au groupe du saut qu'il filme : il sort avec
+-- lui. Ce n'est pas un sauteur de plus pris au hasard dans l'avion.
+--
+-- VOCABULAIRE : « vidéaste » se dit ; le manifest de référence écrit
+-- « porteur vidéo ». La puce porte le mot court, l'infobulle le mot complet.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Migrations appliquées : place_option_video, demo_video_tandem.
+--
+-- APPLIQUÉES LE 26/09/2026. Démo mesurée : 2 vidéos vendues, 1 filmée
+-- (Lucas MOREAU, dans le groupe du tandem), 1 SANS porteur — pour que
+-- l'anomalie se voie.

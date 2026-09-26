@@ -103,7 +103,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
 
     if (rr.length === 0) { setPlaces([]); setChargement(false); return; }
     const { data: pl, error: e2 } = await supabase.from('places_rotation')
-      .select('id, rotation_id, parachutiste_id, moniteur_id, type_saut, rang_sortie, statut, groupe_id, masse_kg, altitude_largage_m, radio, passager_nom, profiles!parachutiste_id(nom, prenom, masse_kg, type_brevet_principal, type_brevet_moniteur)')
+      .select('id, rotation_id, parachutiste_id, moniteur_id, type_saut, rang_sortie, statut, groupe_id, masse_kg, altitude_largage_m, radio, passager_nom, video_option, profiles!parachutiste_id(nom, prenom, masse_kg, type_brevet_principal, type_brevet_moniteur)')
       .in('rotation_id', rr.map(r => r.id)).order('rang_sortie', { nullsFirst: false });
     if (e2) {
       console.error('Places — chargement échoué :', {
@@ -221,6 +221,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
         moniteur_nom: nomsMoniteurs.get(p.moniteur_id ?? '') ?? null,
         equipement: equipements.get(p.parachutiste_id ?? '') ?? null,
         passager_nom: (p as { passager_nom?: string | null }).passager_nom ?? null,
+        video_option: Boolean((p as { video_option?: boolean }).video_option),
         // Ce qui n'est pas saisi ne s'affiche pas : aucune qualification n'est
         // déduite d'un nombre de sauts ni d'un brevet.
         qualifications: qualifs.get(p.parachutiste_id ?? '') ?? [],
@@ -422,6 +423,15 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     return null;
   };
 
+  /** L'option video se vend au comptoir : l'ecran ne fait que la constater. */
+  const basculerVideo = async (placeId: string, vendue: boolean): Promise<string | null> => {
+    const { error } = await supabase.from('places_rotation')
+      .update({ video_option: vendue }).eq('id', placeId);
+    if (error) return messageErreur(error);
+    await charger();
+    return null;
+  };
+
   /** La radio se constate d'un clic : elle est sur la personne, ou elle ne l'est pas. */
   const basculerRadio = async (placeId: string, radio: boolean): Promise<string | null> => {
     const { error } = await supabase.from('places_rotation')
@@ -516,7 +526,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
                   onGrouper={grouper} onDegrouper={degrouper} onDefinirMasse={definirMasse}
                   onDefinirAltitude={definirAltitude}
                   onDefinirCarburant={l => definirCarburant(r.id, l)}
-                  onBasculerRadio={basculerRadio} onAjouterPassager={ajouterPassager}
+                  onBasculerRadio={basculerRadio} onAjouterPassager={ajouterPassager} onBasculerVideo={basculerVideo}
                   aeronef={aeronefs.find(a => a.id === r.aeronef_id)} onChange={charger}
                   onDeposer={fileId => placer(fileId, r.id)} onOuvrirFiche={ouvrirFiche}
                   largueurs={largueurs}

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MIME_FILE } from './FileAvionnageDZ';
 import { SiglesFonctions } from '../../components/SigleFonction';
 import { supabase } from '../../lib/supabase';
-import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff, AlertTriangle, CheckCircle2, Fuel, Radio, ChevronDown, Package } from 'lucide-react';
+import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff, AlertTriangle, CheckCircle2, Fuel, Radio, ChevronDown, Package, Video } from 'lucide-react';
 import { surface, rayure, pastille, action, SEVERITE_COULEUR, type Severite } from '../../lib/jetons';
 import {
   formaterRetard,
@@ -50,6 +50,8 @@ export interface PlaceVue {
   moniteur_nom: string | null;
   /** Passager de tandem non licencié : un nom, une masse, pas de verdict. */
   passager_nom: string | null;
+  /** L'option vidéo a été vendue sur ce saut. */
+  video_option: boolean;
   /** Le parachute porté, tel qu'il est DÉCLARÉ : « perso · Sabre 2 170 » ou
    *  « location DZ · Navigator 260 ». null = rien de déclaré, et on le dit. */
   equipement: string | null;
@@ -90,7 +92,7 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onBasculerRadio, onAjouterPassager }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onBasculerRadio, onAjouterPassager, onBasculerVideo }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -119,6 +121,8 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   onBasculerRadio?: (placeId: string, radio: boolean) => Promise<string | null>;
   /** Le passager d'un tandem : un nom, une masse. Il n'a pas de compte. */
   onAjouterPassager?: (placeMoniteur: PlaceVue, nom: string, kg: number | null) => Promise<string | null>;
+  /** L'option vidéo se vend ou s'annule d'un clic. */
+  onBasculerVideo?: (placeId: string, vendue: boolean) => Promise<string | null>;
 }) {
   const [occupe, setOccupe] = useState(false);
   const [echec, setEchec] = useState<string | null>(null);
@@ -189,6 +193,11 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
       aSonPassager: p.passager_nom === null && p.groupe_id !== null
         && places.some(q => q.passager_nom !== null && q.groupe_id === p.groupe_id),
       masseKg: p.masse_kg,
+      videoVendue: p.video_option,
+      // Quelqu'un filme ce groupe : une place « vidéo » y est présente. Le
+      // drapeau dit que c'est vendu, le groupe dit QUI filme.
+      aSonVideaste: p.groupe_id !== null
+        && places.some(q => q.type_saut === 'video' && q.groupe_id === p.groupe_id),
     })),
     largueursDisponibles: (largueurs ?? []).length,
     siegesOccupes: sieges,
@@ -481,6 +490,27 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                     {radioAttendue(p.type_saut) && !p.radio ? ' !' : ''}
                   </button>
                 )}
+                {/* L'OPTION VIDÉO. Plein = vendue et quelqu'un filme ; ambre
+                    tireté = vendue et personne à bord pour la faire. Le nom du
+                    porteur est dans l'infobulle : c'est lui qu'on cherche. */}
+                {p.video_option && (() => {
+                  const porteur = places.find(q => q.type_saut === 'video'
+                    && q.groupe_id !== null && q.groupe_id === p.groupe_id);
+                  return (
+                    <span className="flex-shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded"
+                      title={porteur ? `Vidéo — filmée par ${porteur.nom}`
+                                     : 'Vidéo vendue — aucun porteur vidéo à bord'}
+                      style={{ fontSize: 10.5, fontWeight: 800,
+                        color: porteur ? TEINTE_DISCIPLINE.video : SEVERITE_COULEUR.vigilance,
+                        border: `1px ${porteur ? 'solid' : 'dashed'} ${porteur ? TEINTE_DISCIPLINE.video : SEVERITE_COULEUR.vigilance}` }}>
+                      <Video className="w-3 h-3 inline-block align-[-1px]" aria-hidden />
+                      <span className="sr-only">
+                        {porteur ? `Vidéo filmée par ${porteur.nom}` : 'Vidéo vendue, sans porteur vidéo'}
+                      </span>
+                      {porteur ? '' : ' !'}
+                    </span>
+                  );
+                })()}
                 {p.parachutiste_id === r.largueur_id && <SiglesFonctions codes={['largueur']} compact />}
 
                 {/* UN PASSAGER N'A PAS DE VERDICT. Il n'a pas de licence : lui
@@ -601,6 +631,22 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                       onClick={() => onDesignerLargueur(p.parachutiste_id!)}
                       style={{ ...action('texte'), minHeight: 28, fontSize: 11 }}>
                       désigner largueur
+                    </button>
+                  )}
+
+                  {/* La vidéo se vend au comptoir : l'écran ne fait que le
+                      constater. Proposée sur les sauts qui l'admettent. */}
+                  {!close && onBasculerVideo && !p.passager_nom
+                    && ['tandem', 'accompagne', 'ecole', 'solo', 'groupe'].includes(p.type_saut) && (
+                    <button type="button" disabled={occupe}
+                      onClick={() => agir('Option vidéo', () =>
+                        onBasculerVideo(p.id, !p.video_option).then(e => ({ error: e ? { message: e } : null })))}
+                      className="whitespace-nowrap px-1.5 py-0.5 rounded"
+                      style={{ fontSize: 11, fontWeight: 700,
+                        color: p.video_option ? TEINTE_DISCIPLINE.video : 'var(--c-dim)',
+                        border: `1px ${p.video_option ? 'solid' : 'dashed'} ${p.video_option ? TEINTE_DISCIPLINE.video : 'var(--n2-bord)'}` }}>
+                      <Video className="w-3 h-3 inline-block align-[-1px] mr-1" aria-hidden />
+                      {p.video_option ? 'vidéo vendue' : 'pas de vidéo'}
                     </button>
                   )}
 
