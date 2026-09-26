@@ -3136,6 +3136,7 @@ export function CentreDashboardPage() {
               aria-label={compact ? item.label : undefined}
               className={`w-full flex items-center transition-all ${compact ? 'justify-center' : 'gap-2.5 px-3 text-left'}`}
               style={{
+                position: 'relative',
                 padding: compact ? '10px 0' : '9px 12px',
                 fontSize: 12,
                 fontWeight: isActive ? 600 : 400,
@@ -3150,7 +3151,8 @@ export function CentreDashboardPage() {
               <Icon className="w-4 h-4 flex-shrink-0" />
               {!compact && <span className="flex-1 truncate">{item.label}</span>}
               {item.badge != null && item.badge > 0 && (
-                <span className={`text-[10px] rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-semibold ${compact ? 'absolute translate-x-3 -translate-y-2' : ''}`} style={{
+                <span className="text-[10px] rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-semibold"
+                  style={{ ...(compact ? { position: 'absolute', top: 2, right: 4, lineHeight: 1 } : {}),
                   background: isMsgBadge ? 'rgba(59,130,246,0.25)' : 'rgba(239,68,68,0.2)',
                   color: isMsgBadge ? '#60A5FA' : '#F87171',
                 }}>
@@ -3164,22 +3166,35 @@ export function CentreDashboardPage() {
 
       {/* Bottom: notifs + logout — always visible, never scrolled away */}
       <div className="px-2 py-3 space-y-0.5 flex-shrink-0" style={{ borderTop: '1px solid var(--c-border)', paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
-        <button className="w-full flex items-center gap-2.5 rounded-lg transition"
-          style={{ padding: '9px 12px', fontSize: 12, color: 'var(--c-dim)' }}
+        <button
+          title={compact ? 'Notifications' : undefined}
+          aria-label={compact ? 'Notifications' : undefined}
+          className={`w-full flex items-center rounded-lg transition ${compact ? 'justify-center' : 'gap-2.5'}`}
+          style={{ position: 'relative', padding: compact ? '10px 0' : '9px 12px', fontSize: 12, color: 'var(--c-dim)' }}
           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--c-card)'; (e.currentTarget as HTMLElement).style.color = 'var(--c-text)'; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--c-dim)'; }}
         >
           <Bell className="w-4 h-4 flex-shrink-0" />
-          <span className="flex-1 text-left">Notifications</span>
+          {!compact && <span className="flex-1 text-left">Notifications</span>}
           {notifCount > 0 && (
-            <span className="text-[10px] rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-semibold" style={{ background: 'rgba(239,68,68,0.2)', color: '#F87171' }}>{notifCount}</span>
+            <span className="text-[10px] rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-semibold"
+              style={{ ...(compact ? { position: 'absolute', top: 2, right: 4, lineHeight: 1 } : {}),
+                       background: 'rgba(239,68,68,0.2)', color: '#F87171' }}>{notifCount}</span>
           )}
         </button>
-        <div className="flex items-center gap-2.5 px-3 py-2">
-          <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0" style={{ background: 'var(--c-border)' }}>
+        {/* En colonne quand la barre est réduite : quatre éléments côte à côte
+            ne tiennent pas dans 60 px, et débordaient sur le contenu. */}
+        <div className={compact
+          ? 'flex flex-col items-center gap-1.5 py-1'
+          : 'flex items-center gap-2.5 px-3 py-2'}>
+          <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
+            title={compact ? `${profile.prenom} ${profile.nom}` : undefined}
+            style={{ background: 'var(--c-border)' }}>
             {initials(profile.nom, profile.prenom)}
           </div>
-          <p className="text-xs flex-1 truncate" style={{ color: 'var(--c-dim)', fontSize: 11 }}>{profile.prenom} {profile.nom}</p>
+          {!compact && (
+            <p className="text-xs flex-1 truncate" style={{ color: 'var(--c-dim)', fontSize: 11 }}>{profile.prenom} {profile.nom}</p>
+          )}
           <button onClick={toggleTheme} className="p-1 rounded-lg transition flex-shrink-0" title={theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
             style={{ color: 'var(--c-dim)' }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--c-text)'; }}
