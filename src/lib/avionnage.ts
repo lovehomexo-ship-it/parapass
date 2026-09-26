@@ -390,7 +390,16 @@ export interface EntreeVerification {
   cloturee: boolean;
   aeronefPlaces: number | null;
   /** Une entrée par place occupée. */
-  places: { rangSortie: number | null; aptitude: 'vert' | 'orange' | 'rouge' | 'gris' }[];
+  places: {
+    rangSortie: number | null;
+    aptitude: 'vert' | 'orange' | 'rouge' | 'gris';
+    typeSaut: string;
+    /** Un passager de tandem : pas de licence, donc pas de verdict à compter. */
+    passager: boolean;
+    /** Ce tandem a-t-il son passager saisi ? */
+    aSonPassager: boolean;
+    masseKg: number | null;
+  }[];
   /** Nombre de largueurs qualifiés dans le centre — 0 change le message. */
   largueursDisponibles: number;
   siegesOccupes: number;
@@ -439,15 +448,35 @@ export function verifierPlanche(e: EntreeVerification): EtatPlanche {
   }
 
   // Le gris compte AVEC le rouge : ne pas savoir se traite comme un refus.
-  const refus = e.places.filter(p => p.aptitude === 'rouge' || p.aptitude === 'gris').length;
+  // Le passager n'a pas de licence : il n'a pas de verdict, et n'entre donc
+  // dans aucun décompte de conformité. L'y compter aurait mis tout l'avion au
+  // rouge à cause de quelqu'un qu'aucune règle ne vise.
+  const juges = e.places.filter(p => !p.passager);
+  const refus = juges.filter(p => p.aptitude === 'rouge' || p.aptitude === 'gris').length;
   if (refus > 0) {
     a.push({ code: 'aptitude_refus', gravite: 'bloquant',
              message: `${refus} personne${refus > 1 ? 's' : ''} à bord ${refus > 1 ? 'sont' : 'est'} à examiner ou à vérifier.` });
   }
-  const vigilance = e.places.filter(p => p.aptitude === 'orange').length;
+  const vigilance = juges.filter(p => p.aptitude === 'orange').length;
   if (vigilance > 0) {
     a.push({ code: 'aptitude_vigilance', gravite: 'vigilance',
              message: `${vigilance} personne${vigilance > 1 ? 's' : ''} à bord en vigilance.` });
+  }
+
+  // Un tandem sans passager n'est pas un tandem : il manque un siège et une
+  // masse. On le dit avant le décollage, quand c'est encore réparable.
+  const tandemsIncomplets = e.places.filter(p => p.typeSaut === 'tandem' && !p.passager && !p.aSonPassager).length;
+  if (tandemsIncomplets > 0) {
+    a.push({ code: 'tandem_sans_passager', gravite: 'vigilance',
+             message: `${tandemsIncomplets} tandem${tandemsIncomplets > 1 ? 's' : ''} sans passager saisi : la masse embarquée est incomplète.` });
+  }
+
+  // Une masse manquante sur un passager est pire qu'ailleurs : personne ne
+  // peut la deviner, il n'a pas de fiche.
+  const passagersSansMasse = e.places.filter(p => p.passager && p.masseKg == null).length;
+  if (passagersSansMasse > 0) {
+    a.push({ code: 'passager_sans_masse', gravite: 'vigilance',
+             message: `${passagersSansMasse} passager${passagersSansMasse > 1 ? 's' : ''} sans masse : elle se demande au comptoir, personne ne peut la deviner.` });
   }
 
   if (!e.heurePrevue) {
@@ -456,13 +485,15 @@ export function verifierPlanche(e: EntreeVerification): EtatPlanche {
   }
 
   // Deux sauteurs au même rang, c'est un ordre de sortie qui ne veut rien dire.
-  const rangs = e.places.map(p => p.rangSortie).filter((r): r is number => r !== null);
+  // Le passager sort ATTACHÉ à son moniteur : il partage son rang, ce n'est
+  // pas un doublon. Il n'entre donc pas dans le contrôle de l'ordre de sortie.
+  const rangs = juges.map(p => p.rangSortie).filter((r): r is number => r !== null);
   const doublons = rangs.length - new Set(rangs).size;
   if (doublons > 0) {
     a.push({ code: 'rangs_doublon', gravite: 'vigilance',
              message: 'Deux personnes portent le même rang de sortie.' });
   }
-  if (e.places.length > 0 && rangs.length < e.places.length) {
+  if (juges.length > 0 && rangs.length < juges.length) {
     a.push({ code: 'rangs_manquants', gravite: 'vigilance',
              message: 'Ordre de sortie incomplet.' });
   }

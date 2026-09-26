@@ -151,8 +151,8 @@ const PRETE: EntreeVerification = {
   largueurId: 'l1', chefAvionId: 'c1', largueurABord: true, heurePrevue: '14:30:00', heureDecollage: null, cloturee: false,
   aeronefPlaces: 4,
   places: [
-    { rangSortie: 1, aptitude: 'vert' },
-    { rangSortie: 2, aptitude: 'vert' },
+    { rangSortie: 1, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80 },
+    { rangSortie: 2, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 75 },
   ],
   largueursDisponibles: 2, siegesOccupes: 2,
 };
@@ -189,14 +189,14 @@ describe('verifierPlanche — ce qui bloque', () => {
 
   it('le GRIS compte avec le rouge : ne pas savoir se traite comme un refus', () => {
     const e = verifierPlanche({ ...PRETE,
-      places: [{ rangSortie: 1, aptitude: 'gris' }, { rangSortie: 2, aptitude: 'vert' }] });
+      places: [{ rangSortie: 1, aptitude: 'gris', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80 }, { rangSortie: 2, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80 }] });
     expect(e.verdict).toBe('rouge');
     expect(e.anomalies.find(a => a.code === 'aptitude_refus')!.message).toContain('1 personne');
   });
 
   it('une vigilance seule ne bloque pas, elle avertit', () => {
     const e = verifierPlanche({ ...PRETE,
-      places: [{ rangSortie: 1, aptitude: 'orange' }, { rangSortie: 2, aptitude: 'vert' }] });
+      places: [{ rangSortie: 1, aptitude: 'orange', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80 }, { rangSortie: 2, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80 }] });
     expect(e.verdict).toBe('orange');
   });
 });
@@ -204,14 +204,14 @@ describe('verifierPlanche — ce qui bloque', () => {
 describe('verifierPlanche — l’ordre de sortie', () => {
   it('deux personnes au même rang : un ordre qui ne veut rien dire', () => {
     const e = verifierPlanche({ ...PRETE,
-      places: [{ rangSortie: 1, aptitude: 'vert' }, { rangSortie: 1, aptitude: 'vert' }] });
+      places: [{ rangSortie: 1, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80 }, { rangSortie: 1, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80 }] });
     expect(e.anomalies.some(a => a.code === 'rangs_doublon')).toBe(true);
     expect(e.verdict).toBe('orange');
   });
 
   it('un rang manquant se signale, sans bloquer', () => {
     const e = verifierPlanche({ ...PRETE,
-      places: [{ rangSortie: 1, aptitude: 'vert' }, { rangSortie: null, aptitude: 'vert' }] });
+      places: [{ rangSortie: 1, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80 }, { rangSortie: null, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80 }] });
     expect(e.anomalies.some(a => a.code === 'rangs_manquants')).toBe(true);
     expect(e.verdict).toBe('orange');
   });
@@ -398,5 +398,48 @@ describe('TEINTE_DISCIPLINE — grouper, jamais alerter', () => {
                      'video', 'tandem', 'largueur']) {
       expect(TEINTE_DISCIPLINE[t]).toBeDefined();
     }
+  });
+});
+
+describe('verifierPlanche — le passager de tandem', () => {
+  const tandem = { rangSortie: 1, aptitude: 'vert' as const, typeSaut: 'tandem',
+                   passager: false, aSonPassager: false, masseKg: 85 };
+  const passager = { rangSortie: 1, aptitude: 'gris' as const, typeSaut: 'tandem',
+                     passager: true, aSonPassager: false, masseKg: 70 };
+
+  it('un tandem sans passager saisi se signale : il manque un siège et une masse', () => {
+    const e = verifierPlanche({ ...PRETE, places: [tandem] });
+    expect(e.anomalies.some(a => a.code === 'tandem_sans_passager')).toBe(true);
+  });
+
+  it('avec son passager, plus rien à signaler', () => {
+    const e = verifierPlanche({ ...PRETE,
+      places: [{ ...tandem, aSonPassager: true }, passager] });
+    expect(e.anomalies.some(a => a.code === 'tandem_sans_passager')).toBe(false);
+  });
+
+  it('le passager n’entre dans AUCUN décompte de conformité', () => {
+    // Il n'a pas de licence. Le compter aurait mis tout l'avion au rouge à
+    // cause de quelqu'un qu'aucune règle ne vise.
+    const e = verifierPlanche({ ...PRETE,
+      places: [{ ...tandem, aSonPassager: true }, passager] });
+    expect(e.anomalies.some(a => a.code === 'aptitude_refus')).toBe(false);
+    expect(e.verdict).toBe('vert');
+  });
+
+  it('un passager sans masse se signale : personne ne peut la deviner', () => {
+    const e = verifierPlanche({ ...PRETE,
+      places: [{ ...tandem, aSonPassager: true }, { ...passager, masseKg: null }] });
+    expect(e.anomalies.some(a => a.code === 'passager_sans_masse')).toBe(true);
+  });
+});
+
+describe('verifierPlanche — le passager sort attaché', () => {
+  it('partager le rang de son moniteur n’est PAS un doublon', () => {
+    const e = verifierPlanche({ ...PRETE, places: [
+      { rangSortie: 1, aptitude: 'vert', typeSaut: 'tandem', passager: false, aSonPassager: true, masseKg: 85 },
+      { rangSortie: 1, aptitude: 'gris', typeSaut: 'tandem', passager: true, aSonPassager: false, masseKg: 70 },
+    ] });
+    expect(e.anomalies.some(a => a.code === 'rangs_doublon')).toBe(false);
   });
 });

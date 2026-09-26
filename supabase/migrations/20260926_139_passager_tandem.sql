@@ -1,0 +1,31 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- LE PASSAGER DE TANDEM — il manquait dans l'avion.
+--
+-- Un tandem, c'est DEUX personnes. Seul le moniteur figurait sur la planche :
+-- le passager prend pourtant un siège et il pèse. La masse embarquée était donc
+-- fausse d'une personne par tandem, et le décompte des places aussi.
+--
+-- ON NE LUI FABRIQUE PAS DE PROFIL. Ce serait créer un compte à quelqu'un qui
+-- n'en a pas demandé, et lui attribuer un feu de conformité qui n'a aucun sens
+-- pour un civil : on ne reproche pas à un passager de ne pas avoir une licence
+-- qu'on ne lui demande pas. Une place peut donc porter un NOM LIBRE.
+--
+-- La contrainte « un seul occupant par place » n'est pas levée : elle accepte
+-- une troisième forme, le passager nommé.
+--
+-- Il est rattaché à son moniteur par le GROUPE et partage son rang de sortie —
+-- ils sortent attachés, c'est littéralement le cas. Le contrôle de l'ordre de
+-- sortie l'ignore donc : ce n'est pas un doublon.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Migrations appliquées : place_passager_tandem, demo_passager_tandem,
+-- demo_avionnage_base_et_passagers.
+--
+-- APPLIQUÉES LE 26/09/2026. Avion n°1 mesuré :
+--   1  Thomas LAURENT    accompagné  80 kg   ← accompagne le PAC
+--   2  Lucas BERNARD     tandem      72 kg
+--   2  Julien FABRE      PASSAGER    75 kg   ← même rang, ils sortent attachés
+--   3  Marie Dupont      groupe      71 kg
+--   4  Antoine BERGER    PAC         82 kg
+--   5  Alice DÉMO        solo        50 kg
+--   6  Alexandre Dupont  groupe      92 kg
+--   ·  Claire DUBOIS     largueur    75 kg

@@ -48,6 +48,8 @@ export interface PlaceVue {
   motifs: string | null;
   /** Le moniteur qui accompagne cette personne, quand il y en a un. */
   moniteur_nom: string | null;
+  /** Passager de tandem non licencié : un nom, une masse, pas de verdict. */
+  passager_nom: string | null;
   /** Le parachute porté, tel qu'il est DÉCLARÉ : « perso · Sabre 2 170 » ou
    *  « location DZ · Navigator 260 ». null = rien de déclaré, et on le dit. */
   equipement: string | null;
@@ -88,7 +90,7 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onBasculerRadio }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onBasculerRadio, onAjouterPassager }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -115,6 +117,8 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   onDefinirCarburant?: (litres: number | null) => Promise<string | null>;
   /** La radio se constate d'un clic : elle est sur la personne, ou elle ne l'est pas. */
   onBasculerRadio?: (placeId: string, radio: boolean) => Promise<string | null>;
+  /** Le passager d'un tandem : un nom, une masse. Il n'a pas de compte. */
+  onAjouterPassager?: (placeMoniteur: PlaceVue, nom: string, kg: number | null) => Promise<string | null>;
 }) {
   const [occupe, setOccupe] = useState(false);
   const [echec, setEchec] = useState<string | null>(null);
@@ -178,7 +182,14 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
     heureDecollage: r.heure_decollage,
     cloturee: r.cloturee_le !== null || r.statut === 'annulee',
     aeronefPlaces: aeronef?.places ?? null,
-    places: places.map(p => ({ rangSortie: p.rang_sortie, aptitude: p.aptitude })),
+    places: places.map(p => ({
+      rangSortie: p.rang_sortie, aptitude: p.aptitude, typeSaut: p.type_saut,
+      passager: p.passager_nom !== null,
+      // Le moniteur « a son passager » si quelqu'un partage son groupe.
+      aSonPassager: p.passager_nom === null && p.groupe_id !== null
+        && places.some(q => q.passager_nom !== null && q.groupe_id === p.groupe_id),
+      masseKg: p.masse_kg,
+    })),
     largueursDisponibles: (largueurs ?? []).length,
     siegesOccupes: sieges,
   });
@@ -422,11 +433,14 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                   {p.type_saut === 'largueur' ? '·' : (p.rang_sortie ?? '·')}
                 </span>
 
-                <button type="button"
+                <button type="button" disabled={!p.parachutiste_id}
                   onClick={() => p.parachutiste_id && onOuvrirFiche?.(p.parachutiste_id)}
-                  className="flex-1 min-w-0 text-left hover:underline"
+                  className={`flex-1 min-w-0 text-left ${p.parachutiste_id ? 'hover:underline' : ''}`}
                   style={{ fontSize: 14, fontWeight: 600, color: 'var(--c-text)', minHeight: 32 }}>
                   <span className="truncate block">
+                    {p.passager_nom && (
+                      <span style={{ color: 'var(--c-muted)', fontWeight: 400 }}>passager · </span>
+                    )}
                     {p.nom}
                     {(p.brevet || p.brevet_moniteur) && (
                       <span style={{ color: 'var(--c-muted)', fontWeight: 400 }}>
@@ -469,12 +483,22 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                 )}
                 {p.parachutiste_id === r.largueur_id && <SiglesFonctions codes={['largueur']} compact />}
 
-                <button type="button" title="Ouvrir la fiche"
-                  onClick={() => p.parachutiste_id && onOuvrirFiche?.(p.parachutiste_id)}
-                  className="flex-shrink-0 whitespace-nowrap"
-                  style={{ ...pastille(SEV_APTITUDE[p.aptitude]), cursor: 'pointer', minHeight: 28 }}>
-                  {LIBELLE_APTITUDE[p.aptitude]}
-                </button>
+                {/* UN PASSAGER N'A PAS DE VERDICT. Il n'a pas de licence : lui
+                    coller « à vérifier » reprocherait à un civil de ne pas
+                    avoir un document qu'on ne lui demande pas. */}
+                {p.passager_nom ? (
+                  <span className="flex-shrink-0 whitespace-nowrap"
+                    style={{ ...pastille('neutre'), minHeight: 28 }}>
+                    non licencié
+                  </span>
+                ) : (
+                  <button type="button" title="Ouvrir la fiche"
+                    onClick={() => p.parachutiste_id && onOuvrirFiche?.(p.parachutiste_id)}
+                    className="flex-shrink-0 whitespace-nowrap"
+                    style={{ ...pastille(SEV_APTITUDE[p.aptitude]), cursor: 'pointer', minHeight: 28 }}>
+                    {LIBELLE_APTITUDE[p.aptitude]}
+                  </button>
+                )}
 
                 {/* Le volet. Fermé, la ligne tient en une phrase lisible. */}
                 <button type="button" onClick={() => basculerDetails(p.id)}
@@ -580,14 +604,52 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                     </button>
                   )}
 
+                  {/* LE PASSAGER DU TANDEM. C'est un civil : pas de compte, pas
+                      de licence, pas de verdict. Un nom et une masse suffisent,
+                      et la masse se demande au comptoir — personne ne peut la
+                      deviner. Il prend un siège, donc il compte. */}
+                  {!close && onAjouterPassager && p.type_saut === 'tandem' && !p.passager_nom
+                    && !places.some(q => q.passager_nom && q.groupe_id && q.groupe_id === p.groupe_id) && (
+                    <form className="flex items-center gap-1.5 flex-wrap"
+                      onSubmit={e => {
+                        e.preventDefault();
+                        const f = e.currentTarget as HTMLFormElement;
+                        const nom = (f.elements.namedItem('nom') as HTMLInputElement).value.trim();
+                        const kgTexte = (f.elements.namedItem('kg') as HTMLInputElement).value.trim();
+                        if (!nom) return;
+                        agir('Ajout du passager', () =>
+                          onAjouterPassager(p, nom, kgTexte === '' ? null : Number(kgTexte.replace(',', '.')))
+                            .then(err => ({ error: err ? { message: err } : null })));
+                      }}>
+                      <span style={{ fontSize: 11, color: SEVERITE_COULEUR.vigilance, fontWeight: 700 }}>
+                        Passager à saisir
+                      </span>
+                      <input name="nom" type="text" placeholder="nom du passager" disabled={occupe}
+                        className="px-2 rounded-lg"
+                        style={{ width: 150, minHeight: 30, fontSize: 12, background: 'var(--c-input)',
+                                 color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
+                      <input name="kg" type="number" inputMode="decimal" min={20} max={250} step={0.5}
+                        placeholder="kg" disabled={occupe}
+                        className="px-1.5 rounded-lg text-right"
+                        style={{ width: 62, minHeight: 30, fontSize: 12, background: 'var(--c-input)',
+                                 color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
+                      <button type="submit" disabled={occupe}
+                        style={{ ...action('secondaire'), minHeight: 30, fontSize: 11 }}>
+                        Ajouter
+                      </button>
+                    </form>
+                  )}
+
                   {/* L'ÉQUIPEMENT, tel qu'il est DÉCLARÉ — jamais deviné. La
                       source est ce que le sauteur a saisi en se déclarant
                       présent (perso ou location), ou à défaut son matériel
                       enregistré. Rien n'est affiché qui ne vienne de là. */}
-                  <span style={{ fontSize: 11, color: p.equipement ? 'var(--c-text2)' : 'var(--c-dim)' }}>
-                    <Package className="w-3 h-3 inline-block align-[-1px] mr-1" aria-hidden />
-                    {p.equipement ?? 'équipement non déclaré'}
-                  </span>
+                  {!p.passager_nom && (
+                    <span style={{ fontSize: 11, color: p.equipement ? 'var(--c-text2)' : 'var(--c-dim)' }}>
+                      <Package className="w-3 h-3 inline-block align-[-1px] mr-1" aria-hidden />
+                      {p.equipement ?? 'équipement non déclaré'}
+                    </span>
+                  )}
 
                   {/* Vert : on le dit aussi, sinon le volet semble vide. */}
                   {!aDire && p.aptitude === 'vert' && (

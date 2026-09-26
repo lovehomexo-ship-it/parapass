@@ -103,7 +103,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
 
     if (rr.length === 0) { setPlaces([]); setChargement(false); return; }
     const { data: pl, error: e2 } = await supabase.from('places_rotation')
-      .select('id, rotation_id, parachutiste_id, moniteur_id, type_saut, rang_sortie, statut, groupe_id, masse_kg, altitude_largage_m, radio, profiles!parachutiste_id(nom, prenom, masse_kg, type_brevet_principal, type_brevet_moniteur)')
+      .select('id, rotation_id, parachutiste_id, moniteur_id, type_saut, rang_sortie, statut, groupe_id, masse_kg, altitude_largage_m, radio, passager_nom, profiles!parachutiste_id(nom, prenom, masse_kg, type_brevet_principal, type_brevet_moniteur)')
       .in('rotation_id', rr.map(r => r.id)).order('rang_sortie', { nullsFirst: false });
     if (e2) {
       console.error('Places — chargement échoué :', {
@@ -205,6 +205,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
 
     setPlaces(brutes.map(p => {
       const pr = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
+      const passager = (p as { passager_nom?: string | null }).passager_nom ?? null;
       return {
         id: p.id, rotation_id: p.rotation_id, parachutiste_id: p.parachutiste_id,
         moniteur_id: p.moniteur_id, type_saut: p.type_saut, rang_sortie: p.rang_sortie,
@@ -219,10 +220,11 @@ function AvionnageInner({ centreId }: { centreId: string }) {
         motifs: motifs.get(p.parachutiste_id ?? '') ?? null,
         moniteur_nom: nomsMoniteurs.get(p.moniteur_id ?? '') ?? null,
         equipement: equipements.get(p.parachutiste_id ?? '') ?? null,
+        passager_nom: (p as { passager_nom?: string | null }).passager_nom ?? null,
         // Ce qui n'est pas saisi ne s'affiche pas : aucune qualification n'est
         // déduite d'un nombre de sauts ni d'un brevet.
         qualifications: qualifs.get(p.parachutiste_id ?? '') ?? [],
-        nom: pr ? `${pr.prenom} ${pr.nom}` : (p.type_saut === 'tandem' ? 'Passager tandem' : '?'),
+        nom: pr ? `${pr.prenom} ${pr.nom}` : (passager ?? 'occupant non nommé'),
         // Inconnu → GRIS. Jamais l'absence de réponse traduite en vert.
         aptitude: (p.parachutiste_id && verdicts.get(p.parachutiste_id)) || 'gris',
       };
@@ -389,6 +391,37 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     return null;
   };
 
+  /**
+   * Le passager d'un tandem. C'est un CIVIL : pas de compte, pas de licence,
+   * pas de verdict. On lui donne une place nommee, rattachee a son moniteur
+   * par le groupe — ils sortent attaches, c'est litteralement le cas.
+   *
+   * Lui fabriquer un profil aurait cree un compte a quelqu'un qui n'en a pas
+   * demande, et un feu de conformite qui n'a aucun sens pour lui.
+   */
+  const ajouterPassager = async (placeMoniteur: PlaceVue, nom: string, kg: number | null): Promise<string | null> => {
+    // Le moniteur et son passager partagent un groupe : s'il n'en a pas, on
+    // en cree un pour les lier.
+    let groupe = placeMoniteur.groupe_id;
+    if (!groupe) {
+      groupe = crypto.randomUUID();
+      const { error: eG } = await supabase.from('places_rotation')
+        .update({ groupe_id: groupe }).eq('id', placeMoniteur.id);
+      if (eG) return messageErreur(eG);
+    }
+    const { error } = await supabase.from('places_rotation').insert({
+      rotation_id: placeMoniteur.rotation_id,
+      passager_nom: nom,
+      type_saut: 'tandem',
+      groupe_id: groupe,
+      rang_sortie: placeMoniteur.rang_sortie,
+      masse_kg: kg,
+    });
+    if (error) return messageErreur(error);
+    await charger();
+    return null;
+  };
+
   /** La radio se constate d'un clic : elle est sur la personne, ou elle ne l'est pas. */
   const basculerRadio = async (placeId: string, radio: boolean): Promise<string | null> => {
     const { error } = await supabase.from('places_rotation')
@@ -483,7 +516,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
                   onGrouper={grouper} onDegrouper={degrouper} onDefinirMasse={definirMasse}
                   onDefinirAltitude={definirAltitude}
                   onDefinirCarburant={l => definirCarburant(r.id, l)}
-                  onBasculerRadio={basculerRadio}
+                  onBasculerRadio={basculerRadio} onAjouterPassager={ajouterPassager}
                   aeronef={aeronefs.find(a => a.id === r.aeronef_id)} onChange={charger}
                   onDeposer={fileId => placer(fileId, r.id)} onOuvrirFiche={ouvrirFiche}
                   largueurs={largueurs}
