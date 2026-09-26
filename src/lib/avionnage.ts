@@ -446,3 +446,70 @@ export function verifierPlanche(e: EntreeVerification): EtatPlanche {
     verdict: a.some(x => x.gravite === 'bloquant') ? 'rouge' : a.length > 0 ? 'orange' : 'vert',
   };
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LES GROUPES DANS L'AVION — repris des manifests professionnels, où un stick
+// se lit par blocs : « FF n°1 », « PAC n°2 », « Tandem n°1 ».
+//
+// Un groupe n'est pas une commodité d'affichage : c'est ce qui sort ensemble.
+// Deux personnes d'un même groupe quittent l'avion dans la même seconde, et
+// le séparateur suivant attend qu'elles soient parties.
+//
+// La colonne places_rotation.groupe_id existait depuis l'origine et n'était
+// LUE NULLE PART. Aucune migration ici : on se sert de ce qui est déjà là.
+//
+// Le libellé est DÉRIVÉ, jamais stocké : « PAC n°2 » est le deuxième groupe
+// de PAC de cet avion. Le stocker aurait créé un nom à maintenir, et deux
+// vérités le jour où un groupe change de discipline.
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface BlocPlanche<P> {
+  /** null = personne seule, sans groupe. */
+  groupeId: string | null;
+  /** « PAC n°2 ». null pour les places isolées : elles n'ont pas de titre. */
+  libelle: string | null;
+  places: P[];
+}
+
+/**
+ * Range les places en blocs, dans l'ordre de sortie.
+ *
+ * L'ordre d'un bloc est celui de son PREMIER sauteur : un groupe ne se
+ * disperse pas dans la liste, sinon « sortir ensemble » ne veut plus rien dire.
+ */
+export function blocsDePlanche<P extends {
+  groupe_id?: string | null; rang_sortie: number | null; type_saut: string;
+}>(places: P[]): BlocPlanche<P>[] {
+  const ordre = (p: P) => p.rang_sortie ?? Number.MAX_SAFE_INTEGER;
+
+  const parGroupe = new Map<string, P[]>();
+  const isolees: P[] = [];
+  for (const p of places) {
+    const g = p.groupe_id ?? null;
+    if (g === null) { isolees.push(p); continue; }
+    const liste = parGroupe.get(g) ?? [];
+    liste.push(p);
+    parGroupe.set(g, liste);
+  }
+
+  const blocs: BlocPlanche<P>[] = [
+    ...[...parGroupe.entries()].map(([groupeId, ps]) => ({
+      groupeId,
+      libelle: null as string | null,
+      places: [...ps].sort((a, b) => ordre(a) - ordre(b)),
+    })),
+    ...isolees.map(p => ({ groupeId: null, libelle: null as string | null, places: [p] })),
+  ].sort((a, b) => ordre(a.places[0]) - ordre(b.places[0]));
+
+  // La numérotation suit l'ordre de sortie : le premier groupe de PAC de
+  // l'avion est « PAC n°1 », quel que soit son identifiant.
+  const compteurs = new Map<string, number>();
+  for (const b of blocs) {
+    if (b.groupeId === null) continue;
+    const type = b.places[0].type_saut;
+    const n = (compteurs.get(type) ?? 0) + 1;
+    compteurs.set(type, n);
+    b.libelle = `${LIBELLE_TYPE[type as TypeSautFile] ?? type} n°${n}`;
+  }
+  return blocs;
+}

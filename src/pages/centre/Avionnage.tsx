@@ -103,7 +103,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
 
     if (rr.length === 0) { setPlaces([]); setChargement(false); return; }
     const { data: pl, error: e2 } = await supabase.from('places_rotation')
-      .select('id, rotation_id, parachutiste_id, moniteur_id, type_saut, rang_sortie, statut, profiles!parachutiste_id(nom, prenom)')
+      .select('id, rotation_id, parachutiste_id, moniteur_id, type_saut, rang_sortie, statut, groupe_id, profiles!parachutiste_id(nom, prenom)')
       .in('rotation_id', rr.map(r => r.id)).order('rang_sortie', { nullsFirst: false });
     if (e2) {
       console.error('Places — chargement échoué :', {
@@ -142,7 +142,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
       return {
         id: p.id, rotation_id: p.rotation_id, parachutiste_id: p.parachutiste_id,
         moniteur_id: p.moniteur_id, type_saut: p.type_saut, rang_sortie: p.rang_sortie,
-        statut: p.statut,
+        statut: p.statut, groupe_id: p.groupe_id,
         nom: pr ? `${pr.prenom} ${pr.nom}` : (p.type_saut === 'tandem' ? 'Passager tandem' : '?'),
         // Inconnu → GRIS. Jamais l'absence de réponse traduite en vert.
         aptitude: (p.parachutiste_id && verdicts.get(p.parachutiste_id)) || 'gris',
@@ -244,6 +244,30 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     charger();
   };
 
+  /**
+   * Former un groupe. On génère l'identifiant CÔTÉ CLIENT (crypto.randomUUID)
+   * plutôt que de créer une table de groupes : un groupe n'a pas d'attribut
+   * propre — son nom se déduit, sa composition est dans les places. Une table
+   * n'aurait rien porté de plus, et aurait pu se désynchroniser.
+   */
+  const grouper = async (placeIds: string[]): Promise<string | null> => {
+    const groupeId = crypto.randomUUID();
+    const { error } = await supabase.from('places_rotation')
+      .update({ groupe_id: groupeId }).in('id', placeIds);
+    if (error) return messageErreur(error);
+    await charger();
+    return null;
+  };
+
+  /** Défaire un groupe ne retire personne de l'avion : on coupe le lien. */
+  const degrouper = async (groupeId: string): Promise<string | null> => {
+    const { error } = await supabase.from('places_rotation')
+      .update({ groupe_id: null }).eq('groupe_id', groupeId);
+    if (error) return messageErreur(error);
+    await charger();
+    return null;
+  };
+
   const inscrire = async (rotationId: string, parachutisteId: string, type: string) => {
     const { error } = await supabase.from('places_rotation')
       .insert({ rotation_id: rotationId, parachutiste_id: parachutisteId, type_saut: type });
@@ -308,6 +332,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
             return (
               <div key={r.id} className="space-y-2">
                 <PlancheAvionnage rotation={r} places={pl} maintenant={maintenant}
+                  onGrouper={grouper} onDegrouper={degrouper}
                   aeronef={aeronefs.find(a => a.id === r.aeronef_id)} onChange={charger}
                   onDeposer={fileId => placer(fileId, r.id)} onOuvrirFiche={ouvrirFiche}
                   largueurs={largueurs}

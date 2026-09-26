@@ -8,7 +8,7 @@ import {
   formaterRetard,
   calculerCall, SEVERITE_CALL, siegesOccupes, libelleCapacite, messageErreur,
   LIBELLE_TYPE, type TypeSautFile,
-  verifierPlanche,
+  verifierPlanche, blocsDePlanche,
 } from '../../lib/avionnage';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -28,6 +28,8 @@ export interface PlaceVue {
   id: string; rotation_id: string; parachutiste_id: string | null;
   moniteur_id: string | null; type_saut: string; rang_sortie: number | null;
   statut: string; nom: string;
+  /** Les gens d'un même groupe SORTENT ENSEMBLE. null = seul. */
+  groupe_id: string | null;
   /** Verdict Feu Vert. JAMAIS nul : ne rien savoir est un état — le gris —
    *  et il doit se voir. Une absence de badge se lisait « tout va bien ». */
   aptitude: 'vert' | 'orange' | 'rouge' | 'gris';
@@ -57,7 +59,7 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -71,10 +73,22 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   /** Les largueurs QUALIFIÉS du centre, pour le sélecteur. */
   largueurs?: { parachutiste_id: string; nom: string; prenom: string }[];
   onDesignerLargueur?: (id: string | null) => void;
+  /** Réunit des places en un groupe — elles sortiront ensemble. */
+  onGrouper?: (placeIds: string[]) => Promise<string | null>;
+  /** Défait un groupe. Ne retire personne de l'avion : c'est le lien qu'on
+   *  coupe, pas les gens. */
+  onDegrouper?: (groupeId: string) => Promise<string | null>;
 }) {
   const [occupe, setOccupe] = useState(false);
   const [echec, setEchec] = useState<string | null>(null);
   const [survol, setSurvol] = useState(false);
+  /** Sélection courante pour former un groupe. Vidée après chaque action. */
+  const [selection, setSelection] = useState<Set<string>>(new Set());
+  const basculer = (id: string) => setSelection(s => {
+    const n = new Set(s);
+    if (n.has(id)) n.delete(id); else n.add(id);
+    return n;
+  });
 
   const call = calculerCall(r.date_jour, r.heure_prevue, r.heure_decollage, maintenant);
   const sieges = siegesOccupes(places);
@@ -267,10 +281,42 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
           {accepteDepot ? 'Personne à bord — glissez quelqu’un depuis la file.' : 'Personne à bord.'}
         </p>
       ) : (
-        <ul className="mt-3">
-          {places.map((p, i) => (
+        <div className="mt-3">
+          {blocsDePlanche(places).map((bloc, ib) => (
+          <div key={bloc.groupeId ?? bloc.places[0].id}
+            className={bloc.groupeId ? 'rounded-xl px-2 py-1 mb-1.5' : ''}
+            style={bloc.groupeId ? {
+              // Un groupe se voit comme un BLOC : fond propre et rayure, pour
+              // qu'on lise « ces trois-là sortent ensemble » sans compter.
+              ...rayure('neutre'),
+              background: 'color-mix(in srgb, var(--c-text) 4%, transparent)',
+            } : { borderTop: ib === 0 ? 'none' : '1px solid var(--n3-filet)' }}>
+            {bloc.libelle && (
+              <div className="flex items-center justify-between gap-2 pt-0.5">
+                <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.06em',
+                               textTransform: 'uppercase', color: 'var(--c-muted)' }}>
+                  {bloc.libelle} · {bloc.places.length} sauteurs
+                </span>
+                {!close && onDegrouper && (
+                  <button type="button" disabled={occupe}
+                    onClick={() => agir('Dégroupage', () =>
+                      onDegrouper(bloc.groupeId!).then(e => ({ error: e ? { message: e } : null })))}
+                    style={{ ...action('texte'), minHeight: 28, fontSize: 11 }}>
+                    Dégrouper
+                  </button>
+                )}
+              </div>
+            )}
+          <ul>
+          {bloc.places.map((p, i) => (
             <li key={p.id} className="flex items-center gap-2 py-1.5"
               style={{ borderTop: i === 0 ? 'none' : '1px solid var(--n3-filet)' }}>
+              {!close && onGrouper && (
+                <input type="checkbox" checked={selection.has(p.id)}
+                  onChange={() => basculer(p.id)}
+                  aria-label={`Sélectionner ${p.nom} pour former un groupe`}
+                  style={{ width: 16, height: 16, flexShrink: 0 }} />
+              )}
               <span className="font-bold flex-shrink-0"
                 style={{ fontSize: 13, color: 'var(--c-muted)', minWidth: 20 }}>
                 {p.rang_sortie ?? '·'}
@@ -321,7 +367,37 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
               )}
             </li>
           ))}
-        </ul>
+          </ul>
+          </div>
+          ))}
+
+          {/* Former un groupe : on coche, on réunit. Deux minimum — « grouper
+              une personne » ne veut rien dire. */}
+          {!close && onGrouper && selection.size > 0 && (
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <button type="button" disabled={occupe || selection.size < 2}
+                className="disabled:opacity-50"
+                onClick={() => agir('Groupage', () =>
+                  onGrouper([...selection]).then(e => {
+                    if (!e) setSelection(new Set());
+                    return { error: e ? { message: e } : null };
+                  }))}
+                style={{ ...action('secondaire'), minHeight: 34, fontSize: 12 }}>
+                <Users className="w-3.5 h-3.5" aria-hidden />
+                Grouper {selection.size} sélectionné{selection.size > 1 ? 's' : ''}
+              </button>
+              <button type="button" onClick={() => setSelection(new Set())}
+                style={{ ...action('texte'), minHeight: 34, fontSize: 12 }}>
+                Annuler
+              </button>
+              {selection.size < 2 && (
+                <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                  sélectionnez-en au moins deux
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {/* ── Les gestes de la planche, dans leur ordre réel ────────────────── */}

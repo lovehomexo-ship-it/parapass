@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   siegesOccupes, libelleCapacite, messageErreur, LIBELLE_TYPE,
   calculerCall, SEVERITE_CALL, formaterRetard,
-  verifierPlanche, type EntreeVerification,
+  verifierPlanche, type EntreeVerification, blocsDePlanche,
 } from './avionnage';
 
 describe('avionnage — capacité', () => {
@@ -235,5 +235,58 @@ describe('verifierPlanche — un avion vide n’est pas prêt, mais ne bloque pa
     const e = verifierPlanche({ ...PRETE, places: [], siegesOccupes: 0 });
     expect(e.anomalies.some(a => a.code === 'vide')).toBe(true);
     expect(e.verdict).toBe('orange');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LES BLOCS — « FF n°1 », « PAC n°2 ». Un groupe sort ENSEMBLE : il ne doit
+// jamais se disperser dans la liste, sinon le mot ne veut plus rien dire.
+// ═══════════════════════════════════════════════════════════════════════════
+
+const pl = (rang: number | null, type: string, groupe: string | null = null) =>
+  ({ rang_sortie: rang, type_saut: type, groupe_id: groupe });
+
+describe('blocsDePlanche', () => {
+  it('sans groupe, une personne par bloc, sans titre', () => {
+    const b = blocsDePlanche([pl(1, 'solo'), pl(2, 'solo')]);
+    expect(b).toHaveLength(2);
+    expect(b.every(x => x.groupeId === null && x.libelle === null)).toBe(true);
+  });
+
+  it('numérote par TYPE et dans l’ordre de sortie', () => {
+    const b = blocsDePlanche([
+      pl(1, 'ecole', 'g1'), pl(2, 'ecole', 'g1'),
+      pl(3, 'groupe', 'g2'), pl(4, 'groupe', 'g2'),
+      pl(5, 'ecole', 'g3'),
+    ]);
+    expect(b.map(x => x.libelle)).toEqual([
+      `${LIBELLE_TYPE.ecole} n°1`, `${LIBELLE_TYPE.groupe} n°1`, `${LIBELLE_TYPE.ecole} n°2`,
+    ]);
+  });
+
+  it('un groupe ne se disperse pas, même si ses rangs sont éparpillés', () => {
+    // g1 est en 1 et 4 ; il doit rester d'un seul tenant, à la place de son
+    // premier sauteur — sinon « sortir ensemble » ne veut plus rien dire.
+    const b = blocsDePlanche([pl(1, 'solo', 'g1'), pl(2, 'solo'), pl(4, 'solo', 'g1')]);
+    expect(b).toHaveLength(2);
+    expect(b[0].groupeId).toBe('g1');
+    expect(b[0].places.map(p => p.rang_sortie)).toEqual([1, 4]);
+  });
+
+  it('les rangs manquants passent en dernier, sans casser l’ordre connu', () => {
+    const b = blocsDePlanche([pl(null, 'solo'), pl(1, 'solo')]);
+    expect(b[0].places[0].rang_sortie).toBe(1);
+    expect(b[1].places[0].rang_sortie).toBeNull();
+  });
+
+  it('aucune place : aucun bloc', () => {
+    expect(blocsDePlanche([])).toEqual([]);
+  });
+
+  it('toutes les places ressortent, une seule fois', () => {
+    const entree = [pl(1, 'solo', 'g1'), pl(2, 'solo', 'g1'), pl(3, 'video'), pl(4, 'solo', 'g2')];
+    const sorties = blocsDePlanche(entree).flatMap(b => b.places);
+    expect(sorties).toHaveLength(entree.length);
+    expect(new Set(sorties.map(p => p.rang_sortie)).size).toBe(4);
   });
 });
