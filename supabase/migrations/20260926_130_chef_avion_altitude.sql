@@ -49,3 +49,6 @@ create trigger trg_rotations_chef_avion_a_bord
   for each row execute function rotations_chef_avion_a_bord();
 
 commit;
+
+-- APPLIQUEE LE 26/09/2026. Refus prouve en base : designer quelqu un qui
+-- n est pas a bord rend 23514 « Le chef avion doit etre a bord de cet avion ».

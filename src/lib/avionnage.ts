@@ -372,6 +372,8 @@ export interface EtatPlanche {
 
 export interface EntreeVerification {
   largueurId: string | null;
+  /** Responsable du stick à bord. DISTINCT du largueur. */
+  chefAvionId: string | null;
   heurePrevue: string | null;
   heureDecollage: string | null;
   cloturee: boolean;
@@ -402,6 +404,14 @@ export function verifierPlanche(e: EntreeVerification): EtatPlanche {
         ? 'Aucun largueur qualifié dans ce centre : la qualification se saisit dans la fiche du licencié.'
         : 'Désignez le largueur : un avion ne décolle pas sans lui.',
     });
+  }
+
+  // Le chef avion n'est pas le largueur : l'un dirige le largage, l'autre
+  // répond du stick à bord. Sur un avion vide la question ne se pose pas —
+  // il n'y a pas de stick dont répondre.
+  if (!e.chefAvionId && e.places.length > 0) {
+    a.push({ code: 'chef_avion', gravite: 'bloquant',
+             message: 'Aucun chef avion désigné : choisissez-le parmi les personnes à bord.' });
   }
 
   if (e.aeronefPlaces === null) {

@@ -103,7 +103,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
 
     if (rr.length === 0) { setPlaces([]); setChargement(false); return; }
     const { data: pl, error: e2 } = await supabase.from('places_rotation')
-      .select('id, rotation_id, parachutiste_id, moniteur_id, type_saut, rang_sortie, statut, groupe_id, masse_kg, profiles!parachutiste_id(nom, prenom, masse_kg)')
+      .select('id, rotation_id, parachutiste_id, moniteur_id, type_saut, rang_sortie, statut, groupe_id, masse_kg, altitude_largage_m, profiles!parachutiste_id(nom, prenom, masse_kg)')
       .in('rotation_id', rr.map(r => r.id)).order('rang_sortie', { nullsFirst: false });
     if (e2) {
       console.error('Places — chargement échoué :', {
@@ -146,6 +146,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
         // La masse de la PLACE prime sur celle du profil : un tandem n'a pas
         // de profil, et une place peut porter une masse ponctuelle.
         masse_kg: (p as { masse_kg?: number | null }).masse_kg ?? pr?.masse_kg ?? null,
+        altitude_largage_m: (p as { altitude_largage_m?: number | null }).altitude_largage_m ?? null,
         nom: pr ? `${pr.prenom} ${pr.nom}` : (p.type_saut === 'tandem' ? 'Passager tandem' : '?'),
         // Inconnu → GRIS. Jamais l'absence de réponse traduite en vert.
         aptitude: (p.parachutiste_id && verdicts.get(p.parachutiste_id)) || 'gris',
@@ -288,6 +289,29 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     return null;
   };
 
+  /** Altitude propre à un sauteur. Vide = il reprend celle de l'avion. */
+  const definirAltitude = async (placeId: string, metres: number | null): Promise<string | null> => {
+    const { error } = await supabase.from('places_rotation')
+      .update({ altitude_largage_m: metres }).eq('id', placeId);
+    if (error) return messageErreur(error);
+    await charger();
+    return null;
+  };
+
+  /** Chef avion. La base vérifie qu'il est à bord — l'écran ne fait que
+   *  proposer les bonnes personnes. */
+  const designerChefAvion = async (rotationId: string, id: string | null) => {
+    const { error } = await supabase.from('rotations')
+      .update({ chef_avion_id: id }).eq('id', rotationId);
+    if (error) {
+      console.error('Désignation du chef avion échouée :', {
+        code: error.code, message: error.message, details: error.details, hint: error.hint,
+      });
+      setErreur(messageErreur(error)); return;
+    }
+    await charger();
+  };
+
   const inscrire = async (rotationId: string, parachutisteId: string, type: string) => {
     const { error } = await supabase.from('places_rotation')
       .insert({ rotation_id: rotationId, parachutiste_id: parachutisteId, type_saut: type });
@@ -353,6 +377,8 @@ function AvionnageInner({ centreId }: { centreId: string }) {
               <div key={r.id} className="space-y-2">
                 <PlancheAvionnage rotation={r} places={pl} maintenant={maintenant}
                   onGrouper={grouper} onDegrouper={degrouper} onDefinirMasse={definirMasse}
+                  onDefinirAltitude={definirAltitude}
+                  onDesignerChefAvion={id => designerChefAvion(r.id, id)}
                   aeronef={aeronefs.find(a => a.id === r.aeronef_id)} onChange={charger}
                   onDeposer={fileId => placer(fileId, r.id)} onOuvrirFiche={ouvrirFiche}
                   largueurs={largueurs}

@@ -33,6 +33,8 @@ export interface PlaceVue {
   /** Masse retenue pour CETTE place : celle de la place si elle en porte une,
    *  sinon celle du profil. null = inconnue — jamais zéro. */
   masse_kg: number | null;
+  /** Altitude de largage de CE sauteur. null = celle de l'avion, pas zéro. */
+  altitude_largage_m: number | null;
   /** Verdict Feu Vert. JAMAIS nul : ne rien savoir est un état — le gris —
    *  et il doit se voir. Une absence de badge se lisait « tout va bien ». */
   aptitude: 'vert' | 'orange' | 'rouge' | 'gris';
@@ -44,6 +46,8 @@ export interface RotationVue {
   cloturee_le: string | null;
   /** Le largueur DÉSIGNÉ de cet avion. Un seul, choisi par la DZ. */
   largueur_id: string | null;
+  /** Le chef avion — responsable du stick à bord. DISTINCT du largueur. */
+  chef_avion_id: string | null;
   /** Planche de démonstration. Se dit à l'écran : une salle de présentation ne
    *  doit pas confondre une planche de démo avec la journée réelle. */
   demo?: boolean;
@@ -66,7 +70,7 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDesignerChefAvion }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -87,6 +91,10 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   onDegrouper?: (groupeId: string) => Promise<string | null>;
   /** Le DT demande la masse à voix haute et la saisit. null = effacer. */
   onDefinirMasse?: (place: PlaceVue, kg: number | null) => Promise<string | null>;
+  /** Altitude propre à un sauteur. null = il reprend celle de l'avion. */
+  onDefinirAltitude?: (placeId: string, metres: number | null) => Promise<string | null>;
+  /** Le chef avion se choisit PARMI LES GENS À BORD — la base l'exige aussi. */
+  onDesignerChefAvion?: (id: string | null) => void;
 }) {
   const [occupe, setOccupe] = useState(false);
   const [echec, setEchec] = useState<string | null>(null);
@@ -136,6 +144,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
 
   const etat = verifierPlanche({
     largueurId: r.largueur_id,
+    chefAvionId: r.chef_avion_id,
     heurePrevue: r.heure_prevue,
     heureDecollage: r.heure_decollage,
     cloturee: r.cloturee_le !== null || r.statut === 'annulee',
@@ -296,6 +305,30 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
         </label>
       )}
 
+      {/* LE CHEF AVION — responsable du stick à bord. Ce n'est PAS le largueur :
+          l'un dirige le largage, l'autre répond de ce qui se passe dans la
+          cabine. La liste ne propose que des gens EMBARQUÉS, et la base refuse
+          les autres : désigner un absent produirait un responsable qui n'y est
+          pas, ce qui est pire que pas de responsable du tout. */}
+      {!close && onDesignerChefAvion && places.length > 0 && (
+        <label className="mt-2 flex items-center gap-2 flex-wrap" style={{ fontSize: 12 }}>
+          <span style={{ color: r.chef_avion_id ? 'var(--c-muted)' : SEVERITE_COULEUR.vigilance,
+                         fontWeight: r.chef_avion_id ? 400 : 700 }}>
+            Chef avion{r.chef_avion_id ? '' : ' — à désigner'}
+          </span>
+          <select value={r.chef_avion_id ?? ''} disabled={occupe}
+            onChange={e => onDesignerChefAvion(e.target.value || null)}
+            className="px-2 rounded-lg"
+            style={{ minHeight: 34, fontSize: 12, background: 'var(--c-input)',
+                     color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }}>
+            <option value="">— non désigné —</option>
+            {places.filter(p => p.parachutiste_id).map(p => (
+              <option key={p.id} value={p.parachutiste_id!}>{p.nom}</option>
+            ))}
+          </select>
+        </label>
+      )}
+
       {/* ── Qui est à bord ───────────────────────────────────────────────── */}
       {places.length === 0 ? (
         <p className="mt-3 py-4 text-center rounded-xl"
@@ -391,6 +424,40 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                              border: `1px solid ${p.masse_kg == null ? SEVERITE_COULEUR.vigilance : 'var(--n2-bord)'}` }} />
                   kg
                 </label>
+              )}
+              {/* L'altitude de CE sauteur. Vide = celle de l'avion, et le
+                  repère le dit en gris : un tandem et un wingsuit ne sortent
+                  pas à la même hauteur, un seul chiffre pour dix personnes
+                  était faux dès qu'on mélangeait les disciplines. */}
+              {!close && onDefinirAltitude && (
+                <label className="flex-shrink-0 flex items-center gap-1"
+                  style={{ fontSize: 11, color: 'var(--c-muted)' }}>
+                  <span className="sr-only">Altitude de largage de {p.nom}, en mètres</span>
+                  <input type="number" inputMode="numeric" min={300} max={8000} step={100}
+                    defaultValue={p.altitude_largage_m ?? ''}
+                    disabled={occupe}
+                    placeholder={r.altitude_largage_m ? String(r.altitude_largage_m) : '— m'}
+                    onBlur={e => {
+                      const v = e.target.value.trim();
+                      const m = v === '' ? null : Number(v);
+                      if (m === (p.altitude_largage_m ?? null)) return;
+                      agir('Altitude du sauteur', () =>
+                        onDefinirAltitude(p.id, m).then(err => ({ error: err ? { message: err } : null })));
+                    }}
+                    className="px-1.5 rounded-lg text-right"
+                    style={{ width: 66, minHeight: 30, fontSize: 12, background: 'var(--c-input)',
+                             color: p.altitude_largage_m == null ? 'var(--c-muted)' : 'var(--c-text)',
+                             border: '1px solid var(--n2-bord)' }} />
+                  m
+                </label>
+              )}
+              {/* Le chef avion porte son sigle, comme le largueur. */}
+              {p.parachutiste_id && p.parachutiste_id === r.chef_avion_id && (
+                <span className="flex-shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded"
+                  style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.06em',
+                           color: 'var(--action-texte)', border: '1px solid var(--action-texte)' }}>
+                  CHEF AVION
+                </span>
               )}
               {/* TOUJOURS un badge, pour les quatre états. Ne rien afficher
                   quand on ne sait pas laissait croire que tout allait bien —

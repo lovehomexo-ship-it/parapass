@@ -148,7 +148,7 @@ describe('avionnage — lisibilité du retard', () => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const PRETE: EntreeVerification = {
-  largueurId: 'l1', heurePrevue: '14:30:00', heureDecollage: null, cloturee: false,
+  largueurId: 'l1', chefAvionId: 'c1', heurePrevue: '14:30:00', heureDecollage: null, cloturee: false,
   aeronefPlaces: 4,
   places: [
     { rangSortie: 1, aptitude: 'vert' },
@@ -337,5 +337,21 @@ describe('libelleMasse', () => {
 
   it('sans plafond connu, pas de plafond inventé', () => {
     expect(libelleMasse(masseEmbarquee([80]), null)).toBe('80 kg');
+  });
+});
+
+describe('verifierPlanche — le chef avion', () => {
+  it('non désigné : bloquant, et distinct du largueur', () => {
+    const e = verifierPlanche({ ...PRETE, chefAvionId: null });
+    expect(e.verdict).toBe('rouge');
+    expect(e.anomalies.some(a => a.code === 'chef_avion')).toBe(true);
+    // Le largueur EST désigné : les deux rôles ne se confondent pas.
+    expect(e.anomalies.some(a => a.code === 'largueur')).toBe(false);
+  });
+
+  it('sur un avion vide, la question ne se pose pas', () => {
+    // Il n'y a pas de stick dont répondre.
+    const e = verifierPlanche({ ...PRETE, chefAvionId: null, places: [], siegesOccupes: 0 });
+    expect(e.anomalies.some(a => a.code === 'chef_avion')).toBe(false);
   });
 });
