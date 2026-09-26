@@ -64,7 +64,7 @@ import {
   Search, Filter, Eye, Trash2, UserCheck, UserX,
   Download, Upload, Hash, TrendingUp, MapPin, Send, Zap, Sun, Moon,
   GraduationCap, MoreVertical, UserMinus, Euro, BookCheck, Puzzle,
-  Palette, CalendarOff, CheckCircle2, BadgeCheck,
+  Palette, CalendarOff, CheckCircle2, BadgeCheck, ChevronLeft,
 } from 'lucide-react';
 import { PlanningCentre } from './PlanningCentre';
 import { GestionPliage } from './centre/GestionPliage';
@@ -2854,6 +2854,18 @@ export function CentreDashboardPage() {
   const setEquipeTab = useCallback((t: string) => navigate(urlDeSection('equipe', t)), [navigate]);
   const setAcademyTab = useCallback((t: string) => navigate(urlDeSection('academy', t)), [navigate]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  /**
+   * Barre latérale repliée : icônes seules. Le choix SURVIT au rechargement —
+   * un réglage d'affichage qu'il faut refaire chaque matin n'est pas un
+   * réglage. Il ne vaut que pour le poste, d'où le localStorage.
+   */
+  const [navRepliee, setNavRepliee] = useState(() => {
+    try { return localStorage.getItem('parapass.centre.nav') === 'repliee'; } catch { return false; }
+  });
+  const basculerNav = () => setNavRepliee(v => {
+    try { localStorage.setItem('parapass.centre.nav', v ? 'deployee' : 'repliee'); } catch { /* mode privé */ }
+    return !v;
+  });
   const [loading, setLoading] = useState(true);
   const [notifCount, setNotifCount] = useState(0);
   const [carnetsEnAttente, setCarnetsEnAttente] = useState(0);
@@ -3085,10 +3097,10 @@ export function CentreDashboardPage() {
     );
   }
 
-  const SidebarContent = () => (
+  const SidebarContent = ({ compact = false }: { compact?: boolean }) => (
     <div className="flex flex-col flex-1 min-h-0">
       {/* Centre info */}
-      <div className="px-4 py-5" style={{ borderBottom: '1px solid var(--c-border)' }}>
+      <div className={compact ? 'px-2 py-4' : 'px-4 py-5'} style={{ borderBottom: '1px solid var(--c-border)' }}>
         <div className="flex items-center gap-3">
           {centre.logo_url ? (
             <img src={centre.logo_url} alt={centre.nom} className="w-9 h-9 rounded-full object-contain flex-shrink-0" style={{ background: 'rgba(255,255,255,0.06)' }} />
@@ -3097,7 +3109,7 @@ export function CentreDashboardPage() {
               {centre.nom.slice(0, 2).toUpperCase()}
             </div>
           )}
-          <div className="min-w-0 flex-1">
+          <div className={`min-w-0 flex-1 ${compact ? 'hidden' : ''}`}>
             <p className="font-bold text-white truncate" style={{ fontSize: 13 }}>{centre.nom}</p>
             <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{
               background: isActivePlan ? 'rgba(37,99,235,0.2)' : 'rgba(249,115,22,0.2)',
@@ -3120,9 +3132,11 @@ export function CentreDashboardPage() {
             <button
               key={item.key}
               onClick={() => { setActiveSection(item.key); setSidebarOpen(false); }}
-              className="w-full flex items-center gap-2.5 px-3 text-left transition-all"
+              title={compact ? item.label : undefined}
+              aria-label={compact ? item.label : undefined}
+              className={`w-full flex items-center transition-all ${compact ? 'justify-center' : 'gap-2.5 px-3 text-left'}`}
               style={{
-                padding: '9px 12px',
+                padding: compact ? '10px 0' : '9px 12px',
                 fontSize: 12,
                 fontWeight: isActive ? 600 : 400,
                 background: isActive ? 'rgba(249,115,22,0.1)' : 'transparent',
@@ -3134,9 +3148,9 @@ export function CentreDashboardPage() {
               onMouseLeave={(e) => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--c-muted)'; } }}
             >
               <Icon className="w-4 h-4 flex-shrink-0" />
-              <span className="flex-1 truncate">{item.label}</span>
+              {!compact && <span className="flex-1 truncate">{item.label}</span>}
               {item.badge != null && item.badge > 0 && (
-                <span className="text-[10px] rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-semibold" style={{
+                <span className={`text-[10px] rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-semibold ${compact ? 'absolute translate-x-3 -translate-y-2' : ''}`} style={{
                   background: isMsgBadge ? 'rgba(59,130,246,0.25)' : 'rgba(239,68,68,0.2)',
                   color: isMsgBadge ? '#60A5FA' : '#F87171',
                 }}>
@@ -3186,14 +3200,30 @@ export function CentreDashboardPage() {
   );
 
   return (
-    <div className="min-h-screen flex" style={{ background: 'var(--c-bg)' }}>
+    <div className="min-h-screen flex parapass-centre"
+      style={{ background: 'var(--c-bg)',
+               // Lue par <main> ; neutralisée sous lg par la règle CSS.
+               ['--nav-largeur' as string]: navRepliee ? '60px' : '220px' }}>
       {/* Mode kiosque (?kiosque=1) : écran du hangar, sans aucune navigation.
           On masque la barre latérale et on laisse le contenu occuper l'écran. */}
       {!modeKiosque && (
       <>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col fixed top-0 left-0 h-full z-30" style={{ width: 220, background: 'var(--c-nav)', borderRight: '1px solid var(--c-border)' }}>
-        <SidebarContent />
+      <aside className="hidden lg:flex flex-col fixed top-0 left-0 h-full z-30"
+        style={{ width: navRepliee ? 60 : 220, background: 'var(--c-nav)',
+                 borderRight: '1px solid var(--c-border)', transition: 'width .18s' }}>
+        <SidebarContent compact={navRepliee} />
+        {/* Replier / déployer. En bas : c'est un réglage d'affichage, il ne
+            dispute pas la place aux entrées de navigation. */}
+        <button type="button" onClick={basculerNav}
+          title={navRepliee ? 'Déployer le menu' : 'Réduire le menu aux icônes'}
+          aria-label={navRepliee ? 'Déployer le menu' : 'Réduire le menu aux icônes'}
+          aria-expanded={!navRepliee}
+          className="flex items-center justify-center gap-2 py-2.5"
+          style={{ borderTop: '1px solid var(--c-border)', color: 'var(--c-muted)', fontSize: 12 }}>
+          {navRepliee ? <ChevronRight className="w-4 h-4" aria-hidden />
+                      : <><ChevronLeft className="w-4 h-4" aria-hidden /> Réduire</>}
+        </button>
       </aside>
 
       {/* Mobile sidebar drawer */}
@@ -3215,7 +3245,10 @@ export function CentreDashboardPage() {
       )}
 
       {/* Main content — sans marge de barre latérale en mode kiosque */}
-      <main className={`flex-1 min-w-0 min-h-screen ${modeKiosque ? '' : 'lg:ml-[220px]'}`}>
+      {/* La marge suit la barre : une classe Tailwind figée à 220 px laissait
+          un trou de 160 px une fois le menu réduit. */}
+      <main className="flex-1 min-w-0 min-h-screen"
+        style={modeKiosque ? undefined : { marginLeft: 'var(--nav-largeur, 0px)', transition: 'margin-left .18s' }}>
         {/* Top bar (mobile) */}
         <div className={`${modeKiosque ? 'hidden' : 'lg:hidden'} flex items-center justify-between px-4 py-3 sticky top-0 z-20`} style={{ background: 'var(--c-nav)', borderBottom: '1px solid var(--c-border)' }}>
           <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-xl" style={{ color: 'var(--c-muted)' }}>

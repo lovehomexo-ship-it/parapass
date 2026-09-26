@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { MIME_FILE } from './FileAvionnageDZ';
 import { SiglesFonctions } from '../../components/SigleFonction';
 import { supabase } from '../../lib/supabase';
-import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff, AlertTriangle, CheckCircle2, Fuel, Radio, ChevronDown, Package, Video } from 'lucide-react';
+import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff, AlertTriangle, CheckCircle2, Fuel, Radio, ChevronDown, Package, Video, Scale, Unlock } from 'lucide-react';
 import { surface, rayure, pastille, action, SEVERITE_COULEUR, type Severite } from '../../lib/jetons';
 import {
   formaterRetard,
   calculerCall, SEVERITE_CALL, siegesOccupes, libelleCapacite, messageErreur,
   libelleDiscipline, teinteDiscipline, radioAttendue, type Discipline,
+  libelleCharge, type ChargeAlaire,
   verifierPlanche, blocsDePlanche, masseEmbarquee, libelleMasse,
 } from '../../lib/avionnage';
 
@@ -70,6 +71,8 @@ export interface RotationVue {
   chef_avion_id: string | null;
   /** Carburant embarqué, en litres. null = non renseigné, jamais zéro. */
   carburant_litres: number | null;
+  /** Embarquement validé : la composition ne bouge plus. */
+  embarquement_valide_le: string | null;
   /** Planche de démonstration. Se dit à l'écran : une salle de présentation ne
    *  doit pas confondre une planche de démo avec la journée réelle. */
   demo?: boolean;
@@ -92,7 +95,7 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines, charges, onValiderEmbarquement }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -117,6 +120,8 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   onDefinirAltitude?: (placeId: string, metres: number | null) => Promise<string | null>;
   /** Carburant embarqué, en litres. */
   onDefinirCarburant?: (litres: number | null) => Promise<string | null>;
+  /** Figer ou rouvrir l'embarquement. Rouvrir n'est possible qu'avant départ. */
+  onValiderEmbarquement?: (valide: boolean) => Promise<string | null>;
   /** La radio se constate d'un clic : elle est sur la personne, ou elle ne l'est pas. */
   onBasculerRadio?: (placeId: string, radio: boolean) => Promise<string | null>;
   /** Le passager d'un tandem : un nom, une masse. Il n'a pas de compte. */
@@ -127,6 +132,8 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   onChangerDiscipline?: (placeId: string, code: string) => Promise<string | null>;
   /** Le référentiel du centre. Vide = on retombe sur les libellés connus. */
   disciplines?: Discipline[];
+  /** Charge alaire par parachutiste. Absente = non calculée, et on le dit. */
+  charges?: Map<string, ChargeAlaire>;
 }) {
   const [occupe, setOccupe] = useState(false);
   const [echec, setEchec] = useState<string | null>(null);
@@ -149,7 +156,15 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
 
   const call = calculerCall(r.date_jour, r.heure_prevue, r.heure_decollage, maintenant);
   const sieges = siegesOccupes(places);
-  const close = r.statut === 'terminee' || r.cloturee_le !== null;
+  // Une planche FIGÉE se lit comme une planche close pour tout ce qui se
+  // saisit : discipline, masse, radio, retrait. Elle garde en revanche ses
+  // boutons de fin de cycle — rouvrir, décoller.
+  const figee = r.embarquement_valide_le !== null;
+  /** Fin de vie de la planche : elle ne se rouvre plus du tout. */
+  const cloturee = r.statut === 'terminee' || r.cloturee_le !== null;
+  /** Plus rien ne se SAISIT. Une planche figée l'est aussi — mais elle garde
+   *  ses boutons de fin de cycle, d'où deux notions et non une. */
+  const close = cloturee || figee;
   const sev = close ? 'conforme' : SEVERITE_CALL[call.urgence];
   const complet = aeronef ? sieges >= aeronef.places : false;
   // Une planche close ou pleine n'accepte pas de dépôt : elle ne s'éclaire pas
@@ -202,6 +217,12 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
       // drapeau dit que c'est vendu, le groupe dit QUI filme.
       aSonVideaste: p.groupe_id !== null
         && places.some(q => q.type_saut === 'video' && q.groupe_id === p.groupe_id),
+      chargeDepasse: libelleCharge(charges?.get(p.parachutiste_id ?? ''))?.depasse ?? false,
+      // Une PAC est accompagnée : soit un moniteur nommé, soit quelqu'un du
+      // même groupe. Sans ni l'un ni l'autre, personne ne sait qui saute avec.
+      pacSansMoniteur: radioAttendue(p.type_saut, disciplines) && !p.moniteur_nom
+        && !(p.groupe_id !== null && places.some(q => q.id !== p.id
+             && q.groupe_id === p.groupe_id && q.parachutiste_id !== null)),
     })),
     largueursDisponibles: (largueurs ?? []).length,
     siegesOccupes: sieges,
@@ -250,7 +271,8 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
           </p>
           <p className="mt-1 font-extrabold leading-none"
             style={{ fontSize: 17, color: close ? 'var(--c-muted)' : SEVERITE_COULEUR[sev] }}>
-            {close ? 'clôturé' : formaterRetard(call.libelle)}
+            {r.cloturee_le !== null || r.statut === 'terminee' ? 'clôturé'
+             : figee ? 'embarquement validé' : formaterRetard(call.libelle)}
           </p>
           <p className="mt-1" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
             {aeronef?.immatriculation ?? 'aéronef non affecté'}
@@ -727,6 +749,25 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                       source est ce que le sauteur a saisi en se déclarant
                       présent (perso ou location), ou à défaut son matériel
                       enregistré. Rien n'est affiché qui ne vienne de là. */}
+                  {/* LA CHARGE ALAIRE. Elle dit d'où vient son seuil : sans
+                      référence saisie, c'est un repère du centre, pas une
+                      règle fédérale. Et quand elle n'est pas calculable, elle
+                      NOMME ce qui manque — une case vide se lirait « tout va
+                      bien », et ce serait faux. */}
+                  {!p.passager_nom && p.parachutiste_id && (() => {
+                    const l = libelleCharge(charges?.get(p.parachutiste_id));
+                    if (!l) return null;
+                    return (
+                      <span style={{ fontSize: 11,
+                        color: l.depasse ? SEVERITE_COULEUR.vigilance
+                             : l.inconnu ? 'var(--c-dim)' : 'var(--c-text2)',
+                        fontWeight: l.depasse ? 700 : 400 }}>
+                        <Scale className="w-3 h-3 inline-block align-[-1px] mr-1" aria-hidden />
+                        {l.texte}
+                      </span>
+                    );
+                  })()}
+
                   {!p.passager_nom && (
                     <span style={{ fontSize: 11, color: p.equipement ? 'var(--c-text2)' : 'var(--c-dim)' }}>
                       <Package className="w-3 h-3 inline-block align-[-1px] mr-1" aria-hidden />
@@ -778,9 +819,25 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
       )}
 
       {/* ── Les gestes de la planche, dans leur ordre réel ────────────────── */}
-      {!close && (
+      {!cloturee && (
         <div className="mt-3 flex gap-2 flex-wrap">
-          {places.length > 1 && (
+          {/* FIGER L'EMBARQUEMENT. Tant qu'on charge l'avion, tout se corrige ;
+              une fois validé, la planche est ce qu'on a annoncé à l'équipage.
+              On rouvre tant que l'avion n'est pas parti — un sauteur se
+              décommande, ça arrive. Après le décollage, la base refuse. */}
+          {!r.heure_decollage && onValiderEmbarquement && (
+            <button type="button" disabled={occupe}
+              onClick={() => agir(figee ? 'Réouverture' : 'Validation de l’embarquement', () =>
+                onValiderEmbarquement(!figee).then(e => ({ error: e ? { message: e } : null })))}
+              title={figee
+                ? 'Rouvrir pour corriger — possible tant que l’avion n’est pas parti'
+                : 'Figer la composition : elle ne se modifiera plus'}
+              style={action('secondaire')}>
+              {figee ? <Unlock className="w-4 h-4" aria-hidden /> : <Lock className="w-4 h-4" aria-hidden />}
+              {figee ? 'Rouvrir l’embarquement' : 'Valider l’embarquement'}
+            </button>
+          )}
+          {!figee && places.length > 1 && (
             <button type="button" disabled={occupe} style={action('secondaire')}
               onClick={() => agir('Ordre de sortie', () =>
                 supabase.rpc('calculer_ordre_sortie', { p_rotation_id: r.id })

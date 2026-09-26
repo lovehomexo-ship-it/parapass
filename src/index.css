@@ -181,3 +181,9 @@ button:not(:disabled):active, [role="button"]:not([aria-disabled="true"]):active
   outline-offset: 2px;
   border-radius: 6px;
 }
+
+/* La barre latérale du Centre n'existe qu'à partir de lg : sous ce seuil, la
+   marge du contenu doit être nulle, quelle que soit la largeur mémorisée. */
+@media (max-width: 1023px) {
+  .parapass-centre { --nav-largeur: 0px; }
+}

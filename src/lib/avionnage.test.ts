@@ -4,7 +4,7 @@ import {
   calculerCall, SEVERITE_CALL, formaterRetard,
   verifierPlanche, type EntreeVerification, blocsDePlanche,
   masseEmbarquee, libelleMasse, radioAttendue, TEINTE_DISCIPLINE,
-  libelleDiscipline, teinteDiscipline,
+  libelleDiscipline, teinteDiscipline, libelleCharge,
 } from './avionnage';
 
 describe('avionnage — capacité', () => {
@@ -152,8 +152,8 @@ const PRETE: EntreeVerification = {
   largueurId: 'l1', chefAvionId: 'c1', largueurABord: true, heurePrevue: '14:30:00', heureDecollage: null, cloturee: false,
   aeronefPlaces: 4,
   places: [
-    { rangSortie: 1, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80, videoVendue: false, aSonVideaste: false },
-    { rangSortie: 2, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 75, videoVendue: false, aSonVideaste: false },
+    { rangSortie: 1, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80, videoVendue: false, aSonVideaste: false, chargeDepasse: false, pacSansMoniteur: false },
+    { rangSortie: 2, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 75, videoVendue: false, aSonVideaste: false, chargeDepasse: false, pacSansMoniteur: false },
   ],
   largueursDisponibles: 2, siegesOccupes: 2,
 };
@@ -190,14 +190,14 @@ describe('verifierPlanche — ce qui bloque', () => {
 
   it('le GRIS compte avec le rouge : ne pas savoir se traite comme un refus', () => {
     const e = verifierPlanche({ ...PRETE,
-      places: [{ rangSortie: 1, aptitude: 'gris', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80, videoVendue: false, aSonVideaste: false }, { rangSortie: 2, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80, videoVendue: false, aSonVideaste: false }] });
+      places: [{ rangSortie: 1, aptitude: 'gris', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80, videoVendue: false, aSonVideaste: false, chargeDepasse: false, pacSansMoniteur: false }, { rangSortie: 2, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80, videoVendue: false, aSonVideaste: false, chargeDepasse: false, pacSansMoniteur: false }] });
     expect(e.verdict).toBe('rouge');
     expect(e.anomalies.find(a => a.code === 'aptitude_refus')!.message).toContain('1 personne');
   });
 
   it('une vigilance seule ne bloque pas, elle avertit', () => {
     const e = verifierPlanche({ ...PRETE,
-      places: [{ rangSortie: 1, aptitude: 'orange', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80, videoVendue: false, aSonVideaste: false }, { rangSortie: 2, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80, videoVendue: false, aSonVideaste: false }] });
+      places: [{ rangSortie: 1, aptitude: 'orange', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80, videoVendue: false, aSonVideaste: false, chargeDepasse: false, pacSansMoniteur: false }, { rangSortie: 2, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80, videoVendue: false, aSonVideaste: false, chargeDepasse: false, pacSansMoniteur: false }] });
     expect(e.verdict).toBe('orange');
   });
 });
@@ -205,14 +205,14 @@ describe('verifierPlanche — ce qui bloque', () => {
 describe('verifierPlanche — l’ordre de sortie', () => {
   it('deux personnes au même rang : un ordre qui ne veut rien dire', () => {
     const e = verifierPlanche({ ...PRETE,
-      places: [{ rangSortie: 1, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80, videoVendue: false, aSonVideaste: false }, { rangSortie: 1, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80, videoVendue: false, aSonVideaste: false }] });
+      places: [{ rangSortie: 1, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80, videoVendue: false, aSonVideaste: false, chargeDepasse: false, pacSansMoniteur: false }, { rangSortie: 1, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80, videoVendue: false, aSonVideaste: false, chargeDepasse: false, pacSansMoniteur: false }] });
     expect(e.anomalies.some(a => a.code === 'rangs_doublon')).toBe(true);
     expect(e.verdict).toBe('orange');
   });
 
   it('un rang manquant se signale, sans bloquer', () => {
     const e = verifierPlanche({ ...PRETE,
-      places: [{ rangSortie: 1, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80, videoVendue: false, aSonVideaste: false }, { rangSortie: null, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80, videoVendue: false, aSonVideaste: false }] });
+      places: [{ rangSortie: 1, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80, videoVendue: false, aSonVideaste: false, chargeDepasse: false, pacSansMoniteur: false }, { rangSortie: null, aptitude: 'vert', typeSaut: 'solo', passager: false, aSonPassager: false, masseKg: 80, videoVendue: false, aSonVideaste: false, chargeDepasse: false, pacSansMoniteur: false }] });
     expect(e.anomalies.some(a => a.code === 'rangs_manquants')).toBe(true);
     expect(e.verdict).toBe('orange');
   });
@@ -407,9 +407,9 @@ describe('TEINTE_DISCIPLINE — grouper, jamais alerter', () => {
 
 describe('verifierPlanche — le passager de tandem', () => {
   const tandem = { rangSortie: 1, aptitude: 'vert' as const, typeSaut: 'tandem',
-                   passager: false, aSonPassager: false, masseKg: 85, videoVendue: false, aSonVideaste: false };
+                   passager: false, aSonPassager: false, masseKg: 85, videoVendue: false, aSonVideaste: false, chargeDepasse: false, pacSansMoniteur: false };
   const passager = { rangSortie: 1, aptitude: 'gris' as const, typeSaut: 'tandem',
-                     passager: true, aSonPassager: false, masseKg: 70, videoVendue: false, aSonVideaste: false };
+                     passager: true, aSonPassager: false, masseKg: 70, videoVendue: false, aSonVideaste: false, chargeDepasse: false, pacSansMoniteur: false };
 
   it('un tandem sans passager saisi se signale : il manque un siège et une masse', () => {
     const e = verifierPlanche({ ...PRETE, places: [tandem] });
@@ -441,8 +441,8 @@ describe('verifierPlanche — le passager de tandem', () => {
 describe('verifierPlanche — le passager sort attaché', () => {
   it('partager le rang de son moniteur n’est PAS un doublon', () => {
     const e = verifierPlanche({ ...PRETE, places: [
-      { rangSortie: 1, aptitude: 'vert', typeSaut: 'tandem', passager: false, aSonPassager: true, masseKg: 85, videoVendue: false, aSonVideaste: false },
-      { rangSortie: 1, aptitude: 'gris', typeSaut: 'tandem', passager: true, aSonPassager: false, masseKg: 70, videoVendue: false, aSonVideaste: false },
+      { rangSortie: 1, aptitude: 'vert', typeSaut: 'tandem', passager: false, aSonPassager: true, masseKg: 85, videoVendue: false, aSonVideaste: false, chargeDepasse: false, pacSansMoniteur: false },
+      { rangSortie: 1, aptitude: 'gris', typeSaut: 'tandem', passager: true, aSonPassager: false, masseKg: 70, videoVendue: false, aSonVideaste: false, chargeDepasse: false, pacSansMoniteur: false },
     ] });
     expect(e.anomalies.some(a => a.code === 'rangs_doublon')).toBe(false);
   });
@@ -451,7 +451,7 @@ describe('verifierPlanche — le passager sort attaché', () => {
 describe('verifierPlanche — l’option vidéo', () => {
   const base = { rangSortie: 1, aptitude: 'vert' as const, typeSaut: 'tandem',
                  passager: false, aSonPassager: true, masseKg: 85,
-                 videoVendue: false, aSonVideaste: false };
+                 videoVendue: false, aSonVideaste: false, chargeDepasse: false, pacSansMoniteur: false };
 
   it('vidéo vendue sans personne pour filmer : on le dit', () => {
     // C'est le cas qui coûte, et il ne se voit qu'en croisant deux
@@ -462,7 +462,7 @@ describe('verifierPlanche — l’option vidéo', () => {
 
   it('vidéo vendue AVEC son porteur : rien à signaler', () => {
     const e = verifierPlanche({ ...PRETE,
-      places: [{ ...base, videoVendue: true, aSonVideaste: true }] });
+      places: [{ ...base, videoVendue: true, aSonVideaste: true, chargeDepasse: false, pacSansMoniteur: false }] });
     expect(e.anomalies.some(a => a.code === 'video_sans_videaste')).toBe(false);
   });
 
@@ -494,5 +494,56 @@ describe('le référentiel des disciplines prime sur le repli', () => {
   it('une discipline inconnue ne casse rien : on affiche son code', () => {
     expect(libelleDiscipline('saut_plage', ref)).toBe('saut_plage');
     expect(radioAttendue('saut_plage', ref)).toBe(false);
+  });
+});
+
+describe('libelleCharge — le seuil DIT d’où il vient', () => {
+  const base = { nbSauts: 120, masseKg: 85, surfaceFt2: 170, charge: 1.1,
+                 seuil: 1.1, sourceTexte: null as string | null, manque: null as string | null };
+
+  it('sans référence saisie, c’est un REPÈRE DU CENTRE — jamais une règle fédérale', () => {
+    // P2 : une règle porte le texte qui la fonde, ou elle n'en est pas une.
+    const l = libelleCharge({ ...base, charge: 1.4 })!;
+    expect(l.depasse).toBe(true);
+    expect(l.texte).toContain('repère du centre, sans référence fédérale');
+  });
+
+  it('avec la référence, c’est elle qu’on cite', () => {
+    const l = libelleCharge({ ...base, charge: 1.4, sourceTexte: 'FFP — manuel DT §4.2' })!;
+    expect(l.texte).toContain('FFP — manuel DT §4.2');
+    expect(l.texte).not.toContain('repère du centre');
+  });
+
+  it('non calculable : on NOMME ce qui manque', () => {
+    // Une case vide se lit « tout va bien », et c'est faux.
+    const l = libelleCharge({ ...base, charge: null, surfaceFt2: null,
+                              manque: 'surface de voile inconnue' })!;
+    expect(l.inconnu).toBe(true);
+    expect(l.texte).toContain('surface de voile inconnue');
+    expect(l.depasse).toBe(false);
+  });
+
+  it('sous le seuil : rien d’alarmant, juste la mesure', () => {
+    const l = libelleCharge({ ...base, charge: 0.9 })!;
+    expect(l.depasse).toBe(false);
+    expect(l.texte).toBe('0.90 lb/ft² · max 1.1');
+  });
+});
+
+describe('verifierPlanche — voile et PAC', () => {
+  const p = (o: object) => ({ rangSortie: 1, aptitude: 'vert' as const, typeSaut: 'solo',
+    passager: false, aSonPassager: false, masseKg: 80, videoVendue: false,
+    aSonVideaste: false, chargeDepasse: false, pacSansMoniteur: false, ...o });
+
+  it('une charge alaire au-dessus du repère est un point de vigilance', () => {
+    const e = verifierPlanche({ ...PRETE, places: [p({ chargeDepasse: true })] });
+    expect(e.anomalies.some(a => a.code === 'charge_alaire')).toBe(true);
+  });
+
+  it('une PAC sans accompagnateur BLOQUE : personne ne sait qui saute avec', () => {
+    const e = verifierPlanche({ ...PRETE,
+      places: [p({ typeSaut: 'ecole', pacSansMoniteur: true })] });
+    expect(e.verdict).toBe('rouge');
+    expect(e.anomalies.some(a => a.code === 'pac_sans_moniteur')).toBe(true);
   });
 });

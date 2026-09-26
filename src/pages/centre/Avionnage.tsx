@@ -7,7 +7,7 @@ import { ymdLocal } from '../../lib/datetime';
 import { Plus, Plane, ScanLine, MoonStar, Sunset, Settings2 } from 'lucide-react';
 import { useDialogues } from '../../components/useDialogues';
 import { action, enTeteSection, SEVERITE_COULEUR } from '../../lib/jetons';
-import { siegesOccupes, messageErreur, type Discipline } from '../../lib/avionnage';
+import { siegesOccupes, messageErreur, type Discipline, type ChargeAlaire } from '../../lib/avionnage';
 import { FileAvionnageDZ } from './FileAvionnageDZ';
 import { AjouterAeronef, type Aeronef } from './Rotations';
 import { RechercheLicencie } from './RechercheLicencie';
@@ -59,6 +59,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
   const [reglagesOuverts, setReglagesOuverts] = useState(false);
   /** Coordonnées du centre — sans elles, pas d'heure de coucher, et on le tait. */
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [charges, setCharges] = useState<Map<string, ChargeAlaire>>(new Map());
   const navigate = useNavigate();
   const { demanderConfirmation, dialogue } = useDialogues();
   const rechargerFile = useRef<(() => Promise<void>) | null>(null);
@@ -191,6 +192,34 @@ function AvionnageInner({ centreId }: { centreId: string }) {
         if (!equipements.has(id)) equipements.set(id, `perso · ${libelle}`);
       }
     }
+
+    // La charge alaire : masse tout equipe / surface de voile, comparee au
+    // repere retenu pour l'experience. Lecture serveur — les sauts et le poids
+    // ne sont pas lisibles par le client.
+    const cs = new Map<string, ChargeAlaire>();
+    if (ids.length > 0) {
+      const { data: ca, error: eC } = await supabase.rpc('charge_alaire_places', {
+        p_centre_id: centreId, p_ids: ids,
+      });
+      if (eC) {
+        console.error('Charge alaire — lecture échouée :', {
+          code: eC.code, message: eC.message, details: eC.details, hint: eC.hint,
+        });
+      }
+      for (const c of (ca ?? []) as {
+        parachutiste_id: string; nb_sauts: number; masse_kg: number | null;
+        surface_ft2: number | null; charge: number | null; seuil: number | null;
+        source_texte: string | null; manque: string | null;
+      }[]) {
+        cs.set(c.parachutiste_id, {
+          nbSauts: c.nb_sauts, masseKg: c.masse_kg, surfaceFt2: c.surface_ft2,
+          charge: c.charge === null ? null : Number(c.charge),
+          seuil: c.seuil === null ? null : Number(c.seuil),
+          sourceTexte: c.source_texte, manque: c.manque,
+        });
+      }
+    }
+    setCharges(cs);
 
     const nomsMoniteurs = new Map<string, string>();
     const idsMoniteurs = [...new Set(brutes.map(p => p.moniteur_id).filter(Boolean))] as string[];
@@ -457,6 +486,20 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     return null;
   };
 
+  /**
+   * Valider l'embarquement FIGE la planche : ce qu'on a annonce a l'equipage
+   * ne se reecrit pas. On peut rouvrir tant que l'avion n'a pas decolle — un
+   * sauteur se decommande, ca arrive. Apres le decollage, la base refuse.
+   */
+  const validerEmbarquement = async (rotationId: string, valide: boolean): Promise<string | null> => {
+    const { error } = await supabase.from('rotations')
+      .update({ embarquement_valide_le: valide ? new Date().toISOString() : null })
+      .eq('id', rotationId);
+    if (error) return messageErreur(error);
+    await charger();
+    return null;
+  };
+
   /** L'option video se vend au comptoir : l'ecran ne fait que la constater. */
   const basculerVideo = async (placeId: string, vendue: boolean): Promise<string | null> => {
     const { error } = await supabase.from('places_rotation')
@@ -588,7 +631,8 @@ function AvionnageInner({ centreId }: { centreId: string }) {
                   onDefinirAltitude={definirAltitude}
                   onDefinirCarburant={l => definirCarburant(r.id, l)}
                   onBasculerRadio={basculerRadio} onAjouterPassager={ajouterPassager} onBasculerVideo={basculerVideo}
-                  onChangerDiscipline={changerDiscipline} disciplines={disciplines}
+                  onChangerDiscipline={changerDiscipline} disciplines={disciplines} charges={charges}
+                  onValiderEmbarquement={v => validerEmbarquement(r.id, v)}
                   aeronef={aeronefs.find(a => a.id === r.aeronef_id)} onChange={charger}
                   onDeposer={fileId => placer(fileId, r.id)} onOuvrirFiche={ouvrirFiche}
                   largueurs={largueurs}

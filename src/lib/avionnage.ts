@@ -365,6 +365,47 @@ export function formaterRetard(libelle: string): string {
 
 export type GraviteAnomalie = 'bloquant' | 'vigilance';
 
+/**
+ * La charge alaire d'une place — mesure, pas jugement.
+ *
+ * `charge` et `seuil` peuvent être nuls : on ne sait pas toujours. Ce qui
+ * manque est NOMMÉ (`manque`), parce qu'une case vide se lit « tout va bien »
+ * et que c'est faux.
+ */
+export interface ChargeAlaire {
+  nbSauts: number;
+  masseKg: number | null;
+  surfaceFt2: number | null;
+  charge: number | null;
+  seuil: number | null;
+  /** Référence du texte. null = repère du centre, PAS une règle fédérale. */
+  sourceTexte: string | null;
+  manque: string | null;
+}
+
+/**
+ * Le libellé d'une charge alaire. Il DIT d'où vient le seuil : sans référence
+ * saisie, « repère du centre » — jamais « règle fédérale ». P2.
+ */
+export function libelleCharge(c: ChargeAlaire | undefined): {
+  texte: string; depasse: boolean; inconnu: boolean;
+} | null {
+  if (!c) return null;
+  if (c.charge === null) {
+    return { texte: `charge alaire — ${c.manque ?? 'non calculable'}`, depasse: false, inconnu: true };
+  }
+  const base = `${c.charge.toFixed(2)} lb/ft²`;
+  if (c.seuil === null) return { texte: base, depasse: false, inconnu: false };
+  const depasse = c.charge > c.seuil;
+  const origine = c.sourceTexte ? c.sourceTexte : 'repère du centre, sans référence fédérale';
+  return {
+    texte: depasse
+      ? `${base} — au-dessus de ${c.seuil} pour ${c.nbSauts} sauts (${origine})`
+      : `${base} · max ${c.seuil}`,
+    depasse, inconnu: false,
+  };
+}
+
 export interface AnomaliePlanche {
   /** Stable, pour les tests et les clés React — jamais affiché. */
   code: string;
@@ -403,6 +444,10 @@ export interface EntreeVerification {
     videoVendue: boolean;
     /** Quelqu'un filme ce groupe : une place « vidéo » y est présente. */
     aSonVideaste: boolean;
+    /** Charge alaire au-dessus du repère retenu pour son expérience. */
+    chargeDepasse: boolean;
+    /** Une PAC sans moniteur nommé : personne ne sait qui l'accompagne. */
+    pacSansMoniteur: boolean;
   }[];
   /** Nombre de largueurs qualifiés dans le centre — 0 change le message. */
   largueursDisponibles: number;
@@ -473,6 +518,21 @@ export function verifierPlanche(e: EntreeVerification): EtatPlanche {
   if (tandemsIncomplets > 0) {
     a.push({ code: 'tandem_sans_passager', gravite: 'vigilance',
              message: `${tandemsIncomplets} tandem${tandemsIncomplets > 1 ? 's' : ''} sans passager saisi : la masse embarquée est incomplète.` });
+  }
+
+  // LA VOILE TROP PETITE POUR L'EXPÉRIENCE. C'est le point de vigilance le
+  // plus lourd de la liste : il ne se répare pas en vol.
+  const chargesHautes = juges.filter(p => p.chargeDepasse).length;
+  if (chargesHautes > 0) {
+    a.push({ code: 'charge_alaire', gravite: 'vigilance',
+             message: `${chargesHautes} charge${chargesHautes > 1 ? 's' : ''} alaire${chargesHautes > 1 ? 's' : ''} au-dessus du repère retenu pour l’expérience — voir le détail sur la ligne.` });
+  }
+
+  // Une PAC dont personne ne sait qui l'accompagne.
+  const pacOrphelines = juges.filter(p => p.pacSansMoniteur).length;
+  if (pacOrphelines > 0) {
+    a.push({ code: 'pac_sans_moniteur', gravite: 'bloquant',
+             message: `${pacOrphelines} PAC sans accompagnateur désigné : nommez le moniteur qui saute avec.` });
   }
 
   // Une vidéo vendue que personne ne filme : c'est le cas qui coûte, et il ne

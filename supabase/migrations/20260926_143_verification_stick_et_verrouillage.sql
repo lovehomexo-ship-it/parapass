@@ -1,0 +1,30 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 1 · LA CHARGE ALAIRE, PLACE PAR PLACE (charge_alaire_places).
+--
+-- Trois données, et il en manque souvent une : la masse tout équipé, la
+-- SURFACE de la voile, le nombre de sauts. La fonction rend TOUJOURS une
+-- ligne, avec ce qui manque NOMMÉ — « surface de voile inconnue » est une
+-- information, une case vide n'en est pas une, et elle se lit « tout va bien ».
+--
+-- LA SOURCE DU SEUIL VOYAGE AVEC LA MESURE. Tant qu'elle est nulle, l'écran
+-- écrit « repère du centre, sans référence fédérale ». P2 : une règle porte le
+-- texte qui la fonde, ou elle n'en est pas une.
+--
+-- 2 · VALIDER L'EMBARQUEMENT FIGE LA PLANCHE.
+--
+-- Tant qu'on charge l'avion, tout se corrige. Une fois validé, la planche est
+-- ce qu'on a annoncé à l'équipage : la modifier après coup, c'est réécrire ce
+-- qui a été dit au pied de l'avion. Un trigger refuse toute écriture sur les
+-- places d'une planche figée.
+--
+-- On FIGE, on ne détruit pas : le DT rouvre tant que l'avion n'a pas décollé —
+-- un sauteur se décommande, ça arrive. Après le décollage, la réouverture est
+-- refusée elle aussi : l'histoire d'un avion parti ne se réécrit pas.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Migrations appliquées : charge_alaire_des_places,
+-- embarquement_valide_verrouille_la_planche. LE 26/09/2026.
+--
+-- Refus prouvé en base :
+--   update places_rotation set radio = not radio  (planche figée)
+--   → 23514 Embarquement valide : cette planche ne se modifie plus.
+--      HINT: Rouvrez l'embarquement sur la planche pour corriger.
