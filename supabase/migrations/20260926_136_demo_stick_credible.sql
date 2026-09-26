@@ -1,0 +1,34 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- DÉMO AVIONNAGE — un premier avion qui raconte le métier.
+--
+-- CE QUI N'ALLAIT PAS : la démo prenait les gens PAR ORDRE ALPHABÉTIQUE et
+-- leur collait une discipline par rotation d'un tableau. Un élève pouvait
+-- apparaître en wingsuit. Le premier avion ne racontait rien.
+--
+-- Deux corrections, dans cet ordre :
+--   1. la discipline DÉCOULE du profil — moniteur tandem → tandem, sans
+--      brevet et moins de 15 sauts → école, brevet C/D → groupe, etc.
+--   2. le premier avion MÉLANGE. La première version ordonnait par priorité
+--      et remplissait la planche d'une seule catégorie : cinq élèves sur six.
+--      On prend maintenant le premier de chaque discipline, puis le deuxième
+--      de chaque — un vrai stick n'est pas monochrome.
+--
+-- Le largueur occupe une place et reçoit une masse : sans elle, le total de
+-- la planche est faux d'un homme.
+--
+-- AUCUNE ÉCRITURE sur un profil marqué donnees_reelles. Ni masse, ni brevet,
+-- ni qualification. C'est la leçon du 26/09 : un script de peuplement ne
+-- touche pas à quelqu'un de vrai.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Voir migrations appliquées « demo_avionnage_stick_credible » puis
+-- « demo_avionnage_stick_melange ».
+--
+-- APPLIQUÉE LE 26/09/2026. Premier avion mesuré après coup :
+--   Claire DUBOIS    D/BPJEPS   largueur   3 qualifications
+--   Lucas BERNARD    C/BEES     tandem     chef avion
+--   Marie Dupont     C          groupe
+--   Antoine BERGER   —          école      radio
+--   Chloé DÉMO       B          solo
+--   Thomas LAURENT   C/BPJEPS   tandem
+--   Alexandre Dupont C          groupe
+-- Sept personnes, cinq disciplines, toutes les masses renseignées.
