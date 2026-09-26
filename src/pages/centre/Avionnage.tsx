@@ -7,6 +7,7 @@ import { ymdLocal } from '../../lib/datetime';
 import { Plus, Plane, ScanLine, MoonStar, Sunset, Settings2 } from 'lucide-react';
 import { useDialogues } from '../../components/useDialogues';
 import { action, enTeteSection, SEVERITE_COULEUR } from '../../lib/jetons';
+import { brevetPrincipal } from '../../lib/brevets';
 import { siegesOccupes, messageErreur, type Discipline, type VerdictDT48 } from '../../lib/avionnage';
 import { FileAvionnageDZ } from './FileAvionnageDZ';
 import { AjouterAeronef, type Aeronef } from './Rotations';
@@ -224,6 +225,30 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     }
     setDt48(d48);
 
+    // LE BREVET VIENT DE LA TABLE `brevets`, comme sur la carte de licence.
+    // La planche lisait profiles.type_brevet_principal, un champ texte sans
+    // date ni numero : les deux ecrans se contredisaient. Mesure sur BigAir —
+    // Antoine BERGER, 7 sauts, « pas de brevet » ici et « brevet C » sur sa
+    // licence. Une seule source, celle qui porte une preuve.
+    const brevets = new Map<string, string>();
+    if (ids.length > 0) {
+      const { data: bv, error: eB } = await supabase.from('brevets')
+        .select('parachutiste_id, type_brevet, date_obtention').in('parachutiste_id', ids);
+      if (eB) {
+        console.error('Brevets — lecture échouée :', {
+          code: eB.code, message: eB.message, details: eB.details, hint: eB.hint,
+        });
+      }
+      const parPersonne = new Map<string, { type_brevet: string }[]>();
+      for (const b of (bv ?? []) as { parachutiste_id: string; type_brevet: string }[]) {
+        parPersonne.set(b.parachutiste_id, [...(parPersonne.get(b.parachutiste_id) ?? []), b]);
+      }
+      for (const [id, liste] of parPersonne) {
+        const principal = brevetPrincipal(liste);
+        if (principal) brevets.set(id, principal.type_brevet);
+      }
+    }
+
     const nomsMoniteurs = new Map<string, string>();
     const idsMoniteurs = [...new Set(brutes.map(p => p.moniteur_id).filter(Boolean))] as string[];
     if (idsMoniteurs.length > 0) {
@@ -268,7 +293,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
         masse_kg: (p as { masse_kg?: number | null }).masse_kg ?? pr?.masse_kg ?? null,
         altitude_largage_m: (p as { altitude_largage_m?: number | null }).altitude_largage_m ?? null,
         radio: Boolean((p as { radio?: boolean }).radio),
-        brevet: pr?.type_brevet_principal ?? null,
+        brevet: brevets.get(p.parachutiste_id ?? '') ?? null,
         brevet_moniteur: pr?.type_brevet_moniteur ?? null,
         motifs: motifs.get(p.parachutiste_id ?? '') ?? null,
         moniteur_nom: nomsMoniteurs.get(p.moniteur_id ?? '') ?? null,

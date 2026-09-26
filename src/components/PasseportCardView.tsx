@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { ParachuteIcon } from './ParachuteIcon';
 import type { TamponConfig } from './TamponDZ';
 import { TYPE_BREVET_LABELS } from '../lib/types';
+import { brevetPrincipal as choisirBrevetPrincipal } from '../lib/brevets';
 import type { Licence, Brevet, CertificatMedical, CentreLicencie, Qualification } from '../lib/types';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCurrencyRules, getCurrencyStatus, CURRENCY_STATUS_CONFIG } from '../lib/currency';
@@ -285,7 +286,11 @@ function CardRecto({ data, id, feu, onFeuClick }: {
   // Les FONCTIONS (largueur, DT…) ne s'affichent PAS ici : la licence est un
   // document d'identité, pas un organigramme. Elles vivent dans l'Avionnage,
   // là où la question « qui est le largueur ? » se pose vraiment.
-  const brevetPrincipal = brevets[0];
+  // LE PLUS HAUT, PAS LE PLUS RÉCENT. `brevets[0]` était trié par date : une
+  // qualification wingsuit passée après le brevet D s'affichait comme brevet
+  // principal. Même règle que la planche d'avionnage — une seule source, un
+  // seul classement.
+  const brevetPrincipal = choisirBrevetPrincipal(brevets);
   const centre = centresLicencies.find(c => c.statut === 'actif')?.centre;
   const avatar = profile.avatar_url || profile.photo_profil_url;
 

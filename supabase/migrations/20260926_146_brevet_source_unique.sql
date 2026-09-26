@@ -1,0 +1,33 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- LE BREVET — deux sources se contredisaient.
+--
+-- Ton constat : « Antoine est en brevet C alors qu'il passe sa PAC ». Ce
+-- n'était pas une donnée de démo isolée, c'était un défaut de conception.
+--
+-- DEUX SOURCES répondaient à « quel brevet a cette personne » :
+--   • la carte de licence lisait la table `brevets` ;
+--   • la planche d'avionnage lisait `profiles.type_brevet_principal`.
+-- Mesuré sur BigAir, elles divergeaient pour 9 personnes sur 29 :
+--   Antoine BERGER  — profil « aucun », licence « C », 7 sauts
+--   Thomas LAURENT  — profil « C »,     licence « B »
+--   Sophie MARTIN   — profil « aucun », licence « B »
+--   Marie Dupont    — profil « C »,     licence : AUCUN brevet enregistré
+--
+-- LA TABLE `brevets` FAIT FOI : elle porte une date d'obtention et un numéro,
+-- donc une preuve. Un champ texte sur le profil n'en porte aucune. Les deux
+-- écrans lisent désormais la même table, avec le même classement.
+--
+-- LE PLUS HAUT, PAS LE PLUS RÉCENT. La carte prenait `brevets[0]` trié par
+-- date : une qualification wingsuit obtenue après le brevet D s'affichait
+-- comme brevet principal. On classe par NIVEAU (BPA < A < B < C < D), et ce
+-- qui n'est pas un niveau — WS1, B2 — reste une qualification.
+--
+-- DONNÉES DE DÉMO RECONSTRUITES depuis l'expérience réelle. Premier essai :
+-- BPA dès 5 sauts — Antoine gardait un BPA en pleine PAC, l'incohérence avait
+-- seulement changé de place. Le BPA CLÔT la progression PAC : seuil porté à
+-- 15 sauts. Antoine et Lea, en PAC, n'ont donc aucun brevet — ce qui est
+-- exactement leur situation.
+--
+-- Aucune écriture sur un profil marqué donnees_reelles.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Appliqué LE 26/09/2026 par requêtes de données (pas de DDL).
