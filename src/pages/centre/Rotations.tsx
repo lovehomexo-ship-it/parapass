@@ -470,7 +470,13 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
   const retirer = async (a: Aeronef) => {
     setErreur(null); setMessage(null); setARetirer(null);
     const { data, error } = await supabase.rpc('retirer_aeronef', { p_aeronef_id: a.id });
-    if (error) { setErreur(error.message); return; }
+    if (error) {
+      console.error('Retrait d’aéronef — échec :', {
+        code: error.code, message: error.message, details: error.details, hint: error.hint });
+      setMessage(`${a.immatriculation} n’a pas pu être retiré : ${error.message}`);
+      setErreur(error.message);
+      return;
+    }
     const r = (data ?? {}) as { action?: string; rotations?: number };
     setMessage(r.action === 'supprime'
       ? `${a.immatriculation} supprimé de la flotte.`
@@ -523,7 +529,7 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
             <button onClick={() => setDeplie(v => !v)} aria-expanded={deplie}
               className="flex items-center gap-1 px-3 rounded-lg text-xs font-bold"
               style={{ minHeight: 36, color: 'var(--c-text2)', border: '1px solid var(--c-border)' }}>
-              {deplie ? 'Masquer' : 'Modifier la flotte'}
+              {deplie ? 'Masquer' : 'Modifier / retirer un aéronef'}
             </button>
           )}
           {!ouvert && (
@@ -544,6 +550,10 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
             <strong>Places</strong> = sièges parachutistes — largueur et passager
             tandem compris, <strong>pilote non compris</strong>. C’est ce nombre que
             la planche remplit, et le « 9/10 » qu’elle affiche.
+            <br />
+            <strong>Retirer</strong> supprime l’aéronef s’il n’a jamais servi. S’il
+            figure déjà sur une planche, il quitte les listes mais reste nommé sur
+            les journées passées — ParaPass ne réécrit pas un historique.
           </p>
           {aeronefs.map(a => (
             <div key={a.id} className="flex items-center gap-2 flex-wrap rounded-xl px-2 py-1.5"
@@ -597,10 +607,10 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
               ) : (
                 <button onClick={() => { setARetirer(a); setMessage(null); }}
                   aria-label={`Retirer ${a.immatriculation} de la flotte`}
-                  title="Retirer de la flotte"
-                  className="p-1 rounded-lg"
-                  style={{ color: 'var(--c-muted)', border: '1px solid var(--c-border)' }}>
-                  <Trash2 className="w-3.5 h-3.5" aria-hidden />
+                  title={`Retirer ${a.immatriculation} de la flotte`}
+                  className="flex items-center gap-1 px-2 rounded-lg text-[11px] font-semibold"
+                  style={{ minHeight: 30, color: '#DC2626', border: '1px solid rgba(220,38,38,0.4)' }}>
+                  <Trash2 className="w-3.5 h-3.5" aria-hidden /> Retirer
                 </button>
               )}
             </div>
@@ -608,7 +618,9 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
           {message && (
             <p role="status" className="text-[11px] px-2 py-1.5 rounded-lg"
               style={{ color: 'var(--c-text2)', background: 'var(--c-bg)',
-                       borderLeft: '4px solid #10B981' }}>{message}</p>
+                       borderLeft: `4px solid ${message.includes('n’a pas pu') ? '#DC2626' : '#10B981'}` }}>
+              {message}
+            </p>
           )}
           <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
             Ces chiffres se lisent sur la fiche de pesée de l’avion. ParaPass
