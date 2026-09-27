@@ -44,6 +44,8 @@ function Inner({ centreId, onFermer, onChange }: {
   const [erreur, setErreur] = useState<string | null>(null);
   const [occupe, setOccupe] = useState(false);
   const [sacs, setSacs] = useState<SacParc[]>([]);
+  const [nouvelleDiscipline, setNouvelleDiscipline] = useState('');
+  const [nouvelleTeinte, setNouvelleTeinte] = useState('#818CF8');
   const [nouveauNom, setNouveauNom] = useState('');
   const [nouvelleSurface, setNouvelleSurface] = useState('');
   const [poids, setPoids] = useState('80');
@@ -58,6 +60,44 @@ function Inner({ centreId, onFermer, onChange }: {
    * l'avionnage. Refaire le calcul en JavaScript aurait donné deux vérités le
    * jour où le tableau change.
    */
+  /**
+   * Personnaliser une discipline du catalogue COMMUN : on n'y écrit pas, on
+   * pose une surcharge propre au centre. Écrire dans le catalogue changerait
+   * le libellé chez tous les autres centres.
+   */
+  const personnaliser = async (code: string, patch: { libelle?: string; teinte?: string }) => {
+    setOccupe(true); setErreur(null);
+    const { error } = await supabase.from('centres_disciplines')
+      .upsert({ centre_id: centreId, code, actif: !retirees.has(code), ...patch },
+              { onConflict: 'centre_id,code' });
+    setOccupe(false);
+    if (error) { setErreur(messageErreur(error)); return; }
+    await charger();
+    onChange();
+  };
+
+  /**
+   * Créer une discipline que le catalogue n'a pas. Le code est dérivé du
+   * libellé — sans accents ni espaces — parce qu'il sert de clé étrangère et
+   * qu'il doit rester stable même si le libellé change ensuite.
+   */
+  const ajouterDiscipline = async () => {
+    const libelle = nouvelleDiscipline.trim();
+    if (!libelle) return;
+    const code = libelle.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 40);
+    if (!code) { setErreur('Ce nom ne donne aucun code utilisable.'); return; }
+    setOccupe(true); setErreur(null);
+    const { error } = await supabase.from('disciplines_saut').insert({
+      code, libelle, teinte: nouvelleTeinte, ordre: 500, centre_id: centreId, actif: true,
+    });
+    setOccupe(false);
+    if (error) { setErreur(messageErreur(error)); return; }
+    setNouvelleDiscipline('');
+    await charger();
+    onChange();
+  };
+
   /** La surface d'un sac : c'est elle que lit la DT 48 pour un sauteur en location. */
   const ecrireSurface = async (sacId: string, valeur: string) => {
     setOccupe(true); setErreur(null);
@@ -112,9 +152,7 @@ function Inner({ centreId, onFermer, onChange }: {
 
   const charger = async () => {
     const [{ data: d }, { data: cd }, { data: sp }] = await Promise.all([
-      supabase.from('disciplines_saut')
-        .select('code, libelle, ordre, equipage, radio_attendue, teinte')
-        .eq('actif', true).order('ordre'),
+      supabase.rpc('disciplines_du_centre', { p_centre_id: centreId }),
       supabase.from('centres_disciplines').select('code, actif').eq('centre_id', centreId),
       supabase.from('sacs_parachute')
         .select('id, nom_court, marque, modele, numero_serie, taille_voile_ft2, statut, actif')
@@ -170,23 +208,77 @@ function Inner({ centreId, onFermer, onChange }: {
                 l’efface nulle part : les sauts passés la gardent, et un saut en
                 cours continue de l’afficher.
               </p>
-              <div className="flex flex-wrap gap-1.5">
+              <ul className="space-y-1.5">
                 {catalogue.map(d => {
                   const actif = !retirees.has(d.code);
                   return (
-                    <button key={d.code} type="button" disabled={occupe}
-                      onClick={() => basculerDiscipline(d.code, !actif)}
-                      aria-pressed={actif}
-                      className="px-2 py-1 rounded-lg disabled:opacity-50"
-                      style={{ fontSize: 12, fontWeight: 700,
-                        color: actif ? (d.teinte ?? 'var(--c-text)') : 'var(--c-dim)',
-                        border: `1px ${actif ? 'solid' : 'dashed'} ${actif ? (d.teinte ?? 'var(--n2-bord)') : 'var(--n2-bord)'}`,
-                        background: actif ? `color-mix(in srgb, ${d.teinte ?? 'transparent'} 12%, transparent)` : 'transparent' }}>
-                      {d.libelle}
-                      {d.radio_attendue && <span title="radio attendue"> · radio</span>}
-                    </button>
+                    <li key={d.code} className="flex items-center gap-2 flex-wrap px-2 py-1.5 rounded-xl"
+                      style={{ background: 'var(--n3-fond)', border: '1px solid var(--n3-filet)' }}>
+                      {/* LE LIBELLÉ. Modifiable : c'est le mot que lit le chef
+                          d'avionnage, il doit être celui de son club. */}
+                      <input type="text" defaultValue={d.libelle} disabled={occupe}
+                        aria-label={`Libellé de ${d.libelle}`}
+                        onBlur={e => {
+                          if (e.target.value.trim() && e.target.value !== d.libelle)
+                            personnaliser(d.code, { libelle: e.target.value.trim() });
+                        }}
+                        className="px-2 rounded-lg"
+                        style={{ width: 150, minHeight: 32, fontSize: 13, fontWeight: 700,
+                                 background: 'var(--c-input)',
+                                 color: d.teinte ?? 'var(--c-text)',
+                                 border: `1px solid ${d.teinte ?? 'var(--n2-bord)'}` }} />
+
+                      {/* LA COULEUR. Elle groupe, elle n'alerte pas : le mot
+                          reste à côté, et c'est lui qui renseigne. */}
+                      <input type="color" defaultValue={d.teinte ?? '#94A3B8'} disabled={occupe}
+                        aria-label={`Couleur de ${d.libelle}`}
+                        onBlur={e => { if (e.target.value !== d.teinte) personnaliser(d.code, { teinte: e.target.value }); }}
+                        style={{ width: 38, height: 32, background: 'transparent',
+                                 border: '1px solid var(--n2-bord)', borderRadius: 8, cursor: 'pointer' }} />
+
+                      {d.radio_attendue && (
+                        <span style={{ fontSize: 11, color: 'var(--c-muted)' }}>radio attendue</span>
+                      )}
+                      {d.propre && (
+                        <span style={{ fontSize: 11, color: 'var(--c-dim)' }}>propre à votre centre</span>
+                      )}
+
+                      <button type="button" disabled={occupe}
+                        onClick={() => basculerDiscipline(d.code, !actif)}
+                        aria-pressed={actif}
+                        className="ml-auto px-2 py-1 rounded-lg"
+                        style={{ fontSize: 12, fontWeight: 700,
+                          color: actif ? SEVERITE_COULEUR.conforme : 'var(--c-dim)',
+                          border: `1px ${actif ? 'solid' : 'dashed'} ${actif ? SEVERITE_COULEUR.conforme : 'var(--n2-bord)'}` }}>
+                        {actif ? 'proposée' : 'retirée'}
+                      </button>
+                    </li>
                   );
                 })}
+              </ul>
+
+              {/* Créer une discipline que le catalogue commun n'a pas. Elle
+                  appartient au centre : les autres ne la voient pas. */}
+              <div className="flex items-end gap-2 flex-wrap mt-2">
+                <label style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                  Nouvelle discipline
+                  <input type="text" value={nouvelleDiscipline}
+                    onChange={e => setNouvelleDiscipline(e.target.value)}
+                    placeholder="ex : Saut Cordouan" disabled={occupe}
+                    className="block px-2 rounded-lg mt-1"
+                    style={{ width: 180, minHeight: 32, fontSize: 13, background: 'var(--c-input)',
+                             color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
+                </label>
+                <input type="color" value={nouvelleTeinte}
+                  onChange={e => setNouvelleTeinte(e.target.value)} disabled={occupe}
+                  aria-label="Couleur de la nouvelle discipline"
+                  style={{ width: 38, height: 32, background: 'transparent',
+                           border: '1px solid var(--n2-bord)', borderRadius: 8, cursor: 'pointer' }} />
+                <button type="button" onClick={ajouterDiscipline}
+                  disabled={occupe || !nouvelleDiscipline.trim()}
+                  className="disabled:opacity-50" style={{ ...action('secondaire'), minHeight: 34 }}>
+                  <Plus className="w-4 h-4" aria-hidden /> Ajouter
+                </button>
               </div>
             </section>
 

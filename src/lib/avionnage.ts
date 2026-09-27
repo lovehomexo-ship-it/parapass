@@ -838,6 +838,10 @@ export interface Discipline {
   /** Fait d'exploitation, pas une règle fédérale : signale une absence. */
   radio_attendue: boolean;
   teinte: string | null;
+  /** Créée par ce centre, par opposition au catalogue commun. */
+  propre?: boolean;
+  /** Proposée à l'avionnage de ce centre. */
+  actif?: boolean;
 }
 
 /** Repli quand le référentiel n'a pas encore répondu. Jamais une autorité. */

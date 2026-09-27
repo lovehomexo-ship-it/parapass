@@ -115,14 +115,17 @@ function AvionnageInner({ centreId }: { centreId: string }) {
 
     // Le référentiel des disciplines, filtré par ce que CE centre propose.
     // Absence de ligne d'activation = le défaut du catalogue.
-    const [{ data: dRef }, { data: dCentre }] = await Promise.all([
-      supabase.from('disciplines_saut')
-        .select('code, libelle, ordre, equipage, radio_attendue, teinte')
-        .eq('actif', true).order('ordre'),
-      supabase.from('centres_disciplines').select('code, actif').eq('centre_id', centreId),
-    ]);
-    const retirees = new Set((dCentre ?? []).filter(x => !x.actif).map(x => x.code));
-    setDisciplines(((dRef ?? []) as Discipline[]).filter(d => !retirees.has(d.code)));
+    // Le référentiel TEL QUE CE CENTRE LE VOIT : ses libellés, ses couleurs,
+    // ses disciplines propres. Une seule lecture, une seule vérité.
+    const { data: dRef, error: eR } = await supabase.rpc('disciplines_du_centre', {
+      p_centre_id: centreId,
+    });
+    if (eR) {
+      console.error('Disciplines — lecture échouée :', {
+        code: eR.code, message: eR.message, details: eR.details, hint: eR.hint,
+      });
+    }
+    setDisciplines(((dRef ?? []) as Discipline[]).filter(d => d.actif !== false));
 
     if (rr.length === 0) { setPlaces([]); setChargement(false); return; }
     const { data: pl, error: e2 } = await supabase.from('places_rotation')

@@ -1,0 +1,30 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- CHAQUE CENTRE NOMME ET COLORE SES DISCIPLINES.
+--
+-- Le catalogue `disciplines_saut` est COMMUN. Y écrire depuis un centre
+-- changerait le libellé chez tous les autres — et « Moniteur PAC » chez l'un
+-- deviendrait « Accompagnateur » chez son voisin sans que personne l'ait
+-- demandé.
+--
+-- Les personnalisations vivent donc en SURCHARGE dans centres_disciplines :
+-- libelle, teinte, ordre, tous nullables. NULL veut dire « celui du catalogue »
+-- — et un centre qui n'y touche pas bénéficie de ses corrections futures.
+--
+-- Un centre peut aussi CRÉER une discipline que le catalogue n'a pas
+-- (disciplines_saut.centre_id). Elle lui appartient ; les autres ne la voient
+-- pas. Le code est dérivé du libellé, sans accents ni espaces, parce qu'il sert
+-- de clé étrangère à places_rotation.type_saut et doit rester stable même si
+-- le libellé change ensuite.
+--
+-- La teinte est contrainte à un hexadécimal : une chaîne libre finirait en CSS
+-- invalide, donc en puce invisible.
+--
+-- `disciplines_du_centre()` rend la vue d'un centre — catalogue commun plus ses
+-- disciplines propres, avec SES libellés et SES couleurs. Une seule lecture,
+-- côté réglages comme côté planche : deux requêtes auraient fini par diverger.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Migration appliquée : disciplines_personnalisables_par_centre. LE 27/09/2026.
+--
+-- Recette : BigAir renomme « Moniteur PAC » en « Accompagnateur PAC » avec une
+-- couleur propre → sa vue change, le catalogue commun reste intact. Surcharge
+-- supprimée ensuite, le libellé commun revient.
