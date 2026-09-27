@@ -102,7 +102,7 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onDefinirAltitudeAvion, flotte, onDefinirAeronef, onSupprimerPlanche, onReordonner, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines, dt48, onValiderEmbarquement, onAmenagementDT48, onDefinirSurfaceVoile }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onDefinirAltitudeAvion, flotte, onDefinirAeronef, onSupprimerPlanche, reglesLevables, onAcquitter, onReordonner, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines, dt48, onValiderEmbarquement, onAmenagementDT48, onDefinirSurfaceVoile }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -134,6 +134,9 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   onDefinirAeronef?: (aeronefId: string) => Promise<string | null>;
   /** Supprimer la planche — refusée par la base dès qu'elle a volé. */
   onSupprimerPlanche?: () => Promise<string | null>;
+  /** Les règles que le référentiel déclare levables, par code. */
+  reglesLevables?: ReadonlyMap<string, { duree: string | null; effet: string | null; libelle: string }>;
+  onAcquitter?: (parachutisteId: string, code: string) => Promise<string | null>;
   /**
    * Le nouvel ordre de sortie, une entrée par SORTIE (un groupe ou une
    * personne seule), chacune portant les identifiants de ses places.
@@ -757,12 +760,47 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
               {/* ── LIGNE 2 : POURQUOI, quand ce n'est pas vert ─────────────
                   « À examiner » sans motif oblige à ouvrir la fiche de chacun.
                   Le motif porte son code : on peut remonter au texte. */}
+              {/* CHAQUE MOTIF SUR SA LIGNE, ET ACQUITTABLE QUAND IL DOIT L'ÊTRE.
+                  Un casque ou une vérification de voile ne se règlent pas par
+                  une saisie : ils se CONSTATENT. Sans moyen de le dire, la
+                  planche restait en alerte toute la journée — et une planche
+                  qui alerte toujours n'alerte plus de rien.
+                  La ligne acquittée ne disparaît pas : elle passe au gris avec
+                  le nom de qui l'a constatée. Le rappel demeure, la trace
+                  aussi. */}
               {aDire && (
-                <p className="mt-0.5 ml-7 flex items-start gap-1.5"
-                  style={{ fontSize: 12, color: SEVERITE_COULEUR[SEV_APTITUDE[p.aptitude]] }}>
-                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-px" aria-hidden />
-                  <span style={{ whiteSpace: 'pre-line' }}>{p.motifs}</span>
-                </p>
+                <div className="mt-0.5 ml-7 space-y-0.5">
+                  {(p.motifs ?? '').split('\n').filter(Boolean).map(ligne => {
+                    const code = ligne.slice(0, 7);
+                    const acquitte = ligne.includes('acquitté par');
+                    const levable = !acquitte && !!reglesLevables?.has(code) && !!onAcquitter
+                                    && !!p.parachutiste_id && !close;
+                    return (
+                      <p key={ligne} className="flex items-start gap-1.5"
+                        style={{ fontSize: 12,
+                                 color: acquitte ? 'var(--c-muted)'
+                                                 : SEVERITE_COULEUR[SEV_APTITUDE[p.aptitude]] }}>
+                        {acquitte
+                          ? <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0 mt-px" aria-hidden />
+                          : <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-px" aria-hidden />}
+                        <span className="flex-1">{ligne}</span>
+                        {levable && (
+                          <button type="button" disabled={occupe}
+                            title={reglesLevables?.get(code)?.effet ?? 'Constaté par l’encadrement'}
+                            onClick={() => agir(`Acquittement ${code}`, () =>
+                              onAcquitter!(p.parachutiste_id!, code)
+                                .then(e => ({ error: e ? { message: e } : null })))}
+                            className="flex-shrink-0 px-2 rounded-lg"
+                            style={{ minHeight: 24, fontSize: 11, fontWeight: 700,
+                                     color: SEVERITE_COULEUR.conforme,
+                                     border: `1px solid ${SEVERITE_COULEUR.conforme}` }}>
+                            Acquitter
+                          </button>
+                        )}
+                      </p>
+                    );
+                  })}
+                </div>
               )}
 
               {/* L'encadrement se lit TOUJOURS : savoir qu'un élève est

@@ -64,6 +64,8 @@ function AvionnageInner({ centreId }: { centreId: string }) {
   const navigate = useNavigate();
   const { demanderConfirmation, dialogue } = useDialogues();
   const rechargerFile = useRef<(() => Promise<void>) | null>(null);
+  const [reglesLevables, setReglesLevables] = useState<Map<string,
+    { duree: string | null; effet: string | null; libelle: string }>>(new Map());
 
   // Le tiroir d'une fiche a sa propre URL : un clic sur une personne y mène,
   // et le bouton Retour ramène ici. C'est là qu'une anomalie se comprend.
@@ -145,21 +147,42 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     const ids = brutes.map(p => p.parachutiste_id).filter(Boolean) as string[];
     const verdicts = new Map<string, PlaceVue['aptitude']>();
     const motifs = new Map<string, string | null>();
+    // LES VERDICTS SE LISENT PAR PLANCHE, plus en un seul bloc : une levée
+    // accordée « pour cette rotation » ne vaut que là, et un appel global ne
+    // saurait pas de quelle planche il s'agit.
     if (ids.length > 0) {
-      const { data: vd, error: e3 } = await supabase.rpc('verdicts_du_jour', {
-        p_centre_id: centreId, p_ids: ids, p_date: jour,
-      });
-      if (e3) {
-        // Une lecture en échec ne rend pas tout vert : elle laisse tout gris.
-        console.error('Verdicts Feu Vert — lecture échouée :', {
-          code: e3.code, message: e3.message, details: e3.details, hint: e3.hint,
+      const parRotation = new Map<string, string[]>();
+      for (const p of brutes) {
+        if (!p.parachutiste_id) continue;
+        const l = parRotation.get(p.rotation_id) ?? [];
+        l.push(p.parachutiste_id);
+        parRotation.set(p.rotation_id, l);
+      }
+      await Promise.all([...parRotation.entries()].map(async ([rotId, rotIds]) => {
+        const { data: vd, error: e3 } = await supabase.rpc('verdicts_du_jour', {
+          p_centre_id: centreId, p_ids: rotIds, p_date: jour, p_rotation_id: rotId,
         });
-      }
-      for (const v of (vd ?? []) as { parachutiste_id: string; verdict: PlaceVue['aptitude']; motifs: string | null }[]) {
-        verdicts.set(v.parachutiste_id, v.verdict);
-        motifs.set(v.parachutiste_id, v.motifs ?? null);
-      }
+        if (e3) {
+          // Une lecture en échec ne rend pas tout vert : elle laisse tout gris.
+          console.error('Verdicts Feu Vert — lecture échouée :', {
+            code: e3.code, message: e3.message, details: e3.details, hint: e3.hint,
+          });
+          return;
+        }
+        for (const v of (vd ?? []) as { parachutiste_id: string; verdict: PlaceVue['aptitude']; motifs: string | null }[]) {
+          verdicts.set(v.parachutiste_id, v.verdict);
+          motifs.set(v.parachutiste_id, v.motifs ?? null);
+        }
+      }));
     }
+
+    // QUELLES RÈGLES PEUVENT ÊTRE ACQUITTÉES, ET PAR QUI. On ne le devine pas :
+    // le référentiel le déclare (`levable`, `habilitation_levee`, `duree_levee`).
+    const { data: rg } = await supabase.rpc('regles_en_vigueur', { p_centre_id: centreId });
+    setReglesLevables(new Map(((rg ?? []) as { code: string; levable: boolean;
+        duree_levee: string | null; effet_levee: string | null; libelle: string }[])
+      .filter(r => r.levable)
+      .map(r => [r.code, { duree: r.duree_levee, effet: r.effet_levee, libelle: r.libelle }])));
     setVerdictsParPersonne(verdicts);
 
     // Le nom du moniteur qui accompagne. Une lecture separee : la jointure
@@ -649,6 +672,27 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     return null;
   };
 
+  /**
+   * ACQUITTER UNE RÈGLE. Le DT constate — casque porté, vérification faite —
+   * et le dit. La ligne ne disparaît pas : elle passe en « acquitté par X »,
+   * pour que le rappel demeure et que la trace existe. La base refuse tout ce
+   * que le référentiel déclare non levable.
+   */
+  const acquitter = async (parachutisteId: string, code: string,
+                           rotationId: string): Promise<string | null> => {
+    const { error } = await supabase.rpc('acquitter_regle', {
+      p_parachutiste_id: parachutisteId, p_centre_id: centreId,
+      p_code: code, p_motif: null, p_rotation_id: rotationId,
+    });
+    if (error) {
+      console.error('Acquittement — échec :', {
+        code: error.code, message: error.message, details: error.details, hint: error.hint });
+      return messageErreur(error);
+    }
+    await charger();
+    return null;
+  };
+
   const reordonner = async (sorties: string[][]): Promise<string | null> => {
     for (let i = 0; i < sorties.length; i++) {
       const { error } = await supabase.from('places_rotation')
@@ -795,6 +839,8 @@ function AvionnageInner({ centreId }: { centreId: string }) {
                   flotte={aeronefs}
                   onDefinirAeronef={id => definirAeronef(r.id, id)}
                   onSupprimerPlanche={() => supprimerPlanche(r.id)}
+                  reglesLevables={reglesLevables}
+                  onAcquitter={(pid, code) => acquitter(pid, code, r.id)}
                   onReordonner={reordonner}
                   onBasculerRadio={basculerRadio} onAjouterPassager={ajouterPassager} onBasculerVideo={basculerVideo}
                   onChangerDiscipline={changerDiscipline} disciplines={disciplines} dt48={dt48}
