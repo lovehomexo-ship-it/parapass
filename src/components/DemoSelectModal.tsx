@@ -21,7 +21,17 @@ interface Props {
 // briefing publié et des planches d'avionnage remplies.
 const DEMO_ACCOUNTS = {
   para: { email: 'demo@parapass.fr', password: 'Demo1234!', dest: '/dashboard' },
-  centre: { email: 'demo.centre@parapass.fr', password: 'DemoPass2026!', dest: '/centre/dashboard' },
+  // LE CENTRE OUVRE UNE SESSION RÉELLE SUR ROYAN, pas un compte bridé.
+  // C'est délibéré : ce que le centre modifie doit se voir aussitôt dans la
+  // démonstration, sans double jeu de données à tenir à jour.
+  //
+  // La contrepartie est à connaître : ce bouton est public, donc un visiteur
+  // agit SOUS L'IDENTITÉ de l'administrateur de Royan — il peut valider un
+  // saut, clore une rotation, changer un réglage, et cela reste. Royan ne
+  // contient aucune donnée réelle (centre `is_demo`, aucun licencié
+  // `donnees_reelles`), donc rien de personnel n'est exposé ; c'est ce qui
+  // rend le compromis acceptable.
+  centre: { email: 'royan.admin@parapass.fr', password: 'Test1234!', dest: '/centre/dashboard' },
 } as const;
 
 export function DemoSelectModal({ onClose }: Props) {
@@ -61,7 +71,7 @@ export function DemoSelectModal({ onClose }: Props) {
           <div>
             <h2 className="text-xl font-bold text-white">Choisissez votre profil de démonstration</h2>
             <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
-              Explorez ParaPass avec de vraies données — compte temporaire
+              Explorez ParaPass avec de vraies données
             </p>
           </div>
           <button
@@ -177,7 +187,8 @@ export function DemoSelectModal({ onClose }: Props) {
 
         {/* Footer */}
         <p className="text-center text-xs pb-5" style={{ color: 'rgba(255,255,255,0.25)' }}>
-          Données réelles de démonstration · Compte temporaire · Aucune modification sauvegardée
+          Données de démonstration · Le profil parachutiste est en lecture seule ·
+          Le centre est une DZ de démonstration : ce que vous y modifiez y reste
         </p>
       </div>
     </div>
