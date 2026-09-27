@@ -786,10 +786,19 @@ export function LandingPage() {
   const [showDemoModal, setShowDemoModal] = useState(false);
   const [inscritCount, setInscritCount] = useState<number | null>(null);
 
+  // LE COMPTEUR ANNONÇAIT 89 BÊTA TESTEURS POUR 47 PERSONNES RÉELLES.
+  // Il comptait TOUS les profils : les comptes de démonstration, ceux des deux
+  // centres fictifs, les comptes internes de ParaPass. Un chiffre gonflé de
+  // moitié sur la page d'accueil, à côté d'une section qui se réclame de la
+  // vérifiabilité — et devant un lecteur dont le métier est de recouper.
+  // On ne compte plus que des personnes.
   useEffect(() => {
     supabase
       .from('profiles')
       .select('*', { count: 'exact', head: true })
+      .not('is_demo', 'is', true)
+      .not('est_demo', 'is', true)
+      .not('compte_interne', 'is', true)
       .then(({ count }) => { if (count !== null) setInscritCount(count); });
   }, []);
 
@@ -1474,56 +1483,15 @@ export function LandingPage() {
       {/* ─── IMPORT IA CARNET PAPIER ────────────────────────────────────────── */}
       <SectionOCR />
 
-      {/* ─── TÉMOIGNAGES ────────────────────────────────────────────────────── */}
-      <section className="py-20 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Reveal>
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-2" style={{ color: '#0F172A' }}>Ils testent ParaPass en bêta</h2>
-              <p className="text-sm" style={{ color: '#94A3B8' }}>Avis de nos premiers bêta testeurs · Rejoignez-les gratuitement</p>
-            </div>
-          </Reveal>
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                quote: 'ParaPass a révolutionné la gestion de mon carnet. Mon moniteur valide mes sauts en quelques secondes.',
-                name: 'Parachutiste bêta testeur',
-                meta: 'Brevet B · Nouvelle-Aquitaine',
-                init: ParachuteGlyph, color: '#2563EB',
-              },
-              {
-                quote: 'En tant que DT, je vois en temps réel si mes élèves sont en règle. Fini les vérifications de dernière minute avant l\'embarquement.',
-                name: 'Directeur Technique',
-                meta: 'Centre agréé · Ouest de la France',
-                init: Building2, color: '#F59E0B',
-              },
-              {
-                quote: 'La section progression est incroyable. Mon moniteur me note après chaque saut et je vois exactement sur quoi travailler.',
-                name: 'Parachutiste bêta testeur',
-                meta: 'Brevet A · Charente-Maritime',
-                init: ParachuteGlyph, color: '#10B981',
-              },
-            ].map((t, i) => (
-              <Reveal key={i} delay={i * 80}>
-                <div className="bg-white rounded-2xl p-7 flex flex-col h-full" style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.07)', border: '1px solid #E2E8F0' }}>
-                  <div className="flex gap-0.5 mb-4" aria-label="5 étoiles sur 5">
-                    {[1,2,3,4,5].map(s => <span key={s} className="text-yellow-400">★</span>)}
-                  </div>
-                  <blockquote className="text-sm leading-relaxed flex-1 mb-5" style={{ color: '#374151' }}>"{t.quote}"</blockquote>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: t.color }}><t.init className="w-5 h-5" style={{ color: '#fff' }} /></div>
-                    <div>
-                      <div className="text-sm font-semibold" style={{ color: '#0F172A' }}>{t.name}</div>
-                      <div className="text-xs" style={{ color: '#64748B' }}>{t.meta}</div>
-                      <div className="text-[10px] mt-0.5 font-medium" style={{ color: '#94A3B8' }}>Avis bêta testeur</div>
-                    </div>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ─── TÉMOIGNAGES — RETIRÉS ──────────────────────────────────────────
+           Trois avis anonymes notés cinq étoiles, attribués à « un
+           parachutiste bêta testeur » et « un directeur technique ». Rien ne
+           permettait au lecteur de les vérifier, et la page s'adresse
+           désormais aussi à des assureurs, dont le métier est précisément de
+           vérifier. Un avis invérifiable coûte plus de crédit qu'il n'en
+           apporte : la section attendra des retours nominatifs et datés.
+           La preuve, en attendant, c'est la section Sécurité & conformité —
+           elle, on peut la recouper texte par texte. */}
 
       {/* ─── SÉCURITÉ & CONFORMITÉ ──────────────────────────────────────────
            Placée AVANT les tarifs : on établit ce que l'outil garantit, et
