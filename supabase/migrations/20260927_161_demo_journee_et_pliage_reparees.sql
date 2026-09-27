@@ -1,0 +1,21 @@
+-- Appliquée en base : reparer_generer_demo_journee + demo_pliage_sacs_avec_surface
+--
+-- DEUX BOUTONS « DÉMO » CASSÉS, TROUVÉS EN MONTANT ROYAN — et cassés pour
+-- BigAir aussi.
+--
+-- 1. `generer_demo_journee` écrivait `certificats_medicaux.type`, colonne qui
+--    n'existe plus. Le bouton échouait ENTIÈREMENT. Personne ne s'en était
+--    aperçu parce que l'erreur ne remonte qu'au clic.
+--
+-- 2. Ses sauts de démonstration n'avaient pas de `centre_id` : depuis que la
+--    file de validation se construit sur la DZ du saut, ils seraient tombés
+--    dans la file de personne — le « saut en attente » que la démonstration
+--    veut montrer serait resté invisible.
+--
+-- 3. `generer_demo_pliage` créait des sacs sans `taille_voile_ft2`. La surface
+--    est pourtant DANS le modèle (« Sport 190 » fait 190 ft²). Sans elle, tout
+--    sauteur en location restait « surface inconnue » donc refusé (P1,
+--    correctement) — et la démonstration ne montrait jamais la DT 48 autrement
+--    qu'en gris.
+--
+-- Corps complets des deux fonctions : voir l'historique Supabase.
