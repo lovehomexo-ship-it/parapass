@@ -454,6 +454,31 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
     onFait();
   };
 
+  /**
+   * RETIRER UN AÉRONEF — ce qui manquait aussi. Une immatriculation saisie de
+   * travers restait dans la flotte pour toujours et polluait le choix à chaque
+   * nouvelle planche.
+   *
+   * La base décide seule entre supprimer et désactiver : un avion cité par une
+   * rotation porte une trace — la planche du 12 mars dit quel avion a largué —
+   * et l'effacer réécrirait l'histoire. Il est alors désactivé, et l'écran dit
+   * lequel des deux a eu lieu.
+   */
+  const [aRetirer, setARetirer] = useState<Aeronef | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const retirer = async (a: Aeronef) => {
+    setErreur(null); setMessage(null); setARetirer(null);
+    const { data, error } = await supabase.rpc('retirer_aeronef', { p_aeronef_id: a.id });
+    if (error) { setErreur(error.message); return; }
+    const r = (data ?? {}) as { action?: string; rotations?: number };
+    setMessage(r.action === 'supprime'
+      ? `${a.immatriculation} supprimé de la flotte.`
+      : `${a.immatriculation} retiré des listes. Il reste nommé sur ${r.rotations ?? 0} planche(s) `
+        + 'déjà enregistrée(s) : ParaPass ne réécrit pas une journée passée.');
+    onFait();
+  };
+
   const valider = async () => {
     if (!immat.trim()) return;
     setEnvoi(true); setErreur(null);
@@ -561,8 +586,30 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
                   className="rounded-lg px-1.5 text-xs text-right w-20" style={stNum} />
                 kg max
               </label>
+              {aRetirer?.id === a.id ? (
+                <span className="flex items-center gap-1.5 text-[11px]">
+                  <span style={{ color: 'var(--c-text2)' }}>Retirer ?</span>
+                  <button onClick={() => retirer(a)} className="px-2 py-1 rounded-lg font-bold"
+                    style={{ color: '#fff', background: '#DC2626' }}>Oui</button>
+                  <button onClick={() => setARetirer(null)} className="px-2 py-1 rounded-lg"
+                    style={{ color: 'var(--c-muted)', border: '1px solid var(--c-border)' }}>Non</button>
+                </span>
+              ) : (
+                <button onClick={() => { setARetirer(a); setMessage(null); }}
+                  aria-label={`Retirer ${a.immatriculation} de la flotte`}
+                  title="Retirer de la flotte"
+                  className="p-1 rounded-lg"
+                  style={{ color: 'var(--c-muted)', border: '1px solid var(--c-border)' }}>
+                  <Trash2 className="w-3.5 h-3.5" aria-hidden />
+                </button>
+              )}
             </div>
           ))}
+          {message && (
+            <p role="status" className="text-[11px] px-2 py-1.5 rounded-lg"
+              style={{ color: 'var(--c-text2)', background: 'var(--c-bg)',
+                       borderLeft: '4px solid #10B981' }}>{message}</p>
+          )}
           <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
             Ces chiffres se lisent sur la fiche de pesée de l’avion. ParaPass
             n’en invente aucun : une masse maximale non renseignée reste vide,

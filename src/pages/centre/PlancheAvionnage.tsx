@@ -102,7 +102,7 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onDefinirAltitudeAvion, onReordonner, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines, dt48, onValiderEmbarquement, onAmenagementDT48, onDefinirSurfaceVoile }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onDefinirAltitudeAvion, flotte, onDefinirAeronef, onReordonner, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines, dt48, onValiderEmbarquement, onAmenagementDT48, onDefinirSurfaceVoile }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -129,6 +129,9 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   onDefinirCarburant?: (litres: number | null) => Promise<string | null>;
   /** L'altitude de largage de l'avion — le défaut de tout le monde à bord. */
   onDefinirAltitudeAvion?: (metres: number | null) => Promise<string | null>;
+  /** La flotte du centre, pour pouvoir corriger l'avion d'une planche. */
+  flotte?: readonly { id: string; immatriculation: string; places: number }[];
+  onDefinirAeronef?: (aeronefId: string) => Promise<string | null>;
   /**
    * Le nouvel ordre de sortie, une entrée par SORTIE (un groupe ou une
    * personne seule), chacune portant les identifiants de ses places.
@@ -297,7 +300,35 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
              : figee ? 'embarquement validé' : formaterRetard(call.libelle)}
           </p>
           <p className="mt-1 flex items-center gap-1.5 flex-wrap" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
-            {aeronef?.immatriculation ?? 'aéronef non affecté'}
+            {/* QUEL AVION PORTE CETTE PLANCHE. C'etait un simple texte, et la
+                planche etait ouverte en silence sur le premier appareil du
+                parc : avec trois avions, on decouvrait l'erreur au nombre de
+                places. Il se corrige tant que l'avion n'est pas parti. */}
+            {!close && onDefinirAeronef && (flotte?.length ?? 0) > 1 ? (
+              <label title="Aéronef de cette planche">
+                <span className="sr-only">Aéronef de la planche n°{r.numero}</span>
+                <select value={aeronef?.id ?? ''} disabled={occupe}
+                  onChange={e => {
+                    const v = e.target.value;
+                    if (!v || v === aeronef?.id) return;
+                    agir('Changement d’aéronef', () =>
+                      onDefinirAeronef(v).then(err => ({ error: err ? { message: err } : null })));
+                  }}
+                  className="rounded-lg px-1.5"
+                  style={{ fontSize: 13, fontWeight: 700, minHeight: 28,
+                           background: 'var(--c-input, var(--c-bg))', color: 'var(--c-text)',
+                           border: '1px solid var(--n2-bord)' }}>
+                  {!aeronef && <option value="">aéronef non affecté</option>}
+                  {(flotte ?? []).map(f => (
+                    <option key={f.id} value={f.id}>{f.immatriculation} · {f.places} pl.</option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <span style={{ fontWeight: 700, color: 'var(--c-text2)' }}>
+                {aeronef?.immatriculation ?? 'aéronef non affecté'}
+              </span>
+            )}
             {/* L'ALTITUDE DE L'AVION, modifiable. Elle est le défaut de tout le
                 monde à bord : une place sans altitude propre lit celle-ci, donc
                 la changer ici change tout l'avion sans rien recopier. */}

@@ -406,7 +406,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     if (error) { setOuvert(precedent); setErreur(messageErreur(error)); }
   };
 
-  const nouvellePlanche = async () => {
+  const nouvellePlanche = async (aeronefId?: string) => {
     setOccupe(true); setErreur(null);
     const dernier = rotations[rotations.length - 1];
     // Heure prévue par défaut : la précédente + 30 min, ou dans 30 min. Une
@@ -416,11 +416,15 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     const prevue = new Date(base.getTime() + 30 * 60000);
     const hh = String(prevue.getHours()).padStart(2, '0');
     const mm = String(prevue.getMinutes()).padStart(2, '0');
+    // L'AVION EST CHOISI, PLUS DEVINE. La planche prenait `aeronefs[0]` en
+    // silence : avec trois appareils au parc, on decouvrait apres coup qu'elle
+    // etait ouverte sur le mauvais — et le nombre de places avec.
+    const av = aeronefs.find(x => x.id === aeronefId) ?? aeronefs[0];
     const { error } = await supabase.from('rotations').insert({
       centre_id: centreId, date_jour: jour,
       numero: (dernier?.numero ?? 0) + 1,
-      aeronef_id: aeronefs[0]?.id ?? null,
-      altitude_largage_m: aeronefs[0]?.altitude_max_m ?? 4000,
+      aeronef_id: av?.id ?? null,
+      altitude_largage_m: av?.altitude_max_m ?? 4000,
       heure_prevue: `${hh}:${mm}:00`,
     });
     setOccupe(false);
@@ -611,6 +615,22 @@ function AvionnageInner({ centreId }: { centreId: string }) {
    * automatiquement » effacerait le classement qu'il vient de poser a la main.
    * Une decision humaine ne se fait pas ecraser par une regle.
    */
+  /**
+   * CHANGER L'AVION D'UNE PLANCHE. Une planche ouverte sur le mauvais appareil
+   * n'avait aucun recours : il fallait la supprimer. L'altitude suit, parce
+   * qu'un plafond d'avion ne se transporte pas d'un appareil a l'autre.
+   */
+  const definirAeronef = async (rotationId: string, aeronefId: string): Promise<string | null> => {
+    const av = aeronefs.find(x => x.id === aeronefId);
+    const { error } = await supabase.from('rotations')
+      .update({ aeronef_id: aeronefId,
+                altitude_largage_m: av?.altitude_max_m ?? 4000 })
+      .eq('id', rotationId);
+    if (error) return messageErreur(error);
+    await charger();
+    return null;
+  };
+
   const reordonner = async (sorties: string[][]): Promise<string | null> => {
     for (let i = 0; i < sorties.length; i++) {
       const { error } = await supabase.from('places_rotation')
@@ -700,10 +720,30 @@ function AvionnageInner({ centreId }: { centreId: string }) {
             <MoonStar className="w-4 h-4" aria-hidden /> Clôturer la journée
           </button>
         )}
-        <button type="button" onClick={nouvellePlanche} disabled={occupe || aeronefs.length === 0}
-          className="disabled:opacity-50" style={action('principal')}>
-          <Plus className="w-4 h-4" aria-hidden /> Nouvelle planche
-        </button>
+        {/* AVEC UN SEUL AVION, un bouton suffit et nommer l'appareil serait du
+            bruit. DES QU'IL Y EN A PLUSIEURS, on demande lequel : c'est la
+            seule information qui manquait vraiment. */}
+        {aeronefs.length <= 1 ? (
+          <button type="button" onClick={() => nouvellePlanche()} disabled={occupe || aeronefs.length === 0}
+            className="disabled:opacity-50" style={action('principal')}>
+            <Plus className="w-4 h-4" aria-hidden /> Nouvelle planche
+            {aeronefs[0] && <span style={{ opacity: 0.75, fontWeight: 400 }}>
+              {' · '}{aeronefs[0].immatriculation}</span>}
+          </button>
+        ) : (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>Nouvelle planche sur</span>
+            {aeronefs.map(a => (
+              <button key={a.id} type="button" disabled={occupe}
+                onClick={() => nouvellePlanche(a.id)}
+                title={`Ouvrir une planche sur le ${a.immatriculation}${a.type ? ' — ' + a.type : ''}, ${a.places} places`}
+                className="disabled:opacity-50" style={{ ...action('principal'), minHeight: 36 }}>
+                <Plus className="w-4 h-4" aria-hidden /> {a.immatriculation}
+                <span style={{ opacity: 0.75, fontWeight: 400 }}>{a.places} pl.</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {erreur && (
@@ -734,6 +774,8 @@ function AvionnageInner({ centreId }: { centreId: string }) {
                   onDefinirAltitude={definirAltitude}
                   onDefinirCarburant={l => definirCarburant(r.id, l)}
                   onDefinirAltitudeAvion={m => definirAltitudeAvion(r.id, m)}
+                  flotte={aeronefs}
+                  onDefinirAeronef={id => definirAeronef(r.id, id)}
                   onReordonner={reordonner}
                   onBasculerRadio={basculerRadio} onAjouterPassager={ajouterPassager} onBasculerVideo={basculerVideo}
                   onChangerDiscipline={changerDiscipline} disciplines={disciplines} dt48={dt48}
