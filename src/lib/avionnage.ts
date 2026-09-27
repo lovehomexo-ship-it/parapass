@@ -653,23 +653,28 @@ export function verifierPlanche(e: EntreeVerification): EtatPlanche {
   // son moniteur sortent à la même seconde — leur reprocher un « même rang »
   // revenait à leur reprocher d'être un groupe.
   // On ne compare donc qu'UN rang par groupe, et les rangs des isolés.
-  const rangsUniques: number[] = [];
-  const groupesVus = new Set<string>();
-  for (const p of juges) {
-    if (p.rangSortie === null) continue;
-    if (p.groupeId !== null && p.groupeId !== undefined) {
-      if (groupesVus.has(p.groupeId)) continue;
-      groupesVus.add(p.groupeId);
-    }
-    rangsUniques.push(p.rangSortie);
+  // L'ORDRE DE SORTIE SE COMPTE EN UNITÉS QUI SORTENT, pas en personnes.
+  // Une unité = un groupe, ou une personne seule. Et l'ÉQUIPAGE n'en fait pas
+  // partie : le largueur ne saute pas, lui demander un rang de sortie n'a
+  // aucun sens.
+  //
+  // C'est l'erreur que je venais de commettre : j'avais réduit les rangs à un
+  // par groupe sans toucher au nombre auquel je les comparais. Six unités
+  // numérotées sur huit personnes se lisaient « ordre incomplet », pour un
+  // avion dont l'ordre était complet.
+  const sautants = juges.filter(p => p.typeSaut !== 'largueur');
+  const unites = new Map<string, number | null>();
+  for (const p of sautants) {
+    const cle = p.groupeId ?? `seul:${unites.size}:${p.rangSortie}`;
+    if (!unites.has(cle)) unites.set(cle, p.rangSortie);
   }
-  const rangs = rangsUniques;
+  const rangs = [...unites.values()].filter((r): r is number => r !== null);
   const doublons = rangs.length - new Set(rangs).size;
   if (doublons > 0) {
     a.push({ code: 'rangs_doublon', gravite: 'vigilance',
-             message: 'Deux personnes portent le même rang de sortie.' });
+             message: 'Deux sorties portent le même rang.' });
   }
-  if (juges.length > 0 && rangs.length < juges.length) {
+  if (unites.size > 0 && rangs.length < unites.size) {
     a.push({ code: 'rangs_manquants', gravite: 'vigilance',
              message: 'Ordre de sortie incomplet.' });
   }

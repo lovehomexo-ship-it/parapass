@@ -657,3 +657,42 @@ describe('blocsDePlanche — le titre annonce le saut, pas l’accessoire', () =
     expect(b[0].libelle).toContain(LIBELLE_PLACE.ecole);
   });
 });
+
+describe('verifierPlanche — l’ordre de sortie se compte en SORTIES', () => {
+  const m = (o: object) => ({ rangSortie: 1, aptitude: 'vert' as const, typeSaut: 'solo',
+    passager: false, aSonPassager: false, masseKg: 80, videoVendue: false,
+    aSonVideaste: false, sousMinimumDT48: false, pacSansMoniteur: false,
+    groupeId: null as string | null, ...o });
+
+  it('un avion entièrement numéroté ne signale RIEN, groupes compris', () => {
+    // Le cas réel : 6 sorties numérotées pour 8 personnes à bord. J'avais
+    // réduit les rangs à un par groupe sans toucher au nombre auquel je les
+    // comparais — « ordre incomplet » sur un avion complet.
+    const e = verifierPlanche({ ...PRETE, places: [
+      m({ rangSortie: 1, groupeId: 'pac', typeSaut: 'ecole' }),
+      m({ rangSortie: 1, groupeId: 'pac', typeSaut: 'accompagne' }),
+      m({ rangSortie: 2 }), m({ rangSortie: 3 }), m({ rangSortie: 4 }),
+      m({ rangSortie: 5, groupeId: 'tdm', typeSaut: 'tandem' }),
+      m({ rangSortie: 5, groupeId: 'tdm', typeSaut: 'video' }),
+      m({ rangSortie: 5, groupeId: 'tdm', typeSaut: 'tandem', passager: true }),
+      m({ rangSortie: 6, typeSaut: 'largueur' }),
+    ] });
+    expect(e.anomalies.some(a => a.code === 'rangs_manquants')).toBe(false);
+    expect(e.anomalies.some(a => a.code === 'rangs_doublon')).toBe(false);
+  });
+
+  it('LE LARGUEUR n’a pas besoin de rang : il ne saute pas', () => {
+    const e = verifierPlanche({ ...PRETE, places: [
+      m({ rangSortie: 1 }),
+      m({ rangSortie: null, typeSaut: 'largueur' }),
+    ] });
+    expect(e.anomalies.some(a => a.code === 'rangs_manquants')).toBe(false);
+  });
+
+  it('une sortie sans rang se signale encore', () => {
+    const e = verifierPlanche({ ...PRETE, places: [
+      m({ rangSortie: 1 }), m({ rangSortie: null }),
+    ] });
+    expect(e.anomalies.some(a => a.code === 'rangs_manquants')).toBe(true);
+  });
+});
