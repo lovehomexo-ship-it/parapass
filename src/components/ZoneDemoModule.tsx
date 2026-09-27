@@ -37,11 +37,18 @@ const n = (r: Record<string, unknown>, k: string) => Number(r[k] ?? 0);
 
 const MODULES: Record<Cle, Config> = {
   avionnage: {
-    description: 'Remplit la journée de 4 planches et d’une file d’attente, avec les '
-      + 'licenciés actifs du centre. Ne crée aucun saut.',
-    avertissementGenerer: '4 planches du jour et une file d’attente, remplies avec les licenciés '
-      + 'actifs du centre. Aucun saut n’est enregistré. Les personnes placées verront '
-      + '« vous êtes manifesté » sur leur téléphone tant que la démo est active.',
+    description: 'Met les dossiers du jour en ordre — licences, certificats médicaux, '
+      + 'matériel, pliages, vérification, briefing acquitté — puis remplit les planches '
+      + 'et la file d’attente. Ne crée aucun saut. Rejouable chaque jour, avec les mêmes personnes.',
+    avertissementGenerer: 'Deux temps. D’abord LES DOSSIERS : licences et certificats médicaux '
+      + 'prolongés, parachute principal et secours déclarés, pliage et vérification du jour '
+      + 'tracés, briefing acquitté. Ensuite LES PLANCHES du jour et la file d’attente, '
+      + 'remplies avec les licenciés actifs.\n\n'
+      + 'Ce qui reste en anomalie après coup reste en anomalie pour une vraie raison : '
+      + 'la météo du jour face au brevet détenu, le casque d’un non-breveté, une reprise '
+      + 'après interruption. C’est ce qu’on veut voir.\n\n'
+      + 'Aucun saut n’est enregistré. Les personnes placées verront « vous êtes manifesté » '
+      + 'sur leur téléphone tant que la démo est active.',
     avertissementRetirer: 'Seules les planches et lignes de file MARQUÉES démonstration seront '
       + 'supprimées. Les planches réelles du jour ne sont pas touchées.',
     libelleGenerer: 'Remplir la journée (démo)',
@@ -49,6 +56,14 @@ const MODULES: Record<Cle, Config> = {
     rpcRetirer: 'retirer_demo_avionnage',
     resumer: (r, mode) => mode === 'gen'
       ? `${n(r,'planches')} planches, ${n(r,'places')} places, ${n(r,'file')} en file.`
+        + (() => {
+            const d = (r.dossiers ?? {}) as Record<string, unknown>;
+            const n2 = (k: string) => Number(d[k] ?? 0);
+            return d && Object.keys(d).length > 0
+              ? ` Dossiers : ${n2('licencies')} licenciés remis en ordre`
+                + `, ${n2('verifications')} vérifications et ${n2('pliages_du_jour')} pliages du jour.`
+              : '';
+          })()
         + (r.largueur_designe ? '' : ' Aucun largueur qualifié au centre : les avions restent au sol.')
       : `Retiré : ${n(r,'planches')} planches, ${n(r,'places')} places, ${n(r,'file')} lignes de file.`,
   },
