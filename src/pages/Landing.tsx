@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { Shield, Check, ArrowRight, Camera, Flame, Zap, Clock,
   Brain, Pencil, Siren, Scroll, Wind, Target, PlaneLanding, Medal, Award,
   CreditCard, Smartphone, ClipboardList, TrendingUp, GraduationCap, CheckCircle2,
-  Backpack, CalendarDays, BarChart3, Wrench, Users, Euro, Star, Sparkles, Building2, AlertTriangle } from 'lucide-react';
+  Backpack, CalendarDays, BarChart3, Wrench, Users, Euro, Star, Sparkles, Building2, AlertTriangle,
+  ShieldCheck } from 'lucide-react';
 import { ParachuteGlyph } from '../design/BadgeIcon';
 import { ModuleIcon } from '../design/academieIcons';
 
@@ -11,6 +12,7 @@ import { ParaPassLogo } from '../components/ParaPassLogo';
 import { ParachuteIcon, ParachuteDropIcon } from '../components/ParachuteIcon';
 import { QRCodeSVG } from 'qrcode.react';
 import { DemoSelectModal } from '../components/DemoSelectModal';
+import { SectionSecurite } from '../components/landing/SectionSecurite';
 import { supabase } from '../lib/supabase';
 import { MODULES, STUDIO, ECONOMIE_STUDIO } from '../data/modules';
 
@@ -853,6 +855,10 @@ export function LandingPage() {
             <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-16 sm:h-20 w-auto object-contain" />
           </Link>
           <div className="flex items-center gap-2 sm:gap-3 ml-3">
+            <a href="#securite"
+              className="hidden sm:inline-flex items-center gap-1.5 text-white/80 hover:text-white text-sm font-medium no-underline transition-colors whitespace-nowrap">
+              Sécurité &amp; conformité
+            </a>
             <Link to="/login" className="text-white/80 hover:text-white text-sm font-medium no-underline transition-colors whitespace-nowrap">
               Se connecter
             </Link>
@@ -887,9 +893,24 @@ export function LandingPage() {
                 </span>
               </h1>
 
-              <p className="mb-8 leading-relaxed max-w-[480px]" style={{ fontSize: '18px', color: 'rgba(255,255,255,0.72)', lineHeight: 1.65 }}>
-                Carnet, licence, progression et sécurité — tout votre parachutisme dans une seule app. Gratuit pour les parachutistes.
+              <p className="mb-6 leading-relaxed max-w-[480px]" style={{ fontSize: '18px', color: 'rgba(255,255,255,0.72)', lineHeight: 1.65 }}>
+                Carnet, licence, progression et sécurité — tout votre parachutisme dans une seule app.
+                Gratuit pour les parachutistes.
               </p>
+
+              {/* L'ARGUMENT QUI DISTINGUE, DES LE HAUT DE PAGE. Un carnet
+                  numerique de plus n'interesse personne ; un carnet qui refuse
+                  un embarquement non conforme, si. */}
+              <a href="#securite"
+                className="inline-flex items-start gap-2.5 mb-8 rounded-xl px-4 py-3 no-underline transition-colors"
+                style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', maxWidth: 480 }}>
+                <ShieldCheck className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#6EE7B7' }} aria-hidden />
+                <span style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.85)', lineHeight: 1.5 }}>
+                  <strong style={{ color: '#fff' }}>14 règles de sécurité opposables</strong> s’appliquent avant
+                  l’embarquement — voilure, licence, médical, météo selon le niveau.
+                  <span style={{ color: '#6EE7B7' }}> Voir le détail →</span>
+                </span>
+              </a>
 
               {/* Mobile card */}
               <div className="flex md:hidden justify-center mb-8">
@@ -1504,6 +1525,13 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* ─── SÉCURITÉ & CONFORMITÉ ──────────────────────────────────────────
+           Placée AVANT les tarifs : on établit ce que l'outil garantit, et
+           seulement ensuite ce qu'il coûte. C'est aussi la section vers
+           laquelle pointe la navbar pour un directeur technique ou un
+           assureur, qui ne viennent pas pour les badges. */}
+      <SectionSecurite />
+
       {/* ─── TARIFS ─────────────────────────────────────────────────────────── */}
       <section className="py-20" style={{ background: '#F8FAFC' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1570,16 +1598,22 @@ export function LandingPage() {
                 <div className="text-4xl font-extrabold" style={{ color: '#001A4D' }}>Dès 49€</div>
                 <div className="text-sm font-medium mt-0.5" style={{ color: '#64748B' }}>HT / mois · Sans engagement</div>
               </div>
-              <p className="text-sm mb-5 mt-3 leading-relaxed" style={{ color: '#374151' }}>
-                Conformité, validation des sauts, planning et statistiques. Modules Pliage, Tandem et Finances en option.
+              {/* CE QUE CONTIENT LE SOCLE, ET CE QUI N'Y EST PAS.
+                  La confusion coûte cher des deux côtés : un centre qui croit
+                  l'avionnage compris, un commercial qui doit se dédire. On
+                  écrit donc la frontière noir sur blanc. */}
+              <p className="text-sm mb-4 mt-3 leading-relaxed" style={{ color: '#374151' }}>
+                <strong>Le socle</strong> — licences, carnets de sauts et suivi de vos licenciés.
+                Les modules métier s’ajoutent ensuite, à la carte.
               </p>
-              <ul className="space-y-2.5 mb-5">
+              <ul className="space-y-2.5 mb-4">
                 {[
-                  'Tableau de bord conformité temps réel',
-                  'Gestion illimitée de vos licenciés',
-                  'Validation des sauts par moniteurs délégués',
-                  'Planning DZ avec météo intégrée',
-                  'Statistiques et rapports de sauts',
+                  'Licences et certificats médicaux : échéances suivies, alertes automatiques',
+                  'Carnets de sauts de tous vos licenciés, validation par moniteurs délégués',
+                  'Tableau de bord conformité en temps réel',
+                  'Attestation de carnet et export',
+                  'Planning DZ, briefing du jour et météo par public',
+                  'Journal de bord de la zone',
                   'Support prioritaire',
                 ].map(f => (
                   <li key={f} className="flex items-start gap-2 text-sm" style={{ color: '#0F172A' }}>
@@ -1589,7 +1623,56 @@ export function LandingPage() {
                 ))}
               </ul>
 
+              {/* LES MODULES, ET LEUR PRIX. L'Avionnage est signale deux fois :
+                  il est le seul a ne pas entrer dans le pack Studio, et c'est
+                  exactement le point sur lequel un centre se trompe. */}
+              <div className="mb-4 rounded-lg p-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                <p className="text-[11px] font-bold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>
+                  Modules complémentaires — en option
+                </p>
+                <div className="space-y-1">
+                  {[
+                    { n: 'Pliage',    p: '29,99 €', d: 'DT 53, QR sacs, plieurs habilités' },
+                    { n: 'Academy',   p: '29,99 €', d: 'quiz sécurité, progression des brevets' },
+                    { n: 'Tandem',    p: '19,99 €', d: 'réservations et marketplace' },
+                    { n: 'Finances',  p: '19,99 €', d: 'encaissements et exports' },
+                  ].map(m => (
+                    <div key={m.n} className="flex items-baseline justify-between gap-2 text-[12px]">
+                      <span style={{ color: '#0F172A' }}>
+                        <strong>{m.n}</strong>{' '}
+                        <span style={{ color: '#94A3B8' }}>· {m.d}</span>
+                      </span>
+                      <span className="font-semibold whitespace-nowrap" style={{ color: '#374151' }}>{m.p}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-2.5 pt-2.5 flex items-baseline justify-between gap-2 text-[12px]"
+                  style={{ borderTop: '1px dashed #CBD5E1' }}>
+                  <span style={{ color: '#0F172A' }}>
+                    <strong>Avionnage</strong>{' '}
+                    <span style={{ color: '#94A3B8' }}>· planches, file d’attente, largueur désigné</span>
+                  </span>
+                  <span className="font-semibold whitespace-nowrap" style={{ color: '#EA580C' }}>49,97 €</span>
+                </div>
+                <p className="text-[11px] mt-1.5 leading-snug" style={{ color: '#EA580C' }}>
+                  Module à part : il n’est pas compris dans le socle, ni dans le pack Studio.
+                </p>
+
+                <div className="mt-2.5 pt-2.5 flex items-baseline justify-between gap-2 text-[12px]"
+                  style={{ borderTop: '1px solid #E2E8F0' }}>
+                  <span style={{ color: '#0F172A' }}>
+                    <strong>Pack Studio</strong>{' '}
+                    <span style={{ color: '#94A3B8' }}>· Pliage + Academy + Tandem + Finances</span>
+                  </span>
+                  <span className="font-semibold whitespace-nowrap" style={{ color: '#2563EB' }}>49,99 €</span>
+                </div>
+              </div>
+
               {/* Paliers */}
+              <p className="text-[11px] font-bold uppercase tracking-wide mb-1.5" style={{ color: '#64748B' }}>
+                Socle — selon le nombre de licenciés
+              </p>
               <div className="mb-3 rounded-lg overflow-hidden" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}>
                 {[
                   { label: 'Starter',   detail: '< 500 licenciés', price: '49€', reco: false },

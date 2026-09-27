@@ -63,7 +63,11 @@ export const MODULES: Module[] = [
   {
     id: 'studio',
     nom: 'ParaPass Studio',
-    desc: 'Tous les modules, présents et à venir. Le plus avantageux.',
+    // La promesse disait « tous les modules, présents et à venir » alors que
+    // l'Avionnage en est exclu depuis sa création : deux pages du même site
+    // se contredisaient, et c'est le genre d'ecart qui se paie en litige.
+    desc: 'Pliage, Academy, Tandem et Finances réunis — et les prochains modules du socle métier. '
+        + 'L’Avionnage reste vendu à part.',
     status: 'pack',
     prix: 49.99,
   },
