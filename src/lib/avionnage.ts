@@ -299,10 +299,26 @@ export function useFileDZ(centreId: string | undefined) {
  * sert qu'à l'AFFICHER. Ne jamais s'en servir pour autoriser ou refuser :
  * deux clics simultanés passeraient tous les deux.
  */
+/**
+ * Les sièges réellement occupés.
+ *
+ * Une place = un siège. Un moniteur RÉFÉRENCÉ sur la place de son élève en
+ * occupe un aussi — sauf s'il a déjà sa propre place dans l'avion, auquel cas
+ * on le comptait DEUX FOIS.
+ *
+ * C'est ce qui affichait « 10/10 — complet » sur un avion de neuf personnes :
+ * le modèle d'origine ne donnait pas de place au moniteur, il était seulement
+ * désigné. Depuis qu'il embarque comme tout le monde, la formule double.
+ */
 export function siegesOccupes(
-  places: readonly { moniteur_id?: string | null }[],
+  places: readonly { parachutiste_id?: string | null; moniteur_id?: string | null }[],
 ): number {
-  return places.length + places.filter(p => p.moniteur_id).length;
+  const aBord = new Set(
+    places.map(p => p.parachutiste_id).filter((id): id is string => !!id));
+  const moniteursSansPlace = new Set(
+    places.map(p => p.moniteur_id)
+      .filter((id): id is string => !!id && !aBord.has(id)));
+  return places.length + moniteursSansPlace.size;
 }
 
 export function libelleCapacite(occupes: number, total: number | null): string {
@@ -520,6 +536,8 @@ export interface EntreeVerification {
     sousMinimumDT48: boolean;
     /** Une PAC sans moniteur nommé : personne ne sait qui l'accompagne. */
     pacSansMoniteur: boolean;
+    /** Le groupe, s'il y en a un : ses membres partagent leur rang de sortie. */
+    groupeId?: string | null;
   }[];
   /** Nombre de largueurs qualifiés dans le centre — 0 change le message. */
   largueursDisponibles: number;
@@ -630,9 +648,22 @@ export function verifierPlanche(e: EntreeVerification): EtatPlanche {
   }
 
   // Deux sauteurs au même rang, c'est un ordre de sortie qui ne veut rien dire.
-  // Le passager sort ATTACHÉ à son moniteur : il partage son rang, ce n'est
-  // pas un doublon. Il n'entre donc pas dans le contrôle de l'ordre de sortie.
-  const rangs = juges.map(p => p.rangSortie).filter((r): r is number => r !== null);
+  // UN GROUPE SORT ENSEMBLE : ses membres partagent le même rang, et c'est le
+  // contraire d'un doublon. Le passager de tandem, le porteur vidéo, l'élève et
+  // son moniteur sortent à la même seconde — leur reprocher un « même rang »
+  // revenait à leur reprocher d'être un groupe.
+  // On ne compare donc qu'UN rang par groupe, et les rangs des isolés.
+  const rangsUniques: number[] = [];
+  const groupesVus = new Set<string>();
+  for (const p of juges) {
+    if (p.rangSortie === null) continue;
+    if (p.groupeId !== null && p.groupeId !== undefined) {
+      if (groupesVus.has(p.groupeId)) continue;
+      groupesVus.add(p.groupeId);
+    }
+    rangsUniques.push(p.rangSortie);
+  }
+  const rangs = rangsUniques;
   const doublons = rangs.length - new Set(rangs).size;
   if (doublons > 0) {
     a.push({ code: 'rangs_doublon', gravite: 'vigilance',

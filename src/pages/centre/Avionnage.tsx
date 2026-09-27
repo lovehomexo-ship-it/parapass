@@ -441,15 +441,22 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     const { error } = await supabase.from('places_rotation')
       .update({ groupe_id: groupeId }).in('id', placeIds);
     if (error) return messageErreur(error);
+    // L'ordre de sortie SUIT le groupage : sans ça, Antoine restait en 4
+    // derrière son moniteur en 1, et le bloc affichait deux rangs pour des
+    // gens qui sortent ensemble.
+    const rot = places.find(p => p.id === placeIds[0])?.rotation_id;
+    if (rot) await supabase.rpc('calculer_ordre_sortie', { p_rotation_id: rot });
     await charger();
     return null;
   };
 
   /** Défaire un groupe ne retire personne de l'avion : on coupe le lien. */
   const degrouper = async (groupeId: string): Promise<string | null> => {
+    const rot = places.find(p => p.groupe_id === groupeId)?.rotation_id;
     const { error } = await supabase.from('places_rotation')
       .update({ groupe_id: null }).eq('groupe_id', groupeId);
     if (error) return messageErreur(error);
+    if (rot) await supabase.rpc('calculer_ordre_sortie', { p_rotation_id: rot });
     await charger();
     return null;
   };
@@ -581,6 +588,19 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     return null;
   };
 
+  /**
+   * L'altitude de largage de l'avion. Elle est le DEFAUT de tout le monde :
+   * les places la suivent sans qu'on recopie rien, puisqu'une place sans
+   * altitude propre lit celle de sa rotation.
+   */
+  const definirAltitudeAvion = async (rotationId: string, metres: number | null): Promise<string | null> => {
+    const { error } = await supabase.from('rotations')
+      .update({ altitude_largage_m: metres }).eq('id', rotationId);
+    if (error) return messageErreur(error);
+    await charger();
+    return null;
+  };
+
   /** Carburant embarqué. Donnée de l'avion, saisie dans l'entête de planche. */
   const definirCarburant = async (rotationId: string, litres: number | null): Promise<string | null> => {
     const { error } = await supabase.from('rotations')
@@ -693,6 +713,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
                   onGrouper={grouper} onDegrouper={degrouper} onDefinirMasse={definirMasse}
                   onDefinirAltitude={definirAltitude}
                   onDefinirCarburant={l => definirCarburant(r.id, l)}
+                  onDefinirAltitudeAvion={m => definirAltitudeAvion(r.id, m)}
                   onBasculerRadio={basculerRadio} onAjouterPassager={ajouterPassager} onBasculerVideo={basculerVideo}
                   onChangerDiscipline={changerDiscipline} disciplines={disciplines} dt48={dt48}
                   onValiderEmbarquement={v => validerEmbarquement(r.id, v)}

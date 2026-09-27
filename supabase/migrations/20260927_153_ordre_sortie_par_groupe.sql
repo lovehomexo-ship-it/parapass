@@ -1,0 +1,25 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- UN GROUPE SORT ENSEMBLE : IL A UN SEUL RANG.
+--
+-- calculer_ordre_sortie numérotait chaque PLACE. Un tandem, son passager et son
+-- porteur vidéo recevaient donc trois rangs différents alors qu'ils quittent
+-- l'avion à la même seconde. Et grouper deux personnes ne changeait rien à leur
+-- numérotation : l'élève restait en 4 derrière son moniteur en 1.
+--
+-- On numérote maintenant par GROUPE, une personne seule comptant pour un groupe
+-- d'une personne. Tous les membres portent le même rang. La règle d'ordre du
+-- centre s'applique au groupe (rang de type le plus fort de ses membres), et
+-- les gros groupes sortent avant les petits, comme avant.
+--
+-- CONSÉQUENCE SUR LA VÉRIFICATION : « deux personnes portent le même rang de
+-- sortie » ne se déclenche plus entre membres d'un même groupe. Le leur
+-- reprocher revenait à leur reprocher d'être un groupe.
+--
+-- Grouper ou dégrouper relance la numérotation : un groupe qui garde des rangs
+-- épars n'en est pas un.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Migration appliquée : ordre_de_sortie_un_rang_par_groupe. LE 27/09/2026.
+--
+-- Vérifié : PAC groupée avec son moniteur → tous deux au rang 1. Le tandem,
+-- son passager et le porteur vidéo → tous au rang 5. Plus aucune alerte de
+-- doublon sur l'avion n°1.

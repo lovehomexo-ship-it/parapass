@@ -97,7 +97,7 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines, dt48, onValiderEmbarquement, onAmenagementDT48, onDefinirSurfaceVoile }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onDefinirAltitudeAvion, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines, dt48, onValiderEmbarquement, onAmenagementDT48, onDefinirSurfaceVoile }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -122,6 +122,8 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   onDefinirAltitude?: (placeId: string, metres: number | null) => Promise<string | null>;
   /** Carburant embarqué, en litres. */
   onDefinirCarburant?: (litres: number | null) => Promise<string | null>;
+  /** L'altitude de largage de l'avion — le défaut de tout le monde à bord. */
+  onDefinirAltitudeAvion?: (metres: number | null) => Promise<string | null>;
   /** Figer ou rouvrir l'embarquement. Rouvrir n'est possible qu'avant départ. */
   onValiderEmbarquement?: (valide: boolean) => Promise<string | null>;
   /** La radio se constate d'un clic : elle est sur la personne, ou elle ne l'est pas. */
@@ -226,6 +228,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
       sousMinimumDT48: libelleDT48(dt48?.get(p.parachutiste_id ?? ''))?.bloque ?? false,
       // Une PAC est accompagnée : soit un moniteur nommé, soit quelqu'un du
       // même groupe. Sans ni l'un ni l'autre, personne ne sait qui saute avec.
+      groupeId: p.groupe_id,
       pacSansMoniteur: radioAttendue(p.type_saut, disciplines) && !p.moniteur_nom
         && !(p.groupe_id !== null && places.some(q => q.id !== p.id
              && q.groupe_id === p.groupe_id && q.parachutiste_id !== null)),
@@ -280,9 +283,34 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
             {r.cloturee_le !== null || r.statut === 'terminee' ? 'clôturé'
              : figee ? 'embarquement validé' : formaterRetard(call.libelle)}
           </p>
-          <p className="mt-1" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
+          <p className="mt-1 flex items-center gap-1.5 flex-wrap" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
             {aeronef?.immatriculation ?? 'aéronef non affecté'}
-            {r.altitude_largage_m ? ` · ${r.altitude_largage_m} m` : ''}
+            {/* L'ALTITUDE DE L'AVION, modifiable. Elle est le défaut de tout le
+                monde à bord : une place sans altitude propre lit celle-ci, donc
+                la changer ici change tout l'avion sans rien recopier. */}
+            {!close && onDefinirAltitudeAvion ? (
+              <label className="flex items-center gap-1"
+                title="Altitude de largage de l’avion — chacun la suit, sauf altitude propre">
+                ·
+                <span className="sr-only">Altitude de largage de l’avion n°{r.numero}, en mètres</span>
+                <input type="number" inputMode="numeric" min={300} max={8000} step={100}
+                  defaultValue={r.altitude_largage_m ?? ''} disabled={occupe}
+                  placeholder="— m"
+                  onBlur={e => {
+                    const v = e.target.value.trim();
+                    const m = v === '' ? null : Number(v);
+                    if (m === (r.altitude_largage_m ?? null)) return;
+                    agir('Altitude de l’avion', () =>
+                      onDefinirAltitudeAvion(m).then(err => ({ error: err ? { message: err } : null })));
+                  }}
+                  className="px-1.5 rounded-lg text-right"
+                  style={{ width: 74, minHeight: 30, fontSize: 13, background: 'var(--c-input)',
+                           color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
+                m
+              </label>
+            ) : (
+              r.altitude_largage_m ? <span>· {r.altitude_largage_m} m</span> : null
+            )}
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">
