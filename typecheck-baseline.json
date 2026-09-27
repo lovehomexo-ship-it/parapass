@@ -1,5 +1,5 @@
 {
-  "maximum": 93,
+  "maximum": 92,
   "signatures": [
     "src/components/AddSautModal.tsx|TS2322|Type '{ className: string; style: { color: \"rgba(255,255,255,0.4)\"; }; title: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.",
     "src/components/AddSautModal.tsx|TS2322|Type '{ className: string; style: { color: \"rgba(255,255,255,0.4)\"; }; title: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.",
@@ -40,7 +40,6 @@
     "src/pages/centre/TandemSection.tsx|TS2345|Argument of type '(l: { profil: { id: string; nom: string; prenom: string; } | null; }) => { id: string; nom: string; prenom: string; } | null' is not assignable to parameter of type '(value: { parachutiste_id: any; profil: { id: any; nom: any; prenom: any; }[]; }, index: number, array: { parachutiste_id: any; profil: { id: any; nom: any; prenom: any; }[]; }[]) => { id: string; nom: string; prenom: string; } | null'.",
     "src/pages/CentreDashboard.tsx|TS2345|Argument of type '(d: { statut: string; date_adhesion: string | null; profiles: { id: string; nom: string; prenom: string; email: string; numero_licence: string; photo_profil_url: string | null; role: string; }; }) => { ...; }' is not assignable to parameter of type '(value: { statut: any; date_adhesion: any; profiles: { id: any; nom: any; prenom: any; email: any; numero_licence: any; photo_profil_url: any; created_at: any; role: any; est_demo: any; }[]; }, index: number, array: { ...; }[]) => { ...; }'.",
     "src/pages/CentreDashboard.tsx|TS2345|Argument of type '(d: { statut: string; date_adhesion: string | null; profiles: { id: string; nom: string; prenom: string; email: string; numero_licence: string; photo_profil_url: string | null; role: string; }; }) => { ...; }' is not assignable to parameter of type '(value: { statut: any; date_adhesion: any; profiles: { id: any; nom: any; prenom: any; email: any; numero_licence: any; photo_profil_url: any; role: any; }[]; }, index: number, array: { statut: any; date_adhesion: any; profiles: { ...; }[]; }[]) => { ...; }'.",
-    "src/pages/CentreDashboard.tsx|TS2345|Argument of type '{ id: any; parachutiste_id: any; date_saut: any; lieu: any; hauteur_m: any; categorie: any; statut: any; }[]' is not assignable to parameter of type 'SetStateAction<SautSummary[]>'.",
     "src/pages/CentreDashboard.tsx|TS2554|Expected 2-3 arguments, but got 1.",
     "src/pages/Dashboard.tsx|TS2322|Type '{ className: string; style: { color: string; }; }' is not assignable to type 'IntrinsicAttributes & { className?: string | undefined; }'.",
     "src/pages/Dashboard.tsx|TS2322|Type '{ className: string; style: { color: string; }; }' is not assignable to type 'IntrinsicAttributes & { className?: string | undefined; }'.",

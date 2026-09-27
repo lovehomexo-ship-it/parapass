@@ -117,6 +117,8 @@ interface SautSummary {
   hauteur_m: number;
   categorie: string;
   statut: 'en_attente' | 'valide' | 'refuse';
+  /** La DZ où le saut a eu lieu. Nul = DZ hors ParaPass : nul centre ne l'atteste. */
+  centre_id?: string | null;
   is_tunnel: boolean;
   valide_par?: string | null;
   valide_le?: string | null;
@@ -1473,10 +1475,19 @@ function SautsSection({ centreId, onNavigate }: { centreId: string | undefined; 
     if (ids.length === 0) { setSauts([]); setLoading(false); return; }
 
     const today = new Date().toISOString().split('T')[0];
+    // LA FILE NE SE CONSTRUIT PLUS SUR LA SEULE APPARTENANCE.
+    // Elle le faisait : un centre voyait tous les sauts en attente de ses
+    // licenciés, où qu'ils aient sauté dans le monde. Un saut réel à Royan
+    // attendait ainsi la signature de BigAir, qui ne l'avait pas vu — or
+    // valider, ici, c'est signer : hash, horodatage, journal immuable.
+    // Un centre ne voit désormais que les sauts faits CHEZ LUI. Ceux d'une DZ
+    // hors ParaPass restent « déclaré, non attesté » dans le carnet du
+    // sauteur : personne ne peut certifier ce qu'il n'a pas vu.
     let query = supabase
       .from('sauts')
       .select('id, parachutiste_id, date_saut, lieu, hauteur_m, categorie, statut, is_tunnel, valide_par, valide_le, moniteur_nom_libre')
-      .in('parachutiste_id', ids);
+      .in('parachutiste_id', ids)
+      .eq('centre_id', centreId);
 
     if (tab === 'attente') query = query.eq('statut', 'en_attente');
     else if (tab === 'today') query = query.eq('date_saut', today);
@@ -2428,6 +2439,7 @@ function LicencieDrawer({
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [confirmRetrait, setConfirmRetrait] = useState(false);
   const [showAddSaut, setShowAddSaut] = useState(false);
+  const [erreurValidation, setErreurValidation] = useState<string | null>(null);
 
   // Le contrôle documentaire manuel a été retiré : Feu Vert établit la même
   // chose sur 14 règles, cite le texte fédéral, et le consigne dans un
@@ -2468,7 +2480,7 @@ function LicencieDrawer({
     setLoadingSauts(true);
     supabase
       .from('sauts')
-      .select('id, parachutiste_id, date_saut, lieu, hauteur_m, categorie, statut')
+      .select('id, parachutiste_id, date_saut, lieu, hauteur_m, categorie, statut, centre_id, is_tunnel')
       .eq('parachutiste_id', licencie.id)
       .order('date_saut', { ascending: false })
       .limit(10)
@@ -2487,18 +2499,35 @@ function LicencieDrawer({
   }, [licencie, tab, currentProfile]);
 
 
+  /**
+   * LA LISTE MONTRE TOUT LE CARNET, LA VALIDATION N'EN COUVRE QU'UNE PART.
+   * Ce bouton signait tous les sauts en attente du licencié, y compris ceux
+   * faits sur une autre DZ — et il marquait la liste « validée » sans jamais
+   * lire les erreurs, si bien qu'un échec passait pour un succès. La base les
+   * refuse désormais ; l'écran ne les propose plus, et dit ce qu'il a fait.
+   */
+  const sautsValidablesIci = sauts.filter(
+    s => s.statut === 'en_attente' && s.centre_id === centreId);
+
   const handleBatchValider = async () => {
-    if (!licencie) return;
+    if (!licencie || sautsValidablesIci.length === 0) return;
     const validateur = currentProfile ? `${currentProfile.prenom} ${currentProfile.nom}` : 'Admin Centre';
-    const pendingIds = sauts.filter(s => s.statut === 'en_attente').map(s => s.id);
-    for (const id of pendingIds) {
-      await supabase.from('sauts').update({
+    setErreurValidation(null);
+    const faits: string[] = [];
+    let echecs = 0;
+    for (const s of sautsValidablesIci) {
+      const { error } = await supabase.from('sauts').update({
         statut: 'valide',
         valide_le: new Date().toISOString(),
         valide_par: validateur,
-      }).eq('id', id);
+      }).eq('id', s.id);
+      if (error) { echecs++; continue; }
+      faits.push(s.id);
     }
-    setSauts(prev => prev.map(s => s.statut === 'en_attente' ? { ...s, statut: 'valide' as const } : s));
+    setSauts(prev => prev.map(s => faits.includes(s.id) ? { ...s, statut: 'valide' as const } : s));
+    if (echecs > 0) {
+      setErreurValidation(`${echecs} saut(s) n'ont pas pu être validés — ils n'ont pas eu lieu dans ce centre.`);
+    }
   };
 
   const handleRetirerDuCentre = async () => {
@@ -2592,12 +2621,13 @@ function LicencieDrawer({
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-gray-700">10 derniers sauts</p>
                 <div className="flex items-center gap-2">
-                  {sauts.some(s => s.statut === 'en_attente') && (
+                  {sautsValidablesIci.length > 0 && (
                     <button
                       onClick={handleBatchValider}
+                      title="Seuls les sauts faits dans ce centre peuvent être validés ici : valider, c’est signer."
                       className="px-3 py-1.5 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg text-xs flex items-center gap-1 transition"
                     >
-                      <CheckCircle className="w-3 h-3" /> Valider en attente
+                      <CheckCircle className="w-3 h-3" /> Valider {sautsValidablesIci.length} saut{sautsValidablesIci.length > 1 ? 's' : ''}
                     </button>
                   )}
                   <button
@@ -2608,6 +2638,16 @@ function LicencieDrawer({
                   </button>
                 </div>
               </div>
+              {erreurValidation && (
+                <p role="alert" className="text-xs text-red-600">{erreurValidation}</p>
+              )}
+              {sauts.some(s => s.statut === 'en_attente' && s.centre_id !== centreId) && (
+                <p className="text-xs text-gray-500">
+                  Certains sauts en attente ont eu lieu sur une autre DZ : c’est
+                  elle qui les atteste. Valider, ici, c’est signer — ce centre
+                  ne peut certifier que ce qu’il a vu.
+                </p>
+              )}
               {loadingSauts ? (
                 <LoaderParaPass taille={56} message={null} />
               ) : sauts.length === 0 ? (

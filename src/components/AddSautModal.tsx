@@ -881,6 +881,14 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
       const payload = {
         date_saut: form.date_saut,
         lieu: isTunnel ? (form.tunnel_name.trim() || form.lieu) : form.lieu,
+        // LA DZ, ET PLUS SEULEMENT SON NOM. `dzSelection` tenait déjà
+        // l'identifiant du centre choisi ; le formulaire en recopiait le nom
+        // dans `lieu` et jetait l'identifiant. Un saut ne savait donc pas où
+        // il avait eu lieu, et sa validation retombait sur la DZ dont le
+        // sauteur est licencié — qui n'y était pas.
+        // Nul pour une DZ hors ParaPass ou une soufflerie : aucun centre ne
+        // peut alors l'attester, et c'est la vérité.
+        centre_id: isTunnel || !dzSelection || dzSelection === '__autre__' ? null : dzSelection,
         aeronef_immat: isTunnel ? '' : form.aeronef_immat,
         nature_saut: form.nature_saut,
         // On enregistre LA CATÉGORIE CHOISIE. Cette ligne disait
