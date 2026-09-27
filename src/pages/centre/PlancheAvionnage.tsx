@@ -327,7 +327,15 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">
-          <span style={pastille(sieges >= (aeronef?.places ?? Infinity) ? 'critique' : 'neutre')}>
+          {/* CE QUE LA PASTILLE COMPTE. « 9/10 » ne veut rien dire tant qu'on
+              ignore si le pilote est dans le 10 : selon la reponse on embarque
+              un sauteur de trop, ou on laisse un siege vide toute la journee.
+              Ce sont les SIEGES PARACHUTISTES — largueur et passager tandem
+              compris —, equipage exclu. Le nombre se regle sur la flotte. */}
+          <span title={aeronef
+              ? `${sieges} personne${sieges > 1 ? 's' : ''} à bord sur ${aeronef.places} siège${aeronef.places > 1 ? 's' : ''} parachutiste${aeronef.places > 1 ? 's' : ''} — largueur et passager tandem compris, pilote non compris. Modifiable dans la flotte, en haut de l’écran.`
+              : 'Aucun aéronef n’est rattaché à cette planche : ParaPass ne connaît donc aucune capacité.'}
+            style={pastille(sieges >= (aeronef?.places ?? Infinity) ? 'critique' : 'neutre')}>
             {libelleCapacite(sieges, aeronef?.places ?? null)}
           </span>
           {/* Un avion se remplit par la MASSE avant les sièges. Le libellé dit

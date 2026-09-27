@@ -10,7 +10,7 @@ import { action, enTeteSection, SEVERITE_COULEUR } from '../../lib/jetons';
 import { brevetPrincipal } from '../../lib/brevets';
 import { siegesOccupes, messageErreur, type Discipline, type VerdictDT48 } from '../../lib/avionnage';
 import { FileAvionnageDZ } from './FileAvionnageDZ';
-import { AjouterAeronef, type Aeronef } from './Rotations';
+import { FlotteAeronefs, type Aeronef } from './Rotations';
 import { RechercheLicencie } from './RechercheLicencie';
 import { ZoneDemoModule } from '../../components/ZoneDemoModule';
 import { ReglagesAvionnage } from './ReglagesAvionnage';
@@ -90,7 +90,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     const [{ data: rot, error: e1 }, { data: av }, { data: ctr }, { data: opt }, { data: lg }] = await Promise.all([
       supabase.from('rotations').select('*')
         .eq('centre_id', centreId).eq('date_jour', jour).order('numero'),
-      supabase.from('aeronefs').select('id, immatriculation, places, altitude_max_m, masse_max_kg')
+      supabase.from('aeronefs').select('id, immatriculation, type, places, altitude_max_m, masse_max_kg')
         .eq('centre_id', centreId).eq('actif', true).order('immatriculation'),
       supabase.from('centres').select('avionnage_actif, latitude, longitude').eq('id', centreId).maybeSingle(),
       supabase.from('centres_options').select('embarquement_qr').eq('centre_id', centreId).maybeSingle(),
@@ -713,7 +713,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
       )}
 
       {/* Sans avion, pas de planche : la saisie est ici, là où le manque se voit. */}
-      <AjouterAeronef centreId={centreId} aeronefs={aeronefs} onFait={charger} />
+      <FlotteAeronefs centreId={centreId} aeronefs={aeronefs} onFait={charger} />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(280px,2fr)]">
         {/* ── Les planches ─────────────────────────────────────────────── */}

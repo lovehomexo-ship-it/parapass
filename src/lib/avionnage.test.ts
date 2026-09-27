@@ -19,6 +19,18 @@ describe('avionnage — capacité', () => {
     expect(siegesOccupes([])).toBe(0);
   });
 
+  it('un moniteur qui a sa propre ligne ne prend pas deux sièges', () => {
+    // Le declencheur de la base comptait « une ligne + une de plus des qu'un
+    // moniteur est designe ». Un moniteur PAC s'inscrit pourtant comme tout le
+    // monde : il occupait donc deux sieges. Sur une planche de 9 dans un
+    // 10 places, l'ecran affichait « 1 place libre » et la base refusait le
+    // dixieme. Le siege existait et personne ne pouvait s'y asseoir.
+    expect(siegesOccupes([
+      { parachutiste_id: 'eleve', moniteur_id: 'thomas' },
+      { parachutiste_id: 'thomas' },
+    ])).toBe(2);
+  });
+
   it('moniteur_id nul ou absent ne compte pas', () => {
     expect(siegesOccupes([{ moniteur_id: null }, {}])).toBe(2);
   });

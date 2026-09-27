@@ -47,7 +47,10 @@ interface Rotation {
   altitude_largage_m: number | null; heure_prevue: string | null;
   statut: string; aeronef_id: string | null; cloturee_le: string | null;
 }
-export interface Aeronef { id: string; immatriculation: string; places: number; altitude_max_m: number | null }
+export interface Aeronef {
+  id: string; immatriculation: string; places: number;
+  altitude_max_m: number | null; type?: string | null; masse_max_kg?: number | null;
+}
 interface Place {
   id: string; rotation_id: string; parachutiste_id: string | null;
   moniteur_id: string | null;
@@ -73,7 +76,7 @@ function RotationsInner({ centreId }: { centreId: string }) {
     const [{ data: rot, error: e1 }, { data: av }, { data: apt }] = await Promise.all([
       supabase.from('rotations').select('*')
         .eq('centre_id', centreId).eq('date_jour', jour).order('numero'),
-      supabase.from('aeronefs').select('id, immatriculation, places, altitude_max_m')
+      supabase.from('aeronefs').select('id, immatriculation, type, places, altitude_max_m, masse_max_kg')
         .eq('centre_id', centreId).eq('actif', true).order('immatriculation'),
       supabase.rpc('get_aptitude_du_jour', { p_centre_id: centreId }),
     ]);
@@ -216,7 +219,7 @@ function RotationsInner({ centreId }: { centreId: string }) {
       {/* Sans avion, pas de largage : la saisie est ICI, là où le manque se
           constate — plutôt qu'un renvoi vers un écran où le formulaire
           n'existe pas. */}
-      <AjouterAeronef centreId={centreId} aeronefs={aeronefs} onFait={charger} />
+      <FlotteAeronefs centreId={centreId} aeronefs={aeronefs} onFait={charger} />
 
 
       {rotations.length === 0 ? (
@@ -393,16 +396,63 @@ export function Inscrire({ rotationId, presents, dejaInscrits, onInscrire }: {
 
 // ─── Aéronefs du centre ──────────────────────────────────────────────────────
 
-export function AjouterAeronef({ centreId, aeronefs, onFait }: {
+/**
+ * DES CAPACITÉS CONNUES, PROPOSÉES — JAMAIS IMPOSÉES.
+ *
+ * Choisir un type pré-remplit les places et le plafond. Ce sont les
+ * configurations courantes de ces avions en parachutisme, pas une vérité :
+ * un même PC-6 vole à 8 ou à 10 selon son aménagement. La valeur reste
+ * modifiable, et l’écran renvoie à la seule source qui fasse foi — la fiche de
+ * pesée de l’avion.
+ */
+const TYPES_CONNUS: { type: string; places: number; plafond: number }[] = [
+  { type: 'Cessna 182', places: 4, plafond: 4000 },
+  { type: 'Cessna 206', places: 5, plafond: 4000 },
+  { type: 'GA8 Airvan', places: 6, plafond: 4000 },
+  { type: 'Pilatus PC-6', places: 10, plafond: 4200 },
+  { type: 'PAC 750XL', places: 16, plafond: 4200 },
+  { type: 'Cessna 208 Caravan', places: 17, plafond: 4200 },
+  { type: 'Let L-410', places: 16, plafond: 4200 },
+  { type: 'DHC-6 Twin Otter', places: 22, plafond: 4200 },
+];
+
+/**
+ * LA FLOTTE DU CENTRE. Elle était jusqu’ici en écriture seule : on ajoutait un
+ * avion, on ne pouvait plus jamais corriger ses places. Un chiffre faux —
+ * saisi vite, ou laissé au défaut de 4 — condamnait chaque planche à compter
+ * de travers, sans recours depuis l’application.
+ *
+ * CE QUE « PLACES » COMPTE, ET QUE RIEN NE DISAIT : les sièges occupables par
+ * des PARACHUTISTES — largueur et passager tandem compris —, ÉQUIPAGE EXCLU.
+ * Le pilote ne s’inscrit jamais sur une planche : le compter dans la capacité
+ * que la planche remplit aurait fait perdre un siège à chaque rotation.
+ */
+export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
   centreId: string; aeronefs: Aeronef[]; onFait: () => void;
 }) {
   const [ouvert, setOuvert] = useState(false);
+  const [deplie, setDeplie] = useState(false);
   const [immat, setImmat] = useState('');
   const [type, setType] = useState('');
   const [places, setPlaces] = useState('4');
   const [altMax, setAltMax] = useState('4000');
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
+
+  /** Choisir un type connu remplit les deux chiffres d’un coup. */
+  const choisirType = (valeur: string) => {
+    setType(valeur);
+    const connu = TYPES_CONNUS.find(t => t.type.toLowerCase() === valeur.trim().toLowerCase());
+    if (connu) { setPlaces(String(connu.places)); setAltMax(String(connu.plafond)); }
+  };
+
+  /** Corriger un avion déjà enregistré — ce qui manquait. */
+  const ecrire = async (id: string, patch: Partial<Aeronef>) => {
+    setErreur(null);
+    const { error } = await supabase.from('aeronefs').update(patch).eq('id', id);
+    if (error) { setErreur(error.message); return; }
+    onFait();
+  };
 
   const valider = async () => {
     if (!immat.trim()) return;
@@ -425,52 +475,151 @@ export function AjouterAeronef({ centreId, aeronefs, onFait }: {
 
   const st = { minHeight: 40, background: 'var(--c-bg)',
     border: '1px solid var(--c-border)', color: 'var(--c-text)' } as const;
-
-  if (!ouvert) {
-    return (
-      <div className="rounded-2xl p-3 flex items-center justify-between gap-2 flex-wrap"
-        style={{ background: aeronefs.length === 0 ? 'rgba(251,191,36,0.10)' : 'var(--c-surface)',
-          border: `1px solid ${aeronefs.length === 0 ? 'rgba(251,191,36,0.35)' : 'var(--c-border)'}` }}>
-        <p className="text-xs" style={{ color: 'var(--c-text2)' }}>
-          {aeronefs.length === 0
-            ? "Aucun aéronef enregistré — sans avion, pas de largage."
-            : `${aeronefs.length} aéronef(s) : ${aeronefs.map(a => a.immatriculation).join(', ')}`}
-        </p>
-        <button onClick={() => setOuvert(true)}
-          className="flex items-center gap-1 px-3 rounded-lg text-xs font-bold"
-          style={{ minHeight: 36, background: 'var(--c-bg)', color: 'var(--c-text)',
-            border: '1px solid var(--c-border)' }}>
-          <Plus className="w-3 h-3" aria-hidden /> Aéronef
-        </button>
-      </div>
-    );
-  }
+  const stNum = { minHeight: 32, background: 'var(--c-input, var(--c-bg))',
+    border: '1px solid var(--c-border)', color: 'var(--c-text)' } as const;
 
   return (
     <div className="rounded-2xl p-3 space-y-2"
-      style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
-      <div className="flex gap-2 flex-wrap">
-        <input value={immat} onChange={e => setImmat(e.target.value)} placeholder="Immatriculation *"
-          className="flex-1 min-w-[130px] rounded-lg px-2 text-xs" style={st} />
-        <input value={type} onChange={e => setType(e.target.value)} placeholder="Type (ex : PC-6)"
-          className="flex-1 min-w-[110px] rounded-lg px-2 text-xs" style={st} />
-        <input value={places} onChange={e => setPlaces(e.target.value)} placeholder="Places"
-          inputMode="numeric" className="w-20 rounded-lg px-2 text-xs" style={st} />
-        <input value={altMax} onChange={e => setAltMax(e.target.value)} placeholder="Alt. max (m)"
-          inputMode="numeric" className="w-28 rounded-lg px-2 text-xs" style={st} />
+      style={{ background: aeronefs.length === 0 ? 'rgba(251,191,36,0.10)' : 'var(--c-surface)',
+        border: `1px solid ${aeronefs.length === 0 ? 'rgba(251,191,36,0.35)' : 'var(--c-border)'}` }}>
+
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <p className="text-xs" style={{ color: 'var(--c-text2)' }}>
+          {aeronefs.length === 0
+            ? 'Aucun aéronef enregistré — sans avion, pas de largage.'
+            : <>
+                <strong>{aeronefs.length} aéronef{aeronefs.length > 1 ? 's' : ''}</strong>
+                {' · '}
+                {aeronefs.map(a => `${a.immatriculation} (${a.places} pl.)`).join(', ')}
+              </>}
+        </p>
+        <div className="flex gap-2">
+          {aeronefs.length > 0 && (
+            <button onClick={() => setDeplie(v => !v)} aria-expanded={deplie}
+              className="flex items-center gap-1 px-3 rounded-lg text-xs font-bold"
+              style={{ minHeight: 36, color: 'var(--c-text2)', border: '1px solid var(--c-border)' }}>
+              {deplie ? 'Masquer' : 'Modifier la flotte'}
+            </button>
+          )}
+          {!ouvert && (
+            <button onClick={() => setOuvert(true)}
+              className="flex items-center gap-1 px-3 rounded-lg text-xs font-bold"
+              style={{ minHeight: 36, background: 'var(--c-bg)', color: 'var(--c-text)',
+                border: '1px solid var(--c-border)' }}>
+              <Plus className="w-3 h-3" aria-hidden /> Aéronef
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* ── LA FLOTTE, MODIFIABLE ──────────────────────────────────────── */}
+      {deplie && aeronefs.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-[11px]" style={{ color: 'var(--c-muted)' }}>
+            <strong>Places</strong> = sièges parachutistes — largueur et passager
+            tandem compris, <strong>pilote non compris</strong>. C’est ce nombre que
+            la planche remplit, et le « 9/10 » qu’elle affiche.
+          </p>
+          {aeronefs.map(a => (
+            <div key={a.id} className="flex items-center gap-2 flex-wrap rounded-xl px-2 py-1.5"
+              style={{ background: 'var(--c-bg)', border: '1px solid var(--c-border)' }}>
+              <Plane className="w-3.5 h-3.5 flex-shrink-0" aria-hidden style={{ color: 'var(--c-muted)' }} />
+              <span className="flex-1 min-w-[120px] text-xs font-bold" style={{ color: 'var(--c-text)' }}>
+                {a.immatriculation}
+                {a.type && <span className="font-normal" style={{ color: 'var(--c-muted)' }}>{' · '}{a.type}</span>}
+              </span>
+              <label className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--c-muted)' }}>
+                <span className="sr-only">Places parachutistes du {a.immatriculation}, pilote non compris</span>
+                <input type="number" min={1} max={40} step={1} defaultValue={a.places}
+                  onBlur={e => {
+                    const n = Number(e.target.value);
+                    if (n >= 1 && n <= 40 && n !== a.places) ecrire(a.id, { places: n });
+                    else e.target.value = String(a.places);
+                  }}
+                  className="rounded-lg px-1.5 text-xs text-right w-14" style={stNum} />
+                places
+              </label>
+              <label className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--c-muted)' }}>
+                <span className="sr-only">Plafond de largage du {a.immatriculation}, en mètres</span>
+                <input type="number" min={500} max={8000} step={100} defaultValue={a.altitude_max_m ?? ''}
+                  placeholder="—"
+                  onBlur={e => {
+                    const v = e.target.value.trim() === '' ? null : Number(e.target.value);
+                    if (v !== (a.altitude_max_m ?? null)) ecrire(a.id, { altitude_max_m: v });
+                  }}
+                  className="rounded-lg px-1.5 text-xs text-right w-20" style={stNum} />
+                m max
+              </label>
+              <label className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--c-muted)' }}>
+                <span className="sr-only">Masse embarquée maximale du {a.immatriculation}, en kg</span>
+                <input type="number" min={100} max={10000} step={10} defaultValue={a.masse_max_kg ?? ''}
+                  placeholder="— kg"
+                  onBlur={e => {
+                    const v = e.target.value.trim() === '' ? null : Number(e.target.value);
+                    if (v !== (a.masse_max_kg ?? null)) ecrire(a.id, { masse_max_kg: v });
+                  }}
+                  className="rounded-lg px-1.5 text-xs text-right w-20" style={stNum} />
+                kg max
+              </label>
+            </div>
+          ))}
+          <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
+            Ces chiffres se lisent sur la fiche de pesée de l’avion. ParaPass
+            n’en invente aucun : une masse maximale non renseignée reste vide,
+            et la planche affiche la masse embarquée sans plafond.
+          </p>
+        </div>
+      )}
+
+      {/* ── AJOUTER UN AÉRONEF ─────────────────────────────────────────── */}
+      {ouvert && (
+        <div className="space-y-2 pt-1">
+          <div className="flex gap-2 flex-wrap items-end">
+            <label className="flex-1 min-w-[130px] text-[11px]" style={{ color: 'var(--c-muted)' }}>
+              Immatriculation *
+              <input value={immat} onChange={e => setImmat(e.target.value)} placeholder="F-HPCJ"
+                className="block w-full rounded-lg px-2 text-xs mt-0.5" style={st} />
+            </label>
+            <label className="flex-1 min-w-[140px] text-[11px]" style={{ color: 'var(--c-muted)' }}>
+              Type
+              <input value={type} onChange={e => choisirType(e.target.value)}
+                list="types-aeronefs" placeholder="ex : Pilatus PC-6"
+                className="block w-full rounded-lg px-2 text-xs mt-0.5" style={st} />
+              <datalist id="types-aeronefs">
+                {TYPES_CONNUS.map(t => <option key={t.type} value={t.type}>{t.places} places</option>)}
+              </datalist>
+            </label>
+            <label className="w-24 text-[11px]" style={{ color: 'var(--c-muted)' }}>
+              Places
+              <input value={places} onChange={e => setPlaces(e.target.value)}
+                inputMode="numeric" className="block w-full rounded-lg px-2 text-xs mt-0.5" style={st} />
+            </label>
+            <label className="w-28 text-[11px]" style={{ color: 'var(--c-muted)' }}>
+              Plafond (m)
+              <input value={altMax} onChange={e => setAltMax(e.target.value)}
+                inputMode="numeric" className="block w-full rounded-lg px-2 text-xs mt-0.5" style={st} />
+            </label>
+          </div>
+          <p className="text-[11px]" style={{ color: 'var(--c-muted)' }}>
+            <strong>Places = sièges parachutistes, pilote non compris.</strong>{' '}
+            Choisir un type connu remplit les deux chiffres ; ce sont des
+            configurations courantes, à confronter à la fiche de pesée de votre avion.
+          </p>
+          <div className="flex gap-2 justify-end">
+            <button onClick={() => setOuvert(false)} className="px-3 rounded-lg text-xs font-semibold"
+              style={{ minHeight: 36, color: 'var(--c-muted)', border: '1px solid var(--c-border)' }}>
+              Annuler
+            </button>
+            <button onClick={valider} disabled={!immat.trim() || envoi}
+              className="px-3 rounded-lg text-xs font-bold disabled:opacity-50"
+              style={{ minHeight: 36, background: '#2563EB', color: '#fff' }}>
+              {envoi ? 'Ajout…' : 'Ajouter'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {erreur && <p className="text-[11px]" style={{ color: '#F87171' }}>{erreur}</p>}
-      <div className="flex gap-2 justify-end">
-        <button onClick={() => setOuvert(false)} className="px-3 rounded-lg text-xs font-semibold"
-          style={{ minHeight: 36, color: 'var(--c-muted)', border: '1px solid var(--c-border)' }}>
-          Annuler
-        </button>
-        <button onClick={valider} disabled={!immat.trim() || envoi}
-          className="px-3 rounded-lg text-xs font-bold disabled:opacity-50"
-          style={{ minHeight: 36, background: '#2563EB', color: '#fff' }}>
-          {envoi ? 'Ajout…' : 'Ajouter'}
-        </button>
-      </div>
     </div>
   );
 }
