@@ -167,39 +167,46 @@ export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlace
                   {a.libelle}
                 </button>
 
-                {/* Un bouton par rotation qui a encore de la place ET où la
-                    personne n'est pas déjà inscrite. Proposer un placement que
-                    la base refusera est une promesse qu'on ne tient pas — et
-                    c'est exactement ce qui se passait : le clic échouait sur
-                    « duplicate key ... une_fois_par_rotation », message dont on
-                    ne pouvait rien tirer au bord d'une piste. */}
+                {/* TOUTES LES ROTATIONS RESTENT VISIBLES, MÊME INDISPONIBLES.
+                    Elles disparaissaient quand l'avion était plein ou la
+                    personne déjà à bord. Une absence n'explique rien : le chef
+                    d'avionnage voyait un bouton hier, plus rien aujourd'hui, et
+                    en concluait que l'application refusait d'ajouter qui que ce
+                    soit. Le bouton reste, grisé, et DIT pourquoi. */}
                 <div className="flex gap-1.5 flex-wrap">
-                  {rotations
-                    .filter(r => r.places_libres === null || r.places_libres > 0)
-                    .filter(r => !(r.deja ?? []).includes(l.parachutiste_id))
-                    .map(r => (
-                    <button key={r.id} type="button" disabled={action_ !== null}
+                  {rotations.map(r => {
+                    const dejaDedans = (r.deja ?? []).includes(l.parachutiste_id);
+                    const complet = r.places_libres !== null && r.places_libres <= 0;
+                    const raison = dejaDedans ? 'déjà sur cette planche'
+                                 : complet    ? 'avion complet'
+                                              : null;
+                    return (
+                    <button key={r.id} type="button"
+                      disabled={action_ !== null || raison !== null}
                       onClick={() => placer(l.id, r.id)}
-                      className="disabled:opacity-50"
-                      style={{ ...action('secondaire'), minHeight: 36, fontSize: 12, padding: '0 10px' }}>
+                      title={raison
+                        ? `Rotation ${r.numero} — ${raison}`
+                        : `Placer sur la rotation ${r.numero}`
+                          + (r.places_libres !== null ? ` — ${r.places_libres} place(s) libre(s)` : '')}
+                      className="disabled:opacity-40"
+                      style={{ ...action('secondaire'), minHeight: 36, fontSize: 12, padding: '0 10px',
+                               cursor: raison ? 'not-allowed' : undefined }}>
                       <UserPlus className="w-3.5 h-3.5" aria-hidden />
                       Rot. {r.numero}
+                      {raison && (
+                        <span style={{ fontWeight: 400, opacity: 0.8 }}>
+                          {' · '}{dejaDedans ? 'déjà dedans' : 'complet'}
+                        </span>
+                      )}
                     </button>
-                  ))}
+                    );
+                  })}
                   {rotations.length === 0 && (
                     <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>
                       créez un avion
                     </span>
                   )}
-                  {rotations.length > 0
-                    && rotations.every(r => (r.deja ?? []).includes(l.parachutiste_id)
-                          || !(r.places_libres === null || r.places_libres > 0)) && (
-                    <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>
-                      {rotations.some(r => (r.deja ?? []).includes(l.parachutiste_id))
-                        ? 'déjà sur les planches ouvertes'
-                        : 'tous les avions sont complets'}
-                    </span>
-                  )}
+
                 </div>
                 </div>
               </li>
