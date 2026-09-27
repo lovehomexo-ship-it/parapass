@@ -102,7 +102,21 @@ export function BriefingSection({ centreId }: { centreId: string }) {
       .upload(path, compressed.blob, { upsert: true, cacheControl: '31536000', contentType: compressed.blob.type });
     if (upErr) {
       console.error('Upload image de fond échoué :', upErr);
-      setError(`Upload échoué : ${upErr.message}`);
+      // « new row violates row-level security policy » ne dit rien à personne,
+      // et surtout pas quoi faire. On traduit les cas connus ; le message brut
+      // reste dans la console pour le diagnostic.
+      const brut = upErr.message ?? '';
+      setError(
+        /row-level security|not authorized|Unauthorized/i.test(brut)
+          ? 'Envoi refusé : seul un administrateur de ce centre peut poser la photo '
+            + 'satellite. Vérifiez que vous êtes bien connecté sur la bonne DZ.'
+        : /exceeded the maximum allowed size|Payload too large/i.test(brut)
+          ? 'Image trop lourde même après compression. Recadrez-la, ou partez d’une '
+            + 'capture moins large.'
+        : /mime type|not supported/i.test(brut)
+          ? 'Format non accepté. Utilisez une capture JPEG ou PNG — ParaPass la '
+            + 'convertit ensuite lui-même.'
+          : `Envoi échoué : ${brut}`);
       return;
     }
     const next = {
