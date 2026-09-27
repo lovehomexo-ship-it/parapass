@@ -183,7 +183,20 @@ button:not(:disabled):active, [role="button"]:not([aria-disabled="true"]):active
 }
 
 /* La barre latérale du Centre n'existe qu'à partir de lg : sous ce seuil, la
-   marge du contenu doit être nulle, quelle que soit la largeur mémorisée. */
-@media (max-width: 1023px) {
-  .parapass-centre { --nav-largeur: 0px; }
+   marge du contenu doit être nulle, quelle que soit la largeur mémorisée.
+
+   CETTE RÈGLE ÉTAIT ÉCRITE, ET SANS EFFET. Le composant posait `--nav-largeur`
+   en style INLINE, et un style inline l'emporte sur une feuille de styles —
+   media query comprise. Le contenu gardait donc 220 px de marge gauche sur un
+   téléphone de 385 px : il en restait 165, et un nom de centre un peu long s'y
+   affichait une lettre par ligne.
+
+   La variable posée inline s'appelle désormais `--nav-largeur-desktop` : elle
+   dit ce que MESURE la barre, pas ce que le contenu doit décaler. C'est ici,
+   et ici seulement, qu'on décide à partir de quelle largeur ce décalage
+   s'applique. */
+.parapass-centre { --nav-largeur: 0px; }
+
+@media (min-width: 1024px) {
+  .parapass-centre { --nav-largeur: var(--nav-largeur-desktop, 220px); }
 }

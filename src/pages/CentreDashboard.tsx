@@ -3258,7 +3258,12 @@ export function CentreDashboardPage() {
     <div className="min-h-screen flex parapass-centre"
       style={{ background: 'var(--c-bg)',
                // Lue par <main> ; neutralisée sous lg par la règle CSS.
-               ['--nav-largeur' as string]: navRepliee ? '60px' : '220px' }}>
+               // On déclare la LARGEUR DE LA BARRE, pas la marge du contenu :
+               // la feuille de styles décide seule à partir de quel seuil elle
+               // s'applique (cf. `.parapass-centre` dans index.css). Poser
+               // `--nav-largeur` ici écrasait la media query, et le contenu
+               // gardait 220 px de marge sur un téléphone.
+               ['--nav-largeur-desktop' as string]: navRepliee ? '60px' : '220px' }}>
       {/* Mode kiosque (?kiosque=1) : écran du hangar, sans aucune navigation.
           On masque la barre latérale et on laisse le contenu occuper l'écran. */}
       {!modeKiosque && (

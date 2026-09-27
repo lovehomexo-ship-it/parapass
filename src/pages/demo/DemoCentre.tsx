@@ -408,6 +408,9 @@ function DemoCentreInner() {
                     saut_en_groupe: 'Saut en groupe',
                     formation_brevet_a: 'Formation Brevet A',
                     journee_portes_ouvertes: 'Journée portes ouvertes',
+                    // Une journée annulée fait partie du métier : la démonstration
+                    // le montre plutôt que d'afficher un planning sans nuage.
+                    journee_annulee: 'Journée annulée — météo',
                   };
                   return (
                     <div key={p.id} className="flex items-center gap-4 px-5 py-4"

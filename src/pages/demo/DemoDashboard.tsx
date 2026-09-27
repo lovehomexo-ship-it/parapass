@@ -616,7 +616,7 @@ function DemoDashboardInner() {
                   <div style={{ background: '#0F2549', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16 }}>
                     <div className="flex items-center gap-2 mb-3">
                       <Wind className="w-3.5 h-3.5 text-blue-400" />
-                      <span className="text-xs font-bold text-white">SkyDive Atlantique — Météo</span>
+                      <span className="text-xs font-bold text-white">Royan Océan Parachutisme — Météo</span>
                     </div>
                     <div className="space-y-2">
                       {[

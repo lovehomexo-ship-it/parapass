@@ -452,7 +452,7 @@ export const DEMO_PARACHUTISTE_LICENCES: Licence[] = [
     statut: 'actif',
     created_at: '2019-05-01T10:00:00Z',
     code_club: '0442',
-    nom_club: 'SkyDive Atlantique',
+    nom_club: 'Royan Océan Parachutisme',
     beneficiaire_nom: 'Marie BERNARD',
     beneficiaire_lien: 'conjoint',
     beneficiaire_telephone: '06 XX XX XX XX',
@@ -489,7 +489,7 @@ export const DEMO_PARACHUTISTE_BREVETS: Brevet[] = [
     parachutiste_id: DEMO_PARACHUTISTE_PROFILE.id,
     type_brevet: 'B',
     date_obtention: '2020-08-15',
-    centre_delivrance: 'SkyDive Atlantique',
+    centre_delivrance: 'Royan Océan Parachutisme',
     numero_brevet: 'B-2020-02187',
     scan_diplome_url: null,
     created_at: '2020-08-15T10:00:00Z',
@@ -499,7 +499,7 @@ export const DEMO_PARACHUTISTE_BREVETS: Brevet[] = [
     parachutiste_id: DEMO_PARACHUTISTE_PROFILE.id,
     type_brevet: 'A',
     date_obtention: '2020-02-28',
-    centre_delivrance: 'SkyDive Atlantique',
+    centre_delivrance: 'Royan Océan Parachutisme',
     numero_brevet: 'A-2020-05621',
     scan_diplome_url: null,
     created_at: '2020-02-28T10:00:00Z',
@@ -567,15 +567,15 @@ function makeLucasSaut(
 }
 
 export const DEMO_PARACHUTISTE_SAUTS: Saut[] = [
-  makeLucasSaut(50, '2026-05-25', 'SkyDive Atlantique', 'F-HSLK', 4200, 'Entraînement', 'OC', 'Vol Relatif 2-way — formation satisfaisante', 'valide', 'Patrick Moreau'),
-  makeLucasSaut(49, '2026-05-18', 'SkyDive Atlantique', 'F-HSLK', 4000, 'Entraînement', 'OA', 'Travail sur la précision à l\'atterrissage', 'valide', 'Patrick Moreau'),
+  makeLucasSaut(50, '2026-05-25', 'Royan Océan Parachutisme', 'F-HSLK', 4200, 'Entraînement', 'OC', 'Vol Relatif 2-way — formation satisfaisante', 'valide', 'Patrick Moreau'),
+  makeLucasSaut(49, '2026-05-18', 'Royan Océan Parachutisme', 'F-HSLK', 4000, 'Entraînement', 'OA', 'Travail sur la précision à l\'atterrissage', 'valide', 'Patrick Moreau'),
   makeLucasSaut(48, '2026-05-04', 'Niort-Marais Poitevin', 'F-GNPT', 3800, 'Loisir', 'OA', 'Saut loisir, belle journée ensoleillée', 'valide', 'Claire Tissot'),
-  makeLucasSaut(47, '2026-04-26', 'SkyDive Atlantique', 'F-HSLK', 4200, 'Entraînement', 'OR>60"', 'Vol libre 70 secondes — stabilité bonne', 'valide', 'Patrick Moreau'),
-  makeLucasSaut(46, '2026-04-13', 'SkyDive Atlantique', 'F-HSLK', 4000, 'Entraînement', 'OC', 'Entraînement VR — travail de sortie', 'en_attente'),
+  makeLucasSaut(47, '2026-04-26', 'Royan Océan Parachutisme', 'F-HSLK', 4200, 'Entraînement', 'OR>60"', 'Vol libre 70 secondes — stabilité bonne', 'valide', 'Patrick Moreau'),
+  makeLucasSaut(46, '2026-04-13', 'Royan Océan Parachutisme', 'F-HSLK', 4000, 'Entraînement', 'OC', 'Entraînement VR — travail de sortie', 'en_attente'),
   makeLucasSaut(45, '2026-03-29', 'La Ferté-Gaucher', 'F-GLFG', 4200, 'Compétition', 'OC', 'Compétition régionale VR2', 'valide', 'Jean-Marc Aubert'),
-  makeLucasSaut(44, '2026-03-15', 'SkyDive Atlantique', 'F-HSLK', 3800, 'Entraînement', 'OA', 'Exercice de chute stabilisée', 'valide', 'Patrick Moreau'),
-  makeLucasSaut(43, '2026-02-22', 'SkyDive Atlantique', 'F-HSLK', 4000, 'Entraînement', 'OC', 'Formation 2-way — bonne communication', 'valide', 'Patrick Moreau'),
-  makeLucasSaut(42, '2025-11-15', 'SkyDive Atlantique', 'F-HSLK', 4200, 'Entraînement', 'OR>60"', 'Dernier saut de saison 2025', 'valide', 'Patrick Moreau'),
+  makeLucasSaut(44, '2026-03-15', 'Royan Océan Parachutisme', 'F-HSLK', 3800, 'Entraînement', 'OA', 'Exercice de chute stabilisée', 'valide', 'Patrick Moreau'),
+  makeLucasSaut(43, '2026-02-22', 'Royan Océan Parachutisme', 'F-HSLK', 4000, 'Entraînement', 'OC', 'Formation 2-way — bonne communication', 'valide', 'Patrick Moreau'),
+  makeLucasSaut(42, '2025-11-15', 'Royan Océan Parachutisme', 'F-HSLK', 4200, 'Entraînement', 'OR>60"', 'Dernier saut de saison 2025', 'valide', 'Patrick Moreau'),
   makeLucasSaut(41, '2025-10-18', 'Niort-Marais Poitevin', 'F-GNPT', 3800, 'Loisir', 'OA', 'Week-end découverte DZ', 'valide', 'Claire Tissot'),
 ];
 
@@ -637,7 +637,7 @@ export const DEMO_PARACHUTISTE_STATS = {
   sautsCetteAnnee: 9,
   altitudeMoyenne: 4050,
   altitudeRecord: 4200,
-  dzPreferee: 'SkyDive Atlantique',
+  dzPreferee: 'Royan Océan Parachutisme',
   dzPrefereeCount: 38,
   dzVisitees: 4,
   repartitionCategories: { OA: 22, OC: 20, 'OR>60"': 8 },
@@ -661,68 +661,87 @@ export const DEMO_PARACHUTISTE_PROGRESSION = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DEMO CENTRE — SkyDive Atlantique (used by DemoSelectModal / local demo mode)
+// DEMO CENTRE — Royan Océan Parachutisme (DemoSelectModal / mode démo local)
+//
+// C'était SkyDive Atlantique, une DZ inventée de toutes pièces : des chiffres
+// ronds, dix licenciés, rien derrière. Un visiteur y voyait une maquette, pas
+// un produit. Ces valeurs sont désormais celles de Royan, le second centre de
+// démonstration réellement peuplé — 25 licenciés, ~5 900 sauts, une flotte, un
+// parc, une zone de saut et trois planches d'avionnage.
+//
+// C'est un INSTANTANÉ : cet écran de démonstration ne lit pas la base. Il se
+// rafraîchit à la main, comme avant — mais il décrit maintenant quelque chose
+// qui existe, et sur lequel on peut ouvrir une vraie session.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const DEMO_CENTRE_DATA = {
   centre: {
-    id: 'demo-centre-skydive-atlantique',
-    nom: 'SkyDive Atlantique',
-    ville: 'Saint-Jean-d\'Angély',
+    id: '1d92899c-1d37-49c9-a64d-5dd2999ddd7b',
+    nom: 'Royan Océan Parachutisme',
+    ville: 'Royan — aérodrome de Royan-Médis',
     region: 'Nouvelle-Aquitaine',
     departement: '17',
-    code_club: '0442',
-    email_contact: 'contact@skydive-atlantique.fr',
-    telephone: '05 46 XX XX XX',
-    site_web: 'https://skydive-atlantique.fr',
+    code_club: 'DEMO1760',
+    email_contact: 'contact@royan-ocean-parachutisme.demo',
+    telephone: '05 46 05 21 00',
+    site_web: 'https://royan-ocean-parachutisme.demo',
     created_at: '2018-04-01T00:00:00Z',
-    nom_dt: 'Patrick Moreau',
+    nom_dt: 'Mathieu SAULNIER',
     signature_dt_url: null,
   },
   stats: {
     totalLicencies: 25,
-    licenciesActifs: 22,
-    totalSautsAnnee: 487,
-    moniteurs: 3,
-    alertesCritiques: 2,
-    alertesWarning: 5,
-    planningCreneaux: 14,
+    licenciesActifs: 25,
+    totalSautsAnnee: 590,
+    moniteurs: 4,
+    alertesCritiques: 1,
+    alertesWarning: 3,
+    planningCreneaux: 6,
   },
+  // Les douze licenciés les plus actifs de Royan, tels que la base les porte.
+  // Claire DUBOIS, Lucas BERNARD, Marie et Alexandre Dupont, Julie MOREAU et
+  // Hugo SIMON sont AUSSI licenciés à BigAir : leur compteur cumule les deux
+  // DZ, comme un carnet le fait dans la vraie vie.
   licencies: [
-    { id: 'dl-1', nom: 'BERNARD', prenom: 'Lucas', numero_licence: 'FFP-2019-04521', statut_licence: 'actif', brevet: 'B', nb_sauts: 50, derniere_activite: '2026-05-25', alertes: 0 },
-    { id: 'dl-2', nom: 'MARTIN', prenom: 'Sophie', numero_licence: 'FFP-2021-08734', statut_licence: 'actif', brevet: 'B', nb_sauts: 247, derniere_activite: '2026-05-18', alertes: 1 },
-    { id: 'dl-3', nom: 'DUPONT', prenom: 'Thomas', numero_licence: 'FFP-2022-10284', statut_licence: 'actif', brevet: 'A', nb_sauts: 32, derniere_activite: '2026-04-30', alertes: 0 },
-    { id: 'dl-4', nom: 'LEROY', prenom: 'Maxime', numero_licence: 'FFP-2020-07431', statut_licence: 'actif', brevet: 'B', nb_sauts: 88, derniere_activite: '2026-05-12', alertes: 1 },
-    { id: 'dl-5', nom: 'GIRARD', prenom: 'Nicolas', numero_licence: 'FFP-2023-12841', statut_licence: 'actif', brevet: 'A', nb_sauts: 18, derniere_activite: '2026-05-08', alertes: 0 },
-    { id: 'dl-6', nom: 'PETIT', prenom: 'Camille', numero_licence: 'FFP-2021-09102', statut_licence: 'actif', brevet: 'B', nb_sauts: 74, derniere_activite: '2026-05-20', alertes: 0 },
-    { id: 'dl-7', nom: 'ROUX', prenom: 'Antoine', numero_licence: 'FFP-2019-03214', statut_licence: 'actif', brevet: 'B', nb_sauts: 121, derniere_activite: '2026-05-11', alertes: 0 },
-    { id: 'dl-8', nom: 'MOREAU', prenom: 'Julie', numero_licence: 'FFP-2024-14523', statut_licence: 'actif', brevet: 'A', nb_sauts: 8, derniere_activite: '2026-04-27', alertes: 1 },
-    { id: 'dl-9', nom: 'CLEMENT', prenom: 'Paul', numero_licence: 'FFP-2022-11089', statut_licence: 'actif', brevet: 'B', nb_sauts: 43, derniere_activite: '2026-05-15', alertes: 0 },
-    { id: 'dl-10', nom: 'GARCIA', prenom: 'Laura', numero_licence: 'FFP-2020-06728', statut_licence: 'actif', brevet: 'B', nb_sauts: 96, derniere_activite: '2026-05-22', alertes: 0 },
+    { id: 'dl-1',  nom: 'SAULNIER',    prenom: 'Mathieu',  numero_licence: 'DEMO-17-0a01', statut_licence: 'actif', brevet: 'D', nb_sauts: 2410, derniere_activite: '2026-09-26', alertes: 0 },
+    { id: 'dl-2',  nom: 'COURTOIS',    prenom: 'Nadège',   numero_licence: 'DEMO-17-0b01', statut_licence: 'actif', brevet: 'D', nb_sauts: 1325, derniere_activite: '2026-09-25', alertes: 0 },
+    { id: 'dl-3',  nom: 'DUBOIS',      prenom: 'Claire',   numero_licence: 'FFP-2026-101',  statut_licence: 'actif', brevet: 'D', nb_sauts: 1192, derniere_activite: '2026-09-27', alertes: 0 },
+    { id: 'dl-4',  nom: 'LE GOFF',     prenom: 'Yann',     numero_licence: 'DEMO-17-0b02', statut_licence: 'actif', brevet: 'D', nb_sauts: 893,  derniere_activite: '2026-09-25', alertes: 0 },
+    { id: 'dl-5',  nom: 'BERNARD',     prenom: 'Lucas',    numero_licence: 'FFP-2024-09821', statut_licence: 'actif', brevet: 'D', nb_sauts: 473, derniere_activite: '2026-09-26', alertes: 0 },
+    { id: 'dl-6',  nom: 'VASSEUR',     prenom: 'Élodie',   numero_licence: 'DEMO-17-0a02', statut_licence: 'actif', brevet: 'C', nb_sauts: 312,  derniere_activite: '2026-09-27', alertes: 0 },
+    { id: 'dl-7',  nom: 'DUPONT',      prenom: 'Marie',    numero_licence: 'FFP-2024-00342', statut_licence: 'actif', brevet: 'C', nb_sauts: 295, derniere_activite: '2026-09-26', alertes: 0 },
+    { id: 'dl-8',  nom: 'DUPONT',      prenom: 'Alexandre',numero_licence: '27-1042',       statut_licence: 'actif', brevet: 'C', nb_sauts: 268, derniere_activite: '2026-09-27', alertes: 0 },
+    { id: 'dl-9',  nom: 'CHARPENTIER', prenom: 'Rémi',     numero_licence: 'DEMO-17-0b03', statut_licence: 'actif', brevet: 'C', nb_sauts: 207,  derniere_activite: '2026-09-27', alertes: 1 },
+    { id: 'dl-10', nom: 'BENALI',      prenom: 'Sarah',    numero_licence: 'DEMO-17-0b04', statut_licence: 'actif', brevet: 'C', nb_sauts: 181,  derniere_activite: '2026-09-26', alertes: 0 },
+    { id: 'dl-11', nom: 'FERRAND',     prenom: 'Inès',     numero_licence: 'DEMO-17-0b10', statut_licence: 'actif', brevet: 'BPA', nb_sauts: 19, derniere_activite: '2026-09-26', alertes: 0 },
+    { id: 'dl-12', nom: 'NOËL',        prenom: 'Gaspard',  numero_licence: 'DEMO-17-0b11', statut_licence: 'actif', brevet: '—', nb_sauts: 9,    derniere_activite: '2026-09-27', alertes: 0 },
   ],
   moniteurs: [
-    { id: 'dm-1', nom: 'MOREAU', prenom: 'Patrick', qualification: 'Moniteur BPA + DT', nb_validations: 47, disponible: true },
-    { id: 'dm-2', nom: 'TISSOT', prenom: 'Claire', qualification: 'Moniteur BPA', nb_validations: 31, disponible: true },
-    { id: 'dm-3', nom: 'AUBERT', prenom: 'Jean-Marc', qualification: 'Moniteur BPA + Tandem', nb_validations: 29, disponible: false },
+    { id: 'dm-1', nom: 'SAULNIER', prenom: 'Mathieu', qualification: 'BEES 1 · DT · Tandem · Largueur', nb_validations: 96, disponible: true },
+    { id: 'dm-2', nom: 'COURTOIS', prenom: 'Nadège',  qualification: 'BPJEPS · Formatrice PAC · Tandem', nb_validations: 74, disponible: true },
+    { id: 'dm-3', nom: 'LE GOFF',  prenom: 'Yann',    qualification: 'BEES 1 · Tandem · Largueur',       nb_validations: 51, disponible: true },
+    { id: 'dm-4', nom: 'DUBOIS',   prenom: 'Claire',  qualification: 'BPJEPS · Largueuse (aussi BigAir)', nb_validations: 38, disponible: false },
   ],
+  // Une DZ sans aucune alerte n'existe pas : celle-ci en porte trois, dont une
+  // bloquante — la voile de Rémi est sous le minimum de la DT 48.
   alertes: [
-    { id: 'da-1', parachutiste: 'LEROY Maxime', type: 'certificat_medical', message: 'Certificat médical expire le 30/06/2026', urgence: 'warning' },
-    { id: 'da-2', parachutiste: 'MARTIN Sophie', type: 'materiel_revision', message: 'Parachute de secours — révision dépassée', urgence: 'critique' },
-    { id: 'da-3', parachutiste: 'MOREAU Julie', type: 'licence', message: 'Licence non tamponnée pour la saison', urgence: 'warning' },
+    { id: 'da-1', parachutiste: 'CHARPENTIER Rémi', type: 'materiel_revision', message: 'Voile 120 ft² sous le minimum DT 48 pour 79 kg — embarquement bloqué', urgence: 'critique' },
+    { id: 'da-2', parachutiste: 'Parc ROP-10',      type: 'materiel_revision', message: 'Sigma 395 — repliage du secours en cours, sac indisponible', urgence: 'warning' },
+    { id: 'da-3', parachutiste: 'NOËL Gaspard',     type: 'licence',           message: 'Élève PAC — épreuve déclarée prête, en attente du moniteur', urgence: 'warning' },
   ],
   planning: [
-    { id: 'dp-1', date: '2026-06-07', heure_debut: '09:00', heure_fin: '17:00', type: 'saut_en_groupe', nb_inscrits: 8, places_max: 12, moniteur: 'Patrick Moreau' },
-    { id: 'dp-2', date: '2026-06-07', heure_debut: '14:00', heure_fin: '18:00', type: 'formation_brevet_a', nb_inscrits: 3, places_max: 6, moniteur: 'Claire Tissot' },
-    { id: 'dp-3', date: '2026-06-08', heure_debut: '10:00', heure_fin: '16:00', type: 'saut_en_groupe', nb_inscrits: 5, places_max: 10, moniteur: 'Jean-Marc Aubert' },
-    { id: 'dp-4', date: '2026-06-14', heure_debut: '09:00', heure_fin: '18:00', type: 'journee_portes_ouvertes', nb_inscrits: 0, places_max: 20, moniteur: 'Patrick Moreau' },
-    { id: 'dp-5', date: '2026-06-15', heure_debut: '09:00', heure_fin: '17:00', type: 'saut_en_groupe', nb_inscrits: 11, places_max: 12, moniteur: 'Claire Tissot' },
+    { id: 'dp-1', date: '2026-09-27', heure_debut: '09:00', heure_fin: '12:30', type: 'saut_en_groupe',          nb_inscrits: 28, places_max: 40, moniteur: 'Mathieu Saulnier' },
+    { id: 'dp-2', date: '2026-09-27', heure_debut: '14:00', heure_fin: '18:30', type: 'saut_en_groupe',          nb_inscrits: 33, places_max: 40, moniteur: 'Nadège Courtois' },
+    { id: 'dp-3', date: '2026-09-28', heure_debut: '09:00', heure_fin: '12:30', type: 'saut_en_groupe',          nb_inscrits: 9,  places_max: 40, moniteur: 'Yann Le Goff' },
+    { id: 'dp-4', date: '2026-09-29', heure_debut: '09:00', heure_fin: '18:00', type: 'journee_annulee',         nb_inscrits: 0,  places_max: 40, moniteur: 'Mathieu Saulnier' },
+    { id: 'dp-5', date: '2026-10-02', heure_debut: '09:00', heure_fin: '18:00', type: 'formation_brevet_a',      nb_inscrits: 6,  places_max: 24, moniteur: 'Nadège Courtois' },
   ],
   validations_recentes: [
-    { id: 'dv-1', parachutiste: 'BERNARD Lucas', saut_date: '2026-05-25', nature: 'Entraînement', statut: 'valide', moniteur: 'Patrick Moreau' },
-    { id: 'dv-2', parachutiste: 'GARCIA Laura', saut_date: '2026-05-22', nature: 'Loisir', statut: 'valide', moniteur: 'Claire Tissot' },
-    { id: 'dv-3', parachutiste: 'PETIT Camille', saut_date: '2026-05-20', nature: 'Entraînement', statut: 'valide', moniteur: 'Patrick Moreau' },
-    { id: 'dv-4', parachutiste: 'MARTIN Sophie', saut_date: '2026-05-18', nature: 'Entraînement', statut: 'valide', moniteur: 'Patrick Moreau' },
-    { id: 'dv-5', parachutiste: 'DUPONT Thomas', saut_date: '2026-04-30', nature: 'Entraînement', statut: 'en_attente', moniteur: null },
+    { id: 'dv-1', parachutiste: 'VASSEUR Élodie',    saut_date: '2026-09-27', nature: 'Entraînement', statut: 'valide',     moniteur: 'Mathieu Saulnier' },
+    { id: 'dv-2', parachutiste: 'DUPONT Alexandre',  saut_date: '2026-09-27', nature: 'Free fly',     statut: 'valide',     moniteur: 'Nadège Courtois' },
+    { id: 'dv-3', parachutiste: 'CHARPENTIER Rémi',  saut_date: '2026-09-27', nature: 'Vol relatif',  statut: 'valide',     moniteur: 'Yann Le Goff' },
+    { id: 'dv-4', parachutiste: 'BERNARD Lucas',     saut_date: '2026-09-26', nature: 'Tandem',       statut: 'valide',     moniteur: 'Mathieu Saulnier' },
+    { id: 'dv-5', parachutiste: 'NOËL Gaspard',      saut_date: '2026-09-27', nature: 'PAC',          statut: 'en_attente', moniteur: null },
   ],
 };
 

@@ -7,9 +7,21 @@ interface Props {
   onClose: () => void;
 }
 
+// LES COMPTES QUE CE BOUTON OUVRE.
+//
+// Ce sont de VRAIES sessions, pas une maquette : le visiteur voit l'application
+// telle qu'elle est. Les deux portent `is_demo`, ce qui rend `is_demo_user()`
+// vrai en base et fait refuser toute écriture par les politiques `no_demo_*` :
+// la démonstration se visite, elle ne se modifie pas.
+//
+// Le compte centre pointait sur SkyDive Atlantique — un centre qui existe en
+// base mais VIDE : zéro présent, aucun briefing, météo indisponible. Un
+// visiteur y voyait un produit incapable. Il ouvre désormais Royan Océan
+// Parachutisme : 25 licenciés, une flotte, un parc, une zone de saut, un
+// briefing publié et des planches d'avionnage remplies.
 const DEMO_ACCOUNTS = {
   para: { email: 'demo@parapass.fr', password: 'Demo1234!', dest: '/dashboard' },
-  centre: { email: 'admin@skydive-atlantique.fr', password: 'DemoPass2026!', dest: '/centre/dashboard' },
+  centre: { email: 'demo.centre@parapass.fr', password: 'DemoPass2026!', dest: '/centre/dashboard' },
 } as const;
 
 export function DemoSelectModal({ onClose }: Props) {
@@ -134,7 +146,7 @@ export function DemoSelectModal({ onClose }: Props) {
               </div>
               <div>
                 <p className="text-white font-bold text-sm">Centre DZ</p>
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>SkyDive Atlantique · La Rochelle</p>
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>Royan Océan Parachutisme · Royan-Médis</p>
               </div>
             </div>
 

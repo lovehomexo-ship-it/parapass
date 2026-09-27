@@ -303,7 +303,7 @@ export function useParaDemo() {
   return useContext(ParaDemoContext);
 }
 
-// ─── Centre demo context (SkyDive Atlantique) ─────────────────────────────────
+// ─── Centre demo context (Royan Océan Parachutisme) ─────────────────────────────────
 
 interface CentreDemoContextType {
   isDemo: true;
