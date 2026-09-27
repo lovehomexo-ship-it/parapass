@@ -1,0 +1,19 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- LE MONITEUR PAC — et ce que je ne sais pas.
+--
+-- « Accompagné » ne dit pas ce qu'est la personne. Il devient « Moniteur PAC ».
+--
+-- CE QUE JE N'AI PAS TROUVÉ : aucun texte fédéral, dans ce que ParaPass
+-- possède, ne nomme ce rôle. La DT 48 ne parle pas de PAC. Le référentiel
+-- `qualifications_ref` liste BEES1, BPJEPS, DEJEPS, DSS, moniteur fédéral,
+-- initiateur VR, largueur, moniteur tandem — pas de formateur PAC.
+--
+-- Je n'invente donc pas un terme fédéral (P2). « Moniteur PAC » est
+-- DESCRIPTIF, et le référentiel des disciplines est paramétrable : une ligne
+-- suffit à le corriger le jour où le texte est connu.
+--
+-- Ce sur quoi je m'appuie : le manifest de référence (Skydive PAPA) écrit
+-- « PAC » sur les DEUX lignes, moniteur et élève ; et ParaPass a déjà une
+-- qualification `formateur_PAC` dans qualifications.type.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Appliqué LE 27/09/2026 : disciplines_saut.libelle pour 'accompagne'.

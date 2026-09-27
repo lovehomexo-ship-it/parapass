@@ -16,7 +16,7 @@ import { supabase } from './supabase';
 export type TypeSautFile = 'ecole' | 'accompagne' | 'solo' | 'groupe' | 'wingsuit' | 'video';
 
 export const LIBELLE_TYPE: Record<TypeSautFile, string> = {
-  solo: 'Solo', accompagne: 'Accompagné', ecole: 'PAC',
+  solo: 'Solo', accompagne: 'Moniteur PAC', ecole: 'PAC',
   groupe: 'Groupe', wingsuit: 'Wingsuit', video: 'Vidéo',
 };
 
@@ -734,15 +734,29 @@ export function blocsDePlanche<P extends {
     ...isolees.map(p => ({ groupeId: null, libelle: null as string | null, places: [p] })),
   ].sort((a, b) => ordre(a.places[0]) - ordre(b.places[0]));
 
+  // LE TITRE DU BLOC PREND LA DISCIPLINE QUI LE DÉFINIT, pas celle du premier
+  // arrivé. Un tandem accompagné de son porteur vidéo s'intitulait « Vidéo
+  // n°1 » quand le vidéaste sortait en tête du tri — le bloc annonçait alors
+  // l'accessoire à la place du saut.
+  const PRIORITE_TITRE = ['tandem', 'ecole', 'init_pac', 'premier_pac', 'post_pac',
+                          'accompagne', 'groupe', 'vr', 'ff', 'wingsuit', 'track'];
+  const disciplineDuBloc = (ps: P[]): string => {
+    for (const code of PRIORITE_TITRE) {
+      const trouve = ps.find(p => p.type_saut === code);
+      if (trouve) return trouve.type_saut;
+    }
+    return ps[0].type_saut;
+  };
+
   // La numérotation suit l'ordre de sortie : le premier groupe de PAC de
   // l'avion est « PAC n°1 », quel que soit son identifiant.
   const compteurs = new Map<string, number>();
   for (const b of blocs) {
     if (b.groupeId === null) continue;
-    const type = b.places[0].type_saut;
+    const type = disciplineDuBloc(b.places);
     const n = (compteurs.get(type) ?? 0) + 1;
     compteurs.set(type, n);
-    b.libelle = `${LIBELLE_TYPE[type as TypeSautFile] ?? type} n°${n}`;
+    b.libelle = `${LIBELLE_PLACE[type] ?? type} n°${n}`;
   }
   return blocs;
 }

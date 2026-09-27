@@ -4,7 +4,7 @@ import {
   calculerCall, SEVERITE_CALL, formaterRetard,
   verifierPlanche, type EntreeVerification, blocsDePlanche,
   masseEmbarquee, libelleMasse, radioAttendue, TEINTE_DISCIPLINE,
-  libelleDiscipline, teinteDiscipline, libelleDT48, SOURCE_DT48,
+  libelleDiscipline, teinteDiscipline, libelleDT48, SOURCE_DT48, LIBELLE_PLACE,
 } from './avionnage';
 
 describe('avionnage — capacité', () => {
@@ -635,5 +635,25 @@ describe('verifierPlanche — un groupe partage son rang, ce n’est pas un doub
   it('deux isolés au même rang aussi', () => {
     const e = verifierPlanche({ ...PRETE, places: [m({ rangSortie: 2 }), m({ rangSortie: 2 })] });
     expect(e.anomalies.some(a => a.code === 'rangs_doublon')).toBe(true);
+  });
+});
+
+describe('blocsDePlanche — le titre annonce le saut, pas l’accessoire', () => {
+  it('un tandem accompagné d’un porteur vidéo s’intitule « Tandem »', () => {
+    // Il s'intitulait « Vidéo n°1 » quand le vidéaste sortait en tête du tri :
+    // le bloc annonçait l'accessoire à la place du saut.
+    const b = blocsDePlanche([
+      { rang_sortie: 5, type_saut: 'video', groupe_id: 'g1' },
+      { rang_sortie: 5, type_saut: 'tandem', groupe_id: 'g1' },
+    ]);
+    expect(b[0].libelle).toBe(`${LIBELLE_PLACE.tandem} n°1`);
+  });
+
+  it('une PAC et son moniteur s’intitulent « PAC »', () => {
+    const b = blocsDePlanche([
+      { rang_sortie: 1, type_saut: 'accompagne', groupe_id: 'g1' },
+      { rang_sortie: 1, type_saut: 'ecole', groupe_id: 'g1' },
+    ]);
+    expect(b[0].libelle).toContain(LIBELLE_PLACE.ecole);
   });
 });
