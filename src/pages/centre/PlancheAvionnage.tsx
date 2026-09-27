@@ -1023,7 +1023,9 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
           )}
           {!figee && places.length > 1 && (
             <button type="button" disabled={occupe} style={action('secondaire')}
-              title="Reclasse selon la règle du centre et REMPLACE l’ordre posé à la main"
+              title={'Reclasse selon l’ordre de sortie réglé pour ce centre — '
+                + 'modifiable par la roue crantée, en haut du module. '
+                + 'REMPLACE l’ordre posé à la main.'}
               onClick={() => agir('Ordre de sortie', async () => {
                 // Un ordre pose a la main marque les places « rang_manuel », et
                 // le calcul automatique les ignore — sinon il ecraserait une

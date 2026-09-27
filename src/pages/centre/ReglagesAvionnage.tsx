@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Settings2, BookOpen, Calculator, Plus } from 'lucide-react';
+import { X, Settings2, BookOpen, Calculator, Plus, ArrowUp, ArrowDown, ListOrdered, RotateCcw } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { surface, action, enTeteSection, SEVERITE_COULEUR } from '../../lib/jetons';
@@ -30,6 +30,22 @@ import { messageErreur, type Discipline, SOURCE_DT48 } from '../../lib/avionnage
  * gouverne que le travail de pliage. Une seconde table aurait garanti deux
  * inventaires divergents au premier sac ajouté.
  */
+/**
+ * L'ORDRE CONSEILLÉ. Ce n'est pas une règle fédérale — ParaPass ne connaît
+ * aucun texte qui fixe un ordre de sortie —, c'est ce qu'un chef d'avionnage
+ * dicte d'ordinaire : les élèves bas et tôt, les autonomes ensuite, les
+ * tandems et leurs vidéastes juste avant la fin, le largueur en dernier
+ * puisque c'est lui qui ferme la porte. Le centre le réécrit s'il fait
+ * autrement : c'est le sens de cet écran.
+ */
+const ORDRE_CONSEILLE = [
+  'ecole', 'init_pac', 'premier_pac', 'post_pac', 'accompagne',
+  'groupe', 'vr', 'init_vr', 'ff', 'init_ff', 'solo', 'track',
+  'wingsuit', 'init_ws', 'saut_plage',
+  'video', 'suivi_video', 'tandem',
+  'largueur',
+];
+
 interface SacParc {
   id: string; nom_court: string | null; marque: string | null; modele: string | null;
   numero_serie: string | null; taille_voile_ft2: number | null; statut: string; actif: boolean | null;
@@ -44,6 +60,7 @@ function Inner({ centreId, onFermer, onChange }: {
   const [erreur, setErreur] = useState<string | null>(null);
   const [occupe, setOccupe] = useState(false);
   const [sacs, setSacs] = useState<SacParc[]>([]);
+  const [ordre, setOrdre] = useState<string[]>([]);
   const [nouvelleDiscipline, setNouvelleDiscipline] = useState('');
   const [nouvelleTeinte, setNouvelleTeinte] = useState('#818CF8');
   const [nouveauNom, setNouveauNom] = useState('');
@@ -150,17 +167,45 @@ function Inner({ centreId, onFermer, onChange }: {
     } : null);
   };
 
+  /**
+   * L'ordre de sortie du centre. On écrit la liste ENTIÈRE d'un coup : un ordre
+   * est un tout, et deux écritures partielles laisseraient une planche
+   * numérotée selon une règle qui n'a jamais existé.
+   */
+  const ecrireOrdre = async (liste: string[]) => {
+    const avant = ordre;
+    setOrdre(liste);           // l'écran suit le doigt, sans attendre le réseau
+    setOccupe(true); setErreur(null);
+    const { error } = await supabase.rpc('definir_ordre_sortie', {
+      p_centre_id: centreId, p_ordre: liste,
+    });
+    setOccupe(false);
+    if (error) { setOrdre(avant); setErreur(messageErreur(error)); return; }
+    onChange();
+  };
+
+  const deplacer = (index: number, sens: -1 | 1) => {
+    const cible = index + sens;
+    if (cible < 0 || cible >= ordre.length) return;
+    const liste = [...ordre];
+    [liste[index], liste[cible]] = [liste[cible], liste[index]];
+    ecrireOrdre(liste);
+  };
+
   const charger = async () => {
-    const [{ data: d }, { data: cd }, { data: sp }] = await Promise.all([
+    const [{ data: d }, { data: cd }, { data: sp }, { data: c }] = await Promise.all([
       supabase.rpc('disciplines_du_centre', { p_centre_id: centreId }),
       supabase.from('centres_disciplines').select('code, actif').eq('centre_id', centreId),
       supabase.from('sacs_parachute')
         .select('id, nom_court, marque, modele, numero_serie, taille_voile_ft2, statut, actif')
         .eq('centre_id', centreId).order('nom_court'),
+      supabase.from('centres').select('ordre_sortie_regle').eq('id', centreId).maybeSingle(),
     ]);
     setCatalogue((d ?? []) as Discipline[]);
     setRetirees(new Set((cd ?? []).filter(x => !x.actif).map(x => x.code)));
     setSacs((sp ?? []) as SacParc[]);
+    const regle = (c?.ordre_sortie_regle ?? null) as string[] | null;
+    setOrdre(Array.isArray(regle) ? regle : []);
     setChargement(false);
   };
   useEffect(() => { charger(); /* eslint-disable-next-line */ }, [centreId]);
@@ -200,6 +245,123 @@ function Inner({ centreId, onFermer, onChange }: {
           <p style={{ fontSize: 13, color: 'var(--c-muted)' }}>Chargement…</p>
         ) : (
           <div className="space-y-5">
+            {/* ── L'ORDRE DE SORTIE AUTOMATIQUE ─────────────────────────
+                C'est ce que fait le bouton « Réordonner » de la planche. Il
+                appliquait jusqu'ici un ordre écrit en base que personne ne
+                pouvait lire ni changer : un automatisme muet. Il se règle
+                désormais ici, et l'écran dit ce qu'il va faire. */}
+            <section>
+              <h3 style={{ ...enTeteSection, marginBottom: 6 }}>
+                <ListOrdered className="w-4 h-4 inline-block mr-1.5 align-[-3px]" aria-hidden />
+                Ordre de sortie automatique
+              </h3>
+              <p className="mb-2" style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                Le bouton <strong>« Réordonner »</strong> de la planche suit cette
+                liste, du premier sorti au dernier. Un groupe prend le rang de
+                celui de ses membres qui sort le plus tôt, et il sort entier.
+                <br />
+                <strong>Une sortie déplacée à la main n’est jamais renumérotée :</strong>{' '}
+                l’automatisme ne défait pas votre geste.
+                <br />
+                <span style={{ color: 'var(--c-dim)' }}>
+                  Aucun texte fédéral ne fixe d’ordre de sortie. Celui-ci est
+                  votre usage, pas une règle — à vous de l’écrire.
+                </span>
+              </p>
+
+              <ol className="space-y-1">
+                {ordre.map((code, i) => {
+                  const d = catalogue.find(x => x.code === code);
+                  const retiree = retirees.has(code);
+                  return (
+                    <li key={code} className="flex items-center gap-2 px-2 py-1 rounded-xl"
+                      style={{ background: 'var(--n3-fond)', border: '1px solid var(--n3-filet)' }}>
+                      <span className="tabular-nums text-right" style={{
+                        width: 22, fontSize: 12, fontWeight: 800, color: 'var(--c-dim)' }}>{i + 1}</span>
+                      <span aria-hidden style={{
+                        width: 10, height: 10, borderRadius: 3, flexShrink: 0,
+                        background: d?.teinte ?? 'var(--n2-bord)' }} />
+                      <span className="flex-1 min-w-0 truncate" style={{
+                        fontSize: 13, fontWeight: 700,
+                        color: retiree ? 'var(--c-dim)' : 'var(--c-text)' }}>
+                        {d?.libelle ?? code}
+                        {retiree && (
+                          <span style={{ fontWeight: 400, fontSize: 11, color: 'var(--c-dim)' }}>
+                            {' · '}retirée, donc jamais rencontrée
+                          </span>
+                        )}
+                      </span>
+                      {i === ordre.length - 1 && (
+                        <span style={{ fontSize: 11, color: 'var(--c-muted)' }}>sort en dernier</span>
+                      )}
+                      <button type="button" disabled={occupe || i === 0}
+                        onClick={() => deplacer(i, -1)}
+                        aria-label={`Faire sortir ${d?.libelle ?? code} plus tôt`}
+                        className="disabled:opacity-25 p-1 rounded-lg"
+                        style={{ border: '1px solid var(--n2-bord)', color: 'var(--c-text2)' }}>
+                        <ArrowUp className="w-3.5 h-3.5" aria-hidden />
+                      </button>
+                      <button type="button" disabled={occupe || i === ordre.length - 1}
+                        onClick={() => deplacer(i, 1)}
+                        aria-label={`Faire sortir ${d?.libelle ?? code} plus tard`}
+                        className="disabled:opacity-25 p-1 rounded-lg"
+                        style={{ border: '1px solid var(--n2-bord)', color: 'var(--c-text2)' }}>
+                        <ArrowDown className="w-3.5 h-3.5" aria-hidden />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+
+              {/* LES NON CLASSÉES. Une discipline absente de la liste sort en
+                  dernier — donc APRÈS le largueur. C'est rarement voulu, alors
+                  on le montre au lieu de le laisser se découvrir en vol. */}
+              {catalogue.filter(d => !ordre.includes(d.code)).length > 0 && (
+                <div className="mt-2 px-2 py-2 rounded-xl" style={{
+                  borderLeft: `5px solid ${SEVERITE_COULEUR.vigilance}`,
+                  background: 'color-mix(in srgb, var(--sev-vigilance) 8%, transparent)' }}>
+                  <p style={{ fontSize: 12, color: 'var(--c-text2)' }}>
+                    Ces disciplines ne figurent pas dans l’ordre : elles
+                    sortiraient <strong>après tout le monde</strong>, largueur inclus.
+                    Placez-les.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    {catalogue.filter(d => !ordre.includes(d.code)).map(d => (
+                      <button key={d.code} type="button" disabled={occupe}
+                        onClick={() => {
+                          // On l'insère juste avant le largueur s'il est en
+                          // queue : sa place est presque toujours celle-là.
+                          const iLargueur = ordre.indexOf('largueur');
+                          const liste = [...ordre];
+                          liste.splice(iLargueur === -1 ? liste.length : iLargueur, 0, d.code);
+                          ecrireOrdre(liste);
+                        }}
+                        className="px-2 py-1 rounded-lg"
+                        style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text)',
+                                 border: `1px solid ${d.teinte ?? 'var(--n2-bord)'}` }}>
+                        <Plus className="w-3 h-3 inline-block mr-1 align-[-1px]" aria-hidden />
+                        {d.libelle}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <button type="button" disabled={occupe}
+                onClick={() => ecrireOrdre(
+                  // On ne rétablit que ce que ce centre connaît, et on garde en
+                  // queue ses disciplines propres : l'ordre conseillé ne les
+                  // cite pas, les effacer de la liste les enverrait après le
+                  // largueur.
+                  [
+                    ...ORDRE_CONSEILLE.filter(c => catalogue.some(d => d.code === c)),
+                    ...catalogue.map(d => d.code).filter(c => !ORDRE_CONSEILLE.includes(c)),
+                  ])}
+                className="mt-2" style={{ ...action('texte'), minHeight: 32, fontSize: 12 }}>
+                <RotateCcw className="w-3.5 h-3.5" aria-hidden /> Rétablir l’ordre conseillé
+              </button>
+            </section>
+
             {/* ── Les disciplines proposées ─────────────────────────────── */}
             <section>
               <h3 style={{ ...enTeteSection, marginBottom: 6 }}>Disciplines proposées</h3>
