@@ -1,0 +1,37 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- MA RÈGLE D'HIER ÉTAIT FAUSSE.
+--
+-- J'avais écrit « une altitude propre ne sert qu'à sortir PLUS BAS » et posé
+-- l'altitude de la ROTATION comme plafond. C'est faux sur le terrain : un
+-- tandem sort PLUS HAUT que le reste du stick, c'est même la règle courante.
+--
+-- Le trigger refusait donc 4200 m sur un avion annoncé à 4000 — et comme la
+-- génération de démo met justement les tandems à 4200, elle échouait en entier.
+-- D'où « Aucune planche aujourd'hui » et le message rouge en pied d'écran.
+--
+-- LE VRAI PLAFOND EST CELUI DE L'AÉRONEF (aeronefs.altitude_max_m) : c'est une
+-- limite physique, pas une convention d'organisation. L'altitude de la rotation
+-- reste le DÉFAUT de tout le monde ; chacun peut s'en écarter, en haut comme en
+-- bas, dans la limite de l'avion. Et la rotation elle-même ne dépasse plus son
+-- aéronef.
+--
+-- Le rabaissement automatique des places disparaît : il reposait sur la même
+-- erreur. Baisser l'altitude de la planche n'a aucune raison de rabaisser un
+-- tandem qui sort volontairement plus haut.
+--
+-- Le Pilatus de BigAir était fiché à 4000 m alors qu'on largue à 4200 : c'est
+-- la fiche aéronef qui était fausse, pas la demande. Corrigée, et un second
+-- appareil ajouté (F-GTOP, 8 places) — une démo à deux aéronefs montre que la
+-- planche choisit le sien.
+--
+-- Le générateur de démo déclarait les voiles en TEXTE LIBRE : la DT 48 ne lit
+-- pas une surface dans du texte, et tout le centre ressortait gris au lendemain
+-- de chaque génération. Il rattache désormais la déclaration au matériel.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Migrations appliquées LE 27/09/2026 :
+--   altitude_plafond_est_l_aeronef_pas_la_rotation, demo_declare_la_voile_rattachee.
+--
+-- Session de démo régénérée : 3 planches, 14 places, 6 en file, 1 passager de
+-- tandem, 2 vidéos vendues dont 1 sans porteur. Avion n°1 : 8 personnes, DT 48
+-- verte pour toutes. Avion n°2 : 2 anomalies de voilure. Le tandem de l'avion
+-- n°1 sort à 4200 m — ce que le trigger d'hier interdisait.
