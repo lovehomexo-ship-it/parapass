@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MIME_FILE } from './FileAvionnageDZ';
 import { SiglesFonctions } from '../../components/SigleFonction';
 import { supabase } from '../../lib/supabase';
-import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff, AlertTriangle, CheckCircle2, Fuel, Radio, ChevronDown, Package, Video, Scale, Unlock } from 'lucide-react';
+import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff, AlertTriangle, CheckCircle2, Fuel, Radio, ChevronDown, Package, Video, Scale, Unlock, GripVertical } from 'lucide-react';
 import { surface, rayure, pastille, action, SEVERITE_COULEUR, type Severite } from '../../lib/jetons';
 import {
   formaterRetard,
@@ -24,6 +24,11 @@ import {
 // Une planche sans trace horaire ne se relit pas le soir, et ne sert à rien
 // pour un journal de bord.
 // ═══════════════════════════════════════════════════════════════════════════
+
+/** Réordonnancement INTERNE à la planche. Distinct du dépôt depuis la file :
+ *  confondre les deux ferait sortir quelqu'un de l'avion en voulant le monter
+ *  d'un rang. */
+export const MIME_SORTIE = 'application/x-parapass-sortie';
 
 export interface PlaceVue {
   id: string; rotation_id: string; parachutiste_id: string | null;
@@ -97,7 +102,7 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onDefinirAltitudeAvion, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines, dt48, onValiderEmbarquement, onAmenagementDT48, onDefinirSurfaceVoile }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onDefinirAltitudeAvion, onReordonner, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines, dt48, onValiderEmbarquement, onAmenagementDT48, onDefinirSurfaceVoile }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -124,6 +129,11 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   onDefinirCarburant?: (litres: number | null) => Promise<string | null>;
   /** L'altitude de largage de l'avion — le défaut de tout le monde à bord. */
   onDefinirAltitudeAvion?: (metres: number | null) => Promise<string | null>;
+  /**
+   * Le nouvel ordre de sortie, une entrée par SORTIE (un groupe ou une
+   * personne seule), chacune portant les identifiants de ses places.
+   */
+  onReordonner?: (sorties: string[][]) => Promise<string | null>;
   /** Figer ou rouvrir l'embarquement. Rouvrir n'est possible qu'avant départ. */
   onValiderEmbarquement?: (valide: boolean) => Promise<string | null>;
   /** La radio se constate d'un clic : elle est sur la personne, ou elle ne l'est pas. */
@@ -151,6 +161,9 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   /** Volets de détail ouverts. Fermés par défaut : la ligne doit tenir en une
    *  phrase lisible, le reste se demande. */
   const [detailsOuverts, setDetailsOuverts] = useState<Set<string>>(new Set());
+  /** Sortie en cours de déplacement, et celle survolée. */
+  const [deplace, setDeplace] = useState<string | null>(null);
+  const [cible, setCible] = useState<string | null>(null);
   const basculerDetails = (id: string) => setDetailsOuverts(s => {
     const n = new Set(s);
     if (n.has(id)) n.delete(id); else n.add(id);
@@ -452,15 +465,60 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
         </p>
       ) : (
         <div className="mt-3">
-          {blocsDePlanche(places).map((bloc, ib) => (
-          <div key={bloc.groupeId ?? bloc.places[0].id}
+          {blocsDePlanche(places).map((bloc, ib) => {
+          const cle = bloc.groupeId ?? bloc.places[0].id;
+          const reordonnable = !close && !!onReordonner
+            && bloc.places.every(p => p.type_saut !== 'largueur');
+          return (
+          <div key={cle}
+            draggable={reordonnable && selection.size === 0}
+            onDragStart={e => {
+              e.dataTransfer.setData(MIME_SORTIE, cle);
+              e.dataTransfer.effectAllowed = 'move';
+              setDeplace(cle);
+            }}
+            onDragEnd={() => { setDeplace(null); setCible(null); }}
+            onDragOver={e => {
+              if (!reordonnable || !e.dataTransfer.types.includes(MIME_SORTIE)) return;
+              e.preventDefault(); e.stopPropagation();
+              e.dataTransfer.dropEffect = 'move';
+              if (cible !== cle) setCible(cle);
+            }}
+            onDragLeave={() => { if (cible === cle) setCible(null); }}
+            onDrop={e => {
+              if (!e.dataTransfer.types.includes(MIME_SORTIE)) return;
+              e.preventDefault(); e.stopPropagation();
+              const source = e.dataTransfer.getData(MIME_SORTIE);
+              setDeplace(null); setCible(null);
+              if (!source || source === cle || !onReordonner) return;
+              // On reconstruit l'ordre des SORTIES, pas des personnes : une
+              // sortie se déplace d'un bloc, avec tous ses membres.
+              const blocs = blocsDePlanche(places)
+                .filter(b => b.places.every(p => p.type_saut !== 'largueur'));
+              const cles = blocs.map(b => b.groupeId ?? b.places[0].id);
+              const depuis = cles.indexOf(source);
+              const vers = cles.indexOf(cle);
+              if (depuis < 0 || vers < 0) return;
+              cles.splice(vers, 0, ...cles.splice(depuis, 1));
+              agir('Ordre de sortie', () =>
+                onReordonner(cles.map(k =>
+                  (blocs.find(b => (b.groupeId ?? b.places[0].id) === k)?.places ?? []).map(p => p.id)))
+                  .then(err => ({ error: err ? { message: err } : null })));
+            }}
             className={bloc.groupeId ? 'rounded-xl px-2 py-1 mb-1.5' : ''}
             style={bloc.groupeId ? {
               // Un groupe se voit comme un BLOC : fond propre et rayure, pour
               // qu'on lise « ces trois-là sortent ensemble » sans compter.
               ...rayure('neutre'),
               background: 'color-mix(in srgb, var(--c-text) 4%, transparent)',
-            } : { borderTop: ib === 0 ? 'none' : '1px solid var(--n3-filet)' }}>
+            } : { borderTop: ib === 0 ? 'none' : '1px solid var(--n3-filet)' }}
+            data-deplace={deplace === cle || undefined}>
+            {/* Le repère de dépôt se lit à la FORME, pas à une couleur d'état :
+                un trait épais au-dessus de la sortie visée. */}
+            {cible === cle && deplace !== null && deplace !== cle && (
+              <div aria-hidden style={{ height: 3, borderRadius: 2,
+                background: 'var(--action-texte)', margin: '2px 0 4px' }} />
+            )}
             {bloc.libelle && (
               <div className="flex items-center justify-between gap-2 pt-0.5">
                 <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.06em',
@@ -496,6 +554,13 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                     onChange={() => basculer(p.id)}
                     aria-label={`Sélectionner ${p.nom} pour former un groupe`}
                     style={{ width: 16, height: 16, flexShrink: 0 }} />
+                )}
+                {/* La poignée dit que ça se déplace. Sans elle, personne ne
+                    devine qu'on peut glisser — et le bouton « Ordre de sortie »
+                    recalculait sans rien changer de visible. */}
+                {!close && onReordonner && p.type_saut !== 'largueur' && i === 0 && (
+                  <GripVertical className="w-4 h-4 flex-shrink-0" aria-hidden
+                    style={{ color: 'var(--c-dim)', cursor: 'grab' }} />
                 )}
                 <span className="font-bold flex-shrink-0"
                   style={{ fontSize: 13, color: 'var(--c-muted)', minWidth: 18 }}>
@@ -900,7 +965,13 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
           );})}
           </ul>
           </div>
-          ))}
+          );})}
+
+          {!close && onReordonner && places.length > 1 && (
+            <p className="mt-1.5" style={{ fontSize: 11.5, color: 'var(--c-dim)' }}>
+              Glissez une ligne — ou un groupe entier — pour changer l’ordre de sortie.
+            </p>
+          )}
 
           {/* Former un groupe : on coche, on réunit. Deux minimum — « grouper
               une personne » ne veut rien dire. */}
@@ -952,10 +1023,20 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
           )}
           {!figee && places.length > 1 && (
             <button type="button" disabled={occupe} style={action('secondaire')}
-              onClick={() => agir('Ordre de sortie', () =>
-                supabase.rpc('calculer_ordre_sortie', { p_rotation_id: r.id })
-                  .then(x => ({ error: x.error })))}>
-              <ArrowDownUp className="w-4 h-4" aria-hidden /> Ordre de sortie
+              title="Reclasse selon la règle du centre et REMPLACE l’ordre posé à la main"
+              onClick={() => agir('Ordre de sortie', async () => {
+                // Un ordre pose a la main marque les places « rang_manuel », et
+                // le calcul automatique les ignore — sinon il ecraserait une
+                // decision humaine. Ce bouton dit explicitement « reprends la
+                // main » : on leve donc le drapeau AVANT de recalculer, sans
+                // quoi il ne ferait visiblement rien.
+                const { error } = await supabase.from('places_rotation')
+                  .update({ rang_manuel: false }).eq('rotation_id', r.id);
+                if (error) return { error };
+                return supabase.rpc('calculer_ordre_sortie', { p_rotation_id: r.id })
+                  .then(x => ({ error: x.error }));
+              })}>
+              <ArrowDownUp className="w-4 h-4" aria-hidden /> Réordonner automatiquement
             </button>
           )}
           {!r.heure_decollage && places.length > 0 && (

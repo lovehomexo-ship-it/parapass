@@ -604,6 +604,23 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     return null;
   };
 
+  /**
+   * Le nouvel ordre de sortie, tel que le DT vient de le glisser.
+   *
+   * On ecrit rang_manuel = true : sans ca, le prochain « Reordonner
+   * automatiquement » effacerait le classement qu'il vient de poser a la main.
+   * Une decision humaine ne se fait pas ecraser par une regle.
+   */
+  const reordonner = async (sorties: string[][]): Promise<string | null> => {
+    for (let i = 0; i < sorties.length; i++) {
+      const { error } = await supabase.from('places_rotation')
+        .update({ rang_sortie: i + 1, rang_manuel: true }).in('id', sorties[i]);
+      if (error) return messageErreur(error);
+    }
+    await charger();
+    return null;
+  };
+
   /** Carburant embarqué. Donnée de l'avion, saisie dans l'entête de planche. */
   const definirCarburant = async (rotationId: string, litres: number | null): Promise<string | null> => {
     const { error } = await supabase.from('rotations')
@@ -717,6 +734,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
                   onDefinirAltitude={definirAltitude}
                   onDefinirCarburant={l => definirCarburant(r.id, l)}
                   onDefinirAltitudeAvion={m => definirAltitudeAvion(r.id, m)}
+                  onReordonner={reordonner}
                   onBasculerRadio={basculerRadio} onAjouterPassager={ajouterPassager} onBasculerVideo={basculerVideo}
                   onChangerDiscipline={changerDiscipline} disciplines={disciplines} dt48={dt48}
                   onValiderEmbarquement={v => validerEmbarquement(r.id, v)}
