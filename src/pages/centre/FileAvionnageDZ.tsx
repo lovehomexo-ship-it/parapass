@@ -30,7 +30,9 @@ const APTITUDE: Record<string, { sev: Severite; libelle: string }> = {
 export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlacer, onOuvrirFiche, rechargerRef }: {
   centreId: string;
   /** Rotations non clôturées, pour proposer où placer. */
-  rotations: { id: string; numero: number; places_libres: number | null }[];
+  rotations: { id: string; numero: number; places_libres: number | null;
+               /** Les personnes DÉJÀ sur cette planche : on ne les repropose pas. */
+               deja?: readonly string[] }[];
   ouvert: boolean;
   onOuvrir: (v: boolean) => void;
   /** Le placement vit dans le parent : bouton ET glisser-déposer y aboutissent. */
@@ -165,11 +167,17 @@ export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlace
                   {a.libelle}
                 </button>
 
-                {/* Un bouton par rotation qui a encore de la place. Une rotation
-                    complète ne s'affiche pas : proposer un placement que la
-                    base refusera est une promesse qu'on ne tient pas. */}
+                {/* Un bouton par rotation qui a encore de la place ET où la
+                    personne n'est pas déjà inscrite. Proposer un placement que
+                    la base refusera est une promesse qu'on ne tient pas — et
+                    c'est exactement ce qui se passait : le clic échouait sur
+                    « duplicate key ... une_fois_par_rotation », message dont on
+                    ne pouvait rien tirer au bord d'une piste. */}
                 <div className="flex gap-1.5 flex-wrap">
-                  {rotations.filter(r => r.places_libres === null || r.places_libres > 0).map(r => (
+                  {rotations
+                    .filter(r => r.places_libres === null || r.places_libres > 0)
+                    .filter(r => !(r.deja ?? []).includes(l.parachutiste_id))
+                    .map(r => (
                     <button key={r.id} type="button" disabled={action_ !== null}
                       onClick={() => placer(l.id, r.id)}
                       className="disabled:opacity-50"
@@ -181,6 +189,15 @@ export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlace
                   {rotations.length === 0 && (
                     <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>
                       créez un avion
+                    </span>
+                  )}
+                  {rotations.length > 0
+                    && rotations.every(r => (r.deja ?? []).includes(l.parachutiste_id)
+                          || !(r.places_libres === null || r.places_libres > 0)) && (
+                    <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                      {rotations.some(r => (r.deja ?? []).includes(l.parachutiste_id))
+                        ? 'déjà sur les planches ouvertes'
+                        : 'tous les avions sont complets'}
                     </span>
                   )}
                 </div>

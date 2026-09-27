@@ -7,6 +7,26 @@ import {
   libelleDiscipline, teinteDiscipline, libelleDT48, SOURCE_DT48, LIBELLE_PLACE,
 } from './avionnage';
 
+describe('avionnage — messages d’erreur', () => {
+  it('traduit le doublon sur une planche', () => {
+    // C'est le message qui a fait croire que l'application refusait d'ajouter
+    // qui que ce soit : exact, et inexploitable au bord d'une piste.
+    expect(messageErreur({
+      message: 'duplicate key value violates unique constraint "places_rotation_une_fois_par_rotation"',
+    })).toBe('Cette personne est déjà inscrite sur cette planche.');
+  });
+
+  it('traduit l’avion complet', () => {
+    expect(messageErreur({ message: 'Rotation complete : 10 sieges parachutistes…' }))
+      .toBe('Cet avion est complet.');
+  });
+
+  it('laisse passer un message déjà lisible', () => {
+    expect(messageErreur({ message: 'Désignez le largueur avant le décollage.' }))
+      .toBe('Désignez le largueur avant le décollage.');
+  });
+});
+
 describe('avionnage — capacité', () => {
   it('un moniteur qui accompagne occupe un siège', () => {
     // L'oublier ferait afficher « 3/4 » à un avion déjà plein : le chef

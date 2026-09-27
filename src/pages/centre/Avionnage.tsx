@@ -863,7 +863,12 @@ function AvionnageInner({ centreId }: { centreId: string }) {
             rotations={ouvertes.map(r => {
               const a = aeronefs.find(x => x.id === r.aeronef_id);
               const occ = siegesOccupes(places.filter(p => p.rotation_id === r.id));
-              return { id: r.id, numero: r.numero, places_libres: a ? a.places - occ : null };
+              return { id: r.id, numero: r.numero, places_libres: a ? a.places - occ : null,
+                       // Qui est DÉJÀ sur cette planche : la base refuse un
+                       // doublon, l'écran ne doit donc pas le proposer.
+                       deja: places.filter(p => p.rotation_id === r.id)
+                                   .map(p => p.parachutiste_id)
+                                   .filter((x): x is string => !!x) };
             })} />
 
           {/* Quelqu'un est là, devant le DT, ni en file ni déclaré présent :
@@ -878,7 +883,12 @@ function AvionnageInner({ centreId }: { centreId: string }) {
               rotations={ouvertes.map(r => {
                 const a = aeronefs.find(x => x.id === r.aeronef_id);
                 const occ = siegesOccupes(places.filter(p => p.rotation_id === r.id));
-                return { id: r.id, numero: r.numero, places_libres: a ? a.places - occ : null };
+                return { id: r.id, numero: r.numero, places_libres: a ? a.places - occ : null,
+                       // Qui est DÉJÀ sur cette planche : la base refuse un
+                       // doublon, l'écran ne doit donc pas le proposer.
+                       deja: places.filter(p => p.rotation_id === r.id)
+                                   .map(p => p.parachutiste_id)
+                                   .filter((x): x is string => !!x) };
               })} />
           </div>
         </div>

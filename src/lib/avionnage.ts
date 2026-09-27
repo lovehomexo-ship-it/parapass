@@ -80,9 +80,31 @@ export interface MaPlaceFile {
  * `hint` qui dit quoi faire. Les recoller ici évite l'écran qui affiche
  * « 42501 » à quelqu'un debout au bord de la piste.
  */
+/**
+ * LES CONTRAINTES DE LA BASE NE PARLENT PAS FRANÇAIS.
+ * « duplicate key value violates unique constraint
+ * "places_rotation_une_fois_par_rotation" » est exact, et absolument
+ * inexploitable au bord d'une piste : le chef d'avionnage en conclut que
+ * l'application refuse d'ajouter qui que ce soit. On traduit les garde-fous
+ * qu'un utilisateur rencontre vraiment ; le reste passe tel quel, et le détail
+ * complet part dans la console.
+ */
+const TRADUCTIONS: readonly [RegExp, string][] = [
+  [/places_rotation_une_fois_par_rotation/,
+   'Cette personne est déjà inscrite sur cette planche.'],
+  [/places_rotation_capacite|Rotation complete/,
+   'Cet avion est complet.'],
+  [/violates row-level security|Reserve au centre|Réservé/,
+   'Action réservée à l’encadrement de ce centre.'],
+];
+
 export function messageErreur(e: unknown): string {
   const err = e as { message?: string; hint?: string; details?: string } | null;
   if (!err) return 'Erreur inconnue.';
+  const brut = [err.message, err.details].filter(Boolean).join(' ');
+  for (const [motif, clair] of TRADUCTIONS) {
+    if (motif.test(brut)) return clair;
+  }
   const bouts = [err.message, err.hint].filter(Boolean) as string[];
   return bouts.length > 0 ? bouts.join(' ') : 'Erreur inconnue.';
 }
