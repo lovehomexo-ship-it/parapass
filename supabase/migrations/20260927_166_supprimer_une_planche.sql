@@ -1,0 +1,18 @@
+-- Appliquée en base : supprimer_une_planche
+--
+-- UNE PLANCHE CRÉÉE PAR ERREUR N'AVAIT AUCUN RECOURS. On ouvrait un avion d'un
+-- clic, rien ne permettait de le refermer : une fausse manœuvre laissait une
+-- planche vide dans la journée pour toujours, qui décalait la numérotation et
+-- brouillait la lecture du tableau.
+--
+-- CE QUI NE SE SUPPRIME PAS, ET POURQUOI. Un avion PARTI est un fait : il a
+-- largué, des sauts en découlent, le journal l'a consigné. L'effacer réécrirait
+-- une journée de vol. Une planche décollée, clôturée, ou dont des sauts
+-- découlent est donc refusée — avec le motif, pas en silence.
+--
+-- LES PERSONNES NE SE PERDENT PAS. Celles qui étaient placées retournent en
+-- file d'avionnage à LEUR rang d'arrivée, comme le fait déjà
+-- `retirer_de_rotation` pour une personne seule : la DZ a changé d'avis, pas le
+-- sauteur. Et la suppression est écrite au journal de bord.
+--
+-- Corps complet en base (fonction `supprimer_rotation`).

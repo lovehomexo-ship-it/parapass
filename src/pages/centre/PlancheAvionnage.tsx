@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MIME_FILE } from './FileAvionnageDZ';
 import { SiglesFonctions } from '../../components/SigleFonction';
 import { supabase } from '../../lib/supabase';
-import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff, AlertTriangle, CheckCircle2, Fuel, Radio, ChevronDown, Package, Video, Scale, Unlock, GripVertical } from 'lucide-react';
+import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff, AlertTriangle, CheckCircle2, Fuel, Radio, ChevronDown, Package, Video, Scale, Unlock, GripVertical, Trash2 } from 'lucide-react';
 import { surface, rayure, pastille, action, SEVERITE_COULEUR, type Severite } from '../../lib/jetons';
 import {
   formaterRetard,
@@ -102,7 +102,7 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onDefinirAltitudeAvion, flotte, onDefinirAeronef, onReordonner, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines, dt48, onValiderEmbarquement, onAmenagementDT48, onDefinirSurfaceVoile }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onDefinirAltitudeAvion, flotte, onDefinirAeronef, onSupprimerPlanche, onReordonner, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines, dt48, onValiderEmbarquement, onAmenagementDT48, onDefinirSurfaceVoile }: {
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -132,6 +132,8 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   /** La flotte du centre, pour pouvoir corriger l'avion d'une planche. */
   flotte?: readonly { id: string; immatriculation: string; places: number }[];
   onDefinirAeronef?: (aeronefId: string) => Promise<string | null>;
+  /** Supprimer la planche — refusée par la base dès qu'elle a volé. */
+  onSupprimerPlanche?: () => Promise<string | null>;
   /**
    * Le nouvel ordre de sortie, une entrée par SORTIE (un groupe ou une
    * personne seule), chacune portant les identifiants de ses places.
@@ -159,6 +161,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   const [occupe, setOccupe] = useState(false);
   const [echec, setEchec] = useState<string | null>(null);
   const [survol, setSurvol] = useState(false);
+  const [confirmerSuppression, setConfirmerSuppression] = useState(false);
   /** Sélection courante pour former un groupe. Vidée après chaque action. */
   const [selection, setSelection] = useState<Set<string>>(new Set());
   /** Volets de détail ouverts. Fermés par défaut : la ligne doit tenir en une
@@ -1079,6 +1082,41 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
               })}>
               <ArrowDownUp className="w-4 h-4" aria-hidden /> Réordonner automatiquement
             </button>
+          )}
+          {/* SUPPRIMER UNE PLANCHE OUVERTE PAR ERREUR. On ouvrait un avion d'un
+              clic et rien ne permettait de le refermer : une fausse manoeuvre
+              restait dans la journée pour toujours.
+              Le bouton disparaît dès que l'avion est parti — une rotation qui a
+              volé ne s'efface pas, et la base le refuse de toute façon. */}
+          {!r.heure_decollage && !close && onSupprimerPlanche && (
+            confirmerSuppression ? (
+              <span className="flex items-center gap-1.5" style={{ fontSize: 12 }}>
+                <span style={{ color: 'var(--c-text2)' }}>
+                  Supprimer la planche n°{r.numero}
+                  {places.length > 0 && ` et remettre ${places.length} personne${places.length > 1 ? 's' : ''} en file`} ?
+                </span>
+                <button type="button" disabled={occupe}
+                  onClick={() => { setConfirmerSuppression(false);
+                    agir('Suppression de la planche', () =>
+                      onSupprimerPlanche().then(e => ({ error: e ? { message: e } : null }))); }}
+                  className="px-2.5 py-1 rounded-lg font-bold"
+                  style={{ color: '#fff', background: '#DC2626' }}>Oui, supprimer</button>
+                <button type="button" onClick={() => setConfirmerSuppression(false)}
+                  className="px-2.5 py-1 rounded-lg"
+                  style={{ color: 'var(--c-muted)', border: '1px solid var(--c-border)' }}>Annuler</button>
+              </span>
+            ) : (
+              <button type="button" disabled={occupe}
+                onClick={() => setConfirmerSuppression(true)}
+                title={places.length > 0
+                  ? 'Supprimer cette planche — les personnes placées repartent en file d’avionnage'
+                  : 'Supprimer cette planche vide'}
+                className="flex items-center gap-1.5 px-2.5 rounded-lg"
+                style={{ minHeight: 36, fontSize: 13, fontWeight: 600,
+                         color: '#DC2626', border: '1px solid rgba(220,38,38,0.4)' }}>
+                <Trash2 className="w-4 h-4" aria-hidden /> Supprimer
+              </button>
+            )
           )}
           {!r.heure_decollage && places.length > 0 && (
             // UN SEUL bouton plein par bloc (règle 6) : c'est celui-ci tant que

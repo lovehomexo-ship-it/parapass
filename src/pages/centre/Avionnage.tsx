@@ -631,6 +631,24 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     return null;
   };
 
+  /**
+   * SUPPRIMER UNE PLANCHE. La base refuse dès qu'elle a volé ou que des sauts
+   * en découlent : ici on ne fait que relayer le motif, on ne le devine pas.
+   */
+  const supprimerPlanche = async (rotationId: string): Promise<string | null> => {
+    const { error } = await supabase.rpc('supprimer_rotation', { p_rotation_id: rotationId });
+    if (error) {
+      console.error('Suppression de planche — échec :', {
+        code: error.code, message: error.message, details: error.details, hint: error.hint });
+      return messageErreur(error);
+    }
+    // La FILE aussi : les personnes placées y retournent, et un compteur qui
+    // reste sur l'ancien chiffre juste après avoir rendu quelqu'un à la file
+    // fait douter de tout le reste.
+    await Promise.all([charger(), rechargerFile.current?.()]);
+    return null;
+  };
+
   const reordonner = async (sorties: string[][]): Promise<string | null> => {
     for (let i = 0; i < sorties.length; i++) {
       const { error } = await supabase.from('places_rotation')
@@ -776,6 +794,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
                   onDefinirAltitudeAvion={m => definirAltitudeAvion(r.id, m)}
                   flotte={aeronefs}
                   onDefinirAeronef={id => definirAeronef(r.id, id)}
+                  onSupprimerPlanche={() => supprimerPlanche(r.id)}
                   onReordonner={reordonner}
                   onBasculerRadio={basculerRadio} onAjouterPassager={ajouterPassager} onBasculerVideo={basculerVideo}
                   onChangerDiscipline={changerDiscipline} disciplines={disciplines} dt48={dt48}
