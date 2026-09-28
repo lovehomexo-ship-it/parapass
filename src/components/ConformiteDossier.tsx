@@ -66,10 +66,13 @@ function Bloc({ titre, sous, lignes }: { titre: string; sous: string; lignes: Li
                 </p>
               )}
 
-              {/* LE TEXTE QUI LA FONDE — une règle sans référence n'en est pas une. */}
+              {/* LE TEXTE QUI LA FONDE — une règle sans référence n'en est pas
+                  une. En `--c-dim` il tombait à 2,1:1 sur fond clair, sous le
+                  seuil de lisibilité : cette teinte est prévue pour du décor,
+                  pas pour une référence qu'on doit pouvoir vérifier. */}
               {l.source_texte && (
                 <p className="mt-1.5 ml-6 flex items-start gap-1.5"
-                  style={{ fontSize: 11, color: 'var(--c-dim)', fontStyle: 'italic' }}>
+                  style={{ fontSize: 11.5, color: 'var(--c-muted)', fontStyle: 'italic' }}>
                   <BookOpen className="w-3 h-3 flex-shrink-0 mt-0.5" aria-hidden />
                   <span>{l.source_texte}</span>
                 </p>

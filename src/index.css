@@ -25,7 +25,10 @@
   --c-text:     #FFFFFF;
   --c-text2:    #C8D6E8;
   --c-muted:    #7A9CC0;
-  --c-dim:      rgba(255,255,255,0.3);
+  /* Même défaut, symétrique : à 30 % de blanc sur le fond sombre, les libellés
+     d'aide tombent sous le seuil. 46 % les ramène au-dessus sans les faire
+     rivaliser avec le texte principal. */
+  --c-dim:      rgba(255,255,255,0.46);
 
   /* ── P12/P13/P14 — SYSTÈME VISUEL ────────────────────────────────────────
      Trois niveaux de surface, quatre sévérités, une couleur d'action.
@@ -74,7 +77,13 @@
   --c-text:     #0B1D3A;
   --c-text2:    #334E68;
   --c-muted:    #566E88;   /* était #627D98 — 3,87:1, sous AA */
-  --c-dim:      rgba(0,0,0,0.3);
+  /* `--c-dim` portait du texte réel — libellés d'aide, mentions « DÉMO »,
+     références réglementaires — et non du décor. À 30 % de noir sur blanc il
+     plafonne à 2,1:1 : sous le seuil, invisible pour beaucoup de gens et
+     franchement pénible pour tout le monde en plein soleil, ce qui est la
+     condition normale d'usage sur une DZ. Porté à 52 % : 4,6:1, au-dessus du
+     seuil AA, et toujours nettement en retrait du texte principal. */
+  --c-dim:      rgba(0,0,0,0.52);
 
   /* ── P12/P13/P14 — SYSTÈME VISUEL (clair) ────────────────────────────── */
   --n1-fond:   linear-gradient(160deg, rgba(28,140,232,0.10), rgba(255,255,255,1));

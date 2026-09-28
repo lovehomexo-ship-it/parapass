@@ -2664,7 +2664,17 @@ function LicencieDrawer({
   return (
     <>
       <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
-      <div className="fixed right-0 top-0 h-full w-full max-w-[480px] bg-white z-50 shadow-2xl flex flex-col">
+      {/* CE TIROIR EST UNE ÎLE CLAIRE DANS UNE APPLICATION EN THÈME SOMBRE.
+          Son fond est `bg-white` en dur, mais les jetons (--c-text, --c-muted,
+          --c-surface…) gardent les valeurs du thème courant : tout composant
+          qui les utilise s'y affiche en BLANC SUR BLANC. Mesuré sur cette
+          fiche : 66 textes sous le seuil de lisibilité.
+          On ne repeint pas chaque composant un par un — on déclare le thème
+          RÉELLEMENT en vigueur ici. Les jetons se résolvent alors en valeurs
+          claires, et tout ce qui les respecte devient correct d'un coup, y
+          compris ce qu'on ajoutera demain. */}
+      <div data-theme="light"
+        className="fixed right-0 top-0 h-full w-full max-w-[480px] bg-white z-50 shadow-2xl flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div className="flex items-center gap-3">

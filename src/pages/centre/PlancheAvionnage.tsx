@@ -642,7 +642,12 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                     aria-label={`Ce que fait ${p.nom}`}
                     className="flex-shrink-0 px-1.5 rounded"
                     style={{ fontSize: 11, fontWeight: 700, minHeight: 28,
-                             color: teinteDiscipline(p.type_saut, disciplines),
+
+                             // LA COULEUR DE DISCIPLINE EST CHOISIE POUR UN FOND SOMBRE.
+                             // Posée telle quelle en mode jour, « Tandem » tombait à 1,68:1 —
+                             // illisible. Mélangée à la couleur de texte du thème, elle garde
+                             // sa valeur de repérage et redevient lisible des deux côtés.
+                             color: `color-mix(in srgb, ${teinteDiscipline(p.type_saut, disciplines)} 55%, var(--c-text))`,
                              background: `color-mix(in srgb, ${teinteDiscipline(p.type_saut, disciplines)} 12%, transparent)`,
                              border: `1px solid ${teinteDiscipline(p.type_saut, disciplines)}` }}>
                     {(disciplines ?? []).map(d => (
@@ -657,7 +662,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                 ) : (
                   <span className="flex-shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded"
                     style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '0.04em',
-                             color: teinteDiscipline(p.type_saut, disciplines),
+                             color: `color-mix(in srgb, ${teinteDiscipline(p.type_saut, disciplines)} 55%, var(--c-text))`,
                              border: `1px solid ${teinteDiscipline(p.type_saut, disciplines)}`,
                              background: `color-mix(in srgb, ${teinteDiscipline(p.type_saut, disciplines)} 12%, transparent)` }}>
                     {libelleDiscipline(p.type_saut, disciplines)}
