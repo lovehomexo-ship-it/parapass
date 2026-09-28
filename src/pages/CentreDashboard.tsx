@@ -944,6 +944,16 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
   const { rules: complianceRules } = useComplianceRules();
   const { rules: currencyRules } = useCurrencyRules();
   const [conformiteMap, setConformiteMap] = useState<Record<string, ComplianceStatus>>({});
+  /**
+   * LE FEU VERT « DOSSIER » — celui qu'on peut lire n'importe quel jour.
+   * Le verdict complet mêle des faits du jour (briefing acquitté, météo face au
+   * brevet, vérification du principal) qui n'existent qu'au pied de l'avion :
+   * hors d'une planche, ils sont « indisponibles » et le voyant reste gris pour
+   * tout le monde. Un voyant toujours gris n'apprend rien.
+   * `verdicts_dossier` ne retient que les règles répondables sur pièces.
+   */
+  const [dossierMap, setDossierMap] = useState<Record<string,
+    { verdict: string; bloquants: number; vigilances: number; motifs: string | null }>>({});
   const [dernierSautMap, setDernierSautMap] = useState<Record<string, string | null>>({});
   const [filtreConformite, setFiltreConformite] = useState<'tous' | ComplianceStatus>('tous');
   // Briefing du jour + acquittements
@@ -1056,6 +1066,22 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
           counts[c.parachutiste_id] = c.total;
         });
         setSautCounts(counts);
+
+        // Le Feu Vert de dossier, pour toute la liste d'un coup.
+        const { data: vd, error: eVd } = await supabase.rpc('verdicts_dossier', {
+          p_centre_id: centreId, p_ids: ids,
+        });
+        if (eVd) {
+          console.error('Feu Vert dossier — lecture échouée :', {
+            code: eVd.code, message: eVd.message, details: eVd.details, hint: eVd.hint });
+        }
+        const dMap: Record<string, { verdict: string; bloquants: number; vigilances: number; motifs: string | null }> = {};
+        (vd ?? []).forEach((v: { parachutiste_id: string; verdict: string;
+                                 nb_bloquants: number; nb_vigilances: number; motifs: string | null }) => {
+          dMap[v.parachutiste_id] = { verdict: v.verdict, bloquants: v.nb_bloquants,
+                                      vigilances: v.nb_vigilances, motifs: v.motifs };
+        });
+        setDossierMap(dMap);
 
         // LE BREVET AFFICHÉ ÉTAIT LE PLUS RÉCENT, PAS LE PLUS ÉLEVÉ. Trié par
         // date décroissante, le premier gagnait : une qualification passée
@@ -1242,6 +1268,10 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
                     {l.prenom} {l.nom}
                   </p>
                   <p className="text-xs" style={{ color: 'var(--c-dim)' }}>{brevets[l.id] ?? '—'}</p>
+                  {/* LE DOSSIER, EN UN MOT. Une pastille de couleur seule oblige
+                      à connaître le code ; le mot se lit sans apprentissage, et
+                      l'infobulle donne le détail avec sa référence. */}
+                  <FeuDossier d={dossierMap[l.id]} />
                   {/* « 1 sauts » se remarque tout de suite sur une fiche. */}
                   <p className="text-xs" style={{ color: 'var(--c-dim)' }}>
                     {sautCounts[l.id] ?? 0} saut{(sautCounts[l.id] ?? 0) > 1 ? 's' : ''}
@@ -1479,6 +1509,38 @@ function DemandesSection({ centreId, onAccepted }: { centreId: string | undefine
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * LE FEU VERT D'UN DOSSIER, EN UN MOT.
+ *
+ * Une pastille de couleur seule suppose qu'on connaisse le code ; le mot se lit
+ * sans rien apprendre. Et il ne promet QUE ce qu'il sait : « dossier complet »
+ * ne dit pas « peut sauter » — le briefing, la météo face au brevet et la
+ * vérification du matériel se constatent au pied de l'avion, pas sur pièces.
+ * Promettre l'aptitude ici serait la promesse qu'on ne pourrait pas tenir.
+ */
+function FeuDossier({ d }: { d?: { verdict: string; bloquants: number; vigilances: number; motifs: string | null } }) {
+  if (!d) return null;
+  const CFG: Record<string, { mot: string; fond: string; texte: string; bord: string }> = {
+    vert:   { mot: 'Dossier complet',    fond: 'rgba(16,185,129,0.12)', texte: '#6EE7B7', bord: 'rgba(16,185,129,0.35)' },
+    orange: { mot: 'À surveiller',       fond: 'rgba(245,158,11,0.12)', texte: '#FBBF24', bord: 'rgba(245,158,11,0.35)' },
+    rouge:  { mot: 'Dossier incomplet',  fond: 'rgba(239,68,68,0.12)',  texte: '#FCA5A5', bord: 'rgba(239,68,68,0.35)' },
+    gris:   { mot: 'À renseigner',       fond: 'rgba(148,163,184,0.12)',texte: '#CBD5E1', bord: 'rgba(148,163,184,0.3)' },
+  };
+  const c = CFG[d.verdict] ?? CFG.gris;
+  const nb = d.bloquants + d.vigilances;
+  return (
+    <span
+      className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full"
+      style={{ fontSize: 10.5, fontWeight: 700, background: c.fond, color: c.texte,
+               border: `1px solid ${c.bord}` }}
+      title={(d.motifs ?? 'Aucune anomalie sur pièces.')
+             + '\n\nLe briefing, la météo face au brevet et la vérification du matériel'
+             + ' se constatent à l’embarquement — ils ne figurent pas ici.'}>
+      {c.mot}{nb > 0 && ` · ${nb}`}
+    </span>
   );
 }
 
