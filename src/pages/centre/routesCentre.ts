@@ -72,6 +72,81 @@ export const SOUS_ONGLETS: Record<string, readonly string[]> = {
   academy: ['quiz', 'pac', 'brevets', 'documents'],
 };
 
+// ═══════════════════════════════════════════════════════════════════════════
+// REGROUPEMENTS DU MENU
+//
+// Vingt et une entrées dans la barre latérale, dont six qui allaient deux par
+// deux : « Demandes d'adhésion » et « Attestation de carnet » sont deux
+// dossiers qu'un licencié soumet et que la DZ doit signer ; « Sécurité » et
+// « Référentiel Feu Vert » sont la veille et sa règle ; « Mes licenciés » et
+// « Mon équipe » sont les gens.
+//
+// On ne DÉPLACE rien : chaque écran garde sa section, son URL, ses favoris.
+// C'est la navigation qui se resserre — une entrée de menu, une barre
+// d'onglets. « Activité des sauts » reste seule : elle ne se range sous
+// aucune des trois.
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface OngletGroupe {
+  readonly section: string;
+  readonly label: string;
+  /** Quand la section a elle-même des sous-onglets, on les remonte ICI plutôt
+   *  que d'empiler deux barres — « Mon équipe » s'affichait deux fois. */
+  readonly sousOnglet?: string;
+}
+
+export interface GroupeNav {
+  /** Section ouverte au clic sur l'entrée de menu — la première du groupe. */
+  readonly cle: string;
+  readonly label: string;
+  readonly onglets: readonly OngletGroupe[];
+}
+
+/** Clé d'onglet stable : une section, ou une section + son sous-onglet. */
+export function cleOnglet(o: { section: string; sousOnglet?: string }): string {
+  return o.sousOnglet ? `${o.section}:${o.sousOnglet}` : o.section;
+}
+
+export const GROUPES_NAV: readonly GroupeNav[] = [
+  {
+    cle: 'demandes',
+    label: 'Demandes',
+    onglets: [
+      { section: 'demandes', label: "Demandes d'adhésion" },
+      { section: 'validations', label: 'Attestations de carnet' },
+    ],
+  },
+  {
+    cle: 'securite',
+    label: 'Sécurité',
+    onglets: [
+      { section: 'securite', label: 'Veille sécurité' },
+      { section: 'regles', label: 'Référentiel Feu Vert' },
+    ],
+  },
+  {
+    cle: 'licencies',
+    label: 'Licenciés & équipe',
+    onglets: [
+      { section: 'licencies', label: 'Mes licenciés' },
+      { section: 'equipe', label: 'Encadrement du jour', sousOnglet: 'encadrement' },
+      { section: 'equipe', label: 'Mon équipe', sousOnglet: 'equipe' },
+    ],
+  },
+];
+
+/** Le groupe auquel appartient une section, s'il y en a un. */
+export function groupeDeSection(section: string): GroupeNav | undefined {
+  return GROUPES_NAV.find(g => g.onglets.some(o => o.section === section));
+}
+
+/** Toutes les sections absorbées par un groupe — sauf la clé qui le représente. */
+export const SECTIONS_GROUPEES: ReadonlySet<string> = new Set(
+  GROUPES_NAV.flatMap(g => g.onglets.map(o => o.section)).filter(
+    s => !GROUPES_NAV.some(g => g.cle === s)
+  )
+);
+
 export const SECTION_DEFAUT = 'dashboard';
 export const URL_DEFAUT = 'journee';
 

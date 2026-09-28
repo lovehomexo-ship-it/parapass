@@ -3,6 +3,7 @@ import { MODULES, computeActiveModules } from '../data/modules';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   sectionDepuisUrl, urlDeSection, sousOngletValide, estIdentifiant, LIBELLE_SECTION,
+  groupeDeSection, cleOnglet,
 } from './centre/routesCentre';
 import { useAuth } from '../lib/auth';
 import { useTheme } from '../lib/ThemeContext';
@@ -3004,7 +3005,6 @@ export function CentreDashboardPage() {
   const equipeTab = (sousOngletValide('equipe', segmentSousOnglet) ?? 'equipe') as 'encadrement' | 'equipe';
   const academyTab = (sousOngletValide('academy', segmentSousOnglet) ?? 'quiz') as 'quiz' | 'pac' | 'brevets' | 'documents';
   const setMessagesTab = useCallback((t: string) => navigate(urlDeSection('messages', t)), [navigate]);
-  const setEquipeTab = useCallback((t: string) => navigate(urlDeSection('equipe', t)), [navigate]);
   const setAcademyTab = useCallback((t: string) => navigate(urlDeSection('academy', t)), [navigate]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   /**
@@ -3190,8 +3190,11 @@ export function CentreDashboardPage() {
 
   const navItems = [
     { key: 'dashboard', label: 'Tableau de bord', icon: Home },
-    { key: 'licencies', label: 'Mes licenciés', icon: Users },
-    { key: 'demandes', label: "Demandes d'adhésion", icon: ClipboardList, badge: stats.demandesAttente },
+    // Trois entrées portent chacune deux écrans : le détail se choisit dans la
+    // barre d'onglets, pas dans la colonne de gauche (cf. GROUPES_NAV).
+    { key: 'licencies', label: 'Licenciés & équipe', icon: Users },
+    { key: 'demandes', label: 'Demandes', icon: ClipboardList,
+      badge: stats.demandesAttente + carnetsEnAttente },
     { key: 'sauts', label: 'Activité des sauts', icon: Activity },
     { key: 'briefing', label: 'Briefing du jour', icon: Megaphone },
     ...(activeModules.has('academy') ? [{ key: 'academy', label: 'Academy', icon: GraduationCap }] : []),
@@ -3199,13 +3202,10 @@ export function CentreDashboardPage() {
     ...(activeModules.has('avionnage') ? [{ key: 'rotations', label: 'Avionnage', icon: Plane }] : []),
     { key: 'materiel', label: 'Matériel', icon: Wrench },
     { key: 'securite', label: 'Sécurité', icon: ShieldAlert },
-    { key: 'regles', label: 'Référentiel Feu Vert', icon: ShieldAlert },
     { key: 'journal', label: 'Journal de bord', icon: BookCheck },
     { key: 'stats', label: 'Statistiques', icon: BarChart2 },
-    { key: 'equipe', label: 'Mon équipe', icon: Shield },
     { key: 'centre', label: 'Mon centre', icon: Settings },
     { key: 'messages', label: 'Messages', icon: MessageSquare, badge: msgUnread },
-    { key: 'validations', label: 'Attestation de carnet', icon: BookCheck, badge: carnetsEnAttente > 0 ? carnetsEnAttente : undefined },
     ...(activeModules.has('pliage') ? [{ key: 'pliage', label: 'Module pliage', icon: Shield }] : []),
     ...(activeModules.has('finances') ? [{ key: 'finances', label: 'Finances', icon: Euro }] : []),
     ...(activeModules.has('tandem') ? [{ key: 'tandem', label: 'Module Tandem', icon: GraduationCap }] : []),
@@ -3279,7 +3279,11 @@ export function CentreDashboardPage() {
       <nav className="flex-1 min-h-0 px-2 py-3 space-y-0.5 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
         {navItems.map(item => {
           const Icon = item.icon;
-          const isActive = activeSection === item.key;
+          // Une entrée de groupe reste allumée sur n'importe lequel de ses écrans.
+          const groupe = groupeDeSection(item.key);
+          const isActive = groupe
+            ? groupe.onglets.some(o => o.section === activeSection)
+            : activeSection === item.key;
           const isMsgBadge = item.key === 'messages';
           return (
             <button
@@ -3458,7 +3462,7 @@ export function CentreDashboardPage() {
                 <>
                   <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--c-dim)' }} aria-hidden />
                   <span className="font-semibold" style={{ color: 'var(--c-text)' }}>
-                    {LIBELLE_SECTION[activeSection] ?? activeSection}
+                    {groupeDeSection(activeSection)?.label ?? LIBELLE_SECTION[activeSection] ?? activeSection}
                   </span>
                 </>
               )}
@@ -3472,6 +3476,30 @@ export function CentreDashboardPage() {
               )}
             </nav>
           )}
+          {/* Les écrans regroupés se choisissent ici, à l'horizontale : la colonne
+              de gauche n'en porte plus qu'une entrée. Rien n'a bougé de place —
+              chaque onglet garde sa section, son URL et ses favoris. */}
+          {(() => {
+            const groupe = groupeDeSection(activeSection);
+            if (!groupe || modeKiosque) return null;
+            const actif = groupe.onglets.find(o =>
+              o.section === activeSection && (!o.sousOnglet || o.sousOnglet === equipeTab));
+            return (
+              <SousOnglets
+                tabs={groupe.onglets.map(o => ({ key: cleOnglet(o), label: o.label }))}
+                active={cleOnglet(actif ?? groupe.onglets[0])}
+                // UNE seule navigation : `setActiveSection` sait déjà poser le
+                // sous-onglet. En appeler deux (setEquipeTab puis celle-ci)
+                // faisait gagner la seconde, sans sous-onglet — « Encadrement du
+                // jour » renvoyait sur « Mon équipe ».
+                onChange={cle => {
+                  const [section, sous] = cle.split(':');
+                  setActiveSection(section, sous);
+                }}
+              />
+            );
+          })()}
+
           {activeSection === 'dashboard' && (
             <>
               {/* Dashboard réagencé : En-tête → Aujourd'hui → À traiter → Pilotage → Météo.
@@ -3548,14 +3576,8 @@ export function CentreDashboardPage() {
           {/* Mon équipe = les gens et leur encadrement : sous-onglets */}
           {activeSection === 'equipe' && (
             <div>
-              <SousOnglets
-                tabs={[
-                  { key: 'encadrement' as const, label: 'Encadrement du jour' },
-                  { key: 'equipe' as const, label: 'Mon équipe' },
-                ]}
-                active={equipeTab}
-                onChange={setEquipeTab}
-              />
+              {/* Pas de seconde barre : « Encadrement du jour » et « Mon équipe »
+                  sont des onglets du groupe « Licenciés & équipe », juste au-dessus. */}
               {equipeTab === 'encadrement' && centreId && <EncadrementSection centreId={centreId} vue="jour" />}
               {equipeTab === 'equipe' && centreId && <EquipeUnifiee centreId={centreId} />}
             </div>
