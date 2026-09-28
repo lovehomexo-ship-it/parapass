@@ -7,6 +7,7 @@ import {
 import { useAuth } from '../lib/auth';
 import { useTheme } from '../lib/ThemeContext';
 import { supabase } from '../lib/supabase';
+import { brevetPrincipal } from '../lib/brevets';
 import { generatePDF } from '../lib/pdf';
 import { sendMessage, useConversationMessages, getOrCreateConversation, useConversations } from '../lib/useMessages';
 import type { Message } from '../lib/useMessages';
@@ -993,14 +994,23 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
   const fetchLicencies = useCallback(async () => {
     if (!centreId) return;
     setLoading(true);
-    const { data } = await supabase
+    // LE FILTRE `est_demo` CACHAIT LES LICENCIÉS D'UN CENTRE DE DÉMONSTRATION.
+    // L'intention est juste — un profil de démo n'a rien à faire dans la liste
+    // d'un centre de production (P11.1) — mais appliquée partout, elle vidait
+    // aussi la liste des centres qui SONT des démonstrations : Royan affichait
+    // 8 licenciés sur 25. On ne masque donc les profils de démo que sur un
+    // centre réel.
+    const { data: ctr } = await supabase
+      .from('centres').select('is_demo').eq('id', centreId).maybeSingle();
+    const centreDemo = ctr?.is_demo === true;
+
+    let requete = supabase
       .from('licencies_centres')
-      // !inner + filtre est_demo : les profils de démonstration ne remontent pas
-      // dans la liste des licenciés d'un centre de production (P11.1).
       .select(`statut, date_adhesion, profiles!parachutiste_id!inner(id, nom, prenom, email, numero_licence, photo_profil_url, created_at, role, est_demo)`)
       .eq('centre_id', centreId)
-      .eq('statut', 'actif')
-      .eq('profiles.est_demo', false);
+      .eq('statut', 'actif');
+    if (!centreDemo) requete = requete.eq('profiles.est_demo', false);
+    const { data } = await requete;
 
     if (data) {
       const list: LicencieSummary[] = data.map((d: {
@@ -1027,26 +1037,44 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
         // Total canonique (hors soufflerie, tous statuts) — même définition que
         // le carnet du parachutiste (useJumpCounts), pour un chiffre identique
         // sur toutes les vues (Prompt F).
-        const { data: sautsData } = await supabase
-          .from('sauts')
-          .select('parachutiste_id')
-          .in('parachutiste_id', ids)
-          .eq('is_tunnel', false);
+        // ON COMPTE EN BASE, PLUS DANS LE NAVIGATEUR. Cet écran téléchargeait
+        // UNE LIGNE PAR SAUT de tous ses licenciés puis les comptait en
+        // JavaScript. PostgREST plafonne une réponse à 1000 lignes : au-delà,
+        // les sauts suivants n'arrivent jamais. À Royan — plus de 5900 sauts —
+        // la plupart des compteurs étaient tronqués, et Sophie MARTIN affichait
+        // « 0 saut » pour 57 réels. Invisible tant qu'un centre reste petit :
+        // le pire genre de bogue, il attend la croissance.
+        const { data: cpt, error: eCpt } = await supabase.rpc('compteurs_sauts', { p_ids: ids });
+        if (eCpt) {
+          console.error('Compteurs de sauts — lecture échouée :', {
+            code: eCpt.code, message: eCpt.message, details: eCpt.details, hint: eCpt.hint });
+        }
         const counts: Record<string, number> = {};
-        (sautsData ?? []).forEach((s: { parachutiste_id: string }) => {
-          counts[s.parachutiste_id] = (counts[s.parachutiste_id] ?? 0) + 1;
+        (cpt ?? []).forEach((c: { parachutiste_id: string; total: number }) => {
+          counts[c.parachutiste_id] = c.total;
         });
         setSautCounts(counts);
 
+        // LE BREVET AFFICHÉ ÉTAIT LE PLUS RÉCENT, PAS LE PLUS ÉLEVÉ. Trié par
+        // date décroissante, le premier gagnait : une qualification passée
+        // après un brevet D s'affichait à sa place, et Claire DUBOIS
+        // apparaissait « BPA » avec 1192 sauts. `brevetPrincipal` retient le
+        // plus haut de l'échelle — c'est déjà la règle partout ailleurs.
         const { data: brevetsData } = await supabase
           .from('brevets')
           .select('parachutiste_id, type_brevet, date_obtention')
-          .in('parachutiste_id', ids)
-          .order('date_obtention', { ascending: false });
-        const bMap: Record<string, string> = {};
-        (brevetsData ?? []).forEach((b: { parachutiste_id: string; type_brevet: string }) => {
-          if (!bMap[b.parachutiste_id]) bMap[b.parachutiste_id] = b.type_brevet;
+          .in('parachutiste_id', ids);
+        const parPersonne = new Map<string, { type_brevet: string; date_obtention: string }[]>();
+        (brevetsData ?? []).forEach((b: { parachutiste_id: string; type_brevet: string; date_obtention: string }) => {
+          const l = parPersonne.get(b.parachutiste_id) ?? [];
+          l.push({ type_brevet: b.type_brevet, date_obtention: b.date_obtention });
+          parPersonne.set(b.parachutiste_id, l);
         });
+        const bMap: Record<string, string> = {};
+        for (const [pid, liste] of parPersonne) {
+          const principal = brevetPrincipal(liste);
+          if (principal) bMap[pid] = principal.type_brevet;
+        }
         setBrevets(bMap);
       }
     }
@@ -1212,7 +1240,10 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
                     {l.prenom} {l.nom}
                   </p>
                   <p className="text-xs" style={{ color: 'var(--c-dim)' }}>{brevets[l.id] ?? '—'}</p>
-                  <p className="text-xs" style={{ color: 'var(--c-dim)' }}>{sautCounts[l.id] ?? 0} sauts</p>
+                  {/* « 1 sauts » se remarque tout de suite sur une fiche. */}
+                  <p className="text-xs" style={{ color: 'var(--c-dim)' }}>
+                    {sautCounts[l.id] ?? 0} saut{(sautCounts[l.id] ?? 0) > 1 ? 's' : ''}
+                  </p>
                 </div>
                 <div className="flex flex-wrap justify-center gap-1.5">
                   <span className="text-xs rounded-full px-2 py-0.5" style={{ background: 'rgba(16,185,129,0.2)', color: '#34D399', border: '1px solid rgba(16,185,129,0.3)' }}>Actif</span>
