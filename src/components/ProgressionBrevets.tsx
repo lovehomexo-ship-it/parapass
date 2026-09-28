@@ -12,7 +12,7 @@ export function ProgressionBrevets({ userId }: { userId: string | undefined }) {
   const { brevets, epreuves, epreuvesDe, reglesDe, prerequisMap, renseigne, loading } = useReferentielBrevets();
   const dzs = useDzMembre(userId);
   const ctx = useContexteEleve(userId);
-  const { progressions, brevetsDelivres, declarerPret, error } = useMaProgression(userId, dzs[0]?.id);
+  const { progressions, brevetsDelivres, declarerPret, error, erreurs, enCours } = useMaProgression(userId, dzs[0]?.id);
 
   if (loading) return null;
 
@@ -110,15 +110,25 @@ export function ProgressionBrevets({ userId }: { userId: string | undefined }) {
                       {statut === 'pret' && <span className="text-[10px] font-semibold" style={{ color: '#FBBF24' }}>en attente du moniteur</span>}
                       {(statut === 'a_faire' || statut === 'echouee') && (
                         preqOk ? (
-                          <button onClick={() => declarerPret(ep.id)}
-                            className="text-[11px] font-bold px-2.5 rounded-lg text-white" style={{ background: '#2563EB', minHeight: 32 }}>
-                            Je suis prêt
+                          <button onClick={() => declarerPret(ep.id)} disabled={enCours === ep.id}
+                            className="text-[11px] font-bold px-2.5 rounded-lg text-white"
+                            style={{ background: '#2563EB', minHeight: 32, opacity: enCours === ep.id ? 0.6 : 1 }}>
+                            {enCours === ep.id ? 'Envoi…' : 'Je suis prêt'}
                           </button>
                         ) : (
                           <span className="text-[10px] text-right" style={{ color: 'rgba(255,255,255,0.35)', maxWidth: 150 }}>
                             valide d'abord {manque}
                           </span>
                         )
+                      )}
+                      {/* Un refus se lit ICI, au bouton. La bannière en haut de la
+                          carte est hors écran dès le deuxième brevet — le bouton
+                          passait alors pour mort. */}
+                      {erreurs[ep.id] && (
+                        <p className="text-[10px] w-full flex items-start gap-1" style={{ color: '#FCA5A5' }}>
+                          <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-px" aria-hidden="true" />
+                          {erreurs[ep.id]}
+                        </p>
                       )}
                     </div>
                   );

@@ -247,6 +247,8 @@ export function useMaProgression(userId: string | undefined, centreId: string | 
   const [progressions, setProgressions] = useState<Record<string, ProgressionEpreuve>>({});
   const [brevetsDelivres, setBrevetsDelivres] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [erreurs, setErreurs] = useState<Record<string, string>>({});
+  const [enCours, setEnCours] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!userId) return;
@@ -262,27 +264,37 @@ export function useMaProgression(userId: string | undefined, centreId: string | 
 
   useEffect(() => { load(); }, [load]);
 
-  /** « Je suis prêt » : signale au moniteur, n'auto-valide JAMAIS. */
+  /** « Je suis prêt » : signale au moniteur, n'auto-valide JAMAIS.
+   *  Un refus doit se voir À CÔTÉ du bouton : la bannière en haut de carte est
+   *  hors écran dès qu'on a plus d'un brevet, et le bouton passait pour mort. */
   const declarerPret = async (epreuveId: string): Promise<void> => {
     if (!userId) return;
     setError(null);
-    const existing = progressions[epreuveId];
-    const { data: written, error } = existing
-      ? await supabase.from('progression_epreuves')
-          .update({ statut: 'pret', declare_pret_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-          .eq('id', existing.id).select('*')
-      : await supabase.from('progression_epreuves')
-          .insert({ user_id: userId, epreuve_id: epreuveId, centre_id: centreId ?? null, statut: 'pret', declare_pret_at: new Date().toISOString() })
-          .select('*');
-    if (error || !written || written.length === 0) {
-      console.error('Déclaration « prêt » échouée :', error);
-      setError(error?.message ?? 'La déclaration n\'a pas pu être enregistrée.');
-      return;
+    setErreurs(e => Object.fromEntries(Object.entries(e).filter(([k]) => k !== epreuveId)));
+    setEnCours(epreuveId);
+    try {
+      const existing = progressions[epreuveId];
+      const { data: written, error } = existing
+        ? await supabase.from('progression_epreuves')
+            .update({ statut: 'pret', declare_pret_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+            .eq('id', existing.id).select('*')
+        : await supabase.from('progression_epreuves')
+            .insert({ user_id: userId, epreuve_id: epreuveId, centre_id: centreId ?? null, statut: 'pret', declare_pret_at: new Date().toISOString() })
+            .select('*');
+      if (error || !written || written.length === 0) {
+        console.error('Déclaration « prêt » échouée :', error);
+        const message = error?.message ?? "L'enregistrement a été refusé — préviens ton moniteur.";
+        setError(message);
+        setErreurs(e => ({ ...e, [epreuveId]: message }));
+        return;
+      }
+      setProgressions(p => ({ ...p, [epreuveId]: written[0] as ProgressionEpreuve }));
+    } finally {
+      setEnCours(null);
     }
-    setProgressions(p => ({ ...p, [epreuveId]: written[0] as ProgressionEpreuve }));
   };
 
-  return { progressions, brevetsDelivres, declarerPret, error, refresh: load };
+  return { progressions, brevetsDelivres, declarerPret, error, erreurs, enCours, refresh: load };
 }
 
 // ─── Côté moniteur / DT ───────────────────────────────────────────────────────
