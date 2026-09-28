@@ -12,6 +12,7 @@ import { generatePDF } from '../lib/pdf';
 import { sendMessage, useConversationMessages, getOrCreateConversation, useConversations } from '../lib/useMessages';
 import type { Message } from '../lib/useMessages';
 import { PasseportCardView } from '../components/PasseportCardView';
+import { ConformiteDossier } from '../components/ConformiteDossier';
 import { AddSautModal } from '../components/AddSautModal';
 import { useComplianceRules, licenceStatus, getComplianceStatus, type ComplianceStatus } from '../lib/compliance';
 import { ComplianceBadge, ComplianceDot } from '../components/ComplianceBadge';
@@ -2699,11 +2700,18 @@ function LicencieDrawer({
         {/* Content */}
         <div className={`flex-1 min-h-0 ${tab === 'messages' ? 'flex flex-col overflow-hidden' : 'overflow-y-auto p-6 space-y-4'}`} key={`${licencie?.id}-${tab}`}>
           {tab === 'carte' && licencie && currentProfile && (
-            <PasseportCardView
-              userId={licencie.id}
-              centreId={centreId}
-              adminId={currentProfile.id}
-            />
+            <>
+              <PasseportCardView
+                userId={licencie.id}
+                centreId={centreId}
+                adminId={currentProfile.id}
+              />
+              {/* LA LISTE ANNONÇAIT « Dossier incomplet · 1 » ET LA FICHE SE
+                  TAISAIT. Une anomalie qu'on ne sait pas résoudre n'est qu'un
+                  reproche : chaque ligne dit désormais ce qui est constaté, ce
+                  qu'il faut faire, et le texte qui la fonde. */}
+              <ConformiteDossier parachutisteId={licencie.id} centreId={centreId} />
+            </>
           )}
 
           {tab === 'sauts' && (

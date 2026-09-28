@@ -457,10 +457,19 @@ function CardRecto({ data, id, feu, onFeuClick }: {
               {' · '}{MOT_VALIDITE[statutMedical]}
             </span>
           </div>
-          {/* Le feu : la décision du DT, résumée. Cliquable hors capture. */}
-          <span className="ml-auto">
-            <FeuTricolore etat={feu ?? null} onClick={onFeuClick} taille={11} />
-          </span>
+          {/* LE FEU N'EST PLUS SUR LA CARTE QUAND IL N'A RIEN À DIRE.
+              Il reflète le dernier contrôle consigné à l'embarquement. Tant
+              qu'aucune licence n'a été scannée — c'est-à-dire presque toujours,
+              hors d'un jour de saut — il reste ÉTEINT. Un feu tricolore éteint
+              en permanence sur chaque carte n'informe de rien et use le seul
+              signal qui devrait alerter. On ne l'affiche donc que lorsqu'un
+              contrôle existe ; l'état des documents se lit juste à côté, en
+              dates et en mots, et le détail dans « Conformité du dossier ». */}
+          {feu && (
+            <span className="ml-auto">
+              <FeuTricolore etat={feu} onClick={onFeuClick} taille={11} />
+            </span>
+          )}
         </div>
 
         {/* ── Row 4 : Assurances ── (une mention par ligne, pas de débordement) */}
