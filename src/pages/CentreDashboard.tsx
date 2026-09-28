@@ -2073,6 +2073,13 @@ function MonCentreSection({ centre, onSaved }: { centre: Centre | null; onSaved:
 
   const handleDeleteLogo = async () => {
     if (!centre?.id) return;
+    // « Supprimer » effaçait le lien et laissait le FICHIER dans le seau. Un
+    // cachet officiel retiré doit l'être vraiment : on retire l'objet, dans
+    // toutes les extensions possibles — l'écran accepte quatre formats et ne
+    // sait pas lequel a servi.
+    const { error: errStockage } = await supabase.storage.from('centre-logos').remove(
+      ['png', 'jpg', 'jpeg', 'svg', 'webp'].map(e => `logo-${centre.id}.${e}`));
+    if (errStockage) console.error('Suppression du fichier logo échouée :', errStockage);
     await supabase.from('centres').update({ logo_url: null }).eq('id', centre.id);
     setLogoUrl(null);
     setLogoFile(null);
@@ -3266,6 +3273,18 @@ export function CentreDashboardPage() {
     setLoading(false);
   }, [profile]);
 
+  const centreIdRef = useRef<string | undefined>(undefined);
+  const chargerCompteursRef = useRef<((id: string) => void) | null>(null);
+
+  // Ce rappel est passé en PROP à un écran qui le met dans les dépendances de
+  // son `useCallback` de chargement. Une lambda recréée à chaque rendu y
+  // provoquait une boucle infinie : chargement → état → rendu → nouvelle
+  // identité → chargement. C'est ce qui faisait clignoter les valeurs et
+  // tourner le spinner sans fin sur l'onglet Attestations.
+  const recompterApresValidation = useCallback(() => {
+    if (centreIdRef.current) chargerCompteursRef.current?.(centreIdRef.current);
+  }, []);
+
   // Les compteurs se rechargent SEULS. Ils ne se mettaient à jour qu'au
   // chargement de la page : une demande arrivée pendant que la DZ travaillait
   // ne se voyait qu'au prochain rafraîchissement — c'est-à-dire jamais, un
@@ -3277,6 +3296,11 @@ export function CentreDashboardPage() {
     const r = (data ?? {}) as { adhesions?: number; carnets?: number; sauts?: number };
     setATraiter({ adhesions: r.adhesions ?? 0, carnets: r.carnets ?? 0, sauts: r.sauts ?? 0 });
   }, []);
+
+  useEffect(() => {
+    centreIdRef.current = centreId;
+    chargerCompteursRef.current = chargerCompteurs;
+  }, [centreId, chargerCompteurs]);
 
   useEffect(() => {
     if (!centreId) return;
@@ -3805,7 +3829,7 @@ export function CentreDashboardPage() {
               nombre, c'est deux nombres à terme. */}
           {activeSection === 'validations' && centreId && (
             <ValidationsCarnet dzId={centreId} onNavigate={setActiveSection}
-              onCompteur={() => { chargerCompteurs(centreId); }} />
+              onCompteur={recompterApresValidation} />
           )}
           {activeSection === 'tandem' && centreId && activeModules.has('tandem') && (
             <TandemSection centreId={centreId} />

@@ -376,6 +376,10 @@ export function ValidationsCarnet({ dzId, onNavigate, onCompteur }: {
   const [lotEnCours, setLotEnCours] = useState(false);
   const [saisieLot, setSaisieLot] = useState(false);
 
+  // Lu par référence dans `load` : voir la note sur ses dépendances.
+  const onCompteurRef = useRef(onCompteur);
+  useEffect(() => { onCompteurRef.current = onCompteur; }, [onCompteur]);
+
   const load = useCallback(async () => {
     setLoading(true);
     // La règle « qui voit les dossiers de démonstration » n'est PAS réécrite
@@ -482,12 +486,16 @@ export function ValidationsCarnet({ dzId, onNavigate, onCompteur }: {
         },
       }));
       setParas(list);
-      onCompteur?.(list.filter(p => p.carnet_statut === 'en_attente').length);
+      onCompteurRef.current?.(list.filter(p => p.carnet_statut === 'en_attente').length);
     }
     // Lecture en échec : on ne remonte RIEN. Annoncer zéro dossier à traiter
     // parce qu'une requête a échoué serait un faux « tout est à jour ».
     setLoading(false);
-  }, [dzId, onCompteur]);
+    // `onCompteur` est LU par une référence, pas déclaré en dépendance : un
+    // appelant qui passe une lambda recréée à chaque rendu relançait sinon le
+    // chargement en boucle — valeurs clignotantes et spinner sans fin. Un
+    // composant ne doit pas dépendre de la discipline de son appelant.
+  }, [dzId]);
 
   useEffect(() => { load(); }, [load]);
 
