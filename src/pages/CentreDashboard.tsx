@@ -3132,7 +3132,7 @@ export function CentreDashboardPage() {
   // « Ce qui attend une décision » : adhésions, attestations de carnet, sauts.
   // Une seule source (`compteurs_a_traiter`), sinon la pastille du menu et
   // l'écran finissent par annoncer deux nombres différents.
-  const [aTraiter, setATraiter] = useState({ adhesions: 0, carnets: 0, sauts: 0 });
+  const [aTraiter, setATraiter] = useState({ adhesions: 0, carnets: 0, sauts: 0, brevets: 0 });
   const carnetsEnAttente = aTraiter.carnets;
   const [activeModules, setActiveModules] = useState<Set<string>>(new Set());
   // ── Avionnage : module optionnel, facturé à part ───────────────────────────
@@ -3293,8 +3293,9 @@ export function CentreDashboardPage() {
   const chargerCompteurs = useCallback(async (id: string) => {
     const { data, error } = await supabase.rpc('compteurs_a_traiter', { p_centre_id: id });
     if (error) { console.error('Comptage des dossiers à traiter échoué :', error); return; }
-    const r = (data ?? {}) as { adhesions?: number; carnets?: number; sauts?: number };
-    setATraiter({ adhesions: r.adhesions ?? 0, carnets: r.carnets ?? 0, sauts: r.sauts ?? 0 });
+    const r = (data ?? {}) as { adhesions?: number; carnets?: number; sauts?: number; brevets?: number };
+    setATraiter({ adhesions: r.adhesions ?? 0, carnets: r.carnets ?? 0,
+                  sauts: r.sauts ?? 0, brevets: r.brevets ?? 0 });
   }, []);
 
   useEffect(() => {
@@ -3312,6 +3313,12 @@ export function CentreDashboardPage() {
         recharger)
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'sauts', filter: `centre_id=eq.${centreId}` },
+        recharger)
+      // Sans filtre de centre : une épreuve déclarée prête porte le centre_id
+      // figé au clic, qui n'est pas forcément celui-ci — la progression suit le
+      // parachutiste, pas la DZ. Le comptage, lui, refiltre correctement.
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'progression_epreuves' },
         recharger)
       .subscribe();
     // Filet : si le temps réel n'est pas disponible (réseau du hangar, onglet
@@ -3346,7 +3353,9 @@ export function CentreDashboardPage() {
       badge: aTraiter.adhesions + aTraiter.carnets },
     { key: 'sauts', label: 'Activité des sauts', icon: Activity, badge: aTraiter.sauts },
     { key: 'briefing', label: 'Briefing du jour', icon: Megaphone },
-    ...(activeModules.has('academy') ? [{ key: 'academy', label: 'Academy', icon: GraduationCap }] : []),
+    ...(activeModules.has('academy')
+      ? [{ key: 'academy', label: 'Academy', icon: GraduationCap, badge: aTraiter.brevets }]
+      : []),
     { key: 'planning', label: 'Planning DZ', icon: Calendar },
     ...(activeModules.has('avionnage') ? [{ key: 'rotations', label: 'Avionnage', icon: Plane }] : []),
     { key: 'materiel', label: 'Matériel', icon: Wrench },
