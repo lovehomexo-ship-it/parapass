@@ -3,16 +3,18 @@ import { Link } from 'react-router-dom';
 import { Shield, Check, ArrowRight, Camera, Flame, Zap, Clock,
   Brain, Pencil, Siren, Scroll, Wind, Target, PlaneLanding, Medal, Award,
   CreditCard, Smartphone, ClipboardList, TrendingUp, GraduationCap, CheckCircle2,
-  Backpack, CalendarDays, BarChart3, Wrench, Users, Euro, Star, Sparkles, Building2, AlertTriangle,
+  Backpack, CalendarDays, BarChart3, Wrench, Users, Euro, Sparkles, Building2, AlertTriangle,
   ShieldCheck, PlayCircle } from 'lucide-react';
 import { ParachuteGlyph } from '../design/BadgeIcon';
 import { ModuleIcon } from '../design/academieIcons';
 
 import { ParaPassLogo } from '../components/ParaPassLogo';
 import { ParachuteIcon, ParachuteDropIcon } from '../components/ParachuteIcon';
-import { QRCodeSVG } from 'qrcode.react';
+
 import { DemoSelectModal } from '../components/DemoSelectModal';
 import { SectionSecurite } from '../components/landing/SectionSecurite';
+import { CardRecto, CardVerso, type PasseportData } from '../components/PasseportCardView';
+import type { Licence, Brevet, CertificatMedical, CentreLicencie } from '../lib/types';
 import { supabase } from '../lib/supabase';
 import { MODULES, STUDIO, ECONOMIE_STUDIO } from '../data/modules';
 
@@ -118,169 +120,82 @@ function Particles() {
 
 // ─── Demo Passport Card (flippable) ──────────────────────────────────────────
 
+/**
+ * LA CARTE DE LA PAGE D'ACCUEIL EST CELLE DE L'APPLICATION.
+ *
+ * Elle était redessinée à la main ici, et elle avait dérivé : autre mise en
+ * page, autres champs, un « Brevet B » écrit en toutes lettres dans une ligne
+ * de texte, pas de ligne de validité colorée, pas de bénéficiaire. Le visiteur
+ * voyait une carte que le produit ne fabrique pas.
+ *
+ * On monte maintenant `CardRecto` / `CardVerso`, les composants que le
+ * passeport utilise, avec une personne fictive. La démonstration ne peut plus
+ * mentir sur le produit : si la carte change, la page d'accueil change avec.
+ */
+const DEMO_PASSEPORT: PasseportData = {
+  profile: {
+    id: '00000000-0000-4000-8000-00000000d3m0',
+    nom: DEMO.nom, prenom: DEMO.prenom,
+    avatar_url: null, photo_profil_url: '/sophie-martin.png',
+    numero_licence: DEMO.licence,
+    date_naissance: '1990-01-30', lieu_naissance: 'Paris',
+    partage_carte_centre: true, signature_url: null,
+  },
+  licences: [{
+    id: 'demo-lic', parachutiste_id: '00000000-0000-4000-8000-00000000d3m0',
+    numero_licence: DEMO.licence, date_delivrance: '2026-01-01',
+    date_expiration: '2026-12-31', organisme: 'FFP', statut: 'actif',
+    created_at: '2026-01-01', code_club: '0916', nom_club: DEMO.dz,
+    beneficiaire_nom: 'Martin Pierre', beneficiaire_lien: 'parent',
+    beneficiaire_telephone: null, assurance_individuelle: true, assurance_rc: true,
+    tampon_dz_url: null, tampon_valide_par: null, tampon_date_validation: null,
+    tampon_signature_url: null, tampon_statut: 'valide', type_licence: 'lp',
+    tampon_snapshot_url: null,
+  } as Licence],
+  brevets: [
+    { type_brevet: 'A', date_obtention: '2021-11-12' } as Brevet,
+    { type_brevet: 'B', date_obtention: '2022-06-08' } as Brevet,
+  ],
+  certificats: [{ date_expiration: '2027-03-15' } as CertificatMedical],
+  centresLicencies: [{ statut: 'actif', centre: { nom: DEMO.dz } } as unknown as CentreLicencie],
+  qualifications: [],
+  sautsCount: DEMO.sauts, validSautsCount: DEMO.sauts,
+  qrToken: null, tamponConfig: null, centre: null,
+  loadedAt: new Date(), dernierSautValide: null,
+  dernierSautDate: new Date().toISOString().slice(0, 10),
+  dernierControle: null,
+};
+
 function DemoPassportCard({ compact = false }: { compact?: boolean }) {
   const [flipped, setFlipped] = useState(false);
-  const size = compact ? 'max-w-[340px]' : 'max-w-[420px]';
+  const largeur = compact ? 340 : 420;
 
   return (
-    <div className={`relative w-full ${size}`} style={{ perspective: 1200 }}>
-    <div
-      className={`demo-card-wrapper relative w-full select-none cursor-pointer`}
-      style={{ minHeight: compact ? 260 : 320 }}
-      onClick={() => setFlipped(f => !f)}
-    >
+    <div className="relative w-full" style={{ maxWidth: largeur, perspective: 1200 }}>
       <div
-        className="demo-card-inner w-full h-full"
-        style={{
-          transformStyle: 'preserve-3d',
-          transition: 'transform 0.65s cubic-bezier(0.4,0,0.2,1)',
-          transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
-          minHeight: compact ? 260 : 320,
-          position: 'relative',
-        }}
+        className="relative w-full select-none cursor-pointer"
+        onClick={() => setFlipped(f => !f)}
+        style={{ filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.5))', transform: compact ? 'rotate(1deg)' : 'rotate(2deg)' }}
       >
-        {/* ── FACE AVANT ── */}
         <div
-          className="demo-card absolute inset-0 rounded-xl overflow-hidden"
           style={{
-            background: 'linear-gradient(135deg, #001A4D 0%, #0f1a30 60%, #1E3A5F 100%)',
-            filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.5))',
-            transform: compact ? 'rotate(1deg)' : 'rotate(2deg)',
-            backfaceVisibility: 'hidden',
-            WebkitBackfaceVisibility: 'hidden',
+            transformStyle: 'preserve-3d',
+            transition: 'transform 0.65s cubic-bezier(0.4,0,0.2,1)',
+            transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+            position: 'relative',
           }}
         >
-          <div className="absolute inset-0 flex items-center justify-end opacity-[0.06] pointer-events-none pr-3">
-            <ParachuteIcon className="w-48 h-48 text-white" />
+          <div style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
+            <CardRecto data={DEMO_PASSEPORT} id="carte-demo-recto" />
           </div>
-          <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: '#F97316' }} />
-
-          <div className="relative flex flex-col gap-2" style={{ padding: compact ? '12px 12px 10px' : '14px 14px 12px', minHeight: compact ? 'calc(260px - 6px)' : 'calc(320px - 6px)', justifyContent: 'space-between' }}>
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-6 w-auto flex-shrink-0" />
-                <div>
-                  <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.08em', color: '#F97316' }}>CARNET DE SAUTS NUMÉRIQUE</div>
-                </div>
-              </div>
-              <div style={{ background: '#10B981', color: '#fff', fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', padding: '2px 8px', borderRadius: 20 }}>ACTIF</div>
-            </div>
-
-            {/* Identity */}
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 overflow-hidden" style={{ width: compact ? 58 : 76, height: compact ? 58 : 76, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)' }}>
-                <img src="/sophie-martin.png" alt="Photo de profil de la carte démo" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div style={{ fontSize: compact ? 18 : 22, fontWeight: 800, letterSpacing: '0.04em', color: '#fff', lineHeight: 1.1, textTransform: 'uppercase' }}>{DEMO.nom}</div>
-                <div style={{ fontSize: compact ? 14 : 16, fontWeight: 400, color: '#fff', lineHeight: 1.2 }}>{DEMO.prenom}</div>
-                <div style={{ fontSize: 11, color: '#F97316', marginTop: 1 }}>Fédération Française de Parachutisme</div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 1 }}>Né(e) le 30/01/1990 à Paris</div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.75)', marginTop: 3, lineHeight: 1.4 }}>{DEMO.licence} · Code Club 0916 · Brevet {DEMO.brevet}</div>
-              </div>
-            </div>
-
-            {/* Data grid */}
-            <div className="grid gap-x-3" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
-              {[['Validité licence', DEMO.licenceValide], ['Cert. méd.', DEMO.medicalValide], ['Sauts totaux', String(DEMO.sauts)]].map(([label, val]) => (
-                <div key={label}>
-                  <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', fontFamily: 'monospace', lineHeight: 1.3 }}>{val}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Badges + QR */}
-            <div className="flex items-end justify-between gap-3">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span style={{ fontSize: 9, background: 'rgba(16,185,129,0.18)', color: '#6EE7B7', border: '1px solid rgba(16,185,129,0.3)', padding: '2px 7px', borderRadius: 20, fontWeight: 600 }}>✓ Assuré</span>
-                <span style={{ fontSize: 9, background: 'rgba(16,185,129,0.18)', color: '#6EE7B7', border: '1px solid rgba(16,185,129,0.3)', padding: '2px 7px', borderRadius: 20, fontWeight: 600 }}>✓ Documents à jour</span>
-              </div>
-              <div className="bg-white rounded-lg flex-shrink-0" style={{ padding: 3 }}>
-                <QRCodeSVG value="https://parapass.fr/verify/demo" size={54} level="M" fgColor="#001A4D" bgColor="#FFFFFF" />
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="flex items-center justify-between" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 5, marginTop: 1 }}>
-              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>parapass.fr</div>
-              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)' }}>↺ retourner</div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── FACE ARRIÈRE — mini dashboard ── */}
-        <div
-          className="absolute inset-0 rounded-xl overflow-hidden"
-          style={{
-            background: 'linear-gradient(135deg, #0f1a30 0%, #001A4D 100%)',
-            filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.5))',
-            transform: compact ? 'rotateY(180deg) rotate(-1deg)' : 'rotateY(180deg) rotate(-2deg)',
-            backfaceVisibility: 'hidden',
-            WebkitBackfaceVisibility: 'hidden',
-            padding: compact ? '12px' : '16px',
-          }}
-        >
-          <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: '#F97316' }} />
-          <div className="relative flex flex-col gap-3 h-full" style={{ minHeight: compact ? 236 : 296 }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <div style={{ fontSize: 10, color: 'rgba(147,197,253,0.8)' }}>{DEMO.prenom} {DEMO.nom}</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>Mon carnet</div>
-              </div>
-              <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)' }}>
-                <Star className="w-3 h-3" style={{ color: '#FBBF24' }} aria-hidden />
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#FB923C' }}>{DEMO.noteProgression}</span>
-                <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>/5 moy.</span>
-              </div>
-            </div>
-
-            <div className="rounded-lg px-3 py-2" style={{ background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.25)' }}>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Total sauts validés</div>
-              <div className="flex items-end gap-2">
-                <span style={{ fontSize: 28, fontWeight: 800, color: '#fff', lineHeight: 1.1 }}>{DEMO.sauts}</span>
-                <span style={{ fontSize: 11, color: '#34D399', marginBottom: 2 }}>+5 ce mois</span>
-              </div>
-            </div>
-
-            <div>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Derniers sauts</div>
-              <div className="space-y-1.5">
-                {[
-                  { date: '22/06/2026', lieu: 'BigAir Rochefort', h: '4 000 m' },
-                  { date: '15/06/2026', lieu: 'Saintes Parachutisme', h: '3 500 m' },
-                  { date: '08/06/2026', lieu: 'BigAir Rochefort', h: '4 000 m' },
-                ].map((s, i) => (
-                  <div key={i} className="flex items-center justify-between rounded-lg px-2.5 py-1.5" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                    <div>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: '#fff' }}>{s.lieu}</div>
-                      <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>{s.date}</div>
-                    </div>
-                    <div style={{ fontSize: 10, color: 'rgba(96,165,250,0.8)', fontFamily: 'monospace' }}>{s.h}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <div className="flex justify-between mb-1">
-                <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Licence FFP</span>
-                <span style={{ fontSize: 9, color: '#34D399', fontWeight: 600 }}>Valide jusqu'au {DEMO.licenceValide}</span>
-              </div>
-              <div className="rounded-full overflow-hidden" style={{ height: 5, background: 'rgba(255,255,255,0.1)' }}>
-                <div style={{ width: '72%', height: '100%', background: 'linear-gradient(90deg, #10B981, #34D399)', borderRadius: 999 }} />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between mt-auto" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 5 }}>
-              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Données démo</div>
-              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)' }}>↺ retourner</div>
-            </div>
+          <div style={{ position: 'absolute', inset: 0, transform: 'rotateY(180deg)', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
+            <CardVerso data={DEMO_PASSEPORT} id="carte-demo-verso" isOwner={false} />
           </div>
         </div>
       </div>
-    </div>
+      <p className="text-center mt-2" style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
+        Données fictives · cliquez pour retourner la carte
+      </p>
     </div>
   );
 }

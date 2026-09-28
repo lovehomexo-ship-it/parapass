@@ -15,7 +15,7 @@ import { jsPDF } from 'jspdf';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
-interface ProfileData {
+export interface ProfileData {
   id: string;
   nom: string;
   prenom: string;
@@ -51,7 +51,7 @@ interface DernierControle {
   controle_par_nom: string | null;
 }
 
-interface PasseportData {
+export interface PasseportData {
   profile: ProfileData;
   licences: Licence[];
   brevets: Brevet[];
@@ -266,7 +266,14 @@ function PanneauAnomalies({ controle, feu, onFermer }: {
 
 // ─── Recto card ─────────────────────────────────────────────────────────────────
 
-function CardRecto({ data, id, feu, onFeuClick }: {
+/**
+ * EXPORTÉE, et c'est le point. La page d'accueil dessinait sa PROPRE carte de
+ * licence, à la main : elle a dérivé de la vraie — autre mise en page, autres
+ * champs, autre hiérarchie. Le visiteur voyait une carte que l'application ne
+ * produit pas. Désormais les deux affichent le même composant, avec des données
+ * différentes : la démonstration ne peut plus mentir sur le produit.
+ */
+export function CardRecto({ data, id, feu, onFeuClick }: {
   data: PasseportData; id: string;
   /** Verdict du DERNIER contrôle. Nul = jamais contrôlé, feu éteint. */
   feu?: CouleurFeu | null;
@@ -538,7 +545,7 @@ function CardRecto({ data, id, feu, onFeuClick }: {
 
 // ─── Verso card ─────────────────────────────────────────────────────────────────
 
-function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isOwner: boolean }) {
+export function CardVerso({ data, id, isOwner }: { data: PasseportData; id: string; isOwner: boolean }) {
   const { profile, licences, qrToken } = data;
   const licence = licences[0];
 
