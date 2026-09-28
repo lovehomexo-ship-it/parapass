@@ -432,17 +432,21 @@ function CardRecto({ data, id, feu, onFeuClick }: {
               <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', fontStyle: 'italic', marginTop: 2 }}>Aucun saut enregistré</div>
             )}
           </div>
+          {/* UNE pastille pour le brevet, et une ligne NOMMÉE pour le reste.
+              La première version posait les autres brevets en pastilles nues :
+              « Brevet B » suivi d'un « A » flottant se lisait comme un défaut
+              d'affichage, pas comme « titulaire aussi du A ». Une lettre seule
+              ne dit rien ; on écrit ce qu'elle veut dire. */}
           {brevetPrincipal && (
-            <div className="flex flex-wrap items-center justify-end gap-1.5" style={{ maxWidth: '58%' }}>
+            <div className="flex flex-col items-end gap-1" style={{ maxWidth: '58%' }}>
               <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.03em', background: 'rgba(249,115,22,0.18)', color: '#FDBA74', border: '1px solid rgba(249,115,22,0.4)', padding: '5px 12px', borderRadius: 20, whiteSpace: 'nowrap' }}>
                 {TYPE_BREVET_LABELS[brevetPrincipal.type_brevet] || `Brevet ${brevetPrincipal.type_brevet}`}
               </span>
-              {autres.map(b => (
-                <span key={b.type_brevet} title={b.date_obtention ? `Obtenu le ${new Date(b.date_obtention).toLocaleDateString('fr-FR')}` : undefined}
-                  style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.03em', background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.72)', border: '1px solid rgba(255,255,255,0.16)', padding: '3px 9px', borderRadius: 20, whiteSpace: 'nowrap' }}>
-                  {b.type_brevet}
+              {autres.length > 0 && (
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', textAlign: 'right', lineHeight: 1.3 }}>
+                  également&nbsp;: {autres.map(b => b.type_brevet).join(' · ')}
                 </span>
-              ))}
+              )}
             </div>
           )}
         </div>

@@ -2,14 +2,14 @@ import { ShieldCheck, Lock, FileLock2, GitBranch, AlertTriangle, Check, Info } f
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SÉCURITÉ ET CONFORMITÉ — la section qu'un directeur technique, un président
-// de club ou un ASSUREUR vient chercher.
+// de club, ou quiconque doit VÉRIFIER, vient chercher.
 //
 // ELLE NE PROMET RIEN QUE LE PRODUIT NE TIENNE. Chaque ligne correspond à une
 // règle réellement chargée en base (`regles_securite`), avec la référence
 // fédérale qui la fonde. Les chiffres cités sont comptés, pas estimés :
 // 14 règles actives, 10 bloquantes, 7 non levables, 459 valeurs de la DT 48.
 //
-// ET ELLE DIT CE QUE PARAPASS NE FAIT PAS. Un assureur accorde plus de crédit
+// ET ELLE DIT CE QUE PARAPASS NE FAIT PAS. Un lecteur averti accorde plus de crédit
 // à un périmètre déclaré qu'à une promesse sans limite — et c'est la seule
 // façon honnête de présenter un outil qui informe une décision humaine sans
 // jamais la remplacer.
@@ -73,7 +73,7 @@ const ARCHITECTURE = [
          + 'une ligne casse la chaîne, et cela se voit.' },
 ];
 
-const ASSUREUR = [
+const POUR_UN_CONTROLE = [
   'Preuve opposable de la conformité AU MOMENT du saut, et non d’un contrôle annuel.',
   'Traçabilité nominative : qui a levé une dérogation, quand, et sur quel motif.',
   'Contrôle systématique des points les plus accidentogènes — charge alaire, reprise après interruption, météo confrontée au niveau.',
@@ -86,7 +86,7 @@ const LIMITES = [
   'ParaPass ne remplace pas le directeur technique. L’application informe, l’humain décide et engage sa responsabilité.',
   'ParaPass ne mesure pas la météo : il lit l’observation signée au briefing et les seuils que le centre a fixés.',
   'ParaPass ne contrôle pas physiquement le matériel : il trace que la vérification a été faite, par qui et quand.',
-  'Le contrôle automatique de l’assurance responsabilité civile du licencié n’est pas encore actif — la donnée est collectée, la règle reste à écrire avec l’assureur.',
+  'Le contrôle automatique de l’assurance responsabilité civile du licencié n’est pas encore actif — la donnée est collectée, la règle reste à écrire.',
 ];
 
 export function SectionSecurite() {
@@ -183,16 +183,16 @@ export function SectionSecurite() {
           ))}
         </div>
 
-        {/* ── POUR UN ASSUREUR ────────────────────────────────────────────── */}
+        {/* ── CE QU'UN CONTRÔLE PEUT VÉRIFIER ─────────────────────────────── */}
         <div className="grid md:grid-cols-2 gap-5">
           <div className="rounded-2xl p-6"
             style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.3)' }}>
             <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <ShieldCheck className="w-5 h-5" style={{ color: '#6EE7B7' }} aria-hidden />
-              Ce que ça change pour un assureur
+              Ce que ça change en cas de contrôle ou de litige
             </h3>
             <ul className="space-y-2.5">
-              {ASSUREUR.map(a => (
+              {POUR_UN_CONTROLE.map(a => (
                 <li key={a} className="flex items-start gap-2.5 text-[13px] leading-relaxed"
                   style={{ color: 'rgba(255,255,255,0.85)' }}>
                   <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#6EE7B7' }} strokeWidth={2.5} aria-hidden />
@@ -204,7 +204,7 @@ export function SectionSecurite() {
 
           {/* L'HONNÊTETÉ EST UN ARGUMENT. Un périmètre déclaré vaut mieux
               qu'une promesse sans limite — surtout devant quelqu'un dont le
-              métier est d'évaluer un risque. */}
+              métier est d'évaluer ce qu'on lui présente. */}
           <div className="rounded-2xl p-6"
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.15)' }}>
             <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">

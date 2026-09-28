@@ -4,7 +4,7 @@ import { Shield, Check, ArrowRight, Camera, Flame, Zap, Clock,
   Brain, Pencil, Siren, Scroll, Wind, Target, PlaneLanding, Medal, Award,
   CreditCard, Smartphone, ClipboardList, TrendingUp, GraduationCap, CheckCircle2,
   Backpack, CalendarDays, BarChart3, Wrench, Users, Euro, Star, Sparkles, Building2, AlertTriangle,
-  ShieldCheck } from 'lucide-react';
+  ShieldCheck, PlayCircle } from 'lucide-react';
 import { ParachuteGlyph } from '../design/BadgeIcon';
 import { ModuleIcon } from '../design/academieIcons';
 
@@ -944,13 +944,21 @@ export function LandingPage() {
                 </Link>
               </div>
 
+              {/* La démonstration était un lien souligné, gris, sous les deux
+                  boutons : c'est pourtant le seul endroit où l'on peut voir le
+                  produit AVANT de donner son adresse. Elle mérite un bouton. */}
               <button
                 type="button"
                 onClick={() => setShowDemoModal(true)}
-                className="text-sm font-medium underline underline-offset-4 mb-7"
-                style={{ color: 'rgba(255,255,255,0.6)', background: 'none', border: 'none', cursor: 'pointer' }}
+                className="hero-btn-demo inline-flex items-center justify-center gap-2.5 font-semibold rounded-xl mb-7"
+                style={{
+                  color: '#BFDBFE', background: 'rgba(59,130,246,0.14)',
+                  border: '1.5px solid rgba(147,197,253,0.45)',
+                  padding: '13px 26px', fontSize: '15px', cursor: 'pointer',
+                }}
               >
-                Ou explorer la démo sans compte →
+                <PlayCircle className="w-5 h-5 flex-shrink-0" aria-hidden />
+                Essayer la démo — sans créer de compte
               </button>
 
               {/* Réassurance discrète */}
@@ -961,8 +969,11 @@ export function LandingPage() {
                     {getBetaLabel(inscritCount)}
                   </p>
                 </div>
+                {/* « Conçu pour les licenciés et clubs FFP », sous un logo
+                    fédéral, se lisait comme un produit de la fédération.
+                    ParaPass est un outil indépendant : il le dit. */}
                 <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '12px' }}>
-                  Conçu pour les licenciés et clubs FFP · Gratuit, sans carte bancaire
+                  Pour les parachutistes et les centres · Gratuit, sans carte bancaire
                 </p>
               </div>
             </div>
@@ -1487,7 +1498,7 @@ export function LandingPage() {
            Trois avis anonymes notés cinq étoiles, attribués à « un
            parachutiste bêta testeur » et « un directeur technique ». Rien ne
            permettait au lecteur de les vérifier, et la page s'adresse
-           désormais aussi à des assureurs, dont le métier est précisément de
+           désormais aussi à des lecteurs dont le métier est précisément de
            vérifier. Un avis invérifiable coûte plus de crédit qu'il n'en
            apporte : la section attendra des retours nominatifs et datés.
            La preuve, en attendant, c'est la section Sécurité & conformité —
@@ -1496,8 +1507,8 @@ export function LandingPage() {
       {/* ─── SÉCURITÉ & CONFORMITÉ ──────────────────────────────────────────
            Placée AVANT les tarifs : on établit ce que l'outil garantit, et
            seulement ensuite ce qu'il coûte. C'est aussi la section vers
-           laquelle pointe la navbar pour un directeur technique ou un
-           assureur, qui ne viennent pas pour les badges. */}
+           laquelle pointe la navbar pour un directeur technique ou tout
+           lecteur venu vérifier, et non chercher des badges. */}
       <SectionSecurite />
 
       {/* ─── TARIFS ─────────────────────────────────────────────────────────── */}
@@ -1731,15 +1742,18 @@ export function LandingPage() {
               <ParaPassLogo mobile />
               <span className="text-xs" style={{ color: '#475569' }}>© 2026 ParaPass — Tous droits réservés</span>
             </div>
+            {/* LE LOGO FÉDÉRAL EST PARTI. Un logo officiel, cliquable vers le
+                site de la fédération, sous la mention « conçu pour les clubs et
+                licenciés FFP », se lit comme un partenariat. Il n'y en a pas.
+                ParaPass s'appuie sur les textes fédéraux publics et le dit —
+                c'est autre chose qu'être adoubé par la fédération. */}
             <div className="flex flex-col items-center gap-2">
-              <a href="https://www.ffp.asso.fr" target="_blank" rel="noopener noreferrer" className="no-underline flex flex-col items-center gap-1.5">
-                <img
-                  src="/logo-ffp-footer.png"
-                  alt="Logo de la Fédération Française de Parachutisme"
-                  style={{ height: '40px', width: 'auto', opacity: 0.7 }}
-                />
-                <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>Conçu pour les clubs et licenciés FFP</span>
-              </a>
+              <span className="text-xs text-center" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                Outil indépendant, sans lien avec une fédération
+              </span>
+              <span className="text-xs text-center" style={{ color: '#475569' }}>
+                Les règles de sécurité citent leurs sources officielles
+              </span>
             </div>
             <div className="flex flex-col items-center sm:items-end gap-2">
               <div className="flex flex-wrap justify-center sm:justify-end gap-4 text-xs" style={{ color: '#475569' }}>
