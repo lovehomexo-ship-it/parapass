@@ -69,7 +69,9 @@ export const LIBELLE_SECTION: Record<string, string> = {
 export const SOUS_ONGLETS: Record<string, readonly string[]> = {
   equipe: ['equipe', 'encadrement'],
   messages: ['conversations', 'relances'],
-  academy: ['quiz', 'pac', 'brevets', 'documents'],
+  // Le premier est l'onglet par défaut : la PAC ouvre l'Académie, le quiz
+  // vient en troisième, après la progression des brevets.
+  academy: ['pac', 'brevets', 'quiz', 'documents'],
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -175,4 +177,57 @@ export function sousOngletValide(section: string, valeur: string | undefined): s
  *  /centre/licencies/<uuid> d'un sous-onglet. */
 export function estIdentifiant(v: string | undefined): boolean {
   return !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ORDRE DU MENU
+//
+// Il suivait l'ordre d'écriture des écrans, pas un usage. On lui donne une
+// logique : LA JOURNÉE d'abord (préparer, voler, constater), puis LES GENS,
+// puis LA FORMATION, puis LES MODULES MÉTIER, puis LE MATÉRIEL ET LA SÉCURITÉ,
+// puis LES TRACES, et l'administration en dernier.
+//
+// Chaque centre peut ensuite la réécrire (`centres.ordre_menu`). Cet ordre
+// stocké est PARTIEL par nature : un module souscrit plus tard — l'avionnage,
+// le tandem — n'y figure pas et se range à sa place par défaut, sans que
+// personne ait rien à refaire. Un module résilié y reste sans effet, et
+// retrouve sa place si le centre y revient.
+// ═══════════════════════════════════════════════════════════════════════════
+
+export const ORDRE_MENU_DEFAUT: readonly string[] = [
+  // La journée
+  'dashboard', 'briefing', 'planning', 'rotations', 'sauts',
+  // Les gens
+  'licencies', 'demandes',
+  // La formation
+  'academy',
+  // Les modules métier
+  'pliage', 'tandem', 'finances',
+  // Le matériel et la sécurité
+  'materiel', 'regles',
+  // Les traces
+  'journal', 'stats',
+  // L'administration
+  'messages', 'centre', 'modules',
+];
+
+/**
+ * Range les entrées du menu selon l'ordre du centre, puis l'ordre par défaut.
+ *
+ * Ce qu'aucun des deux ne nomme passe en fin de liste, dans l'ordre reçu :
+ * un écran nouvellement ajouté au code apparaît, il ne disparaît jamais.
+ */
+export function ordonnerMenu<T extends { key: string }>(
+  items: T[],
+  ordreDuCentre: readonly string[] | null | undefined
+): T[] {
+  const rang = new Map<string, number>();
+  (ordreDuCentre ?? []).forEach((cle, i) => { if (!rang.has(cle)) rang.set(cle, i); });
+  const apres = rang.size;
+  ORDRE_MENU_DEFAUT.forEach((cle, i) => { if (!rang.has(cle)) rang.set(cle, apres + i); });
+  const fin = rang.size;
+  return items
+    .map((item, i) => ({ item, i, r: rang.get(item.key) ?? fin + i }))
+    .sort((a, b) => a.r - b.r || a.i - b.i)
+    .map(x => x.item);
 }

@@ -3,7 +3,7 @@ import { MODULES, computeActiveModules } from '../data/modules';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   sectionDepuisUrl, urlDeSection, sousOngletValide, estIdentifiant, LIBELLE_SECTION,
-  groupeDeSection, cleOnglet,
+  groupeDeSection, cleOnglet, ordonnerMenu,
 } from './centre/routesCentre';
 import { useAuth } from '../lib/auth';
 import { useTheme } from '../lib/ThemeContext';
@@ -63,7 +63,7 @@ import { EquipeUnifiee } from './centre/EquipeUnifiee';
 import {
   Home, Users, ClipboardList, Activity, BarChart2, Calendar, Megaphone,
   Settings, Shield, MessageSquare, Bell, LogOut, Menu, X,
-  AlertTriangle, CheckCircle, Clock, ChevronRight, Plus, Wrench, ShieldAlert, Plane,
+  AlertTriangle, CheckCircle, Clock, ChevronRight, ChevronUp, ChevronDown, Plus, Wrench, ShieldAlert, Plane,
   Search, Filter, Eye, Trash2, UserCheck, UserX,
   Download, Upload, Hash, TrendingUp, MapPin, Send, Zap, Sun, Moon,
   GraduationCap, MoreVertical, UserMinus, Euro, BookCheck, Puzzle,
@@ -98,6 +98,8 @@ interface Centre {
   signature_dt_url: string | null;
   tampon_nom_officiel: string | null;
   nom_dt: string | null;
+  /** Ordre du menu voulu par le centre — partiel par nature (cf. `ordonnerMenu`). */
+  ordre_menu: string[] | null;
 }
 
 interface LicencieSummary {
@@ -1807,6 +1809,105 @@ function SautsSection({ centreId, onNavigate }: { centreId: string | undefined; 
   );
 }
 
+// ─── OrdreDuMenu ───────────────────────────────────────────────────────────────
+
+/**
+ * Ranger soi-même les entrées du menu.
+ *
+ * Deux boutons par ligne plutôt qu'un glisser-déposer : ça marche au doigt sur
+ * un téléphone dans un hangar, au clavier, et avec un lecteur d'écran — ce que
+ * le glisser-déposer ne fait qu'au prix d'un code bien plus lourd.
+ *
+ * On n'enregistre QUE les entrées visibles aujourd'hui. Un module souscrit plus
+ * tard se rangera à sa place par défaut, sans que personne ait rien à refaire.
+ */
+function OrdreDuMenu({ centre, entrees, onSaved }: {
+  centre: Centre | null;
+  entrees: { key: string; label: string }[];
+  onSaved: () => void;
+}) {
+  const [ordre, setOrdre] = useState<string[]>(() => entrees.map(e => e.key));
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
+
+  // Les entrées changent avec l'abonnement : on repart de ce qui est visible.
+  useEffect(() => { setOrdre(entrees.map(e => e.key)); setSaved(false); },
+    [entrees.map(e => e.key).join('|')]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const libelle = (cle: string) => entrees.find(e => e.key === cle)?.label ?? cle;
+
+  const deplacer = (i: number, sens: -1 | 1) => {
+    const j = i + sens;
+    if (j < 0 || j >= ordre.length) return;
+    const copie = [...ordre];
+    [copie[i], copie[j]] = [copie[j], copie[i]];
+    setOrdre(copie); setSaved(false);
+  };
+
+  const enregistrer = async (valeur: string[] | null) => {
+    if (!centre) return;
+    setSaving(true); setErreur(null);
+    const { data: written, error } = await supabase
+      .from('centres').update({ ordre_menu: valeur }).eq('id', centre.id).select('id');
+    setSaving(false);
+    if (error || !written || written.length === 0) {
+      console.error('Enregistrement de l’ordre du menu échoué :', error);
+      setErreur(error?.message ?? 'L’ordre n’a pas pu être enregistré.');
+      return;
+    }
+    setSaved(true);
+    onSaved();
+  };
+
+  return (
+    <div className="rounded-2xl p-5" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+      <h2 className="text-lg font-bold mb-1" style={{ color: 'var(--c-text)' }}>Ordre du menu</h2>
+      <p className="text-xs mb-4" style={{ color: 'var(--c-muted)' }}>
+        Rangez les entrées de la colonne de gauche dans l’ordre qui correspond à votre
+        journée. Seules les entrées de votre abonnement figurent ici ; un module
+        souscrit plus tard se rangera tout seul à sa place, vous n’aurez rien à refaire.
+      </p>
+
+      <ol className="space-y-1 mb-4">
+        {ordre.map((cle, i) => (
+          <li key={cle} className="flex items-center gap-2 rounded-lg px-3 py-2"
+            style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
+            <span className="text-xs tabular-nums w-6 flex-shrink-0" style={{ color: 'var(--c-dim)' }}>{i + 1}.</span>
+            <span className="text-sm flex-1 truncate" style={{ color: 'var(--c-text)' }}>{libelle(cle)}</span>
+            <button type="button" onClick={() => deplacer(i, -1)} disabled={i === 0}
+              aria-label={`Monter ${libelle(cle)}`} title="Monter"
+              className="p-1.5 rounded disabled:opacity-25"
+              style={{ color: 'var(--c-muted)', minHeight: 32, minWidth: 32 }}>
+              <ChevronUp className="w-4 h-4" aria-hidden />
+            </button>
+            <button type="button" onClick={() => deplacer(i, 1)} disabled={i === ordre.length - 1}
+              aria-label={`Descendre ${libelle(cle)}`} title="Descendre"
+              className="p-1.5 rounded disabled:opacity-25"
+              style={{ color: 'var(--c-muted)', minHeight: 32, minWidth: 32 }}>
+              <ChevronDown className="w-4 h-4" aria-hidden />
+            </button>
+          </li>
+        ))}
+      </ol>
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <button type="button" onClick={() => enregistrer(ordre)} disabled={saving}
+          className="px-4 rounded-lg text-sm font-bold text-white disabled:opacity-50"
+          style={{ background: '#F97316', minHeight: 40 }}>
+          {saving ? 'Enregistrement…' : 'Enregistrer l’ordre'}
+        </button>
+        <button type="button" onClick={() => enregistrer(null)} disabled={saving}
+          className="text-xs underline" style={{ color: 'var(--c-dim)', minHeight: 32 }}>
+          revenir à l’ordre par défaut
+        </button>
+        {saved && <span className="text-xs font-semibold" style={{ color: 'var(--sev-conforme)' }}>Ordre enregistré.</span>}
+        {erreur && <span role="alert" className="text-xs font-semibold" style={{ color: 'var(--sev-critique)' }}>{erreur}</span>}
+      </div>
+    </div>
+  );
+}
+
 // ─── MonCentreSection ──────────────────────────────────────────────────────────
 
 function MonCentreSection({ centre, onSaved }: { centre: Centre | null; onSaved: () => void }) {
@@ -3022,6 +3123,7 @@ export function CentreDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [notifCount, setNotifCount] = useState(0);
   const [carnetsEnAttente, setCarnetsEnAttente] = useState(0);
+  const [sautsEnAttente, setSautsEnAttente] = useState(0);
   const [activeModules, setActiveModules] = useState<Set<string>>(new Set());
   // ── Avionnage : module optionnel, facturé à part ───────────────────────────
   // Tant qu'il n'est pas souscrit, le troisième mode n'existe pas — et une URL
@@ -3167,6 +3269,16 @@ export function CentreDashboardPage() {
         .eq('carnet_statut', 'en_attente')
         .eq('profiles.est_demo', false);
       setCarnetsEnAttente(carnetCount ?? 0);
+
+      // Sauts en attente de validation — le menu n'en portait AUCUN compteur :
+      // deux sauts attendaient dans « Activité des sauts » et rien à gauche ne
+      // le disait. On interroge `sauts_du_centre`, la même définition que
+      // l'écran lui-même, pour que les deux ne puissent pas diverger.
+      const { data: sautsAttente, error: sautsAttenteErr } = await supabase.rpc('sauts_du_centre', {
+        p_centre_id: resolvedCentreId, p_onglet: 'attente', p_limit: 200, p_offset: 0,
+      });
+      if (sautsAttenteErr) console.error('Comptage des sauts en attente échoué :', sautsAttenteErr);
+      setSautsEnAttente((sautsAttente ?? []).length);
     }
     setLoading(false);
   }, [profile]);
@@ -3188,14 +3300,14 @@ export function CentreDashboardPage() {
 
   const isActivePlan = isPlanActif(centre);
 
-  const navItems = [
+  const navItemsBruts = [
     { key: 'dashboard', label: 'Tableau de bord', icon: Home },
     // Trois entrées portent chacune deux écrans : le détail se choisit dans la
     // barre d'onglets, pas dans la colonne de gauche (cf. GROUPES_NAV).
     { key: 'licencies', label: 'Licenciés & équipe', icon: Users },
     { key: 'demandes', label: 'Demandes', icon: ClipboardList,
       badge: stats.demandesAttente + carnetsEnAttente },
-    { key: 'sauts', label: 'Activité des sauts', icon: Activity },
+    { key: 'sauts', label: 'Activité des sauts', icon: Activity, badge: sautsEnAttente },
     { key: 'briefing', label: 'Briefing du jour', icon: Megaphone },
     ...(activeModules.has('academy') ? [{ key: 'academy', label: 'Academy', icon: GraduationCap }] : []),
     { key: 'planning', label: 'Planning DZ', icon: Calendar },
@@ -3211,6 +3323,10 @@ export function CentreDashboardPage() {
     ...(activeModules.has('tandem') ? [{ key: 'tandem', label: 'Module Tandem', icon: GraduationCap }] : []),
     { key: 'modules', label: 'Modules', icon: Puzzle },
   ];
+
+  // L'ordre du centre s'applique ICI, sur la liste déjà filtrée par les modules
+  // souscrits : une entrée absente de l'abonnement n'a pas de place à tenir.
+  const navItems = ordonnerMenu(navItemsBruts, centre?.ordre_menu);
 
   if (authLoading || loading) {
     return (
@@ -3500,6 +3616,35 @@ export function CentreDashboardPage() {
             );
           })()}
 
+          {/* Un module non souscrit atteint par son URL — favori, lien partagé,
+              résiliation entre-temps — n'affichait RIEN : un fil d'Ariane seul
+              au-dessus du vide, indiscernable d'une panne. On dit pourquoi. */}
+          {(() => {
+            const MODULE_DE_SECTION: Record<string, string> = {
+              academy: 'Académie', pliage: 'Pliage', tandem: 'Tandem',
+              rotations: 'Avionnage', finances: 'Finances',
+            };
+            const requis = MODULE_DE_SECTION[activeSection];
+            const cle = activeSection === 'rotations' ? 'avionnage' : activeSection;
+            if (!requis || activeModules.has(cle)) return null;
+            return (
+              <div className="rounded-2xl p-6" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+                <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--c-text)' }}>
+                  Module « {requis} » non souscrit
+                </h1>
+                <p className="text-sm mb-4" style={{ color: 'var(--c-muted)' }}>
+                  Cet écran fait partie d'un module qui n'est pas activé sur votre centre.
+                  Vos données ne sont pas perdues : elles réapparaissent dès l'activation.
+                </p>
+                <button onClick={() => setActiveSection('modules')}
+                  className="px-4 rounded-lg text-sm font-bold text-white"
+                  style={{ background: '#F97316', minHeight: 40 }}>
+                  Voir les modules
+                </button>
+              </div>
+            );
+          })()}
+
           {activeSection === 'dashboard' && (
             <>
               {/* Dashboard réagencé : En-tête → Aujourd'hui → À traiter → Pilotage → Météo.
@@ -3583,7 +3728,12 @@ export function CentreDashboardPage() {
             </div>
           )}
           {activeSection === 'centre' && (
-            <MonCentreSection centre={centre} onSaved={fetchCentreData} />
+            <div className="space-y-6">
+              <MonCentreSection centre={centre} onSaved={fetchCentreData} />
+              {/* L'ordre du menu se règle ICI, avec le reste de l'identité du
+                  centre — pas dans un écran à part que personne ne trouve. */}
+              <OrdreDuMenu centre={centre} entrees={navItems} onSaved={fetchCentreData} />
+            </div>
           )}
           {activeSection === 'pliage' && centreId && activeModules.has('pliage') && (
             <GestionPliage centreId={centreId} />
@@ -3601,9 +3751,11 @@ export function CentreDashboardPage() {
             <div>
               <SousOnglets
                 tabs={[
-                  { key: 'quiz' as const, label: 'Académie (quiz sécurité)' },
+                  // L'ordre suit le parcours de l'élève : la PAC, puis les
+                  // brevets, puis le quiz qui les accompagne, puis les textes.
                   { key: 'pac' as const, label: 'Carnet PAC' },
                   { key: 'brevets' as const, label: 'Progression des brevets' },
+                  { key: 'quiz' as const, label: 'Académie (quiz sécurité)' },
                   { key: 'documents' as const, label: 'Documents officiels FFP' },
                 ]}
                 active={academyTab}
