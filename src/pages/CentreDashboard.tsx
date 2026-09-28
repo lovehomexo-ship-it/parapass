@@ -120,6 +120,8 @@ interface SautSummary {
   statut: 'en_attente' | 'valide' | 'refuse';
   /** La DZ où le saut a eu lieu. Nul = DZ hors ParaPass : nul centre ne l'atteste. */
   centre_id?: string | null;
+  /** A sauté ici sans y être licencié. Le dire évite de croire à une erreur. */
+  visiteur?: boolean;
   is_tunnel: boolean;
   valide_par?: string | null;
   valide_le?: string | null;
@@ -1496,51 +1498,34 @@ function SautsSection({ centreId, onNavigate }: { centreId: string | undefined; 
     if (!centreId) return;
     setLoading(true);
 
-    const { data: membresData } = await supabase
-      .from('licencies_centres')
-      .select('parachutiste_id')
-      .eq('centre_id', centreId)
-      .eq('statut', 'actif');
-
-    const ids = (membresData ?? []).map((m: { parachutiste_id: string }) => m.parachutiste_id);
-    if (ids.length === 0) { setSauts([]); setLoading(false); return; }
-
-    const today = new Date().toISOString().split('T')[0];
-    // LA FILE NE SE CONSTRUIT PLUS SUR LA SEULE APPARTENANCE.
-    // Elle le faisait : un centre voyait tous les sauts en attente de ses
-    // licenciés, où qu'ils aient sauté dans le monde. Un saut réel à Royan
-    // attendait ainsi la signature de BigAir, qui ne l'avait pas vu — or
-    // valider, ici, c'est signer : hash, horodatage, journal immuable.
-    // Un centre ne voit désormais que les sauts faits CHEZ LUI. Ceux d'une DZ
-    // hors ParaPass restent « déclaré, non attesté » dans le carnet du
-    // sauteur : personne ne peut certifier ce qu'il n'a pas vu.
-    let query = supabase
-      .from('sauts')
-      .select('id, parachutiste_id, date_saut, lieu, hauteur_m, categorie, statut, is_tunnel, valide_par, valide_le, moniteur_nom_libre')
-      .in('parachutiste_id', ids)
-      .eq('centre_id', centreId);
-
-    if (tab === 'attente') query = query.eq('statut', 'en_attente');
-    else if (tab === 'today') query = query.eq('date_saut', today);
-    else query = query.eq('statut', 'valide').range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
-
-    query = query.order('date_saut', { ascending: false });
-
-    const { data: sautsData } = await query;
-
-    if (sautsData && sautsData.length > 0) {
-      const pIds = [...new Set(sautsData.map((s: SautSummary) => s.parachutiste_id))];
-      const { data: profilesData } = await supabase.from('profiles').select('id, nom, prenom').in('id', pIds);
-      const pMap: Record<string, { nom: string; prenom: string }> = {};
-      (profilesData ?? []).forEach((p: { id: string; nom: string; prenom: string }) => { pMap[p.id] = p; });
-      setSauts(sautsData.map((s: SautSummary) => ({
-        ...s,
-        parachutiste_nom: pMap[s.parachutiste_id]?.nom,
-        parachutiste_prenom: pMap[s.parachutiste_id]?.prenom,
-      })));
-    } else {
-      setSauts([]);
+    // LA FILE EST DÉFINIE EN BASE, PLUS ICI.
+    //
+    // Elle l'était dans cet écran, en trois filtres qu'on pouvait recombiner
+    // de travers — et ça s'est produit deux fois, dans les deux sens. D'abord
+    // « tous les sauts de mes licenciés, où qu'ils aient sauté » : BigAir
+    // devait signer un saut fait à Royan. Puis, en corrigeant, les deux
+    // conditions sont restées cumulées — licencié DU centre ET saut fait AU
+    // centre — et un parachutiste de passage devenait invisible de la DZ qui
+    // l'avait pourtant vu sauter.
+    //
+    // `sauts_du_centre` porte désormais LA définition, une seule fois : les
+    // sauts faits chez ce centre, licencié ou visiteur. L'écran ne compose
+    // plus rien.
+    const { data, error } = await supabase.rpc('sauts_du_centre', {
+      p_centre_id: centreId,
+      p_onglet: tab === 'attente' ? 'attente' : tab === 'today' ? 'today' : 'historique',
+      p_limit: tab === 'historique' ? PAGE_SIZE : 200,
+      p_offset: tab === 'historique' ? page * PAGE_SIZE : 0,
+    });
+    if (error) {
+      console.error('File de validation — lecture échouée :', {
+        code: error.code, message: error.message, details: error.details, hint: error.hint,
+      });
+      setSauts([]); setLoading(false); return;
     }
+
+    setSauts(((data ?? []) as (SautSummary & { nom: string; prenom: string; visiteur: boolean })[])
+      .map(s => ({ ...s, parachutiste_nom: s.nom, parachutiste_prenom: s.prenom })));
     setLoading(false);
   }, [centreId, tab, page]);
 
@@ -1681,7 +1666,19 @@ function SautsSection({ centreId, onNavigate }: { centreId: string | undefined; 
                   className="hover:bg-gray-50 transition cursor-pointer"
                   onClick={() => setExpandedId(id => id === s.id ? null : s.id)}
                 >
-                  <td className="px-4 py-3 font-medium text-gray-900">{s.parachutiste_prenom} {s.parachutiste_nom}</td>
+                  <td className="px-4 py-3 font-medium text-gray-900">
+                    {s.parachutiste_prenom} {s.parachutiste_nom}
+                    {/* Un nom inconnu du fichier des licenciés surprend et fait
+                        soupçonner une erreur. Il est normal : on saute en
+                        voyage, et c'est la DZ d'accueil qui atteste. */}
+                    {s.visiteur && (
+                      <span className="ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-full align-middle"
+                        style={{ background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE' }}
+                        title="A sauté chez vous sans être licencié de votre centre. C’est vous qui l’avez vu sauter, c’est donc vous qui attestez.">
+                        visiteur
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-gray-600">{fr(s.date_saut)}</td>
                   <td className="px-4 py-3 text-gray-600">{s.lieu}</td>
                   <td className="px-4 py-3 text-gray-600">{s.is_tunnel ? '—' : `${s.hauteur_m}m`}</td>
