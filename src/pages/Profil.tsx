@@ -43,7 +43,7 @@ function DelegationSection() {
   if (!user) return null;
 
   return (
-    <div className="mt-6 space-y-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+    <div data-theme="light" className="mt-6 space-y-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
       <div className="flex items-center gap-3">
         <div className="w-7 h-7 rounded-full bg-[#001A4D] flex items-center justify-center flex-shrink-0">
           <Key className="w-3.5 h-3.5 text-white" />
@@ -452,11 +452,22 @@ export function ProfilPage() {
     <Layout>
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-[#001A4D]">Mon Profil</h1>
-          <p className="text-sm text-gray-500">Page de garde — Carnet de sauts numérique FFP</p>
+          {/* Ce titre est HORS de la carte blanche : il se pose sur le fond de
+              l'application, qui suit le thème. En bleu marine fixe, il tombait
+              à 1:1 sur le fond sombre — invisible. */}
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--c-text)' }}>Mon Profil</h1>
+          <p className="text-sm" style={{ color: 'var(--c-muted)' }}>Page de garde — Carnet de sauts numérique FFP</p>
         </div>
 
-        <div className="space-y-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        {/* CETTE PAGE EST DESSINÉE EN CLAIR, DE BOUT EN BOUT : `bg-white` et
+            `text-gray-900` posés en dur, quel que soit le thème choisi. Tout
+            composant qui respecte les jetons (--c-text, --c-muted…) s'y
+            affiche donc en BLANC SUR BLANC quand l'application est en mode
+            sombre — c'est exactement ce qui est arrivé à « Mon poids ».
+            On déclare le thème que la page applique déjà, comme sur le tiroir
+            licencié et le planning : les jetons s'y résolvent en valeurs
+            claires, et tout ce qui les respecte devient correct d'un coup. */}
+        <div data-theme="light" className="space-y-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
 
           {/* ── Section 1 : Identité ── */}
           <SectionHeader num="1" title="Identité du licencié" />
@@ -640,7 +651,7 @@ export function ProfilPage() {
         </div>
 
         {/* ── Section Confidentialité / Profil public ── */}
-        <div className="mt-6 space-y-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div data-theme="light" className="mt-6 space-y-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <SectionHeader num="6" title="Profil communauté &amp; Confidentialité" />
 
           <FormRow label="Nom d'utilisateur (@username)" hint={privacy.username_modifie && privacy.username ? "Déjà modifié — non modifiable à nouveau" : "Généré automatiquement prenom.nom — modifiable une fois"}>
@@ -757,7 +768,7 @@ export function ProfilPage() {
         )}
 
         {/* ── Section Préférences ── */}
-        <div className="mt-6 space-y-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div data-theme="light" className="mt-6 space-y-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <div className="flex items-center gap-3">
             <div className="w-7 h-7 rounded-full bg-[#001A4D] flex items-center justify-center flex-shrink-0">
               <Settings className="w-3 h-3 text-white" aria-hidden />
@@ -789,7 +800,7 @@ export function ProfilPage() {
         </div>
 
 
-        <div className="mt-6 space-y-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div data-theme="light" className="mt-6 space-y-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-7 h-7 rounded-full bg-[#001A4D] flex items-center justify-center flex-shrink-0">
