@@ -46,7 +46,7 @@ export function BrevetsSection({ centreId }: { centreId: string }) {
       </div>
 
       {error && (
-        <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
+        <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: 'var(--sev-critique)' }}>
           <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}
         </div>
       )}
@@ -81,7 +81,7 @@ export function BrevetsSection({ centreId }: { centreId: string }) {
               <div key={row.id} className="rounded-xl p-3" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
                 <div className="flex items-center gap-2 flex-wrap mb-2">
                   <span className="text-sm font-bold text-white">{row.prenom} {row.nom}</span>
-                  <span className="text-xs" style={{ color: '#FBBF24' }}>
+                  <span className="text-xs" style={{ color: 'var(--sev-vigilance)' }}>
                     {row.brevetCode ? `Brevet ${row.brevetCode} — ` : ''}{row.epreuve?.libelle ?? 'épreuve supprimée'}
                     {row.epreuve && row.epreuve.quantite_requise > 1 && ` (${row.quantite_faite}/${row.epreuve.quantite_requise})`}
                   </span>
@@ -208,7 +208,7 @@ function MettreEnProgression({ centreId, referentiel }: {
         </button>
       </div>
       {msg && (
-        <p className="text-xs" style={{ color: msg.ok ? '#86EFAC' : '#FCA5A5' }}>{msg.texte}</p>
+        <p className="text-xs" style={{ color: msg.ok ? '#86EFAC' : 'var(--sev-critique)' }}>{msg.texte}</p>
       )}
     </div>
   );
@@ -271,7 +271,7 @@ function ElevesAvancement({ centreId, referentiel, onDelivrer }: {
                 <span key={b.id} className="text-xs px-2.5 py-1.5 rounded-lg inline-flex items-center gap-2"
                   style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${pret ? 'rgba(251,191,36,0.4)' : 'var(--c-border)'}`, color: 'var(--c-text2)' }}>
                   {b.code} : {validees}/{eps.length}
-                  {dejaDelivre && <span style={{ color: '#34D399' }}>délivré ✓</span>}
+                  {dejaDelivre && <span style={{ color: 'var(--sev-conforme)' }}>délivré ✓</span>}
                   {pret && (
                     <button
                       onClick={() => {
@@ -345,7 +345,7 @@ function ReferentielEditor({ referentiel }: { referentiel: ReturnType<typeof use
         Saisissez ici le contenu officiel des brevets tel que défini par la FFP — épreuves, types, quantités, prérequis.
         Les valeurs inconnues restent « À DÉFINIR AVEC LA FFP » : n'inventez rien.
       </p>
-      {error && <p className="text-xs" style={{ color: '#FCA5A5' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}</p>}
+      {error && <p className="text-xs" style={{ color: 'var(--sev-critique)' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}</p>}
 
       <div className="flex gap-1.5 flex-wrap">
         {referentiel.brevets.map(b => (
@@ -370,7 +370,7 @@ function ReferentielEditor({ referentiel }: { referentiel: ReturnType<typeof use
       )}
 
       {eps.length === 0 ? (
-        <p className="text-sm py-3" style={{ color: '#FBBF24' }}>Épreuves de ce brevet : À DÉFINIR AVEC LA FFP.</p>
+        <p className="text-sm py-3" style={{ color: 'var(--sev-vigilance)' }}>Épreuves de ce brevet : À DÉFINIR AVEC LA FFP.</p>
       ) : (
         <div className="space-y-1.5">
           {eps.map(e => (

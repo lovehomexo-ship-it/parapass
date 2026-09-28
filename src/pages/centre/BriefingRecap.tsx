@@ -88,7 +88,7 @@ export function BriefingRecapDZ({ centreId, onOuvrir }: { centreId: string; onOu
           <div className="flex items-center gap-2 flex-wrap mb-1.5">
             <Megaphone className="w-4 h-4 flex-shrink-0" style={{ color: '#F97316' }} />
             <h2 className="text-base font-extrabold text-white">
-              Circuit du jour : <span style={{ color: '#FBBF24' }}>{circuit?.nom ?? 'circuit inconnu'}</span>
+              Circuit du jour : <span style={{ color: 'var(--sev-vigilance)' }}>{circuit?.nom ?? 'circuit inconnu'}</span>
             </h2>
           </div>
 
@@ -113,7 +113,7 @@ export function BriefingRecapDZ({ centreId, onOuvrir }: { centreId: string; onOu
           <div className="flex items-center gap-x-4 gap-y-1 flex-wrap text-xs mb-3" style={{ color: 'var(--c-dim)' }}>
             <span>{republie ? '' : `Publié à ${heurePub}`}</span>
             {republie && (
-              <span className="inline-flex items-center gap-1" style={{ color: '#FBBF24' }}>
+              <span className="inline-flex items-center gap-1" style={{ color: 'var(--sev-vigilance)' }}>
                 <RefreshCw className="w-3 h-3" /> Mis à jour à {heurePub}
               </span>
             )}
@@ -122,7 +122,7 @@ export function BriefingRecapDZ({ centreId, onOuvrir }: { centreId: string; onOu
                 LICENCIÉS du centre appartient aux statistiques, pas à la journée. */}
             {ack.publie && (
               <span className="inline-flex items-center gap-1"
-                style={{ color: ack.manquants.length === 0 ? '#34D399' : 'var(--c-muted)' }}>
+                style={{ color: ack.manquants.length === 0 ? 'var(--sev-conforme)' : 'var(--c-muted)' }}>
                 <CheckCircle className="w-3.5 h-3.5" />
                 {libelleAck(ack)}
               </span>

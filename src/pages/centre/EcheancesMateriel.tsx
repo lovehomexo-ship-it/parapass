@@ -92,7 +92,7 @@ function EcheancesInner({ centreId }: { centreId: string }) {
   if (erreur) {
     return (
       <div className="rounded-2xl p-4 text-sm" style={{ background: 'rgba(239,68,68,0.10)',
-        border: '1px solid rgba(239,68,68,0.35)', color: '#F87171' }}>
+        border: '1px solid rgba(239,68,68,0.35)', color: 'var(--sev-critique)' }}>
         Échéances indisponibles : {erreur}
         <button onClick={charger} className="ml-2 underline" style={{ minHeight: 32 }}>Réessayer</button>
       </div>

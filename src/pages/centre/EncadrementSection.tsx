@@ -46,7 +46,7 @@ export function EncadrementSection({ centreId, vue }: { centreId: string; vue?: 
       </div>
 
       {enc.error && (
-        <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
+        <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: 'var(--sev-critique)' }}>
           <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {enc.error}
         </div>
       )}
@@ -61,7 +61,7 @@ export function EncadrementSection({ centreId, vue }: { centreId: string; vue?: 
               return (
                 <li key={q.id}>
                   {enc.noms[q.user_id] ?? q.user_id} — {q.qualification_code}
-                  <span style={{ color: expiree ? '#F87171' : '#FCD34D' }}>
+                  <span style={{ color: expiree ? 'var(--sev-critique)' : '#FCD34D' }}>
                     {' '}{expiree ? 'expirée depuis le' : 'expire le'} {new Date(q.date_expiration!).toLocaleDateString('fr-FR')}
                   </span>
                 </li>
@@ -129,7 +129,7 @@ function CarteSeance({ seance, enc }: { seance: SeanceJour; enc: ReturnType<type
         <h3 className="text-sm font-bold text-white">{TYPE_SEANCE_LABELS[seance.type_seance]}</h3>
         {complete ? (
           <span className="text-[11px] font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1"
-            style={{ background: 'rgba(16,185,129,0.12)', color: '#34D399', border: '1px solid rgba(16,185,129,0.3)' }}>
+            style={{ background: 'rgba(16,185,129,0.12)', color: 'var(--sev-conforme)', border: '1px solid rgba(16,185,129,0.3)' }}>
             <CheckCircle className="w-3 h-3" /> Encadrement réglementaire
           </span>
         ) : (
@@ -150,18 +150,18 @@ function CarteSeance({ seance, enc }: { seance: SeanceJour; enc: ReturnType<type
             {regle.a_verifier
               ? <User className="w-4 h-4 flex-shrink-0 mt-0.5" aria-hidden />
               : satisfaite
-              ? <CheckCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#34D399' }} />
+              ? <CheckCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: 'var(--sev-conforme)' }} />
               : <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#FCD34D' }} />}
             <div className="min-w-0">
               <span style={{ color: 'var(--c-text2)' }}>{regle.libelle_exigence}</span>
               {satisfaite && rempliePar.length > 0 && (
-                <span style={{ color: '#34D399' }}> — {rempliePar.slice(0, regle.quantite_min + 1).join(', ')}</span>
+                <span style={{ color: 'var(--sev-conforme)' }}> — {rempliePar.slice(0, regle.quantite_min + 1).join(', ')}</span>
               )}
               {!satisfaite && !regle.a_verifier && (
                 <span style={{ color: '#FCD34D' }}> — manque {Math.max(0, regle.quantite_min - rempliePar.length)} personne{regle.quantite_min - rempliePar.length > 1 ? 's' : ''}</span>
               )}
               {expires.length > 0 && (
-                <span style={{ color: '#F87171' }}> · qualif expirée : {expires.join(', ')} (ne compte pas)</span>
+                <span style={{ color: 'var(--sev-critique)' }}> · qualif expirée : {expires.join(', ')} (ne compte pas)</span>
               )}
               {regle.a_verifier && <span style={{ color: 'var(--c-dim)' }}> — à l'appréciation du DT</span>}
             </div>
@@ -230,7 +230,7 @@ function AnnuaireMoniteurs({ centreId, enc }: { centreId: string; enc: ReturnTyp
 
   return (
     <div className="space-y-4">
-      {error && <p className="text-xs" style={{ color: '#FCA5A5' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}</p>}
+      {error && <p className="text-xs" style={{ color: 'var(--sev-critique)' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}</p>}
 
       {[...parMoniteur.entries()].map(([userId, qs]) => (
         <div key={userId} className="rounded-xl p-3" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
@@ -242,7 +242,7 @@ function AnnuaireMoniteurs({ centreId, enc }: { centreId: string; enc: ReturnTyp
                 <span key={q.id} className="text-[11px] px-2.5 py-1 rounded-full inline-flex items-center gap-1.5"
                   style={{
                     background: !q.actif ? 'rgba(148,163,184,0.1)' : expiree ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
-                    color: !q.actif ? '#94A3B8' : expiree ? '#FCA5A5' : '#34D399',
+                    color: !q.actif ? '#94A3B8' : expiree ? 'var(--sev-critique)' : 'var(--sev-conforme)',
                     border: `1px solid ${!q.actif ? 'rgba(148,163,184,0.3)' : expiree ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)'}`,
                   }}>
                   {q.qualification_code}

@@ -204,7 +204,7 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
     return items;
   });
 
-  const inputStyle: React.CSSProperties = { background: 'var(--c-bg)', border: '1px solid var(--c-border)', color: 'white', borderRadius: 10, padding: '10px 12px', fontSize: 14, outline: 'none', width: '100%', minHeight: 44 };
+  const inputStyle: React.CSSProperties = { background: 'var(--c-bg)', border: '1px solid var(--c-border)', color: 'var(--c-text)', borderRadius: 10, padding: '10px 12px', fontSize: 14, outline: 'none', width: '100%', minHeight: 44 };
   const chip = (actif: boolean) => ({ background: actif ? '#2563EB' : 'var(--c-surface)', color: actif ? 'white' : 'var(--c-muted)', border: `1px solid ${actif ? '#2563EB' : 'var(--c-border)'}`, minHeight: 40 });
 
   if (loading) return <LoaderParaPass taille={72} message={null} />;
@@ -212,7 +212,7 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
   return (
     <div className="space-y-4">
       {error && (
-        <div className="rounded-xl px-4 py-3 text-sm flex items-start gap-2" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
+        <div className="rounded-xl px-4 py-3 text-sm flex items-start gap-2" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: 'var(--sev-critique)' }}>
           <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" /> <span>{error}</span>
         </div>
       )}
@@ -224,8 +224,8 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
           <ul className="text-xs space-y-1" style={{ color: 'var(--c-text2)' }}>
             {alertes.map((a, i) => (
               <li key={i} className="leading-snug">
-                <span className="text-white font-medium">{a.nom}</span> — {a.label}{' '}
-                <span style={{ color: a.etat === 'expire' ? '#F87171' : '#FCD34D' }}>
+                <span className="font-medium" style={{ color: 'var(--c-text)' }}>{a.nom}</span> — {a.label}{' '}
+                <span style={{ color: a.etat === 'expire' ? 'var(--sev-critique)' : '#FCD34D' }}>
                   {a.etat === 'expire' ? 'expirée' : 'expire'} {a.date ? `le ${fmt(a.date)}` : ''}
                 </span>
               </li>
@@ -247,7 +247,7 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
       {/* Formulaire ajout — colonne unique sur mobile */}
       {formOuvert && (
         <div className="rounded-xl p-4 space-y-3" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
-          <p className="text-sm font-bold text-white">Ajouter une qualification</p>
+          <p className="text-sm font-bold" style={{ color: 'var(--c-text)' }}>Ajouter une qualification</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <select value={form.user_id} onChange={e => setForm(f => ({ ...f, user_id: e.target.value }))} style={inputStyle}>
               <option value="">Personne (membre du centre)…</option>
@@ -335,11 +335,11 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
                   const e = etatDate(expLoin, true, seuil);
                   return (
                     <div className="mt-3 rounded-xl px-3 py-2 flex flex-wrap items-center gap-2" style={{ background: COULEURS[e].bg, border: `1px solid ${COULEURS[e].bd}` }}>
-                      <CheckSquare className="w-4 h-4 flex-shrink-0" style={{ color: '#34D399' }} />
+                      <CheckSquare className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--sev-conforme)' }} />
                       <span className="text-xs" style={{ color: 'var(--c-text2)' }}>
                         Peut valider les sauts{rep.date_delegation && ` · depuis le ${fmt(rep.date_delegation)}`}{expLoin && ` · exp. ${fmt(expLoin)}`}
                       </span>
-                      <button onClick={() => revoquerDelegation(m)} className="ml-auto text-xs font-semibold px-3 rounded-lg" style={{ background: 'rgba(239,68,68,0.12)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.3)', minHeight: 40 }}>
+                      <button onClick={() => revoquerDelegation(m)} className="ml-auto text-xs font-semibold px-3 rounded-lg" style={{ background: 'rgba(239,68,68,0.12)', color: 'var(--sev-critique)', border: '1px solid rgba(239,68,68,0.3)', minHeight: 40 }}>
                         Révoquer
                       </button>
                     </div>
@@ -353,7 +353,7 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
                     <span className="text-xs" style={{ color: 'var(--c-text2)' }}>
                       Plieur habilité{m.plieur.numero_qualif && ` · n°${m.plieur.numero_qualif}`}{m.plieur.date_expiration ? ` · ${etatDate(m.plieur.date_expiration, true, seuil) === 'expire' ? 'expirée' : 'valide →'} ${fmt(m.plieur.date_expiration)}` : ' · permanente'}
                     </span>
-                    <button onClick={() => retirerPlieur(m.plieur!.id)} className="ml-auto text-xs font-semibold px-3 rounded-lg" style={{ background: 'rgba(239,68,68,0.12)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.3)', minHeight: 40 }}>
+                    <button onClick={() => retirerPlieur(m.plieur!.id)} className="ml-auto text-xs font-semibold px-3 rounded-lg" style={{ background: 'rgba(239,68,68,0.12)', color: 'var(--sev-critique)', border: '1px solid rgba(239,68,68,0.3)', minHeight: 40 }}>
                       Retirer
                     </button>
                   </div>

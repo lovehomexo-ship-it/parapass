@@ -113,8 +113,8 @@ function isoDate(d: Date) { return d.toISOString().slice(0, 10); }
 
 function statutBadge(s: string) {
   const map: Record<string, { label: string; color: string; bg: string }> = {
-    confirme: { label: 'Confirmé', color: '#10B981', bg: 'rgba(16,185,129,0.12)' },
-    en_attente: { label: 'En attente', color: '#F59E0B', bg: 'rgba(245,158,11,0.12)' },
+    confirme: { label: 'Confirmé', color: 'var(--sev-conforme)', bg: 'rgba(16,185,129,0.12)' },
+    en_attente: { label: 'En attente', color: 'var(--sev-vigilance)', bg: 'rgba(245,158,11,0.12)' },
     effectue: { label: 'Effectué', color: '#60A5FA', bg: 'rgba(96,165,250,0.12)' },
     annule: { label: 'Annulé', color: '#EF4444', bg: 'rgba(239,68,68,0.12)' },
     reporte: { label: 'Reporté', color: '#A78BFA', bg: 'rgba(167,139,250,0.12)' },
@@ -301,7 +301,7 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
                       {slot.heure.slice(0, 5)}
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: isAnnule ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.12)', color: isAnnule ? '#EF4444' : '#10B981' }}>
+                      <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: isAnnule ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.12)', color: isAnnule ? '#EF4444' : 'var(--sev-conforme)' }}>
                         {isAnnule ? 'Annulé météo' : `${dispo}/${slot.capacite} places`}
                       </span>
                     </div>
@@ -345,9 +345,9 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
                                 {b.avec_video && <span className="text-[10px] px-1.5 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(139,92,246,0.12)', color: '#A78BFA' }}><Video className="w-3 h-3" aria-hidden />Vidéo</span>}
                                 {b.avec_photos && <span className="text-[10px] px-1.5 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(249,115,22,0.12)', color: '#F97316' }}><Camera className="w-3 h-3" aria-hidden />Photos</span>}
                                 {b.dossier_complete ? (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.1)', color: '#10B981' }}>✓ Dossier OK</span>
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.1)', color: 'var(--sev-conforme)' }}>✓ Dossier OK</span>
                                 ) : (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(245,158,11,0.1)', color: '#F59E0B' }}><AlertTriangle className="w-3 h-3" aria-hidden />Dossier incomplet</span>
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(245,158,11,0.1)', color: 'var(--sev-vigilance)' }}><AlertTriangle className="w-3 h-3" aria-hidden />Dossier incomplet</span>
                                 )}
                               </div>
                               {/* Solde + paiement */}
@@ -362,7 +362,7 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
                                   </button>
                                 )}
                                 {b.statut_paiement_solde !== 'non_paye' && (
-                                  <span className="text-[11px]" style={{ color: '#10B981' }}>✓ Solde réglé</span>
+                                  <span className="text-[11px]" style={{ color: 'var(--sev-conforme)' }}>✓ Solde réglé</span>
                                 )}
                                 {b.statut !== 'effectue' && b.arrive && (
                                   <button
@@ -437,7 +437,7 @@ function OngletBons({ centreId }: { centreId: string }) {
   const totalUtilise = bons.filter(b => b.statut === 'utilise').reduce((s, b) => s + b.montant, 0);
 
   const statutBon = (s: string) => {
-    if (s === 'actif') return { label: 'Actif', color: '#10B981', bg: 'rgba(16,185,129,0.12)' };
+    if (s === 'actif') return { label: 'Actif', color: 'var(--sev-conforme)', bg: 'rgba(16,185,129,0.12)' };
     if (s === 'utilise') return { label: 'Utilisé', color: '#60A5FA', bg: 'rgba(96,165,250,0.12)' };
     return { label: 'Expiré', color: '#EF4444', bg: 'rgba(239,68,68,0.12)' };
   };
@@ -550,7 +550,7 @@ function OngletStats({ centreId }: { centreId: string }) {
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-xl p-4" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
           <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--c-muted)' }}>Dossiers complétés</p>
-          <p className="text-3xl font-black" style={{ color: '#10B981' }}>{stats.dossiersTaux}%</p>
+          <p className="text-3xl font-black" style={{ color: 'var(--sev-conforme)' }}>{stats.dossiersTaux}%</p>
         </div>
         <div className="rounded-xl p-4" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
           <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--c-muted)' }}>Taux vidéo</p>
@@ -756,7 +756,7 @@ export function TandemSection({ centreId }: { centreId: string }) {
             title={config?.actif ? 'Désactiver le module tandem' : 'Activer le module tandem'}
             className="flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full transition-all disabled:opacity-50"
             style={config?.actif
-              ? { background: 'rgba(16,185,129,0.12)', color: '#10B981', border: '1px solid rgba(16,185,129,0.3)' }
+              ? { background: 'rgba(16,185,129,0.12)', color: 'var(--sev-conforme)', border: '1px solid rgba(16,185,129,0.3)' }
               : { background: 'rgba(148,163,184,0.12)', color: '#94A3B8', border: '1px solid rgba(148,163,184,0.3)' }
             }
           >

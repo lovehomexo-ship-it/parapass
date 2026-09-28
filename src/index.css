@@ -50,6 +50,14 @@
   --sev-conforme:  #34D399;   /* 8.73:1 */
   --sev-neutre:    #7A9CC0;   /* 5.87:1 */
 
+  /* L'accent violet du module Pliage. Il était écrit en dur (#C4B5FD/#A78BFA),
+     deux teintes claires choisies pour ce fond sombre : en mode jour elles
+     tombaient à 1,5:1 — mesuré, 48 libellés illisibles sur le seul écran
+     Pliage. Un accent de module est une couleur d'identité, il lui faut donc
+     une valeur par thème comme aux sévérités. */
+  --c-pliage:      #C4B5FD;   /* clair sur fond sombre */
+  --c-pliage-fort: #A78BFA;
+
   /* Action — et rien d'autre. Jamais un état. */
   --action-fond:   #136FBC;   /* blanc dessus : 5.21:1 */
   /* Accent PARACHUTISTE — l orange est son identite (onglets, carte, badges).
@@ -99,6 +107,8 @@
   --sev-vigilance: #8A5100;   /* 5.83:1 */
   --sev-conforme:  #047857;   /* 4.96:1 */
   --sev-neutre:    #4B647E;
+  --c-pliage:      #5B21B6;   /* violet 800 — 7,4:1 sur blanc */
+  --c-pliage-fort: #6D28D9;
 
   --action-fond:   #136FBC;
   --accent-fond:   #C2410C;

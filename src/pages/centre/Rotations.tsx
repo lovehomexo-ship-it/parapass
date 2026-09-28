@@ -213,7 +213,7 @@ function RotationsInner({ centreId }: { centreId: string }) {
 
       {erreur && (
         <div className="rounded-xl p-3 text-sm" style={{ background: 'rgba(239,68,68,0.10)',
-          border: '1px solid rgba(239,68,68,0.35)', color: '#F87171' }}>{erreur}</div>
+          border: '1px solid rgba(239,68,68,0.35)', color: 'var(--sev-critique)' }}>{erreur}</div>
       )}
 
       {/* Sans avion, pas de largage : la saisie est ICI, là où le manque se
@@ -277,7 +277,7 @@ function RotationsInner({ centreId }: { centreId: string }) {
             </div>
 
             {close && (
-              <p className="text-[11px]" style={{ color: '#34D399' }}>
+              <p className="text-[11px]" style={{ color: 'var(--sev-conforme)' }}>
                 Clôturée — les sauts ont été créés, en attente de validation moniteur.
               </p>
             )}
@@ -678,7 +678,7 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
         </div>
       )}
 
-      {erreur && <p className="text-[11px]" style={{ color: '#F87171' }}>{erreur}</p>}
+      {erreur && <p className="text-[11px]" style={{ color: 'var(--sev-critique)' }}>{erreur}</p>}
     </div>
   );
 }

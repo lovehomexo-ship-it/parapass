@@ -41,7 +41,7 @@ export function AcademyScoresDZ({ centreId }: { centreId: string }) {
 
   if (loading) return <LoaderParaPass taille={72} message={null} />;
   if (erreur) return (
-    <div className="rounded-xl px-4 py-3 text-sm flex items-center gap-2" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
+    <div className="rounded-xl px-4 py-3 text-sm flex items-center gap-2" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: 'var(--sev-critique)' }}>
       <AlertTriangle className="w-4 h-4" /> {erreur}
     </div>
   );
@@ -58,7 +58,7 @@ export function AcademyScoresDZ({ centreId }: { centreId: string }) {
 
       {/* Classement */}
       <div className="rounded-2xl p-5" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
-        <h3 className="font-semibold text-white text-sm mb-3 flex items-center gap-2"><Trophy className="w-4 h-4" style={{ color: '#FBBF24' }} /> Classement du centre</h3>
+        <h3 className="font-semibold text-white text-sm mb-3 flex items-center gap-2"><Trophy className="w-4 h-4" style={{ color: 'var(--sev-vigilance)' }} /> Classement du centre</h3>
         {actifs.length === 0 ? (
           <p className="text-sm" style={{ color: 'var(--c-dim)' }}>Aucun licencié n'a encore joué au quiz. Parlez-en au prochain briefing !</p>
         ) : (
@@ -83,9 +83,9 @@ export function AcademyScoresDZ({ centreId }: { centreId: string }) {
                     <tr key={r.user_id} style={{ borderTop: '1px solid var(--c-border)' }}>
                       <td className="py-2 pr-3" style={{ color: 'var(--c-dim)' }}>{idx + 1}</td>
                       <td className="py-2 pr-3 text-white font-medium">{r.prenom} {r.nom}</td>
-                      <td className="py-2 pr-3 font-bold" style={{ color: '#FBBF24' }}>{r.xp_total}</td>
+                      <td className="py-2 pr-3 font-bold" style={{ color: 'var(--sev-vigilance)' }}>{r.xp_total}</td>
                       <td className="py-2 pr-3" style={{ color: 'var(--c-dim)' }}>{r.tentatives}</td>
-                      <td className="py-2 pr-3" style={{ color: taux >= 70 ? '#34D399' : 'var(--c-text2)' }}>{taux} %</td>
+                      <td className="py-2 pr-3" style={{ color: taux >= 70 ? 'var(--sev-conforme)' : 'var(--c-text2)' }}>{taux} %</td>
                       <td className="py-2 pr-3" style={{ color: 'var(--c-dim)' }}>
                         {r.streak_actuel > 0 ? <span className="inline-flex items-center gap-1"><Flame className="w-3.5 h-3.5" style={{ color: '#F97316' }} />{r.streak_actuel} j</span> : '—'}
                       </td>
@@ -255,7 +255,7 @@ export function DocumentsFFPDZ({ centreId, dtId }: { centreId: string; dtId: str
         l'obligation de conservation 3 ans, sans papier. Formats exacts <strong>à valider avec la FFP</strong>.
       </p>
 
-      {erreur && <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {erreur}</div>}
+      {erreur && <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: 'var(--sev-critique)' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {erreur}</div>}
       {info && <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)', color: '#86EFAC' }}>{info}</div>}
 
       {/* Génération */}

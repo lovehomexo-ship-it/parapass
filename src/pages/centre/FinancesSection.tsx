@@ -64,8 +64,8 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const STATUT_STYLES: Record<string, { label: string; bg: string; color: string }> = {
-  du:      { label: 'Dû',        bg: 'rgba(245,158,11,0.15)',  color: '#F59E0B' },
-  paye:    { label: 'Payé',      bg: 'rgba(16,185,129,0.15)',  color: '#10B981' },
+  du:      { label: 'Dû',        bg: 'rgba(245,158,11,0.15)',  color: 'var(--sev-vigilance)' },
+  paye:    { label: 'Payé',      bg: 'rgba(16,185,129,0.15)',  color: 'var(--sev-conforme)' },
   annule:  { label: 'Annulé',    bg: 'rgba(100,116,139,0.15)', color: '#94A3B8' },
 };
 
@@ -390,9 +390,9 @@ export function FinancesSection({ dzId }: { dzId: string }) {
       {/* KPI cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'CA ce mois', value: euros(kpis.ca_mois), color: '#10B981', bg: 'rgba(16,185,129,0.1)' },
+          { label: 'CA ce mois', value: euros(kpis.ca_mois), color: 'var(--sev-conforme)', bg: 'rgba(16,185,129,0.1)' },
           { label: 'Transactions', value: kpis.nb_transactions, color: '#60A5FA', bg: 'rgba(96,165,250,0.1)' },
-          { label: 'Montant dû', value: euros(kpis.montant_du), color: '#F59E0B', bg: 'rgba(245,158,11,0.1)' },
+          { label: 'Montant dû', value: euros(kpis.montant_du), color: 'var(--sev-vigilance)', bg: 'rgba(245,158,11,0.1)' },
           { label: 'Taux de paiement', value: `${kpis.taux_paiement}%`, color: '#A78BFA', bg: 'rgba(167,139,250,0.1)' },
         ].map(k => (
           <div key={k.label} className="rounded-xl p-4" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border-f)' }}>
@@ -446,7 +446,7 @@ export function FinancesSection({ dzId }: { dzId: string }) {
                     <tr key={p.parachutiste_id} style={{ color: 'var(--c-text2)' }}>
                       <td className="px-4 py-3 font-medium">{p.prenom} {p.nom}</td>
                       <td className="px-4 py-3 text-xs" style={{ color: 'var(--c-dim)' }}>{p.email}</td>
-                      <td className="px-4 py-3 font-bold" style={{ color: p.solde_du > 0 ? '#F59E0B' : '#10B981' }}>
+                      <td className="px-4 py-3 font-bold" style={{ color: p.solde_du > 0 ? 'var(--sev-vigilance)' : 'var(--sev-conforme)' }}>
                         {euros(p.solde_du)}
                       </td>
                       <td className="px-4 py-3" style={{ color: 'var(--c-dim)' }}>{p.nb_transactions}</td>
@@ -564,7 +564,7 @@ export function FinancesSection({ dzId }: { dzId: string }) {
                     <button onClick={() => { setSelectedTarif(t); setShowTarifModal(true); }} className="p-1.5 rounded-lg" style={{ color: 'var(--c-muted)' }}>
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={() => deleteTarif(t.id)} className="p-1.5 rounded-lg" style={{ color: '#F87171' }}>
+                    <button onClick={() => deleteTarif(t.id)} className="p-1.5 rounded-lg" style={{ color: 'var(--sev-critique)' }}>
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -600,7 +600,7 @@ export function FinancesSection({ dzId }: { dzId: string }) {
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-sm" style={{ color: 'var(--c-text)' }}>{p.nom}</span>
                         {!p.actif && <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(100,116,139,0.15)', color: '#94A3B8' }}>Inactif</span>}
-                        {isExpired && <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(239,68,68,0.15)', color: '#F87171' }}>Expiré</span>}
+                        {isExpired && <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(239,68,68,0.15)', color: 'var(--sev-critique)' }}>Expiré</span>}
                       </div>
                       <p className="text-xs mt-0.5" style={{ color: 'var(--c-dim)' }}>
                         {p.type === 'pourcentage' ? `${p.valeur}%` : `${euros(Number(p.valeur) * 100)}`} de réduction
@@ -612,7 +612,7 @@ export function FinancesSection({ dzId }: { dzId: string }) {
                       <button onClick={() => { setSelectedPromo(p); setShowPromoModal(true); }} className="p-1.5 rounded-lg" style={{ color: 'var(--c-muted)' }}>
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => deletePromo(p.id)} className="p-1.5 rounded-lg" style={{ color: '#F87171' }}>
+                      <button onClick={() => deletePromo(p.id)} className="p-1.5 rounded-lg" style={{ color: 'var(--sev-critique)' }}>
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>

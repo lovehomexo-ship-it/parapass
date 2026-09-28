@@ -440,7 +440,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
       </div>
 
       {error && (
-        <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
+        <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: 'var(--sev-critique)' }}>
           <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}
         </div>
       )}
@@ -646,7 +646,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
               </span>
             ))}
             {draftSettings.no_fly_zones.map((z, i) => (
-              <span key={`n${i}`} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full" style={{ background: 'rgba(239,68,68,0.1)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.3)' }}>
+              <span key={`n${i}`} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--sev-critique)', border: '1px solid rgba(239,68,68,0.3)' }}>
                 <Ban className="w-3 h-3 inline-block mr-1 align-[-1px]" aria-hidden /> {z.nom}
                 <button onClick={() => deleteNoFly(i)} aria-label={`Supprimer ${z.nom}`} style={{ minWidth: 24, minHeight: 24 }}>
                   <Trash2 className="w-3 h-3" />

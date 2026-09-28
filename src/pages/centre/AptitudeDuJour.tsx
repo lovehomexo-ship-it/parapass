@@ -77,7 +77,7 @@ function AptitudeInner({ centreId, date }: { centreId: string; date?: string }) 
 
   if (erreur) {
     return (
-      <div className="rounded-2xl p-4 text-sm" style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.35)', color: '#F87171' }}>
+      <div className="rounded-2xl p-4 text-sm" style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.35)', color: 'var(--sev-critique)' }}>
         Aptitude indisponible : {erreur}
         <button onClick={charger} className="ml-2 underline" style={{ minHeight: 32 }}>Réessayer</button>
       </div>
@@ -152,7 +152,7 @@ function AptitudeInner({ centreId, date }: { centreId: string; date?: string }) 
                           {m.libelle} — {m.detail}
                         </span>
                         {m.levee ? (
-                          <span className="flex items-center gap-1 text-[11px] flex-shrink-0" style={{ color: '#34D399' }}>
+                          <span className="flex items-center gap-1 text-[11px] flex-shrink-0" style={{ color: 'var(--sev-conforme)' }}>
                             <Check className="w-3 h-3" aria-hidden /> levée
                           </span>
                         ) : (

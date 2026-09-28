@@ -508,8 +508,16 @@ export function PlanningCentre({ centreId }: { centreId: string }) {
   const creneauAuj = creneaux.find(c => c.date === todayKey && c.statut === 'ouvert');
   const inscritsAuj = creneauAuj ? creneauAuj.nb_places_total - creneauAuj.nb_places_restantes : 0;
 
+  // CET ÉCRAN EST DESSINÉ EN CLAIR DE BOUT EN BOUT : quarante-deux classes
+  // `bg-white` / `text-gray-900` posées en dur. Dans une application en thème
+  // sombre, ses titres en gris anthracite tombaient à 1,07:1 sur le fond de
+  // page — invisibles — et ses cartes blanches restaient blanches quoi qu'il
+  // arrive. Plutôt que de le repeindre ligne à ligne, on DÉCLARE le thème
+  // qu'il applique déjà, et on lui donne le fond qui va avec. Les jetons s'y
+  // résolvent alors en valeurs claires, cohérentes avec ses classes fixes.
   return (
-    <div className="space-y-6">
+    <div data-theme="light" className="space-y-6 rounded-2xl p-4"
+      style={{ background: 'var(--c-bg)', color: 'var(--c-text)' }}>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Planning DZ</h1>
         <button

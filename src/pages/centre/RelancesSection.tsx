@@ -188,7 +188,7 @@ export function RelancesSection({ centreId }: { centreId: string }) {
       </div>
 
       {erreur && (
-        <div className="rounded-xl px-4 py-3 text-sm flex items-center gap-2" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
+        <div className="rounded-xl px-4 py-3 text-sm flex items-center gap-2" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: 'var(--sev-critique)' }}>
           <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {erreur}
         </div>
       )}
@@ -255,7 +255,7 @@ export function RelancesSection({ centreId }: { centreId: string }) {
                       {items.map(i => (
                         <span key={i.type_document + i.echeance_date} className="text-[11px] px-2 py-0.5 rounded-full" style={{
                           background: i.jours_restants < 0 ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)',
-                          color: i.jours_restants < 0 ? '#FCA5A5' : '#FCD34D',
+                          color: i.jours_restants < 0 ? 'var(--sev-critique)' : '#FCD34D',
                         }}>
                           {docLabel(i.type_document)} · {i.jours_restants < 0 ? `expiré le ${new Date(i.echeance_date).toLocaleDateString('fr-FR')}` : `échéance ${new Date(i.echeance_date).toLocaleDateString('fr-FR')}`} · palier {palierLabel(i.palier)}
                         </span>

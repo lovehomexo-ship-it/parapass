@@ -123,7 +123,7 @@ export function AjouterEquipement({ centreId, onFait, onFermer }: {
             className="w-full rounded-xl px-3 text-sm" style={st} />
         </label>
       </div>
-      {erreur && <p className="text-xs" style={{ color: '#F87171' }}>{erreur}</p>}
+      {erreur && <p className="text-xs" style={{ color: 'var(--sev-critique)' }}>{erreur}</p>}
       <Boutons onFermer={onFermer} onValider={valider} envoi={envoi} libelle="Ajouter" />
     </Modale>
   );
@@ -207,7 +207,7 @@ export function EnregistrerOperation({ materielId, libelleMateriel, typeDefaut, 
         La prochaine échéance est calculée depuis cette date. L’opération entre au
         journal de bord.
       </p>
-      {erreur && <p className="text-xs" style={{ color: '#F87171' }}>{erreur}</p>}
+      {erreur && <p className="text-xs" style={{ color: 'var(--sev-critique)' }}>{erreur}</p>}
       <Boutons onFermer={onFermer} onValider={valider} envoi={envoi} libelle="Enregistrer" />
     </Modale>
   );

@@ -28,7 +28,7 @@ export function PresencesDZ({ dzId }: { dzId: string }) {
       </div>
 
       {error && (
-        <p className="text-xs mb-2" style={{ color: '#FCA5A5' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}</p>
+        <p className="text-xs mb-2" style={{ color: 'var(--sev-critique)' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}</p>
       )}
 
       {tries.length === 0 ? (
@@ -62,7 +62,7 @@ export function PresencesDZ({ dzId }: { dzId: string }) {
               </span>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1.5 ml-auto"
                 style={p.briefingAcquitte
-                  ? { background: 'rgba(16,185,129,0.12)', color: '#34D399', border: '1px solid rgba(16,185,129,0.3)' }
+                  ? { background: 'rgba(16,185,129,0.12)', color: 'var(--sev-conforme)', border: '1px solid rgba(16,185,129,0.3)' }
                   : { background: 'rgba(249,115,22,0.12)', color: '#FDBA74', border: '1px solid rgba(249,115,22,0.35)' }}>
                 <span className="w-1.5 h-1.5 rounded-full" style={{ background: p.briefingAcquitte ? '#34D399' : '#F97316' }} />
                 {p.briefingAcquitte ? 'Briefing OK' : 'Briefing non acquitté'}

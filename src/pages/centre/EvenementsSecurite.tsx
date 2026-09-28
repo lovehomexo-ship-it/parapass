@@ -246,7 +246,7 @@ function SecuriteInner({ centreId }: { centreId: string }) {
 
       {erreur && (
         <div className="rounded-xl p-3 text-sm" style={{ background: 'rgba(239,68,68,0.10)',
-          border: '1px solid rgba(239,68,68,0.35)', color: '#F87171' }}>{erreur}</div>
+          border: '1px solid rgba(239,68,68,0.35)', color: 'var(--sev-critique)' }}>{erreur}</div>
       )}
 
       {formOuvert && (

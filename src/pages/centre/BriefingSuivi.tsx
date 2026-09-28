@@ -88,7 +88,7 @@ export function BriefingSuiviDuJour({ centreId }: { centreId: string }) {
   return (
     <div className="space-y-4">
       <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
-        <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: '#10B981' }} />
+        <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--sev-conforme)' }} />
         <p className="text-sm font-bold text-white">
           {acquittes.length} / {membres.length} licenciés ont pris connaissance
         </p>
@@ -97,7 +97,7 @@ export function BriefingSuiviDuJour({ centreId }: { centreId: string }) {
 
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="rounded-xl p-4" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
-          <h3 className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: '#34D399' }}>Ont acquitté</h3>
+          <h3 className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: 'var(--sev-conforme)' }}>Ont acquitté</h3>
           {acquittes.length === 0 ? (
             <p className="text-xs" style={{ color: 'var(--c-dim)' }}>Personne pour l'instant.</p>
           ) : (
@@ -117,7 +117,7 @@ export function BriefingSuiviDuJour({ centreId }: { centreId: string }) {
           </h3>
           <p className="text-[10px] mb-3" style={{ color: 'var(--c-dim)' }}>À titre informatif — l'appli ne relance personne.</p>
           {nonAcquittes.length === 0 ? (
-            <p className="text-xs" style={{ color: '#34D399' }}>Tout le monde a acquitté <PartyPopper className="w-3 h-3 inline-block align-[-1px]" aria-hidden /></p>
+            <p className="text-xs" style={{ color: 'var(--sev-conforme)' }}>Tout le monde a acquitté <PartyPopper className="w-3 h-3 inline-block align-[-1px]" aria-hidden /></p>
           ) : (
             <ul className="space-y-1.5">
               {nonAcquittes.map(m => (
@@ -204,7 +204,7 @@ export function BriefingArchive({ centreId, circuits }: { centreId: string; circ
               <span className="text-xs" style={{ color: '#7DD3FC' }}>
                 {b.vent_direction_deg}°{b.vent_vitesse_kt != null ? ` · ${b.vent_vitesse_kt} kt` : ''}
               </span>
-              <span className="text-xs ml-auto" style={{ color: '#34D399' }}>{acks.length} acquittement{acks.length > 1 ? 's' : ''}</span>
+              <span className="text-xs ml-auto" style={{ color: 'var(--sev-conforme)' }}>{acks.length} acquittement{acks.length > 1 ? 's' : ''}</span>
               {isOpen ? <ChevronUp className="w-4 h-4" style={{ color: 'var(--c-dim)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'var(--c-dim)' }} />}
             </button>
             {isOpen && (

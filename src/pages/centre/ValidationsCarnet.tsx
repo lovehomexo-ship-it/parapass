@@ -249,7 +249,7 @@ function ValidationForm({
         <button
           onClick={() => setShowRefus(v => !v)}
           className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition"
-          style={{ background: 'rgba(239,68,68,0.12)', color: '#F87171', border: '1px solid rgba(239,68,68,0.25)' }}
+          style={{ background: 'rgba(239,68,68,0.12)', color: 'var(--sev-critique)', border: '1px solid rgba(239,68,68,0.25)' }}
         >
           <X className="w-4 h-4" /> Refuser
         </button>
@@ -315,7 +315,7 @@ function ParaCard({ para, dzId, onDone }: { para: ParaEnAttente; dzId: string; o
           )}
           {carnet_statut === 'en_attente' && (
             <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
-              style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.3)' }}>
+              style={{ background: 'rgba(245,158,11,0.15)', color: 'var(--sev-vigilance)', border: '1px solid rgba(245,158,11,0.3)' }}>
               En attente
             </span>
           )}
@@ -328,13 +328,13 @@ function ParaCard({ para, dzId, onDone }: { para: ParaEnAttente; dzId: string; o
       {open && (
         <div className="px-4 pb-4">
           {carnet_statut === 'valide' && (
-            <div className="rounded-lg px-3 py-2 text-sm" style={{ background: 'rgba(16,185,129,0.08)', color: '#34D399' }}>
+            <div className="rounded-lg px-3 py-2 text-sm" style={{ background: 'rgba(16,185,129,0.08)', color: 'var(--sev-conforme)' }}>
               Validé{carnet_valide_par ? ` par ${carnet_valide_par}` : ''}
               {carnet_date_validation && ` — le ${new Date(carnet_date_validation).toLocaleDateString('fr-FR')}`}
             </div>
           )}
           {carnet_statut === 'refuse' && (
-            <div className="rounded-lg px-3 py-2 text-sm" style={{ background: 'rgba(239,68,68,0.08)', color: '#F87171' }}>
+            <div className="rounded-lg px-3 py-2 text-sm" style={{ background: 'rgba(239,68,68,0.08)', color: 'var(--sev-critique)' }}>
               Refusé{carnet_motif_refus ? ` — ${carnet_motif_refus}` : ''}
             </div>
           )}
@@ -553,7 +553,7 @@ export function ValidationsCarnet({ dzId, onNavigate, onCompteur }: {
                 {enAttente.length} dossier{enAttente.length > 1 ? 's' : ''} en attente
               </p>
               <p className="text-xs mt-0.5" style={{ color: 'var(--c-dim)' }}>
-                <span style={{ color: '#34D399', fontWeight: 600 }}>{conformes.length} conforme{conformes.length > 1 ? 's' : ''}</span>
+                <span style={{ color: 'var(--sev-conforme)', fontWeight: 600 }}>{conformes.length} conforme{conformes.length > 1 ? 's' : ''}</span>
                 {' · '}
                 <span style={{ color: aLaMain > 0 ? '#FB923C' : 'var(--c-dim)', fontWeight: 600 }}>
                   {aLaMain} à traiter à la main

@@ -156,8 +156,8 @@ export function ModulesSection({ centreId, onActiveChange }: Props) {
       {/* ── Modules live ── */}
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <Zap className="w-4 h-4" style={{ color: '#10B981' }} />
-          <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#10B981' }}>Modules disponibles</h3>
+          <Zap className="w-4 h-4" style={{ color: 'var(--sev-conforme)' }} />
+          <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--sev-conforme)' }}>Modules disponibles</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {liveModules.map((mod) => (
@@ -223,7 +223,7 @@ function PackCard({ mod, active, saving, economie, prixSepares, onToggle }: {
         <p className="text-sm mt-0.5" style={{ color: 'var(--c-dim)' }}>{mod.desc}</p>
         <div className="flex flex-wrap items-center gap-2 mt-2">
           <span className="text-lg font-extrabold" style={{ color: '#F97316' }}>{mod.prix?.toFixed(2).replace('.', ',')} €<span className="text-sm font-normal text-gray-500">/mois</span></span>
-          <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(16,185,129,0.12)', color: '#10B981', border: '1px solid rgba(16,185,129,0.3)' }}>
+          <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(16,185,129,0.12)', color: 'var(--sev-conforme)', border: '1px solid rgba(16,185,129,0.3)' }}>
             Économisez ~{economie}€/mois vs {prixSepares.toFixed(2).replace('.', ',')} € séparés
           </span>
         </div>
@@ -263,7 +263,7 @@ function LiveCard({ mod, active, includedInStudio, saving, onToggle }: {
         <ModuleIcon id={mod.id} label={mod.nom} className="w-6 h-6" />
         {active && (
           <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full"
-            style={{ background: 'rgba(16,185,129,0.12)', color: '#10B981', border: '1px solid rgba(16,185,129,0.3)' }}>
+            style={{ background: 'rgba(16,185,129,0.12)', color: 'var(--sev-conforme)', border: '1px solid rgba(16,185,129,0.3)' }}>
             <Check className="w-3 h-3" />
             {includedInStudio ? 'Inclus dans Studio' : 'Activé'}
           </span>
@@ -290,7 +290,7 @@ function LiveCard({ mod, active, includedInStudio, saving, onToggle }: {
           className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
           style={{
             background: active ? 'rgba(239,68,68,0.08)' : 'rgba(16,185,129,0.12)',
-            color: active ? '#EF4444' : '#10B981',
+            color: active ? '#EF4444' : 'var(--sev-conforme)',
             border: `1px solid ${active ? 'rgba(239,68,68,0.25)' : 'rgba(16,185,129,0.3)'}`,
           }}
         >

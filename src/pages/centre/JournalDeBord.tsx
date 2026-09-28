@@ -128,7 +128,7 @@ function JournalInner({ centreId }: { centreId: string }) {
         </label>
 
         {cloture ? (
-          <div className="flex items-center gap-2 text-xs" style={{ color: '#34D399' }}>
+          <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--sev-conforme)' }}>
             <Lock className="w-4 h-4" aria-hidden />
             Clôturée par {cloture.cloture_nom} le {new Date(cloture.cloture_le).toLocaleDateString('fr-FR')}
             <button onClick={clôturer} disabled={enCours}
@@ -148,7 +148,7 @@ function JournalInner({ centreId }: { centreId: string }) {
 
       {erreur && (
         <div className="rounded-2xl p-4 text-sm" style={{ background: 'rgba(239,68,68,0.10)',
-          border: '1px solid rgba(239,68,68,0.35)', color: '#F87171' }}>
+          border: '1px solid rgba(239,68,68,0.35)', color: 'var(--sev-critique)' }}>
           Journal indisponible : {erreur}
         </div>
       )}

@@ -203,7 +203,7 @@ function AlertBannerClickable({
   return (
     <div className="flex items-center gap-3 rounded-lg px-4 py-2.5" style={{ background: styles.background, border: styles.border }}>
       <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: styles.iconColor }} />
-      <span className="flex-1 text-sm" style={{ color: 'rgba(255,255,255,0.8)' }}>{message}</span>
+      <span className="flex-1 text-sm" style={{ color: 'var(--c-text2)' }}>{message}</span>
       {onView && (
         <button onClick={onView} className="text-xs font-semibold flex-shrink-0 transition-opacity hover:opacity-70" style={{ color: '#F97316' }}>
           Voir →
@@ -304,7 +304,7 @@ function TuileEncadrementDZ({ centreId, onGo }: { centreId: string; onGo: (secti
     <button className={tuileRecap} style={tuileRecapStyle} onClick={() => onGo('equipe', 'encadrement')}>
       <p className="text-[11px] font-bold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Encadrement des séances</p>
       {/* État vide illustré (pas de tiret orphelin) ; ✓ vectoriel quand conforme. */}
-      <p className="text-2xl font-extrabold mt-1 flex items-center" style={{ color: enc.seances.length === 0 ? 'var(--c-dim)' : manque === 0 ? '#34D399' : '#FBBF24', minHeight: 32 }}>
+      <p className="text-2xl font-extrabold mt-1 flex items-center" style={{ color: enc.seances.length === 0 ? 'var(--c-dim)' : manque === 0 ? 'var(--sev-conforme)' : 'var(--sev-vigilance)', minHeight: 32 }}>
         {enc.seances.length === 0
           ? <CalendarOff className="w-6 h-6" />
           : manque === 0
@@ -336,7 +336,7 @@ function TuileRelancesDZ({ centreId, onGo }: { centreId: string; onGo: (section:
   return (
     <button className={tuileRecap} style={tuileRecapStyle} onClick={() => onGo('messages', 'relances')}>
       <p className="text-[11px] font-bold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Échéances à relancer</p>
-      <p className="text-2xl font-extrabold mt-1" style={{ color: relancesDues === 0 ? '#34D399' : '#FBBF24' }}>{relancesDues}</p>
+      <p className="text-2xl font-extrabold mt-1" style={{ color: relancesDues === 0 ? 'var(--sev-conforme)' : 'var(--sev-vigilance)' }}>{relancesDues}</p>
       <p className="text-xs mt-1" style={{ color: 'var(--c-dim)' }}>
         {relancesDues === 0 ? 'Documents à jour selon les paliers.' : 'Licences / certificats arrivant à échéance.'}
       </p>
@@ -503,7 +503,7 @@ function DashboardHome({
                 {/* Statut « Agréé » valorisé en badge distinct */}
                 {isPlanActif(centre) ? (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold flex-shrink-0"
-                    style={{ background: 'rgba(16,185,129,0.16)', color: '#34D399', border: '1px solid rgba(16,185,129,0.35)' }}>
+                    style={{ background: 'rgba(16,185,129,0.16)', color: 'var(--sev-conforme)', border: '1px solid rgba(16,185,129,0.35)' }}>
                     <BadgeCheck className="w-3.5 h-3.5" /> Agréé
                   </span>
                 ) : (
@@ -528,7 +528,7 @@ function DashboardHome({
               <p style={{ color: 'var(--c-muted)', fontSize: 12, marginTop: 2 }}>licenciés</p>
             </div>
             <div className="flex-1 sm:flex-initial rounded-xl px-3.5 py-2 text-center" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}>
-              <p style={{ color: '#34D399', fontSize: 24, fontWeight: 800, lineHeight: 1 }}>{sautsThisMonth}</p>
+              <p style={{ color: 'var(--sev-conforme)', fontSize: 24, fontWeight: 800, lineHeight: 1 }}>{sautsThisMonth}</p>
               <p style={{ color: 'var(--c-muted)', fontSize: 12, marginTop: 2 }}>sauts / mois</p>
             </div>
           </div>
@@ -607,7 +607,7 @@ function DashboardHome({
       <button onClick={() => onNavigate('validations')}
         className="w-full rounded-2xl p-4 flex items-center gap-4 text-left transition"
         style={{ background: carnetsEnAttente > 0 ? 'rgba(249,115,22,0.12)' : 'rgba(16,185,129,0.08)', border: `1px solid ${carnetsEnAttente > 0 ? 'rgba(249,115,22,0.4)' : 'rgba(16,185,129,0.25)'}` }}>
-        <span className="flex-shrink-0" style={{ color: carnetsEnAttente > 0 ? '#F97316' : '#34D399' }}>
+        <span className="flex-shrink-0" style={{ color: carnetsEnAttente > 0 ? '#F97316' : 'var(--sev-conforme)' }}>
           {carnetsEnAttente > 0 ? <BookCheck className="w-8 h-8" /> : <CheckCircle2 className="w-8 h-8" />}
         </span>
         <div className="flex-1 min-w-0">
@@ -618,7 +618,7 @@ function DashboardHome({
             </>
           ) : (
             <>
-              <div className="text-sm font-bold" style={{ color: '#34D399' }}>Tout est à jour</div>
+              <div className="text-sm font-bold" style={{ color: 'var(--sev-conforme)' }}>Tout est à jour</div>
               <div className="text-xs mt-0.5" style={{ color: 'var(--c-dim)' }}>Aucun carnet en attente de validation</div>
             </>
           )}
@@ -693,7 +693,7 @@ function DashboardHome({
                     </div>
                     <span className="text-[11px] font-medium flex-shrink-0" style={
                       s.statut === 'valide'
-                        ? { background: 'rgba(16,185,129,0.12)', color: '#10B981', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 20, padding: '3px 10px' }
+                        ? { background: 'rgba(16,185,129,0.12)', color: 'var(--sev-conforme)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 20, padding: '3px 10px' }
                         : s.statut === 'refuse'
                         ? { background: 'rgba(239,68,68,0.12)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 20, padding: '3px 10px' }
                         : { background: 'rgba(249,115,22,0.12)', color: '#F97316', border: '1px solid rgba(249,115,22,0.25)', borderRadius: 20, padding: '3px 10px' }
@@ -715,10 +715,10 @@ function DashboardHome({
               // Sémantique stricte : vert = conforme/OK · orange = à surveiller · rouge = critique.
               // Les valeurs POSITIVES (valides, médicaux OK) sont vertes — le manque
               // éventuel est déjà signalé par « expirées » (rouge) juste en dessous.
-              { label: 'Licences FFP valides', value: licencesValides, total: totalMembers, color: '#10B981' },
-              { label: 'Licences expirées', value: licencesExpirees, total: null, color: licencesExpirees > 0 ? '#EF4444' : '#10B981' },
-              { label: 'Certificats médicaux OK', value: certifOk, total: totalMembers, color: '#10B981' },
-              { label: 'Expirant dans 30j', value: certifExpirant, total: null, color: certifExpirant > 0 ? '#F97316' : '#10B981' },
+              { label: 'Licences FFP valides', value: licencesValides, total: totalMembers, color: 'var(--sev-conforme)' },
+              { label: 'Licences expirées', value: licencesExpirees, total: null, color: licencesExpirees > 0 ? '#EF4444' : 'var(--sev-conforme)' },
+              { label: 'Certificats médicaux OK', value: certifOk, total: totalMembers, color: 'var(--sev-conforme)' },
+              { label: 'Expirant dans 30j', value: certifExpirant, total: null, color: certifExpirant > 0 ? '#F97316' : 'var(--sev-conforme)' },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
                 <span style={{ color: 'var(--c-text2)', fontSize: 12 }}>{item.label}</span>
@@ -784,7 +784,7 @@ function ModalPromotion({ licencie, onConfirm, onClose }: {
           </div>
           <div>
             <h2 className="font-bold text-white text-base">Promouvoir en moniteur délégué</h2>
-            <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>{licencie.prenom} {licencie.nom}</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--c-muted)' }}>{licencie.prenom} {licencie.nom}</p>
           </div>
         </div>
 
@@ -892,14 +892,14 @@ function MenuActionsLicencie({ licencie, onOpenDrawer, onMessage, onPromouvoir, 
         <div className="absolute right-0 top-full mt-1 z-50 rounded-xl overflow-hidden shadow-2xl py-1 min-w-[190px]"
           style={{ background: '#1E3A5F', border: '1px solid rgba(255,255,255,0.12)' }}>
           <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-left transition"
-            style={{ color: 'rgba(255,255,255,0.8)' }}
+            style={{ color: 'var(--c-text2)' }}
             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
             onClick={() => { setOpen(false); onOpenDrawer(); }}>
             <Eye className="w-4 h-4 opacity-60" /> Voir le passeport
           </button>
           <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-left transition"
-            style={{ color: 'rgba(255,255,255,0.8)' }}
+            style={{ color: 'var(--c-text2)' }}
             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
             onClick={() => { setOpen(false); onMessage(); }}>
@@ -910,7 +910,7 @@ function MenuActionsLicencie({ licencie, onOpenDrawer, onMessage, onPromouvoir, 
 
           {!isMoniteur ? (
             <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-left transition"
-              style={{ color: '#34D399' }}
+              style={{ color: 'var(--sev-conforme)' }}
               onMouseEnter={e => (e.currentTarget.style.background = 'rgba(52,211,153,0.1)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               onClick={() => { setOpen(false); onPromouvoir(); }}>
@@ -918,7 +918,7 @@ function MenuActionsLicencie({ licencie, onOpenDrawer, onMessage, onPromouvoir, 
             </button>
           ) : (
             <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-left transition"
-              style={{ color: '#F87171' }}
+              style={{ color: 'var(--sev-critique)' }}
               onMouseEnter={e => (e.currentTarget.style.background = 'rgba(248,113,113,0.1)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               onClick={() => { setOpen(false); onRevoquer(); }}>
@@ -1198,8 +1198,8 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
             />
           </div>
           <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid var(--c-border-f)' }}>
-            <button onClick={() => setViewMode('grid')} className="px-3 py-2 text-sm transition" style={{ background: viewMode === 'grid' ? '#2563EB' : 'transparent', color: viewMode === 'grid' ? 'white' : 'rgba(255,255,255,0.5)' }}>Grille</button>
-            <button onClick={() => setViewMode('list')} className="px-3 py-2 text-sm transition" style={{ background: viewMode === 'list' ? '#2563EB' : 'transparent', color: viewMode === 'list' ? 'white' : 'rgba(255,255,255,0.5)' }}>Liste</button>
+            <button onClick={() => setViewMode('grid')} className="px-3 py-2 text-sm transition" style={{ background: viewMode === 'grid' ? '#2563EB' : 'transparent', color: viewMode === 'grid' ? 'white' : 'var(--c-muted)' }}>Grille</button>
+            <button onClick={() => setViewMode('list')} className="px-3 py-2 text-sm transition" style={{ background: viewMode === 'list' ? '#2563EB' : 'transparent', color: viewMode === 'list' ? 'white' : 'var(--c-muted)' }}>Liste</button>
           </div>
         </div>
       </div>
@@ -1226,7 +1226,7 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
               className="text-xs font-semibold px-3 py-1.5 rounded-full transition"
               style={{
                 background: active ? `${color}26` : 'var(--c-border)',
-                color: active ? color : 'rgba(255,255,255,0.6)',
+                color: active ? color : 'var(--c-muted)',
                 border: `1px solid ${active ? `${color}66` : 'var(--c-border-f)'}`,
               }}
             >
@@ -1279,9 +1279,9 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
                   </p>
                 </div>
                 <div className="flex flex-wrap justify-center gap-1.5">
-                  <span className="text-xs rounded-full px-2 py-0.5" style={{ background: 'rgba(16,185,129,0.2)', color: '#34D399', border: '1px solid rgba(16,185,129,0.3)' }}>Actif</span>
+                  <span className="text-xs rounded-full px-2 py-0.5" style={{ background: 'rgba(16,185,129,0.2)', color: 'var(--sev-conforme)', border: '1px solid rgba(16,185,129,0.3)' }}>Actif</span>
                   {isMoniteur && (
-                    <span className="text-xs rounded-full px-2 py-0.5 flex items-center gap-1" style={{ background: 'rgba(52,211,153,0.15)', color: '#34D399', border: '1px solid rgba(52,211,153,0.4)' }}>
+                    <span className="text-xs rounded-full px-2 py-0.5 flex items-center gap-1" style={{ background: 'rgba(52,211,153,0.15)', color: 'var(--sev-conforme)', border: '1px solid rgba(52,211,153,0.4)' }}>
                       <GraduationCap className="w-3 h-3" /> Moniteur
                     </span>
                   )}
@@ -1330,9 +1330,9 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
                     <td className="px-4 py-3" style={{ color: 'var(--c-dim)' }}>{sautCounts[l.id] ?? 0}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-xs rounded-full px-2 py-0.5" style={{ background: 'rgba(16,185,129,0.2)', color: '#34D399', border: '1px solid rgba(16,185,129,0.3)' }}>Actif</span>
+                        <span className="text-xs rounded-full px-2 py-0.5" style={{ background: 'rgba(16,185,129,0.2)', color: 'var(--sev-conforme)', border: '1px solid rgba(16,185,129,0.3)' }}>Actif</span>
                         {isMoniteur && (
-                          <span className="text-xs rounded-full px-2 py-0.5 flex items-center gap-1" style={{ background: 'rgba(52,211,153,0.15)', color: '#34D399', border: '1px solid rgba(52,211,153,0.4)' }}>
+                          <span className="text-xs rounded-full px-2 py-0.5 flex items-center gap-1" style={{ background: 'rgba(52,211,153,0.15)', color: 'var(--sev-conforme)', border: '1px solid rgba(52,211,153,0.4)' }}>
                             <GraduationCap className="w-3 h-3" /> Moniteur
                           </span>
                         )}
@@ -1356,7 +1356,7 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
                       {(() => {
                         if (!briefingDuJourId) return <span className="text-xs" style={{ color: 'var(--c-dim)' }}>—</span>;
                         const st = acksSet.has(l.id)
-                          ? { label: 'Acquitté', color: '#10B981', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)' }
+                          ? { label: 'Acquitté', color: 'var(--sev-conforme)', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)' }
                           : { label: 'Non lu', color: '#EF4444', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)' };
                         return (
                           <span className="text-xs rounded-full px-2 py-0.5 inline-flex items-center gap-1.5" style={{ background: st.bg, color: st.color, border: `1px solid ${st.border}` }}>
@@ -1468,7 +1468,7 @@ function DemandesSection({ centreId, onAccepted }: { centreId: string | undefine
       <h1 className="text-2xl font-bold text-white">Demandes d'adhésion <span className="font-normal text-lg" style={{ color: 'var(--c-dim)' }}>({demandes.length})</span></h1>
       {demandes.length === 0 ? (
         <div className="rounded-2xl p-16 text-center" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-          <CheckCircle className="w-12 h-12 mx-auto mb-3" style={{ color: '#34D399' }} />
+          <CheckCircle className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--sev-conforme)' }} />
           <p style={{ color: 'var(--c-dim)' }}>Aucune demande en attente</p>
         </div>
       ) : (
@@ -1489,7 +1489,7 @@ function DemandesSection({ centreId, onAccepted }: { centreId: string | undefine
                 <button
                   onClick={() => handleAccept(d.id)}
                   className="px-3 py-2 rounded-xl text-sm flex items-center gap-1 transition"
-                  style={{ background: 'rgba(16,185,129,0.15)', color: '#34D399', border: '1px solid rgba(16,185,129,0.2)' }}
+                  style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--sev-conforme)', border: '1px solid rgba(16,185,129,0.2)' }}
                   onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.background = 'rgba(16,185,129,0.25)'}
                   onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.background = 'rgba(16,185,129,0.15)'}
                 >
@@ -1498,7 +1498,7 @@ function DemandesSection({ centreId, onAccepted }: { centreId: string | undefine
                 <button
                   onClick={() => handleRefuse(d.id)}
                   className="px-3 py-2 rounded-xl text-sm flex items-center gap-1 transition"
-                  style={{ background: 'transparent', color: '#F87171', border: '1px solid rgba(239,68,68,0.3)' }}
+                  style={{ background: 'transparent', color: 'var(--sev-critique)', border: '1px solid rgba(239,68,68,0.3)' }}
                   onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.1)'}
                   onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.background = 'transparent'}
                 >
@@ -1524,11 +1524,16 @@ function DemandesSection({ centreId, onAccepted }: { centreId: string | undefine
  */
 function FeuDossier({ d }: { d?: { verdict: string; bloquants: number; vigilances: number; motifs: string | null } }) {
   if (!d) return null;
+  // LES COULEURS VIENNENT DES JETONS DE SÉVÉRITÉ, PAS D'ICI. J'avais écrit des
+  // teintes pâles (#6EE7B7, #FBBF24…) choisies pour un fond sombre : posées
+  // telles quelles en mode jour elles tombaient à 2:1 — mesuré, 23 pastilles
+  // illisibles sur cette seule liste. Les jetons `--sev-*` sont redéfinis par
+  // thème, donc lisibles des deux côtés sans que ce composant ait à le savoir.
   const CFG: Record<string, { mot: string; fond: string; texte: string; bord: string }> = {
-    vert:   { mot: 'Dossier complet',    fond: 'rgba(16,185,129,0.12)', texte: '#6EE7B7', bord: 'rgba(16,185,129,0.35)' },
-    orange: { mot: 'À surveiller',       fond: 'rgba(245,158,11,0.12)', texte: '#FBBF24', bord: 'rgba(245,158,11,0.35)' },
-    rouge:  { mot: 'Dossier incomplet',  fond: 'rgba(239,68,68,0.12)',  texte: '#FCA5A5', bord: 'rgba(239,68,68,0.35)' },
-    gris:   { mot: 'À renseigner',       fond: 'rgba(148,163,184,0.12)',texte: '#CBD5E1', bord: 'rgba(148,163,184,0.3)' },
+    vert:   { mot: 'Dossier complet',    fond: 'rgba(16,185,129,0.12)', texte: 'var(--sev-conforme)',  bord: 'rgba(16,185,129,0.35)' },
+    orange: { mot: 'À surveiller',       fond: 'rgba(245,158,11,0.12)', texte: 'var(--sev-vigilance)', bord: 'rgba(245,158,11,0.35)' },
+    rouge:  { mot: 'Dossier incomplet',  fond: 'rgba(239,68,68,0.12)',  texte: 'var(--sev-critique)',  bord: 'rgba(239,68,68,0.35)' },
+    gris:   { mot: 'À renseigner',       fond: 'rgba(148,163,184,0.12)',texte: 'var(--sev-neutre)',    bord: 'rgba(148,163,184,0.3)' },
   };
   const c = CFG[d.verdict] ?? CFG.gris;
   const nb = d.bloquants + d.vigilances;
@@ -1662,7 +1667,7 @@ function SautsSection({ centreId, onNavigate }: { centreId: string | undefined; 
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Activité des sauts</h1>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--c-text)' }}>Activité des sauts</h1>
           <p className="text-xs text-gray-500 mt-0.5">
             Validation des sauts individuels (onglet « Sauts à valider »).
             {onNavigate && (
@@ -1993,7 +1998,7 @@ function MonCentreSection({ centre, onSaved }: { centre: Centre | null; onSaved:
       <div className="rounded-2xl overflow-hidden shadow-sm border border-gray-100" style={{ background: 'linear-gradient(135deg, #001A4D 0%, #0f1a30 100%)' }}>
         <div className="px-6 pt-5 pb-4 border-b border-white/10">
           <h2 className="text-base font-semibold text-white">Identité visuelle du centre</h2>
-          <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--c-dim)' }}>
             Votre logo apparaît comme cachet officiel sur le verso des carnets de vos parachutistes
           </p>
         </div>
@@ -2001,7 +2006,7 @@ function MonCentreSection({ centre, onSaved }: { centre: Centre | null; onSaved:
         <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
           {/* Left — preview */}
           <div className="flex flex-col items-center gap-3">
-            <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'rgba(255,255,255,0.4)' }}>Aperçu cachet DZ</p>
+            <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--c-dim)' }}>Aperçu cachet DZ</p>
             <div
               className="w-24 h-24 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
               style={{ background: 'rgba(255,255,255,0.07)', border: '2px solid rgba(249,115,22,0.4)' }}
@@ -2044,10 +2049,10 @@ function MonCentreSection({ centre, onSaved }: { centre: Centre | null; onSaved:
               <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: 'rgba(249,115,22,0.12)' }}>
                 <Upload className="w-4 h-4" style={{ color: '#F97316' }} />
               </div>
-              <p className="text-xs text-center font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>
+              <p className="text-xs text-center font-medium" style={{ color: 'var(--c-text2)' }}>
                 {uploadingLogo ? 'Upload en cours…' : 'Glisser-déposer ou cliquer'}
               </p>
-              <p className="text-[10px] text-center" style={{ color: 'rgba(255,255,255,0.3)' }}>
+              <p className="text-[10px] text-center" style={{ color: 'var(--c-dim)' }}>
                 PNG, JPG, SVG, WebP · Max 2 Mo
               </p>
             </div>
@@ -2089,8 +2094,8 @@ function MonCentreSection({ centre, onSaved }: { centre: Centre | null; onSaved:
               </div>
             )}
 
-            <div className="rounded-lg px-3 py-2.5 text-[10px] leading-relaxed" style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.4)' }}>
-              <p className="font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.6)' }}>Conseils</p>
+            <div className="rounded-lg px-3 py-2.5 text-[10px] leading-relaxed" style={{ background: 'rgba(255,255,255,0.04)', color: 'var(--c-dim)' }}>
+              <p className="font-semibold mb-1" style={{ color: 'var(--c-muted)' }}>Conseils</p>
               <p>· Fond transparent (PNG) pour un rendu optimal</p>
               <p>· Logo carré ou circulaire idéalement</p>
               <p>· Appliqué immédiatement sur toutes les cartes</p>
@@ -3302,7 +3307,7 @@ export function CentreDashboardPage() {
                 <span className="text-[10px] rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-semibold"
                   style={{ ...(compact ? { position: 'absolute', top: 2, right: 4, lineHeight: 1 } : {}),
                   background: isMsgBadge ? 'rgba(59,130,246,0.25)' : 'rgba(239,68,68,0.2)',
-                  color: isMsgBadge ? '#60A5FA' : '#F87171',
+                  color: isMsgBadge ? '#60A5FA' : 'var(--sev-critique)',
                 }}>
                   {item.badge}
                 </span>
@@ -3327,7 +3332,7 @@ export function CentreDashboardPage() {
           {notifCount > 0 && (
             <span className="text-[10px] rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-semibold"
               style={{ ...(compact ? { position: 'absolute', top: 2, right: 4, lineHeight: 1 } : {}),
-                       background: 'rgba(239,68,68,0.2)', color: '#F87171' }}>{notifCount}</span>
+                       background: 'rgba(239,68,68,0.2)', color: 'var(--sev-critique)' }}>{notifCount}</span>
           )}
         </button>
         {/* En colonne quand la barre est réduite : quatre éléments côte à côte

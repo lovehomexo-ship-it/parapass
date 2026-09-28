@@ -189,8 +189,8 @@ function OperationnelInner({ centreId }: { centreId: string }) {
         </p>
       </div>
 
-      {erreur && <p className="text-xs" style={{ color: '#F87171' }}>Échec : {erreur}</p>}
-      {message && <p className="text-xs" style={{ color: '#34D399' }}>{message}</p>}
+      {erreur && <p className="text-xs" style={{ color: 'var(--sev-critique)' }}>Échec : {erreur}</p>}
+      {message && <p className="text-xs" style={{ color: 'var(--sev-conforme)' }}>{message}</p>}
 
       <button onClick={enregistrer} disabled={envoi}
         className="w-full flex items-center justify-center gap-2 rounded-xl text-sm font-bold disabled:opacity-50"

@@ -45,9 +45,9 @@ interface PliageJour {
 
 function statutPaiementBadge(s: string) {
   switch (s) {
-    case 'paye_app': return { label: 'Payé app', color: '#10B981', bg: 'rgba(16,185,129,0.12)' };
+    case 'paye_app': return { label: 'Payé app', color: 'var(--sev-conforme)', bg: 'rgba(16,185,129,0.12)' };
     case 'paye_comptoir': return { label: 'Payé comptoir', color: '#60A5FA', bg: 'rgba(96,165,250,0.12)' };
-    case 'auto_plie': return { label: 'Auto-plié', color: '#A78BFA', bg: 'rgba(167,139,250,0.12)' };
+    case 'auto_plie': return { label: 'Auto-plié', color: 'var(--c-pliage-fort)', bg: 'rgba(167,139,250,0.12)' };
     case 'a_regler': return { label: 'À régler', color: '#F97316', bg: 'rgba(249,115,22,0.12)' };
     default: return { label: 'Non attribué', color: '#94A3B8', bg: 'rgba(148,163,184,0.12)' };
   }
@@ -139,10 +139,10 @@ function ModalQR({ sac, onClose }: { sac: Sac; onClose: () => void }) {
       >
         <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div>
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>QR permanent · Sac</p>
+            <p className="text-xs" style={{ color: 'var(--c-dim)' }}>QR permanent · Sac</p>
             <h3 className="font-bold text-white">{nom}</h3>
             {(sac.marque || sac.modele) && (
-              <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--c-dim)' }}>
                 {[sac.marque, sac.modele].filter(Boolean).join(' ')}
               </p>
             )}
@@ -155,12 +155,12 @@ function ModalQR({ sac, onClose }: { sac: Sac; onClose: () => void }) {
           <div className="p-4 rounded-2xl bg-white mb-4">
             <QRCodeSVG value={url} size={180} level="H" />
           </div>
-          <p className="text-xs text-center" style={{ color: 'rgba(255,255,255,0.3)' }}>
+          <p className="text-xs text-center" style={{ color: 'var(--c-dim)' }}>
             QR permanent · ECC niveau H · ne change jamais
           </p>
         </div>
         <div className="flex gap-3 px-5 pb-5">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm" style={{ border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)', background: 'transparent' }}>
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm" style={{ border: '1px solid rgba(255,255,255,0.15)', color: 'var(--c-muted)', background: 'transparent' }}>
             Fermer
           </button>
           <button
@@ -270,7 +270,7 @@ function ModalNouveauSac({
         <div className="p-5 space-y-4">
           {/* Nom court — obligatoire */}
           <div>
-            <label className="block text-xs font-semibold mb-1.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--c-muted)' }}>
               Nom court du sac <span style={{ color: '#F97316' }}>*</span>
             </label>
             <input
@@ -281,7 +281,7 @@ function ModalNouveauSac({
               style={inputStyle}
               autoFocus
             />
-            <p className="text-[11px] mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>
+            <p className="text-[11px] mt-1" style={{ color: 'var(--c-dim)' }}>
               Ce nom s'affiche en gros lors du scan
             </p>
           </div>
@@ -289,24 +289,24 @@ function ModalNouveauSac({
           {/* Marque / Modèle */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold mb-1.5" style={{ color: 'rgba(255,255,255,0.55)' }}>Marque</label>
+              <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--c-muted)' }}>Marque</label>
               <input type="text" value={form.marque} onChange={e => setForm(f => ({ ...f, marque: e.target.value }))} placeholder="Performance Designs" style={inputStyle} />
             </div>
             <div>
-              <label className="block text-xs font-semibold mb-1.5" style={{ color: 'rgba(255,255,255,0.55)' }}>Modèle</label>
+              <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--c-muted)' }}>Modèle</label>
               <input type="text" value={form.modele} onChange={e => setForm(f => ({ ...f, modele: e.target.value }))} placeholder="Pilot 168" style={inputStyle} />
             </div>
           </div>
 
           {/* N° de série */}
           <div>
-            <label className="block text-xs font-semibold mb-1.5" style={{ color: 'rgba(255,255,255,0.55)' }}>N° de série</label>
+            <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--c-muted)' }}>N° de série</label>
             <input type="text" value={form.numeroSerie} onChange={e => setForm(f => ({ ...f, numeroSerie: e.target.value }))} placeholder="Optionnel" style={inputStyle} />
           </div>
 
           {/* Statut */}
           <div>
-            <label className="block text-xs font-semibold mb-1.5" style={{ color: 'rgba(255,255,255,0.55)' }}>Statut</label>
+            <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--c-muted)' }}>Statut</label>
             <select
               value={form.statut}
               onChange={e => setForm(f => ({ ...f, statut: e.target.value }))}
@@ -324,7 +324,7 @@ function ModalNouveauSac({
               type="button"
               onClick={() => setShowOwner(s => !s)}
               className="flex items-center gap-2 text-xs font-semibold"
-              style={{ color: 'rgba(255,255,255,0.4)', background: 'none', border: 'none', cursor: 'pointer' }}
+              style={{ color: 'var(--c-dim)', background: 'none', border: 'none', cursor: 'pointer' }}
             >
               <ChevronRight className="w-3 h-3" style={{ transform: showOwner ? 'rotate(90deg)' : '', transition: 'transform 0.15s' }} />
               Sac personnel d'un licencié (optionnel)
@@ -358,7 +358,7 @@ function ModalNouveauSac({
           </div>
         </div>
         <div className="flex gap-3 px-5 pb-5">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm" style={{ border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)', background: 'transparent' }}>
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm" style={{ border: '1px solid rgba(255,255,255,0.15)', color: 'var(--c-muted)', background: 'transparent' }}>
             Annuler
           </button>
           <button
@@ -528,7 +528,7 @@ function OngletPliageDuJour({ centreId }: { centreId: string }) {
       </div>
 
       {actionError && (
-        <div className="rounded-xl px-4 py-3 mb-4 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
+        <div className="rounded-xl px-4 py-3 mb-4 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: 'var(--sev-critique)' }}>
           <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {actionError}
         </div>
       )}
@@ -580,7 +580,7 @@ function OngletPliageDuJour({ centreId }: { centreId: string }) {
                 {/* Traçabilité sécurité : origine du pliage, signalée — jamais bloquée */}
                 {estAuto ? (
                   <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
-                    style={{ background: 'rgba(167,139,250,0.12)', color: '#C4B5FD', border: '1px solid rgba(167,139,250,0.3)' }}>
+                    style={{ background: 'rgba(167,139,250,0.12)', color: 'var(--c-pliage)', border: '1px solid rgba(167,139,250,0.3)' }}>
                     Auto-pliage
                   </span>
                 ) : !habOk && (
@@ -634,8 +634,8 @@ function OngletGestionSacs({ centreId }: { centreId: string }) {
   useEffect(() => { fetchSacs(); }, [fetchSacs]);
 
   const statutColors: Record<string, { color: string; bg: string }> = {
-    en_service: { color: '#10B981', bg: 'rgba(16,185,129,0.12)' },
-    au_repliage_secours: { color: '#F59E0B', bg: 'rgba(245,158,11,0.12)' },
+    en_service: { color: 'var(--sev-conforme)', bg: 'rgba(16,185,129,0.12)' },
+    au_repliage_secours: { color: 'var(--sev-vigilance)', bg: 'rgba(245,158,11,0.12)' },
     retire: { color: '#EF4444', bg: 'rgba(239,68,68,0.12)' },
   };
 
@@ -780,9 +780,9 @@ function OngletStats({ centreId }: { centreId: string }) {
           <p className="text-xs font-semibold mb-3" style={{ color: 'var(--c-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Répartition</p>
           <div className="space-y-2">
             {[
-              { label: 'Payé app', val: stats.payeApp, color: '#10B981' },
+              { label: 'Payé app', val: stats.payeApp, color: 'var(--sev-conforme)' },
               { label: 'Payé comptoir', val: stats.payeComptoir, color: '#60A5FA' },
-              { label: 'Auto-plié', val: stats.autoPlies, color: '#A78BFA' },
+              { label: 'Auto-plié', val: stats.autoPlies, color: 'var(--c-pliage-fort)' },
               { label: 'À régler', val: stats.aRegler, color: '#F97316' },
               { label: 'Non attribué', val: stats.nonAttribues, color: '#94A3B8' },
             ].filter(r => r.val > 0).map(row => (
@@ -962,7 +962,7 @@ function OngletRelevePlieurs({ centreId }: { centreId: string }) {
                 </span>
               </div>
               <span className="text-center text-sm font-bold" style={{ color: '#60A5FA' }}>{r.nbPliages}</span>
-              <span className="text-right text-sm font-semibold" style={{ color: '#10B981' }}>
+              <span className="text-right text-sm font-semibold" style={{ color: 'var(--sev-conforme)' }}>
                 {r.montantAReverse.toFixed(0)} €
               </span>
             </div>
@@ -1043,7 +1043,7 @@ function OngletParcSacs({ centreId }: { centreId: string }) {
   const horsService = sacs.filter(s => s.statut !== 'en_service');
 
   const etatConfig = {
-    libre: { label: 'Libre', color: '#10B981', bg: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.25)' },
+    libre: { label: 'Libre', color: 'var(--sev-conforme)', bg: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.25)' },
     pris: { label: 'Pris', color: '#60A5FA', bg: 'rgba(96,165,250,0.1)', border: 'rgba(96,165,250,0.25)' },
     a_plier: { label: 'À plier', color: '#F97316', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.25)' },
     hors_service: { label: 'Hors service', color: '#94A3B8', bg: 'rgba(148,163,184,0.1)', border: 'rgba(148,163,184,0.25)' },
@@ -1065,7 +1065,7 @@ function OngletParcSacs({ centreId }: { centreId: string }) {
       {/* KPI compteurs */}
       <div className="grid grid-cols-4 gap-3 mb-6">
         {([
-          { label: 'Libres', val: libres.length, color: '#10B981' },
+          { label: 'Libres', val: libres.length, color: 'var(--sev-conforme)' },
           { label: 'Sortis', val: pris.length, color: '#60A5FA' },
           { label: 'À plier', val: aPlier.length, color: '#F97316' },
           { label: 'Hors service', val: horsService.length, color: '#94A3B8' },
@@ -1220,7 +1220,7 @@ function OngletHabilitations({ centreId }: { centreId: string }) {
         <button
           onClick={() => setShowForm(s => !s)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
-          style={{ background: 'rgba(167,139,250,0.12)', color: '#A78BFA', border: '1px solid rgba(167,139,250,0.3)', cursor: 'pointer' }}
+          style={{ background: 'rgba(167,139,250,0.12)', color: 'var(--c-pliage-fort)', border: '1px solid rgba(167,139,250,0.3)', cursor: 'pointer' }}
         >
           <Plus className="w-3.5 h-3.5" /> Habiliter un plieur
         </button>
@@ -1252,7 +1252,7 @@ function OngletHabilitations({ centreId }: { centreId: string }) {
           <div className="flex gap-2">
             <button onClick={habiliter} disabled={saving || !form.plieur_id}
               className="px-4 py-2 rounded-lg text-xs font-semibold disabled:opacity-50"
-              style={{ background: 'rgba(167,139,250,0.2)', color: '#A78BFA', border: '1px solid rgba(167,139,250,0.4)', cursor: 'pointer' }}>
+              style={{ background: 'rgba(167,139,250,0.2)', color: 'var(--c-pliage-fort)', border: '1px solid rgba(167,139,250,0.4)', cursor: 'pointer' }}>
               {saving ? 'Enregistrement...' : 'Valider l\'habilitation'}
             </button>
             <button onClick={() => setShowForm(false)}
@@ -1301,7 +1301,7 @@ function OngletHabilitations({ centreId }: { centreId: string }) {
                 <p className="text-xs" style={{ color: 'var(--c-text)' }}>{p.plieur?.prenom} {p.plieur?.nom}</p>
                 <button onClick={() => supabase.from('plieurs_valides').update({ actif: true }).eq('id', p.id).then(load)}
                   className="text-[11px] px-2 py-0.5 rounded"
-                  style={{ background: 'rgba(167,139,250,0.1)', color: '#A78BFA', border: 'none', cursor: 'pointer' }}>
+                  style={{ background: 'rgba(167,139,250,0.1)', color: 'var(--c-pliage-fort)', border: 'none', cursor: 'pointer' }}>
                   Réactiver
                 </button>
               </div>
