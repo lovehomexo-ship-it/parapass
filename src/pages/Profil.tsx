@@ -6,6 +6,7 @@ import { Layout } from '../components/Layout';
 import { Check, Upload, Globe, Users, Lock, Eye, Building2, Key, CheckCircle, AlertTriangle, Camera, PenLine, Trash2, Settings } from 'lucide-react';
 import { PhotoCropModal } from '../components/PhotoCropModal';
 import { LoaderParaPass } from '../components/LoaderParaPass';
+import { MonPoids } from '../components/MonPoids';
 
 const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#001A4D]/20 focus:border-[#001A4D]';
 const selectCls = inputCls;
@@ -524,9 +525,21 @@ export function ProfilPage() {
             </FormRow>
           </div>
 
-          {/* ── Section 2 : Coordonnées ── */}
+          {/* ── Section 2 : Mon poids ──
+              Il se saisissait dans la carte « charge alaire », elle-même
+              enfouie dans la fiche de CHAQUE matériel : personne ne le
+              trouvait. Il appartient à l'identité du pratiquant, et c'est ici
+              qu'on le cherche. */}
           <div className="border-t border-gray-100 pt-4">
-            <SectionHeader num="2" title="Coordonnées" />
+            <SectionHeader num="2" title="Mon poids" />
+          </div>
+          <div className="mb-2">
+            <MonPoids userId={user?.id} />
+          </div>
+
+          {/* ── Section 3 : Coordonnées ── */}
+          <div className="border-t border-gray-100 pt-4">
+            <SectionHeader num="3" title="Coordonnées" />
           </div>
 
           <FormRow label="Adresse">
@@ -549,7 +562,7 @@ export function ProfilPage() {
 
           {/* ── Section 3 : Ouverture du carnet ── */}
           <div className="border-t border-gray-100 pt-4">
-            <SectionHeader num="3" title="Ouverture du carnet" />
+            <SectionHeader num="4" title="Ouverture du carnet" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -567,7 +580,7 @@ export function ProfilPage() {
 
           {/* ── Section signature ── */}
           <div className="border-t border-gray-100 pt-4">
-            <SectionHeader num="4" title="Ma signature" />
+            <SectionHeader num="5" title="Ma signature" />
           </div>
           <p className="text-xs text-gray-500">Signez dans le cadre ci-dessous. Cette signature apparaîtra sur votre passeport numérique.</p>
           <div className="space-y-2">
@@ -628,7 +641,7 @@ export function ProfilPage() {
 
         {/* ── Section Confidentialité / Profil public ── */}
         <div className="mt-6 space-y-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <SectionHeader num="5" title="Profil communauté &amp; Confidentialité" />
+          <SectionHeader num="6" title="Profil communauté &amp; Confidentialité" />
 
           <FormRow label="Nom d'utilisateur (@username)" hint={privacy.username_modifie && privacy.username ? "Déjà modifié — non modifiable à nouveau" : "Généré automatiquement prenom.nom — modifiable une fois"}>
             <div className="flex items-center gap-2">

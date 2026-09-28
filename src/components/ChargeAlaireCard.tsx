@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Gauge, AlertTriangle } from 'lucide-react';
+import { Gauge } from 'lucide-react';
 import {
   useCanopyGuidelines, usePoidsEquipe, getCanopyStatus, CANOPY_STATUS_CONFIG,
 } from '../lib/canopy';
@@ -9,24 +8,11 @@ import { useJumpCounts } from '../lib/useJumpCount';
  *  Le poids équipé reste privé (table owner-only), jamais affiché ailleurs. */
 export function ChargeAlaireCard({ userId, tailleVoileFt2 }: { userId: string | undefined; tailleVoileFt2: number | null }) {
   const guidelines = useCanopyGuidelines();
-  const { poidsKg, save, poidsNuKg, saveNu } = usePoidsEquipe(userId);
-  const [editNu, setEditNu] = useState(false);
-  const [draftNu, setDraftNu] = useState('');
+  const { poidsKg } = usePoidsEquipe(userId);
   const { valid: sautsCount } = useJumpCounts(userId);
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState('');
-  const [saveError, setSaveError] = useState<string | null>(null);
 
   const { status, chargeAlaire, guideline } = getCanopyStatus(poidsKg, tailleVoileFt2, sautsCount, guidelines);
   const cfg = CANOPY_STATUS_CONFIG[status];
-
-  const handleSave = async () => {
-    const val = draft.trim() === '' ? null : parseFloat(draft.replace(',', '.'));
-    if (val !== null && (isNaN(val) || val <= 0 || val > 300)) { setSaveError('Poids invalide'); return; }
-    const err = await save(val);
-    setSaveError(err);
-    if (!err) setEditing(false);
-  };
 
   // Jauge : position de la charge actuelle par rapport au repère de la tranche
   const gaugePct = chargeAlaire && guideline
@@ -56,7 +42,7 @@ export function ChargeAlaireCard({ userId, tailleVoileFt2 }: { userId: string | 
           <p className="text-xs leading-relaxed mb-2" style={{ color: 'rgba(255,255,255,0.5)' }}>
             {!tailleVoileFt2
               ? 'Renseignez la surface de votre voile (ft²) via « Modifier » pour situer votre charge alaire.'
-              : 'Renseignez votre poids équipé pour calculer votre charge alaire — un bon repère pour choisir sa taille de voile.'}
+              : 'Renseignez votre poids dans « Mon profil » pour calculer votre charge alaire — un bon repère pour choisir sa taille de voile.'}
           </p>
         </div>
       ) : (
@@ -89,71 +75,26 @@ export function ChargeAlaireCard({ userId, tailleVoileFt2 }: { userId: string | 
         </>
       )}
 
-      {/* Poids équipé (privé) */}
+      {/* LE POIDS NE SE SAISIT PLUS ICI.
+          Cette carte est affichée sur CHAQUE matériel : elle offrait donc
+          autant de points de saisie que le sauteur a de sacs, pour une donnée
+          qui n'en admet qu'un. C'était la cause du désordre — trois endroits
+          écrivaient un poids sans se connaître. La saisie vit désormais dans
+          « Mon profil », et cette carte se contente de ce qu'elle sait faire :
+          calculer et expliquer. */}
       <div className="flex items-center gap-2 flex-wrap">
-        {editing ? (
-          <>
-            <input
-              type="number" min="0" step="0.5" placeholder="kg" autoFocus
-              value={draft} onChange={e => setDraft(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSave()}
-              className="w-24 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
-              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}
-            />
-            <button onClick={handleSave} className="text-xs font-semibold px-3 py-1.5 rounded-lg text-white" style={{ background: '#2563EB' }}>OK</button>
-            <button onClick={() => { setEditing(false); setSaveError(null); }} className="text-xs px-2 py-1.5" style={{ color: 'rgba(255,255,255,0.5)' }}>Annuler</button>
-          </>
-        ) : (
-          <button
-            onClick={() => { setEditing(true); setDraft(poidsKg != null ? String(poidsKg) : ''); }}
-            className="text-xs font-medium underline underline-offset-2"
-            style={{ color: 'rgba(147,197,253,0.8)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-          >
-            {poidsKg != null ? `Poids équipé : ${poidsKg} kg — modifier` : '+ Renseigner mon poids équipé'}
-          </button>
-        )}
-        {saveError && <span className="text-xs" style={{ color: '#FCA5A5' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {saveError}</span>}
-      </div>
-
-      {/* LE POIDS NU — celui que lit la DT 48. Le tableau fédéral ajoute
-          lui-même 10 kg d'équipement : deux poids coexistent, et ils ne sont
-          pas interchangeables. Renseigné ici une fois, il évite d'être
-          redemandé à chaque avionnage. */}
-      <div className="flex items-center gap-2 flex-wrap mt-1.5">
-        {editNu ? (
-          <>
-            <input type="number" min={30} max={160} step={0.5} value={draftNu}
-              onChange={e => setDraftNu(e.target.value)} autoFocus
-              className="w-24 px-2 py-1 rounded-lg text-xs"
-              style={{ background: 'rgba(255,255,255,0.08)', color: '#fff',
-                       border: '1px solid rgba(255,255,255,0.15)' }} />
-            <button
-              onClick={async () => {
-                const err = await saveNu(draftNu.trim() === '' ? null : parseFloat(draftNu.replace(',', '.')));
-                if (!err) setEditNu(false);
-              }}
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg text-white"
-              style={{ background: '#2563EB' }}>OK</button>
-            <button onClick={() => setEditNu(false)} className="text-xs px-2 py-1.5"
-              style={{ color: 'rgba(255,255,255,0.5)' }}>Annuler</button>
-          </>
-        ) : (
-          <button
-            onClick={() => { setEditNu(true); setDraftNu(poidsNuKg != null ? String(poidsNuKg) : ''); }}
-            className="text-xs font-medium underline underline-offset-2"
-            style={{ color: 'rgba(147,197,253,0.8)', background: 'none', border: 'none',
-                     cursor: 'pointer', padding: 0 }}>
-            {poidsNuKg != null
-              ? `Poids nu : ${poidsNuKg} kg — modifier`
-              : '+ Renseigner mon poids nu (surface de voilure DT 48)'}
-          </button>
-        )}
+        <a href="/profil" className="text-xs font-medium underline underline-offset-2"
+          style={{ color: 'rgba(147,197,253,0.9)' }}>
+          {poidsKg != null
+            ? `Poids équipé : ${poidsKg} kg — modifier dans Mon profil`
+            : 'Renseigner mon poids dans Mon profil'}
+        </a>
       </div>
 
       <p className="text-[10px] mt-2 leading-relaxed" style={{ color: 'rgba(255,255,255,0.3)' }}>
         Formule : poids en livres ÷ surface en pieds carrés. La charge alaire influence la vitesse de vol et d'atterrissage de la voile :
         descendre en taille trop tôt est une cause fréquente d'accident. Repère consultatif — la décision se prend avec votre moniteur.
-        Poids équipé (combinaison + parachute) : utilisé uniquement pour ce calcul, jamais affiché ailleurs — facultatif.
+        Le poids se saisit une seule fois, dans « Mon profil ».
       </p>
     </div>
   );
