@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { ParachuteIcon } from './ParachuteIcon';
 import type { TamponConfig } from './TamponDZ';
 import { TYPE_BREVET_LABELS } from '../lib/types';
-import { brevetPrincipal as choisirBrevetPrincipal } from '../lib/brevets';
+import { brevetPrincipal as choisirBrevetPrincipal, autresBrevets } from '../lib/brevets';
 import type { Licence, Brevet, CertificatMedical, CentreLicencie, Qualification } from '../lib/types';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCurrencyRules, getCurrencyStatus, CURRENCY_STATUS_CONFIG } from '../lib/currency';
@@ -291,6 +291,10 @@ function CardRecto({ data, id, feu, onFeuClick }: {
   // principal. Même règle que la planche d'avionnage — une seule source, un
   // seul classement.
   const brevetPrincipal = choisirBrevetPrincipal(brevets);
+  // La carte n'affichait QUE le principal. Un brevet A délivré à quelqu'un qui
+  // détient déjà le BPA était donc enregistré et invisible — exactement ce
+  // qu'on a vu sur la licence de Florian PUYBAREAU.
+  const autres = autresBrevets(brevets);
   const centre = centresLicencies.find(c => c.statut === 'actif')?.centre;
   const avatar = profile.avatar_url || profile.photo_profil_url;
 
@@ -429,9 +433,17 @@ function CardRecto({ data, id, feu, onFeuClick }: {
             )}
           </div>
           {brevetPrincipal && (
-            <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.03em', background: 'rgba(249,115,22,0.18)', color: '#FDBA74', border: '1px solid rgba(249,115,22,0.4)', padding: '5px 12px', borderRadius: 20, whiteSpace: 'nowrap' }}>
-              {TYPE_BREVET_LABELS[brevetPrincipal.type_brevet] || `Brevet ${brevetPrincipal.type_brevet}`}
-            </span>
+            <div className="flex flex-wrap items-center justify-end gap-1.5" style={{ maxWidth: '58%' }}>
+              <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.03em', background: 'rgba(249,115,22,0.18)', color: '#FDBA74', border: '1px solid rgba(249,115,22,0.4)', padding: '5px 12px', borderRadius: 20, whiteSpace: 'nowrap' }}>
+                {TYPE_BREVET_LABELS[brevetPrincipal.type_brevet] || `Brevet ${brevetPrincipal.type_brevet}`}
+              </span>
+              {autres.map(b => (
+                <span key={b.type_brevet} title={b.date_obtention ? `Obtenu le ${new Date(b.date_obtention).toLocaleDateString('fr-FR')}` : undefined}
+                  style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.03em', background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.72)', border: '1px solid rgba(255,255,255,0.16)', padding: '3px 9px', borderRadius: 20, whiteSpace: 'nowrap' }}>
+                  {b.type_brevet}
+                </span>
+              ))}
+            </div>
           )}
         </div>
 

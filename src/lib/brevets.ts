@@ -17,16 +17,25 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * L'échelle de la progression française. BPA (brevet de parachutiste
- * autonome) précède A, puis B, C, D.
+ * L'échelle de la progression française, RECOPIÉE du référentiel FFP tel qu'il
+ * est saisi en base (`brevets_referentiel.ordre`, source « Manuel FFP 2026
+ * (CA 27-03-2026) + DT49 ») :
  *
- * Ce qui n'est PAS dans cette liste n'est pas un brevet de niveau : WS1, B2…
- * sont des qualifications. Elles se rangent à 0 et ne peuvent jamais devenir
- * le brevet principal — mais elles restent affichées ailleurs, on ne les perd
- * pas, on ne les confond plus.
+ *     A (1) · B (2) · B1…B5, Bi4, Bi5 (3-9) · BPA (10) · C (11) · D (12)
+ *
+ * LE BPA N'EST PAS LE PREMIER ÉCHELON, C'EST LE PIVOT. Le référentiel le
+ * décrit ainsi : « Pivot central. Prérogatives : pratique autonome ; vidéo
+ * chute/sous voile ; ACCÈS C ET D ; accès CQP plieur secours. » Il se situe
+ * après le B, avant le C. Ce module le classait sous le A — une invention, et
+ * elle contredisait la seule source citée de l'application.
+ *
+ * Les rangs 3 à 9 du référentiel (B1…B5, Bi4, Bi5) sont des QUALIFICATIONS, pas
+ * des échelons : on ne « monte » pas de B2 à B3. Elles restent hors de cette
+ * liste, se rangent à 0, ne peuvent jamais devenir le brevet principal — mais
+ * elles sont affichées, on ne les perd pas, on ne les confond plus.
  */
 export const ECHELLE_BREVET: Record<string, number> = {
-  BPA: 1, A: 2, B: 3, C: 4, D: 5,
+  A: 1, B: 2, BPA: 3, C: 4, D: 5,
 };
 
 export interface BrevetLu {
@@ -59,11 +68,30 @@ export function qualificationsHorsEchelle<T extends BrevetLu>(brevets: T[] | nul
  */
 export function brevetIncoherent(type: string | null | undefined, nbSauts: number): boolean {
   if (!type) return false;
-  const niveau = ECHELLE_BREVET[type];
-  if (niveau === undefined) return false;
-  // Le BPA CLÔT la progression PAC : quelqu'un encore en PAC ne l'a pas. Mon
-  // premier seuil, à 0, laissait passer un BPA à 7 sauts en pleine PAC —
-  // l'incohérence déplacée d'un cran, pas corrigée.
-  const planchers: Record<number, number> = { 1: 15, 2: 30, 3: 60, 4: 150, 5: 400 };
-  return nbSauts < planchers[niveau];
+  // Ces bornes sont attachées au CODE du brevet, pas à son rang. Corriger la
+  // place du BPA dans l'échelle ne doit pas déplacer en silence un seuil que
+  // le référentiel ne fixe nulle part : le référentiel donne un ORDRE, il ne
+  // donne aucun nombre de sauts. P2 — on ne dérive pas une règle d'une autre.
+  //
+  // Le BPA clôt la progression PAC : quelqu'un encore en PAC ne l'a pas. Un
+  // premier seuil à 0 laissait passer un BPA à 7 sauts en pleine PAC.
+  const PLANCHERS: Record<string, number> = { BPA: 15, A: 30, B: 60, C: 150, D: 400 };
+  const plancher = PLANCHERS[type];
+  if (plancher === undefined) return false;
+  return nbSauts < plancher;
+}
+
+/**
+ * Les AUTRES brevets détenus — tout sauf le principal, le plus haut d'abord,
+ * les qualifications à la suite.
+ *
+ * La carte de licence n'affichait que le principal. Un brevet A délivré à
+ * quelqu'un qui détient déjà le BPA n'apparaissait donc nulle part : la
+ * délivrance était bien enregistrée, et invisible.
+ */
+export function autresBrevets<T extends BrevetLu>(brevets: T[] | null | undefined): T[] {
+  const principal = brevetPrincipal(brevets);
+  return (brevets ?? [])
+    .filter(b => b !== principal)
+    .sort((a, b) => (ECHELLE_BREVET[b.type_brevet] ?? 0) - (ECHELLE_BREVET[a.type_brevet] ?? 0));
 }
