@@ -69,6 +69,10 @@ export interface PasseportData {
   dernierControle: DernierControle | null;
 }
 
+/** Domaine du QR de vérification. Fixe : une licence scannée depuis un hangar
+ *  doit mener au site public, jamais à `localhost` ni à une préproduction. */
+const ORIGINE_PUBLIQUE = 'https://parapass.fr';
+
 // ─── Status helpers ─────────────────────────────────────────────────────────────
 
 type ValidityStatus = 'valide' | 'bientot' | 'expire' | 'manquant';
@@ -620,7 +624,11 @@ export function CardVerso({ data, id, isOwner }: { data: PasseportData; id: stri
             {qrToken ? (
               <>
                 <div className="bg-white rounded-xl" style={{ padding: 5, boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
-                  <QRCodeSVG value={`${window.location.origin}/verify/${qrToken}`} size={80} level="M" />
+                  {/* `window` n'existe pas hors navigateur — rendu de test,
+                      capture PDF côté serveur. Le QR d'une licence doit de
+                      toute façon pointer sur le domaine public, pas sur
+                      l'adresse depuis laquelle la carte est ouverte. */}
+                  <QRCodeSVG value={`${ORIGINE_PUBLIQUE}/verify/${qrToken}`} size={80} level="M" />
                 </div>
                 <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>Scanner pour vérifier</div>
               </>
