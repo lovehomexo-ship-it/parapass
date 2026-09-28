@@ -12,7 +12,6 @@ import { siegesOccupes, messageErreur, type Discipline, type VerdictDT48 } from 
 import { FileAvionnageDZ } from './FileAvionnageDZ';
 import { FlotteAeronefs, type Aeronef } from './Rotations';
 import { RechercheLicencie } from './RechercheLicencie';
-import { ZoneDemoModule } from '../../components/ZoneDemoModule';
 import { ReglagesAvionnage } from './ReglagesAvionnage';
 import { coucherSoleil, libelleCoucher } from '../../lib/soleil';
 import {
@@ -894,9 +893,9 @@ function AvionnageInner({ centreId }: { centreId: string }) {
         </div>
       </div>
 
-      {/* Zone de test, EN BAS et à part : ce qui n'est pas de la production ne
-          se mélange pas aux planches du jour. */}
-      <ZoneDemoModule module="avionnage" centreId={centreId} onFait={charger} />
+      {/* La zone de test vivait ICI aussi, avec son propre jeu de données : trois
+          boutons pour trois modules, deux populations qui s'ignoraient. Un seul
+          bouton les remplace, sur le tableau de bord du centre. */}
 
       {reglagesOuverts && (
         <ReglagesAvionnage centreId={centreId}

@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { QRCodeSVG } from 'qrcode.react';
 import { X, Plus, Printer, Download, ChevronRight, Clock, Package, Backpack, AlertTriangle, Smartphone, Sparkles } from 'lucide-react';
-import { ZoneDemoModule } from '../../components/ZoneDemoModule';
 import { ParachuteGlyph } from '../../design/BadgeIcon';
 import { CycleHelpPanel } from '../../components/CyclePliageSchema';
 import { habilitationValide } from '../../lib/pliage';
@@ -1323,7 +1322,9 @@ export function GestionPliage({ centreId }: { centreId: string }) {
   // on incrémente cette clé : l'onglet visible se remonte et relit. Sans elle,
   // le bouton écrivait en base et l'écran ne bougeait pas — le DT en aurait
   // conclu qu'il n'avait rien fait.
-  const [version, setVersion] = useState(0);
+  // `version` remonte les onglets d'un cran quand le parc change ; plus personne
+  // ne l'incrémente depuis que la zone de démo a quitté cet écran.
+  const [version] = useState(0);
 
   const ONGLETS: { id: Onglet; label: string }[] = [
     { id: 'jour', label: 'Du jour' },
@@ -1373,9 +1374,9 @@ export function GestionPliage({ centreId }: { centreId: string }) {
       {onglet === 'releve' && <OngletRelevePlieurs key={version} centreId={centreId} />}
       {onglet === 'habilitations' && <OngletHabilitations key={version} centreId={centreId} />}
 
-      {/* Zone de test, EN BAS et à part : ce qui n'est pas de la production ne
-          se mélange pas au parc réel. */}
-      <ZoneDemoModule module="pliage" centreId={centreId} onFait={() => setVersion(v => v + 1)} />
+      {/* La zone de test vivait ICI aussi, avec son propre jeu de données : trois
+          boutons pour trois modules, deux populations qui s'ignoraient. Un seul
+          bouton les remplace, sur le tableau de bord du centre. */}
     </div>
   );
 }
