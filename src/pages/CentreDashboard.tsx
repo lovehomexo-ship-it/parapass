@@ -3122,8 +3122,11 @@ export function CentreDashboardPage() {
   });
   const [loading, setLoading] = useState(true);
   const [notifCount, setNotifCount] = useState(0);
-  const [carnetsEnAttente, setCarnetsEnAttente] = useState(0);
-  const [sautsEnAttente, setSautsEnAttente] = useState(0);
+  // « Ce qui attend une décision » : adhésions, attestations de carnet, sauts.
+  // Une seule source (`compteurs_a_traiter`), sinon la pastille du menu et
+  // l'écran finissent par annoncer deux nombres différents.
+  const [aTraiter, setATraiter] = useState({ adhesions: 0, carnets: 0, sauts: 0 });
+  const carnetsEnAttente = aTraiter.carnets;
   const [activeModules, setActiveModules] = useState<Set<string>>(new Set());
   // ── Avionnage : module optionnel, facturé à part ───────────────────────────
   // Tant qu'il n'est pas souscrit, le troisième mode n'existe pas — et une URL
@@ -3258,30 +3261,40 @@ export function CentreDashboardPage() {
       if (modulesError) console.error('Chargement centre_modules échoué :', modulesError);
       setActiveModules(computeActiveModules(modulesData ?? []));
 
-      // Carnets en attente de validation — hors profils de démonstration (P11.1) :
-      // la file d'attestation d'un centre de production ne doit contenir que de
-      // vrais dossiers.
-      const { count: carnetCount } = await supabase
-        .from('licencies_centres')
-        .select('*, profiles!parachutiste_id!inner(est_demo)', { count: 'exact', head: true })
-        .eq('centre_id', resolvedCentreId)
-        .eq('statut', 'actif')
-        .eq('carnet_statut', 'en_attente')
-        .eq('profiles.est_demo', false);
-      setCarnetsEnAttente(carnetCount ?? 0);
-
-      // Sauts en attente de validation — le menu n'en portait AUCUN compteur :
-      // deux sauts attendaient dans « Activité des sauts » et rien à gauche ne
-      // le disait. On interroge `sauts_du_centre`, la même définition que
-      // l'écran lui-même, pour que les deux ne puissent pas diverger.
-      const { data: sautsAttente, error: sautsAttenteErr } = await supabase.rpc('sauts_du_centre', {
-        p_centre_id: resolvedCentreId, p_onglet: 'attente', p_limit: 200, p_offset: 0,
-      });
-      if (sautsAttenteErr) console.error('Comptage des sauts en attente échoué :', sautsAttenteErr);
-      setSautsEnAttente((sautsAttente ?? []).length);
+      await chargerCompteurs(resolvedCentreId);
     }
     setLoading(false);
   }, [profile]);
+
+  // Les compteurs se rechargent SEULS. Ils ne se mettaient à jour qu'au
+  // chargement de la page : une demande arrivée pendant que la DZ travaillait
+  // ne se voyait qu'au prochain rafraîchissement — c'est-à-dire jamais, un
+  // jour d'activité. Le temps réel est déjà le motif de la maison
+  // (encadrement, sauts en attente) ; on l'applique aux trois guichets.
+  const chargerCompteurs = useCallback(async (id: string) => {
+    const { data, error } = await supabase.rpc('compteurs_a_traiter', { p_centre_id: id });
+    if (error) { console.error('Comptage des dossiers à traiter échoué :', error); return; }
+    const r = (data ?? {}) as { adhesions?: number; carnets?: number; sauts?: number };
+    setATraiter({ adhesions: r.adhesions ?? 0, carnets: r.carnets ?? 0, sauts: r.sauts ?? 0 });
+  }, []);
+
+  useEffect(() => {
+    if (!centreId) return;
+    const recharger = () => { chargerCompteurs(centreId); };
+    const canal = supabase
+      .channel(`a-traiter-${centreId}`)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'licencies_centres', filter: `centre_id=eq.${centreId}` },
+        recharger)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'sauts', filter: `centre_id=eq.${centreId}` },
+        recharger)
+      .subscribe();
+    // Filet : si le temps réel n'est pas disponible (réseau du hangar, onglet
+    // réveillé), on ne reste pas bloqué sur un compte périmé.
+    const battement = window.setInterval(recharger, 120000);
+    return () => { supabase.removeChannel(canal); window.clearInterval(battement); };
+  }, [centreId, chargerCompteurs]);
 
   useEffect(() => {
     if (!authLoading) fetchCentreData();
@@ -3306,8 +3319,8 @@ export function CentreDashboardPage() {
     // barre d'onglets, pas dans la colonne de gauche (cf. GROUPES_NAV).
     { key: 'licencies', label: 'Licenciés & équipe', icon: Users },
     { key: 'demandes', label: 'Demandes', icon: ClipboardList,
-      badge: stats.demandesAttente + carnetsEnAttente },
-    { key: 'sauts', label: 'Activité des sauts', icon: Activity, badge: sautsEnAttente },
+      badge: aTraiter.adhesions + aTraiter.carnets },
+    { key: 'sauts', label: 'Activité des sauts', icon: Activity, badge: aTraiter.sauts },
     { key: 'briefing', label: 'Briefing du jour', icon: Megaphone },
     ...(activeModules.has('academy') ? [{ key: 'academy', label: 'Academy', icon: GraduationCap }] : []),
     { key: 'planning', label: 'Planning DZ', icon: Calendar },
@@ -3787,9 +3800,12 @@ export function CentreDashboardPage() {
               {messagesTab === 'relances' && centreId && <RelancesSection centreId={centreId} />}
             </div>
           )}
+          {/* L'écran ne dicte plus le compteur : il signale qu'il a écrit, et
+              c'est `compteurs_a_traiter` qui recompte. Deux sources pour un même
+              nombre, c'est deux nombres à terme. */}
           {activeSection === 'validations' && centreId && (
             <ValidationsCarnet dzId={centreId} onNavigate={setActiveSection}
-              onCompteur={setCarnetsEnAttente} />
+              onCompteur={() => { chargerCompteurs(centreId); }} />
           )}
           {activeSection === 'tandem' && centreId && activeModules.has('tandem') && (
             <TandemSection centreId={centreId} />

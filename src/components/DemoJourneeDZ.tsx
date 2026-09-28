@@ -56,10 +56,15 @@ function DemoJourneeInner({ centreId, centreNom, onDone }: { centreId: string; c
       return;
     }
     const r = (data ?? {}) as Record<string, unknown>;
+    const ignores = (r.modules_non_souscrits ?? []) as string[];
     setInfo(mode === 'gen'
       ? `Journée générée : ${nb(r, 'planches')} planches, ${nb(r, 'places')} embarqués, `
-        + `${nb(r, 'sauts')} sauts (dont ceux à valider), ${nb(r, 'pliages_du_jour') || nb(r, 'pliages')} pliages, `
-        + `${nb(r, 'tandem')} réservations tandem, briefing publié et dossiers à jour.`
+        + `${nb(r, 'sauts')} sauts (dont ceux à valider), ${nb(r, 'pliages')} pliages, `
+        + `${nb(r, 'tandem')} réservations tandem, ${nb(r, 'adhesions')} demandes d'adhésion, `
+        + `${nb(r, 'carnets')} attestations de carnet, briefing publié et dossiers à jour.`
+        // Un module non souscrit ne fait plus échouer le reste — mais il ne
+        // faut pas laisser croire qu'il a été généré.
+        + (ignores.length ? ` Non générés, faute de souscription : ${ignores.join(', ')}.` : '')
       : `Démonstration retirée : ${nb(r, 'planches')} planches, ${nb(r, 'sauts')} sauts, `
         + `${nb(r, 'pliages')} pliages, ${nb(r, 'tandem')} réservations, ${nb(r, 'presences')} présences.`);
     onDone?.(); // rafraîchit le dashboard sans rechargement complet

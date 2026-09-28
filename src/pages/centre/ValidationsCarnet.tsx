@@ -378,7 +378,19 @@ export function ValidationsCarnet({ dzId, onNavigate, onCompteur }: {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
+    // La règle « qui voit les dossiers de démonstration » n'est PAS réécrite
+    // ici : elle vit dans `centre_montre_les_demos`, partagée avec le compteur
+    // du menu. Les deux l'avaient écrite chacun de son côté — la pastille
+    // annonçait deux attestations, cet écran n'en montrait aucune.
+    const { data: montreDemos, error: regleErr } = await supabase
+      .rpc('centre_montre_les_demos', { p_centre_id: dzId });
+    if (regleErr) {
+      console.error('Lecture de la règle P11.1 échouée :', regleErr);
+      setLoading(false);
+      return; // Aucune liste plutôt qu'une liste fausse.
+    }
+
+    let requete = supabase
       .from('licencies_centres')
       .select(`
         id,
@@ -391,11 +403,10 @@ export function ValidationsCarnet({ dzId, onNavigate, onCompteur }: {
         carnet_motif_refus,
         profiles!parachutiste_id!inner(id, nom, prenom, email, numero_licence, photo_profil_url, est_demo)
       `)
-      // Les dossiers de démonstration n'encombrent pas la file d'attestation
-      // d'un centre de production (P11.1).
-      .eq('profiles.est_demo', false)
       .eq('centre_id', dzId)
       .eq('statut', 'actif');
+    if (!montreDemos) requete = requete.eq('profiles.est_demo', false);
+    const { data } = await requete;
 
     if (data) {
       const rows = data as unknown as Array<{
