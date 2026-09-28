@@ -3201,7 +3201,7 @@ export function CentreDashboardPage() {
     { key: 'planning', label: 'Planning DZ', icon: Calendar },
     ...(activeModules.has('avionnage') ? [{ key: 'rotations', label: 'Avionnage', icon: Plane }] : []),
     { key: 'materiel', label: 'Matériel', icon: Wrench },
-    { key: 'securite', label: 'Sécurité', icon: ShieldAlert },
+    { key: 'regles', label: 'Sécurité', icon: ShieldAlert },
     { key: 'journal', label: 'Journal de bord', icon: BookCheck },
     { key: 'stats', label: 'Statistiques', icon: BarChart2 },
     { key: 'centre', label: 'Mon centre', icon: Settings },

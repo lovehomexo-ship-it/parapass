@@ -117,11 +117,13 @@ export const GROUPES_NAV: readonly GroupeNav[] = [
     ],
   },
   {
-    cle: 'securite',
+    // Le référentiel d'abord : c'est la règle qu'on consulte, la veille n'est
+    // que le registre de ce qui a déjà eu lieu.
+    cle: 'regles',
     label: 'Sécurité',
     onglets: [
-      { section: 'securite', label: 'Veille sécurité' },
       { section: 'regles', label: 'Référentiel Feu Vert' },
+      { section: 'securite', label: 'Veille sécurité' },
     ],
   },
   {
