@@ -7,15 +7,14 @@ import { Layout } from '../components/Layout';
 import { usePassport, uploadDocument, getSignedUrl } from '../lib/usePassport';
 import { TYPE_BREVET_LABELS, QUALIFICATION_LABELS } from '../lib/types';
 import type { Licence, Brevet, CertificatMedical, CentreLicencie, Qualification } from '../lib/types';
-import { User, FileText, Shield, Award, Building2, CreditCard as Edit3, Plus, Trash2, ChevronDown, ChevronUp, Check, X, Upload, ExternalLink, AlertTriangle, AlertOctagon, BookMarked, Bell } from 'lucide-react';
+import { User, FileText, Shield, Award, Building2, CreditCard as Edit3, Plus, Trash2, ChevronDown, ChevronUp, Check, X, Upload, ExternalLink, AlertTriangle, AlertOctagon, Bell } from 'lucide-react';
 import { ContactsUrgenceTab, InterdictionsTab } from './PasseportSecurite';
 import { IncidentsTab } from './PasseportIncidents';
-import { BrevetsModulesTab } from './PasseportBrevets';
 import { ProgressionBrevets } from '../components/ProgressionBrevets';
 import { CarnetPACEleve } from '../components/pac/CarnetPACEleve';
 import { PasseportCardView } from '../components/PasseportCardView';
 
-type PassportTab = 'carte' | 'licence' | 'medical' | 'pac' | 'brevets' | 'modules' | 'qualifications' | 'centres' | 'securite' | 'incidents';
+type PassportTab = 'carte' | 'licence' | 'medical' | 'pac' | 'brevets' | 'qualifications' | 'centres' | 'securite' | 'incidents';
 
 // ─── Form helpers ──────────────────────────────────────────────────────────────
 
@@ -36,24 +35,39 @@ const selectCls = inputCls;
 export function PasseportPage() {
   const { user, profile } = useAuth();
   const { isDemo } = useDemo();
-  const { licences, brevets, certificats, centresLicencies, qualifications, modulesBrevets, contacts, incidents, interdictions, refresh } = usePassport(user?.id);
+  const { licences, brevets, certificats, centresLicencies, qualifications, contacts, incidents, interdictions, refresh } = usePassport(user?.id);
   const [saving, setSaving] = useState(false);
 
   // Ouverture directe sur un onglet via ?onglet= (liens des alertes / états vides).
-  const ONGLETS_VALIDES: PassportTab[] = ['carte', 'licence', 'medical', 'pac', 'brevets', 'modules', 'qualifications', 'centres', 'securite', 'incidents'];
+  // « modules » n'est plus un onglet : c'était l'ANCIEN système de progression,
+  // une liste de modules écrite en dur dans le code et validée à la main. Le
+  // référentiel FFP 2026 l'a remplacé — 61 épreuves, conditions calculées,
+  // « Je suis prêt » — et les deux onglets montraient la même chose deux fois.
+  // La table `modules_brevets` n'a JAMAIS reçu une seule ligne : vérifié avant
+  // de retirer, rien n'est perdu.
+  // L'adresse reste valide et renvoie sur Brevets : un lien mis en favori ne
+  // doit pas tomber sur une page vide.
+  const ONGLETS_VALIDES: PassportTab[] = ['carte', 'licence', 'medical', 'pac', 'brevets', 'qualifications', 'centres', 'securite', 'incidents'];
   const [searchParams] = useSearchParams();
 
   // L'onglet est lu DÈS LE PREMIER RENDU, et non dans un effet : un lien profond
   // n'affiche donc plus « carte » avant de basculer. Effet de bord utile, les
   // tests fumée peuvent enfin atteindre chaque onglet — c'est ce qui manquait
   // pour repérer l'onglet Licence cassé pendant plus d'un mois.
-  const ongletUrl = searchParams.get('onglet') as PassportTab | null;
-  const [tab, setTab] = useState<PassportTab>(
-    ongletUrl && ONGLETS_VALIDES.includes(ongletUrl) ? ongletUrl : 'carte');
+  // Un lien vers l'ancien onglet « modules » atterrit sur Brevets, qui l'a
+  // remplacé : renvoyer sur « carte » ferait croire que le lien est cassé.
+  const resoudre = (o: string | null): PassportTab | null => {
+    if (!o) return null;
+    if (o === 'modules') return 'brevets';
+    return ONGLETS_VALIDES.includes(o as PassportTab) ? (o as PassportTab) : null;
+  };
+
+  const ongletUrl = resoudre(searchParams.get('onglet'));
+  const [tab, setTab] = useState<PassportTab>(ongletUrl ?? 'carte');
 
   useEffect(() => {
-    const o = searchParams.get('onglet') as PassportTab | null;
-    if (o && ONGLETS_VALIDES.includes(o)) setTab(o);
+    const o = resoudre(searchParams.get('onglet'));
+    if (o) setTab(o);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
@@ -65,7 +79,6 @@ export function PasseportPage() {
     { key: 'medical', label: 'Médical', icon: <Shield className="w-4 h-4" /> },
     { key: 'pac', label: 'Carnet PAC', icon: <Award className="w-4 h-4" /> },
     { key: 'brevets', label: 'Brevets', icon: <Award className="w-4 h-4" /> },
-    { key: 'modules', label: 'Modules', icon: <BookMarked className="w-4 h-4" /> },
     { key: 'qualifications', label: 'Qualif.', icon: <ChevronDown className="w-4 h-4" /> },
     { key: 'centres', label: 'Centres', icon: <Building2 className="w-4 h-4" /> },
     { key: 'securite', label: 'Sécurité', icon: <AlertTriangle className="w-4 h-4" />, badge: interdictions.length },
@@ -165,17 +178,6 @@ export function PasseportPage() {
         {/* Centres */}
         {tab === 'centres' && (
           <CentresTab centresLicencies={centresLicencies} userId={user?.id} onRefresh={refresh} saving={saving} setSaving={setSaving} />
-        )}
-
-        {/* Modules de brevets */}
-        {tab === 'modules' && (
-          <BrevetsModulesTab
-            brevets={brevets}
-            modules={modulesBrevets}
-            userId={user?.id}
-            isEditor={isMoniteurOrAdmin}
-            onRefresh={refresh}
-          />
         )}
 
         {/* Sécurité — contacts urgence + interdictions */}
