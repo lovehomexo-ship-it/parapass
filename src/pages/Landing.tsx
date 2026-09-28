@@ -19,13 +19,17 @@ import { supabase } from '../lib/supabase';
 import { MODULES, STUDIO, ECONOMIE_STUDIO } from '../data/modules';
 
 // ─── Persona démo unique — utilisé partout sur la page ───────────────────────
+// Les chiffres viennent de la licence réelle affichée dans l'application pour
+// cette personne : 57 sauts, licence FFP-2021-08734, brevets A puis B. La page
+// en annonçait 187 et un autre numéro — deux vérités pour la même personne.
 const DEMO = {
   nom: 'MARTIN',
   prenom: 'Sophie',
   brevet: 'B',
-  licence: 'FFP-2024-8801',
-  sauts: 187,
+  licence: 'FFP-2021-08734',
+  sauts: 57,
   dz: 'BigAir Rochefort',
+  codeClub: '0916',
   licenceValide: '31/12/2026',
   medicalValide: '15/03/2027',
   noteProgression: '4,2',
@@ -139,13 +143,13 @@ const DEMO_PASSEPORT: PasseportData = {
     avatar_url: null, photo_profil_url: '/sophie-martin.png',
     numero_licence: DEMO.licence,
     date_naissance: '1990-01-30', lieu_naissance: 'Paris',
-    partage_carte_centre: true, signature_url: null,
+    partage_carte_centre: true, signature_url: '/signature-demo.svg',
   },
   licences: [{
     id: 'demo-lic', parachutiste_id: '00000000-0000-4000-8000-00000000d3m0',
     numero_licence: DEMO.licence, date_delivrance: '2026-01-01',
     date_expiration: '2026-12-31', organisme: 'FFP', statut: 'actif',
-    created_at: '2026-01-01', code_club: '0916', nom_club: DEMO.dz,
+    created_at: '2026-01-01', code_club: DEMO.codeClub, nom_club: DEMO.dz,
     beneficiaire_nom: 'Martin Pierre', beneficiaire_lien: 'parent',
     beneficiaire_telephone: null, assurance_individuelle: true, assurance_rc: true,
     tampon_dz_url: null, tampon_valide_par: null, tampon_date_validation: null,
@@ -160,7 +164,9 @@ const DEMO_PASSEPORT: PasseportData = {
   centresLicencies: [{ statut: 'actif', centre: { nom: DEMO.dz } } as unknown as CentreLicencie],
   qualifications: [],
   sautsCount: DEMO.sauts, validSautsCount: DEMO.sauts,
-  qrToken: null, tamponConfig: null, centre: null,
+  // Le QR et la signature ne s'affichent au verso QUE si le jeton et la
+  // signature existent — sans eux, le verso montrait deux cadres vides.
+  qrToken: 'demo-sophie-martin', tamponConfig: null, centre: null,
   loadedAt: new Date(), dernierSautValide: null,
   dernierSautDate: new Date().toISOString().slice(0, 10),
   dernierControle: null,
@@ -169,13 +175,20 @@ const DEMO_PASSEPORT: PasseportData = {
 function DemoPassportCard({ compact = false }: { compact?: boolean }) {
   const [flipped, setFlipped] = useState(false);
   const largeur = compact ? 340 : 420;
+  // La page monte DEUX cartes — celle du bandeau et celle de la version
+  // mobile. Un identifiant partagé en donnait deux avec le même `id` : tout
+  // code qui en cherche une par son id tombait sur la mauvaise, invisible et
+  // haute de zéro pixel. Chaque instance porte le sien.
+  const cle = compact ? 'compacte' : 'principale';
 
   return (
     <div className="relative w-full" style={{ maxWidth: largeur, perspective: 1200 }}>
       <div
         className="relative w-full select-none cursor-pointer"
         onClick={() => setFlipped(f => !f)}
-        style={{ filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.5))', transform: compact ? 'rotate(1deg)' : 'rotate(2deg)' }}
+        // Pas de `filter` ICI : un filtre sur un ancêtre aplatit le contexte 3D
+        // et le retournement ne se voit plus. L'ombre est posée sur les faces.
+        style={{ transform: compact ? 'rotate(1deg)' : 'rotate(2deg)' }}
       >
         <div
           style={{
@@ -186,10 +199,12 @@ function DemoPassportCard({ compact = false }: { compact?: boolean }) {
           }}
         >
           <div style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
-            <CardRecto data={DEMO_PASSEPORT} id="carte-demo-recto" />
+            <CardRecto data={DEMO_PASSEPORT} id={`carte-demo-recto-${cle}`} />
           </div>
           <div style={{ position: 'absolute', inset: 0, transform: 'rotateY(180deg)', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
-            <CardVerso data={DEMO_PASSEPORT} id="carte-demo-verso" isOwner={false} />
+            {/* `isOwner` : le verso ne montre la signature qu'à son titulaire.
+                Ici la titulaire est fictive, et c'est SA carte qu'on montre. */}
+            <CardVerso data={DEMO_PASSEPORT} id={`carte-demo-verso-${cle}`} isOwner />
           </div>
         </div>
       </div>
@@ -1212,9 +1227,9 @@ export function LandingPage() {
                       DERNIERS SAUTS
                     </div>
                     {[
-                      { num: 187, date: '22/06/2026', dz: 'BigAir Rochefort', alt: '4 000m', moniteur: 'Moniteur' },
-                      { num: 186, date: '15/06/2026', dz: 'Saintes Parachutisme', alt: '3 500m', moniteur: 'Moniteur' },
-                      { num: 185, date: '08/06/2026', dz: 'BigAir Rochefort', alt: '4 000m', moniteur: 'Moniteur' },
+                      { num: 57, date: '22/06/2026', dz: 'BigAir Rochefort', alt: '4 000m', moniteur: 'Moniteur' },
+                      { num: 56, date: '15/06/2026', dz: 'Saintes Parachutisme', alt: '3 500m', moniteur: 'Moniteur' },
+                      { num: 55, date: '08/06/2026', dz: 'BigAir Rochefort', alt: '4 000m', moniteur: 'Moniteur' },
                     ].map((s, i) => (
                       <div key={i} className="flex items-center gap-2 px-3 py-2" style={{ borderTop: i > 0 ? '1px solid rgba(255,255,255,0.04)' : undefined }}>
                         <div className="w-6 h-5 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: '#F97316', fontSize: '8px' }}>{s.num}</div>
