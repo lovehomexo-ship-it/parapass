@@ -303,6 +303,8 @@ export interface FileValidationRow extends ProgressionEpreuve {
   nom: string; prenom: string;
   epreuve: Epreuve | null;
   brevetCode: string | null;
+  /** Là où l'élève a cliqué « je suis prêt » — jamais là où on peut le valider. */
+  declareA: string | null;
 }
 
 export function useValidationStaff(centreId: string | undefined) {
@@ -311,8 +313,12 @@ export function useValidationStaff(centreId: string | undefined) {
 
   const load = useCallback(async () => {
     if (!centreId) return;
+    // `progression_des_licencies` et non `.eq('centre_id', …)` : une progression
+    // appartient au parachutiste. Elle était clouée à la PREMIÈRE DZ de sa liste
+    // au moment du clic — Florian PUYBAREAU, licencié à Royan ET à BigAir, ne
+    // voyait sa demande arriver que chez l'une des deux, au hasard.
     const [{ data: prog, error: pErr }, { data: eps, error: eErr }, { data: brs, error: bErr }] = await Promise.all([
-      supabase.from('progression_epreuves').select('*').eq('centre_id', centreId).order('declare_pret_at', { ascending: true }),
+      supabase.rpc('progression_des_licencies', { p_centre_id: centreId }),
       supabase.from('epreuves').select('*'),
       supabase.from('brevets_referentiel').select('id, code'),
     ]);
@@ -329,12 +335,22 @@ export function useValidationStaff(centreId: string | undefined) {
     }
     const epMap = Object.fromEntries(((eps ?? []) as Epreuve[]).map(e => [e.id, e]));
     const brMap = Object.fromEntries(((brs ?? []) as { id: string; code: string }[]).map(b => [b.id, b.code]));
+
+    // Le DT voit maintenant des demandes déclarées ailleurs : il doit savoir où.
+    const centreIds = [...new Set(list.map(p => p.centre_id).filter((c): c is string => !!c && c !== centreId))];
+    let centres: Record<string, string> = {};
+    if (centreIds.length) {
+      const { data: cs } = await supabase.from('centres').select('id, nom').in('id', centreIds);
+      centres = Object.fromEntries((cs ?? []).map(c => [c.id, c.nom]));
+    }
+
     setRows(list.map(p => ({
       ...p,
       nom: profils[p.user_id]?.nom ?? '?',
       prenom: profils[p.user_id]?.prenom ?? '',
       epreuve: epMap[p.epreuve_id] ?? null,
       brevetCode: epMap[p.epreuve_id] ? brMap[epMap[p.epreuve_id].brevet_id] ?? null : null,
+      declareA: p.centre_id && p.centre_id !== centreId ? centres[p.centre_id] ?? null : null,
     })));
   }, [centreId]);
 

@@ -85,6 +85,12 @@ export function BrevetsSection({ centreId }: { centreId: string }) {
                     {row.brevetCode ? `Brevet ${row.brevetCode} — ` : ''}{row.epreuve?.libelle ?? 'épreuve supprimée'}
                     {row.epreuve && row.epreuve.quantite_requise > 1 && ` (${row.quantite_faite}/${row.epreuve.quantite_requise})`}
                   </span>
+                  {row.declareA && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full"
+                      style={{ background: 'rgba(148,163,184,0.12)', color: 'var(--c-muted)' }}>
+                      déclarée à {row.declareA}
+                    </span>
+                  )}
                   <span className="text-[10px] ml-auto" style={{ color: 'var(--c-dim)' }}>
                     prêt depuis le {row.declare_pret_at ? new Date(row.declare_pret_at).toLocaleDateString('fr-FR') : '—'}
                   </span>
@@ -227,8 +233,11 @@ function ElevesAvancement({ centreId, referentiel, onDelivrer }: {
 
   const load = async () => {
     const [{ data: prog, error: pErr }, { data: valid, error: vErr }] = await Promise.all([
-      supabase.from('progression_epreuves').select('*').eq('centre_id', centreId),
-      supabase.from('validations_brevet').select('user_id, brevet_id').eq('centre_id', centreId),
+      // Les licenciés du centre, pas les lignes estampillées à son nom : un élève
+      // peut avoir déclaré chez une autre DZ, et un brevet peut lui avoir été
+      // délivré ailleurs — sans quoi on le redélivrerait.
+      supabase.rpc('progression_des_licencies', { p_centre_id: centreId }),
+      supabase.rpc('brevets_delivres_aux_licencies', { p_centre_id: centreId }),
     ]);
     if (pErr) { console.error('Chargement avancement échoué :', pErr); setLoading(false); return; }
     if (vErr) console.error('Chargement délivrances échoué :', vErr);
@@ -244,7 +253,8 @@ function ElevesAvancement({ centreId, referentiel, onDelivrer }: {
       (map[p.user_id] ??= { nom: noms[p.user_id] ?? '?', progressions: {} }).progressions[p.epreuve_id] = p;
     }
     setParEleve(map);
-    setDelivres(new Set((valid ?? []).map(v => `${v.user_id}:${v.brevet_id}`)));
+    setDelivres(new Set(((valid ?? []) as { user_id: string; brevet_id: string }[])
+      .map(v => `${v.user_id}:${v.brevet_id}`)));
     setLoading(false);
   };
   useEffect(() => { load(); }, [centreId]); // eslint-disable-line react-hooks/exhaustive-deps
