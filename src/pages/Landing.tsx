@@ -8,7 +8,6 @@ import { Shield, Check, ArrowRight, Camera, Flame, Zap, Clock,
 import { ParachuteGlyph } from '../design/BadgeIcon';
 import { ModuleIcon } from '../design/academieIcons';
 
-import { ParaPassLogo } from '../components/ParaPassLogo';
 import { ParachuteIcon, ParachuteDropIcon } from '../components/ParachuteIcon';
 
 import { DemoSelectModal } from '../components/DemoSelectModal';
@@ -212,6 +211,35 @@ function DemoPassportCard({ compact = false }: { compact?: boolean }) {
         Données fictives · cliquez pour retourner la carte
       </p>
     </div>
+  );
+}
+
+/**
+ * LE LOGO, POSÉ SUR UNE PLAQUE CLAIRE — et c'est délibéré.
+ *
+ * Le fichier fourni n'a AUCUNE transparence : fond blanc opaque, 1983 × 793,
+ * WebP sans canal alpha (vérifié dans l'en-tête VP8X, bit alpha à 0). Sur le
+ * bleu marine de la page, un tel fichier affiche un rectangle blanc autour du
+ * dessin — on dirait une image cassée.
+ *
+ * Deux façons de s'en sortir : détourer l'image, ce qui la MODIFIE et n'est
+ * pas à moi de faire, ou assumer la plaque. On l'assume : coins arrondis,
+ * marge intérieure, ombre portée — le blanc devient un support, pas un défaut.
+ *
+ * Avec un PNG à fond transparent, tout ceci disparaît et le logo se pose
+ * directement sur le fond : une ligne à changer.
+ */
+function LogoParaPass({ hauteur = 64 }: { hauteur?: number }) {
+  return (
+    <span className="inline-flex items-center justify-center"
+      style={{
+        background: '#FFFFFF', borderRadius: 14,
+        padding: `${Math.round(hauteur * 0.12)}px ${Math.round(hauteur * 0.2)}px`,
+        boxShadow: '0 8px 24px rgba(0,0,0,0.28)',
+      }}>
+      <img src="/logo-parapass.webp" alt="ParaPass"
+        style={{ height: hauteur, width: 'auto', objectFit: 'contain', display: 'block' }} />
+    </span>
   );
 }
 
@@ -791,7 +819,9 @@ export function LandingPage() {
         {/* ─── NAVBAR ─── */}
         <nav className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between py-3 sm:py-4">
           <Link to="/" className="no-underline flex items-center flex-shrink-0">
-            <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-16 sm:h-20 w-auto object-contain" />
+            {/* Le logo de la page d'accueil : c'est la première chose qu'on
+                voit, il a droit à sa place. */}
+            <LogoParaPass hauteur={56} />
           </Link>
           <div className="flex items-center gap-2 sm:gap-3 ml-3">
             <a href="#securite"
@@ -1669,7 +1699,7 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8 text-center sm:text-left">
             <div className="flex flex-col items-center sm:items-start gap-2">
-              <ParaPassLogo mobile />
+              <LogoParaPass hauteur={44} />
               <span className="text-xs" style={{ color: '#475569' }}>© 2026 ParaPass — Tous droits réservés</span>
             </div>
             {/* LE LOGO FÉDÉRAL EST PARTI. Un logo officiel, cliquable vers le
