@@ -19,7 +19,7 @@ import { useAlertes, type MaterielEcheance } from '../lib/useAlertes';
 import { useComplianceRules, getMaterielEcheance } from '../lib/compliance';
 import { MaRepriseCard } from '../components/MaRepriseCard';
 import { BriefingDuJourBlock } from '../components/BriefingDuJourCard';
-import { FileAvionnage } from '../components/FileAvionnage';
+import { AvionnageDuJour } from '../components/AvionnageDuJour';
 import { MeteoAltitudeCard } from '../components/MeteoAltitudeCard';
 import { CheckInPresence } from '../components/CheckInPresence';
 import { ShareCardModal } from '../components/ShareCardModal';
@@ -721,10 +721,12 @@ export function DashboardPage() {
                   geste (je lis les consignes, puis je me manifeste). Le
                   composant ne rend RIEN tant que la DZ n'a pas ouvert la file,
                   donc il n'encombre pas l'écran hors journée de saut. */}
-              {briefingDzs.map(dz => (
-                <FileAvionnage key={`avionnage-${dz.id}`} centreId={dz.id}
-                  centreNom={briefingDzs.length > 1 ? dz.nom : undefined} userId={user?.id} />
-              ))}
+              {/* UN SEUL BLOC, quel que soit le nombre d'affiliations. Il y en
+                  avait un PAR CENTRE : deux DZ donnaient deux bandeaux vides,
+                  cinq en donnaient cinq, et la licence numérique passait sous
+                  la ligne de flottaison. On ne saute pas sur cinq drop zones le
+                  même jour — cf. AvionnageDuJour. */}
+              <AvionnageDuJour userId={user?.id} />
 
               {/* Note : le bandeau « Documents à jour / Brevet X » a été retiré —
                   l'info figure sur la licence numérique (badge statut + brevet).

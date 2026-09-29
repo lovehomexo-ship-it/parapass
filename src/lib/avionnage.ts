@@ -913,3 +913,61 @@ export function teinteDiscipline(code: string, referentiel?: Discipline[]): stri
   return referentiel?.find(d => d.code === code)?.teinte
     ?? TEINTE_DISCIPLINE[code] ?? 'var(--c-muted)';
 }
+
+// ── Vue d'ensemble multi-DZ ────────────────────────────────────────────────
+//
+// Le tableau de bord montrait UN BANDEAU PAR CENTRE. Avec cinq ou six
+// affiliations, l'écran d'accueil devenait une liste de cartes vides — et la
+// licence numérique passait sous la ligne de flottaison.
+//
+// Or on saute sur UNE drop zone un jour donné. `mon_avionnage_du_jour` rend
+// une ligne par DZ, déjà triée de la plus pertinente à la moins ; l'écran
+// n'affiche que la première et laisse choisir les autres.
+
+export interface ResumeAvionnageDz {
+  centre_id: string;
+  centre_nom: string;
+  ouvert: boolean;
+  avions_programmes: number;
+  avions_a_venir: number;
+  ma_position: number | null;
+  total_attente: number;
+  suis_je_place: boolean;
+}
+
+/** Une DZ « active » : il s'y passe quelque chose aujourd'hui pour cette personne. */
+export function dzActive(d: ResumeAvionnageDz): boolean {
+  return d.ma_position !== null || d.avions_programmes > 0;
+}
+
+export function useResumeAvionnage(userId: string | undefined) {
+  const [dzs, setDzs] = useState<ResumeAvionnageDz[]>([]);
+  const [chargement, setChargement] = useState(true);
+  const [erreur, setErreur] = useState<string | null>(null);
+
+  const charger = useCallback(async () => {
+    if (!userId) { setChargement(false); return; }
+    const { data, error } = await supabase.rpc('mon_avionnage_du_jour', { p_user_id: userId });
+    if (error) {
+      console.error('Résumé avionnage échoué :', error);
+      // On ne rend pas une liste vide sur un échec : « rien aujourd'hui »
+      // serait un mensonge, et le sauteur raterait son avion.
+      setErreur(messageErreur(error));
+      setChargement(false);
+      return;
+    }
+    setErreur(null);
+    setDzs((data ?? []) as ResumeAvionnageDz[]);
+    setChargement(false);
+  }, [userId]);
+
+  useEffect(() => { charger(); }, [charger]);
+
+  useEffect(() => {
+    if (!userId) return;
+    const id = setInterval(charger, 60_000);
+    return () => clearInterval(id);
+  }, [userId, charger]);
+
+  return { dzs, chargement, erreur, recharger: charger };
+}

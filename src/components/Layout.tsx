@@ -1,9 +1,10 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, isDelegationActive } from '../lib/auth';
+import { useResumeAvionnage } from '../lib/avionnage';
 import {
   Menu, X, LogOut, BookOpen, Bell, MessageSquare,
   Settings, User, Award, ChevronDown, CheckCircle, AlertTriangle,
-  Sun, Moon, QrCode, MapPin, Plus, CalendarDays, XCircle, KeyRound, Eye,
+  Sun, Moon, QrCode, MapPin, Plus, Plane, CalendarDays, XCircle, KeyRound, Eye,
 } from 'lucide-react';
 import { ParachuteGlyph } from '../design/BadgeIcon';
 import { useState, useRef, useEffect, useMemo } from 'react';
@@ -46,6 +47,15 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
   const navigate = useNavigate();
   const location = useLocation();
   const isPratiquant = profile?.role === 'parachutiste' || profile?.role === 'moniteur' || profile?.role === 'moniteur_delegue';
+
+  // La pastille d'avionnage de la barre mobile. Elle ne s'allume que s'il se
+  // passe quelque chose AUJOURD'HUI : une position en file d'abord — c'est ce
+  // qui compte quand on attend son tour — sinon le nombre d'avions programmés.
+  const { dzs: dzsAvionnage } = useResumeAvionnage(isPratiquant ? profile?.id : undefined);
+  const maPosition = dzsAvionnage.find(d => d.ma_position !== null)?.ma_position ?? null;
+  const avionsDuJour = dzsAvionnage.reduce((n, d) => n + d.avions_programmes, 0);
+  const avionnageBadge = maPosition !== null ? `#${maPosition}`
+    : avionsDuJour > 0 ? String(avionsDuJour) : null;
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -493,13 +503,26 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
               }
             } },
             { key: 'saut', label: 'Saut', icon: <Plus className="w-7 h-7" />, onClick: () => navigate('/dashboard?action=add-jump') },
+            // L'avionnage a sa place ICI, au pouce, et pas seulement en haut de
+            // l'accueil : au hangar on regarde son téléphone d'une main. La
+            // pastille dit d'un coup d'œil s'il se passe quelque chose —
+            // position en file si on y est, sinon nombre d'avions du jour.
+            { key: 'avionnage', label: 'Avionnage', icon: <Plane className="w-6 h-6" />,
+              badge: avionnageBadge, onClick: () => navigate('/dashboard#avionnage') },
             { key: 'qr', label: 'QR', icon: <QrCode className="w-6 h-6" />, onClick: () => navigate('/qr-code') },
           ].map((a) => (
             <button key={a.key} onClick={a.onClick}
               className="flex-1 flex flex-col items-center justify-center gap-1 active:opacity-70"
-              style={{ minHeight: 64, color: 'var(--c-text)' }}
-              aria-label={a.label}>
+              style={{ minHeight: 64, color: 'var(--c-text)', position: 'relative' }}
+              aria-label={a.badge ? `${a.label} — ${a.badge}` : a.label}>
               {a.icon}
+              {a.badge && (
+                <span className="absolute text-[10px] font-bold px-1.5 rounded-full"
+                  style={{ top: 6, right: '50%', transform: 'translateX(140%)',
+                           background: '#F97316', color: '#fff', lineHeight: '16px', minWidth: 16, textAlign: 'center' }}>
+                  {a.badge}
+                </span>
+              )}
               <span className="text-[11px] font-semibold">{a.label}</span>
             </button>
           ))}
