@@ -116,7 +116,7 @@ export function ParametresPage() {
           <Minimize2 className="w-6 h-6" />
         </button>
         <div className="bg-white rounded-2xl p-8 max-w-xs w-full text-center shadow-2xl">
-          <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-10 w-auto mx-auto mb-3" />
+          <img src="/logo-parapass.webp" alt="ParaPass" className="h-10 w-auto mx-auto mb-3" />
           <p className="font-bold text-[#001A4D] mb-1">{profile.prenom} {profile.nom}</p>
           <p className="text-xs text-gray-400 mb-4">{cleanLicence(profile.numero_licence)}</p>
           <div className="flex justify-center mb-4">

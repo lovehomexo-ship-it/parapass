@@ -360,7 +360,7 @@ export function CardRecto({ data, id, feu, onFeuClick }: {
         {/* ── Row 1 : Header ── */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-7 w-auto flex-shrink-0" />
+            <img src="/logo-parapass.webp" alt="ParaPass" className="h-7 w-auto flex-shrink-0" />
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', color: '#F97316' }}>Licence numérique FFP</div>
           </div>
           <div className="flex items-center gap-1.5">
@@ -591,7 +591,7 @@ export function CardVerso({ data, id, isOwner }: { data: PasseportData; id: stri
               Fédération Française de Parachutisme
             </div>
           </div>
-          <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-6 w-auto flex-shrink-0" style={{ opacity: 0.7 }} />
+          <img src="/logo-parapass.webp" alt="ParaPass" className="h-6 w-auto flex-shrink-0" style={{ opacity: 0.7 }} />
         </div>
 
         {/* ── Row 2 : Certifications (EN HAUT) ── */}

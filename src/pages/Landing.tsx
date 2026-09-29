@@ -215,31 +215,21 @@ function DemoPassportCard({ compact = false }: { compact?: boolean }) {
 }
 
 /**
- * LE LOGO, POSÉ SUR UNE PLAQUE CLAIRE — et c'est délibéré.
+ * LE LOGO DE LA PAGE D'ACCUEIL.
  *
- * Le fichier fourni n'a AUCUNE transparence : fond blanc opaque, 1983 × 793,
- * WebP sans canal alpha (vérifié dans l'en-tête VP8X, bit alpha à 0). Sur le
- * bleu marine de la page, un tel fichier affiche un rectangle blanc autour du
- * dessin — on dirait une image cassée.
+ * La version précédente était posée sur une plaque blanche : le fichier fourni
+ * n'avait pas de canal alpha, et sur le bleu marine de la page il affichait un
+ * rectangle blanc autour du dessin. La plaque assumait ce blanc plutôt que de
+ * le subir.
  *
- * Deux façons de s'en sortir : détourer l'image, ce qui la MODIFIE et n'est
- * pas à moi de faire, ou assumer la plaque. On l'assume : coins arrondis,
- * marge intérieure, ombre portée — le blanc devient un support, pas un défaut.
- *
- * Avec un PNG à fond transparent, tout ceci disparaît et le logo se pose
- * directement sur le fond : une ligne à changer.
+ * Le fichier transparent est arrivé — WebP 1983 × 793 avec chunk ALPH, bit
+ * alpha à 1 — donc la plaque n'a plus lieu d'être : le logo se pose
+ * directement sur le fond, comme il devait le faire.
  */
 function LogoParaPass({ hauteur = 64 }: { hauteur?: number }) {
   return (
-    <span className="inline-flex items-center justify-center"
-      style={{
-        background: '#FFFFFF', borderRadius: 14,
-        padding: `${Math.round(hauteur * 0.12)}px ${Math.round(hauteur * 0.2)}px`,
-        boxShadow: '0 8px 24px rgba(0,0,0,0.28)',
-      }}>
-      <img src="/logo-parapass.webp" alt="ParaPass"
-        style={{ height: hauteur, width: 'auto', objectFit: 'contain', display: 'block' }} />
-    </span>
+    <img src="/logo-parapass.webp" alt="ParaPass"
+      style={{ height: hauteur, width: 'auto', objectFit: 'contain', display: 'block', flexShrink: 0 }} />
   );
 }
 
@@ -1183,7 +1173,7 @@ export function LandingPage() {
                 <div className="rounded-2xl overflow-hidden" style={{ background: '#0B1D3A', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 32px 64px rgba(0,0,0,0.5)' }}>
                   <div className="flex items-center justify-between px-4 py-3" style={{ background: '#071529', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                     <div className="flex items-center gap-2">
-                      <img src="/Logo_ParaPass.png" alt="" aria-hidden className="h-6 w-auto" />
+                      <img src="/logo-parapass.webp" alt="" aria-hidden className="h-6 w-auto" />
                       <span className="text-xs font-semibold text-white">{DEMO.prenom} {DEMO.nom}</span>
                       <span className="text-[9px] px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(249,115,22,0.2)', color: '#F97316', border: '1px solid rgba(249,115,22,0.3)' }}>DÉMO</span>
                     </div>
@@ -1355,7 +1345,7 @@ export function LandingPage() {
                 <div className="rounded-2xl overflow-hidden" style={{ background: '#0B1D3A', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 32px 64px rgba(0,0,0,0.25)' }}>
                   <div className="flex items-center justify-between px-4 py-3" style={{ background: '#071529', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                     <div className="flex items-center gap-2">
-                      <img src="/Logo_ParaPass.png" alt="" aria-hidden className="h-6 w-auto" />
+                      <img src="/logo-parapass.webp" alt="" aria-hidden className="h-6 w-auto" />
                       <span className="text-xs font-bold text-white">BigAir Rochefort</span>
                     </div>
                     <div className="flex items-center gap-2">

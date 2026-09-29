@@ -140,7 +140,7 @@ export function VerifyOfflinePage() {
 
   return (
     <div className="min-h-screen bg-[#001A4D] flex flex-col items-center justify-start pt-8 px-4 pb-8">
-      <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-10 w-auto mb-6" />
+      <img src="/logo-parapass.webp" alt="ParaPass" className="h-10 w-auto mb-6" />
 
       {/* Verdict binaire très visible, avant le détail (Prompt S). */}
       {status !== 'loading' && (

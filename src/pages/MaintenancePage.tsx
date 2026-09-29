@@ -35,7 +35,7 @@ export function MaintenancePage() {
       {/* Logo */}
       <div className="mb-8 relative z-10">
         <img
-          src="/Logo_ParaPass.png"
+          src="/logo-parapass.webp"
           alt="ParaPass"
           className="h-16 sm:h-20 w-auto object-contain mx-auto"
         />

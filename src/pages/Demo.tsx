@@ -407,7 +407,7 @@ function DemoDashboardInner() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-28">
             <div className="flex items-center gap-2">
-              <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-14 w-auto object-contain" />
+              <img src="/logo-parapass.webp" alt="ParaPass" className="h-14 w-auto object-contain" />
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm text-gray-300 hidden sm:block">{profile.prenom} {profile.nom}</span>

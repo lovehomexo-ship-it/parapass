@@ -1,4 +1,8 @@
-const LOGO_SRC = '/Logo_ParaPass.png';
+// Le logo est passé au WebP à fond TRANSPARENT (chunk ALPH). L'ancien PNG
+// portait sa marge dans l'image elle-même, d'où le `marginTop` compensatoire
+// qui traînait ici : le nouveau fichier est cadré au trait, la marge se règle
+// donc en CSS, là où on la voit.
+const LOGO_SRC = '/logo-parapass.webp';
 
 interface ParaPassLogoProps {
   size?: 'sm' | 'md' | 'lg';
@@ -18,7 +22,6 @@ export function ParaPassLogo({ mobile = false }: ParaPassLogoProps) {
         objectFit: 'contain',
         display: 'block',
         flexShrink: 0,
-        marginTop: '8px',
       }}
     />
   );

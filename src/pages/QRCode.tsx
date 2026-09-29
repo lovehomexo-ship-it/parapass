@@ -118,7 +118,7 @@ export function QRCodePage() {
           <Minimize2 className="w-6 h-6" />
         </button>
         <div className="bg-white rounded-2xl p-8 max-w-sm w-full relative">
-          <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-12 w-auto mx-auto mb-3" />
+          <img src="/logo-parapass.webp" alt="ParaPass" className="h-12 w-auto mx-auto mb-3" />
           <div className="text-center mb-4">
             <p className="text-lg font-bold text-[#001A4D]">{profile.prenom} {profile.nom}</p>
             <p className="text-sm text-gray-500">Licence FFP : {cleanLicence(profile.numero_licence)}</p>
@@ -140,7 +140,7 @@ export function QRCodePage() {
             <ParachuteIcon className="w-96 h-96 text-[#001A4D]" />
           </div>
 
-          <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-12 w-auto mx-auto mb-3" />
+          <img src="/logo-parapass.webp" alt="ParaPass" className="h-12 w-auto mx-auto mb-3" />
           <h1 className="text-xl font-bold text-[#001A4D] mb-2">Mon QR Code</h1>
           <p className="text-sm text-gray-500 mb-6">Présentez ce QR code lors des contrôles DGAC ou gendarmerie</p>
 

@@ -166,7 +166,7 @@ export function VerifyPage() {
 
       {/* ── TOP BAR ── */}
       <div className="bg-white border-b border-gray-100 px-4 py-2 flex items-center justify-between">
-        <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-8 w-auto object-contain" />
+        <img src="/logo-parapass.webp" alt="ParaPass" className="h-8 w-auto object-contain" />
         <div className="flex items-center gap-1 bg-[#001A4D]/5 rounded-full px-3 py-1">
           <Shield className="w-3 h-3 text-[#001A4D]" />
           <span className="text-[10px] font-semibold text-[#001A4D] uppercase tracking-wider">Vérification ParaPass</span>
@@ -369,7 +369,7 @@ function PasseportCard({ profile, licence, brevet, certif, sautsTotal, licNum, s
     >
       {/* Top row */}
       <div className="flex items-center justify-between px-4 pt-4 pb-3">
-        <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-7 w-auto object-contain " />
+        <img src="/logo-parapass.webp" alt="ParaPass" className="h-7 w-auto object-contain " />
         <span
           className="text-[10px] font-bold tracking-widest px-2.5 py-1 rounded-full"
           style={{ background: sb.bg, color: sb.text }}
@@ -608,7 +608,7 @@ function IntegriteSection({ sauts }: { sauts: SautHashRow[] }) {
 function Footer({ verifiedAt, token }: { verifiedAt: Date; token: string }) {
   return (
     <footer className="mt-4 px-4 py-6 text-center" style={{ background: '#001A4D' }}>
-      <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-7 w-auto object-contain  mx-auto mb-3" />
+      <img src="/logo-parapass.webp" alt="ParaPass" className="h-7 w-auto object-contain  mx-auto mb-3" />
       <p className="text-white/80 font-semibold mb-1" style={{ fontSize: '12px' }}>Vérification ParaPass</p>
       <p className="text-white/50" style={{ fontSize: '11px' }}>
         Données chiffrées AES-256 · Hébergé en Europe

@@ -164,7 +164,7 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
 
           {/* Logo + FFP co-branding */}
           <Link to="/dashboard" className="no-underline flex items-center gap-3 flex-shrink-0">
-            <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-8 w-auto object-contain" />
+            <img src="/logo-parapass.webp" alt="ParaPass" className="h-8 w-auto object-contain" />
             <span style={{ width: '1px', height: '20px', background: 'var(--c-border-f)', display: 'inline-block', flexShrink: 0 }} />
             <img
               src="/logo-ffp-footer.png"
@@ -373,7 +373,7 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
               className="flex items-center justify-between px-4 py-4"
               style={{ borderBottom: '1px solid var(--c-border)' }}
             >
-              <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-7 w-auto object-contain" />
+              <img src="/logo-parapass.webp" alt="ParaPass" className="h-7 w-auto object-contain" />
               <button
                 onClick={() => setDrawerOpen(false)}
                 className="w-8 h-8 flex items-center justify-center rounded-lg"
@@ -536,7 +536,7 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
       <footer style={{ background: 'var(--c-nav)', borderTop: '1px solid var(--c-border-s)', padding: '16px 24px' }}>
         <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 items-center gap-3 text-center" style={{ color: 'var(--c-muted)', fontSize: '11px' }}>
           <div className="flex items-center justify-center sm:justify-start gap-2">
-            <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-5 w-auto opacity-50" />
+            <img src="/logo-parapass.webp" alt="ParaPass" className="h-5 w-auto opacity-50" />
             <span>© 2026 ParaPass</span>
           </div>
           <div className="flex items-center justify-center gap-2">

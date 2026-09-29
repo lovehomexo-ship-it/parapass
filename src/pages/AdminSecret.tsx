@@ -74,7 +74,7 @@ export function AdminSecretPage() {
 
       {/* Logo */}
       <div className="mb-8 relative z-10">
-        <img src="/Logo_ParaPass.png" alt="ParaPass" className="h-14 sm:h-16 w-auto object-contain mx-auto" />
+        <img src="/logo-parapass.webp" alt="ParaPass" className="h-14 sm:h-16 w-auto object-contain mx-auto" />
       </div>
 
       {!authed ? (
