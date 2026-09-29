@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, isDelegationActive } from '../lib/auth';
-import { useResumeAvionnage } from '../lib/avionnage';
+import { useResumeAvionnage, badgeAvionnage } from '../lib/avionnage';
 import {
   Menu, X, LogOut, BookOpen, Bell, MessageSquare,
   Settings, User, Award, ChevronDown, CheckCircle, AlertTriangle,
@@ -52,10 +52,11 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
   // passe quelque chose AUJOURD'HUI : une position en file d'abord — c'est ce
   // qui compte quand on attend son tour — sinon le nombre d'avions programmés.
   const { dzs: dzsAvionnage } = useResumeAvionnage(isPratiquant ? profile?.id : undefined);
-  const maPosition = dzsAvionnage.find(d => d.ma_position !== null)?.ma_position ?? null;
-  const avionsDuJour = dzsAvionnage.reduce((n, d) => n + d.avions_programmes, 0);
-  const avionnageBadge = maPosition !== null ? `#${maPosition}`
-    : avionsDuJour > 0 ? String(avionsDuJour) : null;
+  const avionnageBadge = badgeAvionnage(dzsAvionnage);
+  // Le bouton lui-même ne s'affiche que si au moins une DZ propose l'avionnage.
+  // La base ne rend que les centres qui ont SOUSCRIT le module : un pratiquant
+  // dont aucune DZ ne l'a pris ne voit pas l'entrée du tout.
+  const avionnageDisponible = dzsAvionnage.length > 0;
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -502,14 +503,16 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
                 navigate('/dashboard#checkin');
               }
             } },
-            { key: 'saut', label: 'Saut', icon: <Plus className="w-7 h-7" />, onClick: () => navigate('/dashboard?action=add-jump') },
+            { key: 'saut', label: 'Saut', icon: <Plus className="w-7 h-7" />, badge: null as string | null, onClick: () => navigate('/dashboard?action=add-jump') },
             // L'avionnage a sa place ICI, au pouce, et pas seulement en haut de
             // l'accueil : au hangar on regarde son téléphone d'une main. La
             // pastille dit d'un coup d'œil s'il se passe quelque chose —
             // position en file si on y est, sinon nombre d'avions du jour.
-            { key: 'avionnage', label: 'Avionnage', icon: <Plane className="w-6 h-6" />,
-              badge: avionnageBadge, onClick: () => navigate('/dashboard#avionnage') },
-            { key: 'qr', label: 'QR', icon: <QrCode className="w-6 h-6" />, onClick: () => navigate('/qr-code') },
+            ...(avionnageDisponible
+              ? [{ key: 'avionnage', label: 'Avionnage', icon: <Plane className="w-6 h-6" />,
+                   badge: avionnageBadge, onClick: () => navigate('/dashboard#avionnage') }]
+              : []),
+            { key: 'qr', label: 'QR', icon: <QrCode className="w-6 h-6" />, badge: null as string | null, onClick: () => navigate('/qr-code') },
           ].map((a) => (
             <button key={a.key} onClick={a.onClick}
               className="flex-1 flex flex-col items-center justify-center gap-1 active:opacity-70"

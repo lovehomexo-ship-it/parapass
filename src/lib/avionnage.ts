@@ -927,7 +927,11 @@ export function teinteDiscipline(code: string, referentiel?: Discipline[]): stri
 export interface ResumeAvionnageDz {
   centre_id: string;
   centre_nom: string;
+  /** La file est ouverte AUJOURD'HUI. La souscription du module, elle, est
+   *  déjà filtrée côté base : une DZ sans le module n'est jamais rendue. */
   ouvert: boolean;
+  /** Présence déclarée sur cette DZ aujourd'hui. */
+  je_suis_present: boolean;
   avions_programmes: number;
   avions_a_venir: number;
   ma_position: number | null;
@@ -935,9 +939,28 @@ export interface ResumeAvionnageDz {
   suis_je_place: boolean;
 }
 
-/** Une DZ « active » : il s'y passe quelque chose aujourd'hui pour cette personne. */
+/**
+ * Une DZ « active » : il s'y passe quelque chose aujourd'hui pour cette
+ * personne. Trois conditions s'enchaînent, et elles sont l'ordre du geste :
+ * le centre a souscrit le module (garanti par la base), il a ouvert la file
+ * aujourd'hui, et un avion est programmé. Être déjà en file l'emporte sur
+ * tout le reste.
+ */
 export function dzActive(d: ResumeAvionnageDz): boolean {
-  return d.ma_position !== null || d.avions_programmes > 0;
+  return d.ma_position !== null || (d.ouvert && d.avions_programmes > 0);
+}
+
+/**
+ * Le compteur de la barre mobile ne s'allume QUE si le geste est à portée :
+ * on y est déjà, ou on est sur le terrain et un avion vole. Une pastille qui
+ * s'allume pour une DZ où l'on n'a pas mis les pieds est du bruit.
+ */
+export function badgeAvionnage(dzs: ResumeAvionnageDz[]): string | null {
+  const enFile = dzs.find(d => d.ma_position !== null);
+  if (enFile) return `#${enFile.ma_position}`;
+  const surPlace = dzs.filter(d => d.je_suis_present && d.ouvert && d.avions_programmes > 0);
+  const avions = surPlace.reduce((n, d) => n + d.avions_programmes, 0);
+  return avions > 0 ? String(avions) : null;
 }
 
 export function useResumeAvionnage(userId: string | undefined) {

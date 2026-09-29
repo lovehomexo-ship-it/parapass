@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plane, AlertTriangle } from 'lucide-react';
+import { Plane, AlertTriangle, MapPin } from 'lucide-react';
 import { ErrorBoundary } from './ErrorBoundary';
 import { FileAvionnage } from './FileAvionnage';
 import { useResumeAvionnage, dzActive, type ResumeAvionnageDz } from '../lib/avionnage';
@@ -107,8 +107,21 @@ function AvionnageInner({ userId }: { userId: string | undefined }) {
   const dz = dzs.find(d => d.centre_id === choisie) ?? dzs[0];
 
   return (
-    <div className="mb-6">
+    <div className="mb-6" id="avionnage">
       <SelecteurDz dzs={dzs} choisie={dz.centre_id} onChoisir={setChoisie} />
+
+      {/* SE METTRE EN FILE SUPPOSE D'ÊTRE SUR LE TERRAIN. La base le refuse
+          désormais — on ne compose pas une rotation avec quelqu'un d'absent —
+          alors autant le dire AVANT le clic, avec le geste à faire. */}
+      {!dz.je_suis_present && dz.ma_position === null && dz.ouvert && (
+        <div className="rounded-xl px-3 py-2 mb-2 flex items-start gap-2"
+          style={{ background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.3)' }}>
+          <MapPin className="w-4 h-4 flex-shrink-0 mt-px" style={{ color: '#FDBA74' }} aria-hidden />
+          <span className="text-[11px] leading-relaxed" style={{ color: '#FDBA74' }}>
+            Déclare ta présence à {dz.centre_nom} pour pouvoir te mettre en file.
+          </span>
+        </div>
+      )}
       {/* `key` sur la DZ : changer de centre remonte le bloc, sinon il garderait
           la file du centre précédent le temps d'un aller-retour réseau. */}
       <FileAvionnage key={dz.centre_id} centreId={dz.centre_id}
