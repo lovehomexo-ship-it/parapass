@@ -140,7 +140,7 @@ const DEMO_PASSEPORT: PasseportData = {
   profile: {
     id: '00000000-0000-4000-8000-00000000d3m0',
     nom: DEMO.nom, prenom: DEMO.prenom,
-    avatar_url: null, photo_profil_url: '/sophie-martin.png',
+    avatar_url: null, photo_profil_url: '/sophie-martin.webp',
     numero_licence: DEMO.licence,
     date_naissance: '1990-01-30', lieu_naissance: 'Paris',
     partage_carte_centre: true, signature_url: '/signature-demo.svg',
