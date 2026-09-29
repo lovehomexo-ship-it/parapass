@@ -61,7 +61,9 @@ function DemoJourneeInner({ centreId, centreNom, onDone }: { centreId: string; c
       ? `Journée générée : ${nb(r, 'planches')} planches, ${nb(r, 'places')} embarqués, `
         + `${nb(r, 'sauts')} sauts (dont ceux à valider), ${nb(r, 'pliages')} pliages, `
         + `${nb(r, 'tandem')} réservations tandem, ${nb(r, 'adhesions')} demandes d'adhésion, `
-        + `${nb(r, 'carnets')} attestations de carnet, briefing publié et dossiers à jour.`
+        + `${nb(r, 'carnets')} attestations de carnet, `
+        + `${nb(r, 'qualifications')} qualifications d'encadrants et ${nb(r, 'delegations')} délégations, `
+        + `briefing publié et dossiers à jour.`
         // Un module non souscrit ne fait plus échouer le reste — mais il ne
         // faut pas laisser croire qu'il a été généré.
         + (ignores.length ? ` Non générés, faute de souscription : ${ignores.join(', ')}.` : '')

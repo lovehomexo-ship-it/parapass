@@ -66,6 +66,11 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
   const [membres, setMembres] = useState<Membre[]>([]);
   const [membresCentre, setMembresCentre] = useState<{ id: string; nom: string }[]>([]);
   const [qualifsRef, setQualifsRef] = useState<{ code: string; libelle: string }[]>([]);
+  // Le référentiel porte un libellé lisible pour chaque code. L'écran affichait
+  // le CODE — « MONITEUR_REFERENT_MINEURS » en capitales et tirets bas. Le code
+  // est une clé technique, pas un mot qu'on montre à un directeur technique.
+  const libelleQualif = (code: string) =>
+    qualifsRef.find(q => q.code === code)?.libelle ?? code;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filtre, setFiltre] = useState<Filtre>('tous');
@@ -199,7 +204,7 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
   // bandeau : qualifs + plieurs expirés ou proches (tous types)
   const alertes = membres.flatMap(m => {
     const items: { nom: string; label: string; etat: Etat; date: string | null }[] = [];
-    m.qualifs.forEach(q => { const e = etatDate(q.date_expiration, q.actif, seuil); if (e === 'expire' || e === 'bientot') items.push({ nom: `${m.prenom} ${m.nom}`, label: q.qualification_code, etat: e, date: q.date_expiration }); });
+    m.qualifs.forEach(q => { const e = etatDate(q.date_expiration, q.actif, seuil); if (e === 'expire' || e === 'bientot') items.push({ nom: `${m.prenom} ${m.nom}`, label: libelleQualif(q.qualification_code), etat: e, date: q.date_expiration }); });
     if (m.plieur) { const e = etatDate(m.plieur.date_expiration, m.plieur.actif, seuil); if (e === 'expire' || e === 'bientot') items.push({ nom: `${m.prenom} ${m.nom}`, label: 'Plieur', etat: e, date: m.plieur.date_expiration }); }
     return items;
   });
@@ -309,7 +314,7 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
                         const c = COULEURS[e];
                         return (
                           <span key={q.id} className="text-[11px] px-2.5 py-1 rounded-full inline-flex items-center gap-1.5" style={{ background: c.bg, color: c.fg, border: `1px solid ${c.bd}` }}>
-                            <span className="font-semibold">{q.qualification_code}</span>
+                            <span className="font-semibold">{libelleQualif(q.qualification_code)}</span>
                             {q.numero && <span className="opacity-80">n°{q.numero}</span>}
                             {q.date_expiration
                               ? <span>{e === 'expire' ? 'expirée' : 'valide →'} {fmt(q.date_expiration)}</span>
