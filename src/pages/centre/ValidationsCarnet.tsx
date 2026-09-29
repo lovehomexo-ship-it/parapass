@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { ModaleSaisie } from '../../components/ModaleSaisie';
+import { Avatar } from '../../components/Avatar';
 import { Check, X, ChevronDown, ChevronUp, Upload, ExternalLink } from 'lucide-react';
 
 interface ParaEnAttente {
@@ -283,17 +284,14 @@ function ParaCard({ para, dzId, onDone }: { para: ParaEnAttente; dzId: string; o
   const [open, setOpen] = useState(false);
   const { profile, carnet_statut, carnet_valide_par, carnet_date_validation, carnet_motif_refus } = para;
 
-  const initials = `${profile.prenom[0] ?? ''}${profile.nom[0] ?? ''}`.toUpperCase();
-
   return (
     <div className="rounded-xl overflow-hidden" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border-f)' }}>
       <div className="flex items-center gap-3 px-4 py-3">
-        <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-          style={{ background: 'var(--c-border)' }}>
-          {profile.photo_profil_url
-            ? <img src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/avatars/${profile.photo_profil_url}`} className="w-9 h-9 rounded-full object-cover" alt="" />
-            : initials}
-        </div>
+        {/* L'adresse était fabriquée à la main ici, à partir d'une valeur QUI EST
+            DÉJÀ une adresse complète — et vers un seau « avatars » inexistant.
+            `Avatar` porte la règle une fois, et retombe sur les initiales quand
+            l'image ne charge pas. */}
+        <Avatar photo={profile.photo_profil_url} prenom={profile.prenom} nom={profile.nom} taille={36} />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold" style={{ color: 'var(--c-text)' }}>{profile.prenom} {profile.nom}</p>
           {profile.numero_licence && (
