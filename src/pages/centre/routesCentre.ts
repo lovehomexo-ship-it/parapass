@@ -14,6 +14,7 @@
 export const URL_VERS_SECTION: Record<string, string> = {
   journee: 'dashboard',
   licencies: 'licencies',
+  presents: 'presents',
   adhesions: 'demandes',
   sauts: 'sauts',
   briefing: 'briefing',
@@ -44,6 +45,7 @@ export const SECTION_VERS_URL: Record<string, string> = Object.fromEntries(
 export const LIBELLE_SECTION: Record<string, string> = {
   dashboard: 'Journée',
   licencies: 'Licenciés',
+  presents: 'Présents du jour',
   demandes: 'Adhésions',
   sauts: 'Sauts',
   briefing: 'Briefing',
@@ -129,9 +131,12 @@ export const GROUPES_NAV: readonly GroupeNav[] = [
     ],
   },
   {
-    cle: 'licencies',
+    cle: 'presents',
     label: 'Licenciés & équipe',
     onglets: [
+      // « Qui est là » vient EN PREMIER : c'est la question du matin, avant
+      // la liste complète des licenciés.
+      { section: 'presents', label: 'Présents du jour' },
       { section: 'licencies', label: 'Mes licenciés' },
       { section: 'equipe', label: 'Encadrement du jour', sousOnglet: 'encadrement' },
       { section: 'equipe', label: 'Mon équipe', sousOnglet: 'equipe' },
@@ -198,7 +203,7 @@ export const ORDRE_MENU_DEFAUT: readonly string[] = [
   // La journée
   'dashboard', 'briefing', 'planning', 'rotations', 'sauts',
   // Les gens
-  'licencies', 'demandes',
+  'presents', 'licencies', 'demandes',
   // La formation
   'academy',
   // Les modules métier

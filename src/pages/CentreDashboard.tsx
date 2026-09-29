@@ -59,6 +59,7 @@ import { VigilanceVoileDZ } from '../components/VigilanceVoileDZ';
 import { BriefingSection } from './centre/BriefingSection';
 import { BrevetsSection } from './centre/BrevetsSection';
 import { RelectureQuestions } from './centre/RelectureQuestions';
+import { PresentsDuJour } from './centre/PresentsDuJour';
 import { EncadrementSection } from './centre/EncadrementSection';
 import { EquipeUnifiee } from './centre/EquipeUnifiee';
 import {
@@ -356,7 +357,7 @@ function ZoneTitre({ children }: { children: React.ReactNode }) {
 // ─── DashboardHome ─────────────────────────────────────────────────────────────
 
 function DashboardHome({
-  centre, stats, onNavigate, carnetsEnAttente, mode,
+  centre, stats, onNavigate, carnetsEnAttente, presentsDuJour = 0, mode,
   briefingSlot, acquittementSlot, terrainSlot, meteoSlot, onAllerGestion, onChangerMode,
   encadrementSlot, relancesSlot, vigilanceSlot, avionnageSlot, enAttenteAvionnage = 0,
   avionnageDisponible = true,
@@ -365,6 +366,8 @@ function DashboardHome({
   stats: DashStats;
   onNavigate: (s: string) => void;
   carnetsEnAttente: number;
+  /** Têtes déclarées présentes aujourd'hui, repartis exclus. */
+  presentsDuJour?: number;
   /** F14 — deux métiers, deux modes : le corps de l'écran en dépend. */
   mode: ModeEcran;
   briefingSlot?: React.ReactNode;      // Briefing du jour (mode Journée)
@@ -582,6 +585,11 @@ function DashboardHome({
               onAller: () => onAllerGestion('demandes') },
             { genre: 'activite', cle: 'sauts', valeur: stats.sautsAujourdhui,
               libelle: 'sauts aujourd’hui' },
+            // COMBIEN DE TÊTES SUR LE TERRAIN. Le chiffre existait dans la
+            // base depuis le premier check-in, et n'apparaissait nulle part :
+            // le DT devait le deviner. Il mène à la liste nominative.
+            { genre: 'activite', cle: 'presents', valeur: presentsDuJour,
+              libelle: 'présents sur la DZ' },
           ]} />
 
           {meteoSlot}
@@ -3133,7 +3141,7 @@ export function CentreDashboardPage() {
   // « Ce qui attend une décision » : adhésions, attestations de carnet, sauts.
   // Une seule source (`compteurs_a_traiter`), sinon la pastille du menu et
   // l'écran finissent par annoncer deux nombres différents.
-  const [aTraiter, setATraiter] = useState({ adhesions: 0, carnets: 0, sauts: 0, brevets: 0, questions: 0 });
+  const [aTraiter, setATraiter] = useState({ adhesions: 0, carnets: 0, sauts: 0, brevets: 0, questions: 0, presents: 0 });
   const carnetsEnAttente = aTraiter.carnets;
   const [activeModules, setActiveModules] = useState<Set<string>>(new Set());
   // ── Avionnage : module optionnel, facturé à part ───────────────────────────
@@ -3295,10 +3303,11 @@ export function CentreDashboardPage() {
     const { data, error } = await supabase.rpc('compteurs_a_traiter', { p_centre_id: id });
     if (error) { console.error('Comptage des dossiers à traiter échoué :', error); return; }
     const r = (data ?? {}) as {
-      adhesions?: number; carnets?: number; sauts?: number; brevets?: number; questions?: number;
+      adhesions?: number; carnets?: number; sauts?: number; brevets?: number;
+      questions?: number; presents?: number;
     };
     setATraiter({ adhesions: r.adhesions ?? 0, carnets: r.carnets ?? 0, sauts: r.sauts ?? 0,
-                  brevets: r.brevets ?? 0, questions: r.questions ?? 0 });
+                  brevets: r.brevets ?? 0, questions: r.questions ?? 0, presents: r.presents ?? 0 });
   }, []);
 
   useEffect(() => {
@@ -3322,6 +3331,9 @@ export function CentreDashboardPage() {
       // parachutiste, pas la DZ. Le comptage, lui, refiltre correctement.
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'progression_epreuves' },
+        recharger)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'dz_presences', filter: `dz_id=eq.${centreId}` },
         recharger)
       .subscribe();
     // Filet : si le temps réel n'est pas disponible (réseau du hangar, onglet
@@ -3351,7 +3363,7 @@ export function CentreDashboardPage() {
     { key: 'dashboard', label: 'Tableau de bord', icon: Home },
     // Trois entrées portent chacune deux écrans : le détail se choisit dans la
     // barre d'onglets, pas dans la colonne de gauche (cf. GROUPES_NAV).
-    { key: 'licencies', label: 'Licenciés & équipe', icon: Users },
+    { key: 'presents', label: 'Licenciés & équipe', icon: Users },
     { key: 'demandes', label: 'Demandes', icon: ClipboardList,
       badge: aTraiter.adhesions + aTraiter.carnets },
     { key: 'sauts', label: 'Activité des sauts', icon: Activity, badge: aTraiter.sauts },
@@ -3711,6 +3723,7 @@ export function CentreDashboardPage() {
                     stats={stats}
                     onNavigate={setActiveSection}
                     carnetsEnAttente={carnetsEnAttente}
+                    presentsDuJour={aTraiter.presents}
                     mode={mode}
                     onChangerMode={changerMode}
                     onAllerGestion={(section, sousOnglet) => { changerMode('gestion'); setActiveSection(section, sousOnglet); }}
@@ -3751,6 +3764,9 @@ export function CentreDashboardPage() {
                   l'Avionnage et la Gestion. Ils sont dans le tiroir meteoSlot
                   du mode Journée, leur seul endroit (règle 3). */}
             </>
+          )}
+          {activeSection === 'presents' && centreId && (
+            <PresentsDuJour centreId={centreId} />
           )}
           {activeSection === 'licencies' && (
             <ErrorBoundary>
