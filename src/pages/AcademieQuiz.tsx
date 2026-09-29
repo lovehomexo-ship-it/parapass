@@ -2,8 +2,9 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
+import { useParametresAcademie } from '../lib/academie';
 import { getGrade, PROPOSITION_COLORS, diffLabel, type QuizQuestion, type QuizResult } from '../lib/quiz';
-import { ArrowLeft, ChevronRight, Clock, CheckCircle, XCircle, Trophy, Star, BookOpen, Inbox, CalendarDays, Target, AlertTriangle, Zap } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Clock, CheckCircle, XCircle, Trophy, Star, BookOpen, Inbox, CalendarDays, Target, AlertTriangle, Zap, ExternalLink } from 'lucide-react';
 import { GradeIcon } from '../design/academieIcons';
 
 // ─── Durée timer par question (secondes) ────────────────────────────────────────
@@ -105,6 +106,7 @@ function ResultsScreen({ stats, onRetry, onDone }: { stats: SessionStats; onRetr
 
 export function AcademieQuizPage() {
   const { user } = useAuth();
+  const parametres = useParametresAcademie();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const mode = (searchParams.get('mode') ?? 'training') as 'daily' | 'training';
@@ -134,30 +136,22 @@ export function AcademieQuizPage() {
       const { data: xpRows } = await supabase.from('quiz_xp').select('xp').eq('user_id', user.id);
       setXpBeforeSession((xpRows ?? []).reduce((s: number, r: { xp: number }) => s + r.xp, 0));
 
-      // Brevet du user → filtre niveau_brevet_mini
-      const { data: profData } = await supabase
-        .from('profiles')
-        .select('type_brevet_principal')
-        .eq('id', user.id)
-        .maybeSingle();
-      const userBrevet = profData?.type_brevet_principal ?? null;
-      const BREVET_ORDER = ['A', 'B', 'C', 'D'];
-      const userBrevetIdx = userBrevet ? BREVET_ORDER.indexOf(userBrevet) : BREVET_ORDER.length - 1;
-      const allowedBrevets = BREVET_ORDER.slice(0, userBrevetIdx + 1);
-
-      let query = supabase
-        .from('quiz_questions')
-        .select('id, enonce, propositions, theme, niveau_brevet_mini, difficulte')
-        .eq('statut', 'validee')
-        .or(`niveau_brevet_mini.is.null,niveau_brevet_mini.in.(${allowedBrevets.join(',')})`);
-
-      if (mode === 'daily') {
-        query = query.order('id');
-      } else if (theme) {
-        query = query.eq('theme', theme);
-      }
-
-      const { data, error } = await query.limit(100);
+      // CE FILTRE FAISAIT L'INVERSE DE CE QU'IL DEVAIT. Il lisait
+      // `profiles.type_brevet_principal` — le champ texte déclaré obsolète
+      // dans src/lib/brevets.ts — et, pour un élève SANS brevet, faisait
+      // `indexOf(null) → length - 1` : le débutant recevait donc TOUTES les
+      // questions, jusqu'au niveau D. Donnée absente = le plus permissif,
+      // exactement l'inverse de P1.
+      //
+      // `academie_questions` porte désormais la règle, une seule fois, côté
+      // base : questions validées, de son niveau ou en dessous, de la banque
+      // commune ou d'un centre où il est licencié actif. Le niveau se calcule
+      // sur les brevets RÉELLEMENT détenus et les paliers PAC délivrés, et
+      // vaut 1 — débutant — quand on ne sait rien.
+      const { data, error } = await supabase.rpc('academie_questions', {
+        p_user_id: user.id,
+        p_theme: mode === 'training' && theme ? theme : null,
+      });
 
       if (error) {
         console.error('[AcademieQuiz] Erreur chargement questions:', error.message, error.details);
@@ -166,7 +160,7 @@ export function AcademieQuizPage() {
       }
 
       if (!data || data.length === 0) {
-        console.warn('[AcademieQuiz] 0 question retournée — theme:', theme, 'brevet:', userBrevet);
+        console.warn('[AcademieQuiz] 0 question retournée — theme:', theme);
         setLoading(false);
         return;
       }
@@ -326,6 +320,22 @@ export function AcademieQuizPage() {
       </div>
 
       <ProgressBar current={currentIdx + 1} total={questions.length} timer={timer} />
+
+      {/* SUR CHAQUE SESSION, sans exception. Une question d'entraînement mal
+          comprise pour une règle officielle peut coûter cher sur un sujet où
+          l'erreur est physique. Le texte et le lien viennent de la base :
+          l'adresse fédérale changera, pas le code. */}
+      <div className="rounded-xl px-4 py-3 mt-3 mb-4 flex flex-col gap-2"
+        style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(96,165,250,0.35)' }}>
+        <p className="text-xs leading-relaxed" style={{ color: '#BFDBFE' }}>
+          {parametres.mentionEntrainement}
+        </p>
+        <a href={parametres.qcmOfficielUrl} target="_blank" rel="noopener noreferrer"
+          className="text-xs font-semibold inline-flex items-center gap-1.5 no-underline"
+          style={{ color: '#93C5FD' }}>
+          Passer le QCM officiel de la FFP <ExternalLink className="w-3 h-3" aria-hidden />
+        </a>
+      </div>
 
       {/* Question */}
       <div className="rounded-2xl p-5 mb-6" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>

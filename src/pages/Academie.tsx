@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
+import { useParametresAcademie } from '../lib/academie';
 import { Layout } from '../components/Layout';
 import { getGrade, getProgressToNextGrade, THEMES, QUIZ_BADGES, RARETE_COLORS } from '../lib/quiz';
-import { Flame, ChevronRight, Lock, Trophy, Medal, CheckCircle2, CalendarDays } from 'lucide-react';
+import { Flame, ChevronRight, Lock, Trophy, Medal, CheckCircle2, CalendarDays, ExternalLink } from 'lucide-react';
 import { GradeIcon, QuizThemeIcon, QuizBadgeIcon } from '../design/academieIcons';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -151,6 +152,7 @@ function useAcademieData(userId: string | undefined) {
 // ─── Page principale ────────────────────────────────────────────────────────────
 
 export function AcademiePage() {
+  const parametres = useParametresAcademie();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { xp, badges, classement, themeProgress, loading } = useAcademieData(user?.id);
@@ -195,6 +197,22 @@ export function AcademiePage() {
               <p className="text-xs mt-1" style={{ color: 'var(--c-muted)' }}>{prog.current}/{prog.needed} XP vers grade suivant</p>
             </div>
           )}
+        </div>
+
+        {/* La règle du jeu, ÉNONCÉE EN HAUT de l'Académie : ce qui s'entraîne
+            ici, ce qui se valide chez la FFP. Une application qui laisserait
+            croire qu'elle délivre un acquis de sécurité serait dangereuse. */}
+        <div className="rounded-2xl p-4 mb-4 flex flex-col gap-2"
+          style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(96,165,250,0.3)' }}>
+          <p className="text-xs leading-relaxed" style={{ color: 'var(--c-text2)' }}>
+            {parametres.mentionEntrainement}
+          </p>
+          <a href={parametres.qcmOfficielUrl} target="_blank" rel="noopener noreferrer"
+            className="text-xs font-bold inline-flex items-center gap-1.5 no-underline"
+            style={{ color: '#60A5FA' }}>
+            Pour valider officiellement ton brevet, passe le QCM de la FFP
+            <ExternalLink className="w-3 h-3 flex-shrink-0" aria-hidden />
+          </a>
         </div>
 
         {/* Quiz du jour */}

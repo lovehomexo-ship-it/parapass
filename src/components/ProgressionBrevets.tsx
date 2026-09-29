@@ -1,4 +1,5 @@
-import { GraduationCap, CheckCircle, Clock, Hourglass, XCircle, AlertTriangle, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { GraduationCap, CheckCircle, Clock, Hourglass, XCircle, AlertTriangle, User, ChevronRight } from 'lucide-react';
 import {
   useReferentielBrevets, useMaProgression, useContexteEleve,
   prerequisEpreuveOk, epreuvesBrevetCompletes, resteAFaire, evalRegle, conditionsBrevetOk,
@@ -138,6 +139,18 @@ export function ProgressionBrevets({ userId }: { userId: string | undefined }) {
                   <p className="text-[11px] mt-2" style={{ color: '#FDBA74' }}>
                     Il te reste : {reste.join(' · ')}.
                   </p>
+                )}
+
+                {/* La théorie se révise là où elle vit. L'Académie sert les
+                    questions du niveau réellement atteint — pas besoin de
+                    choisir, et un débutant n'y verra pas de questions de
+                    brevet D. */}
+                {!delivre && (
+                  <Link to="/academie"
+                    className="text-[11px] font-semibold inline-flex items-center gap-1 mt-2 no-underline"
+                    style={{ color: '#93C5FD' }}>
+                    Réviser la théorie de mon niveau <ChevronRight className="w-3 h-3" aria-hidden />
+                  </Link>
                 )}
               </div>
             );
