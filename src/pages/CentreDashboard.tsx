@@ -58,6 +58,7 @@ import { SurLeTerrain } from './centre/SurLeTerrain';
 import { VigilanceVoileDZ } from '../components/VigilanceVoileDZ';
 import { BriefingSection } from './centre/BriefingSection';
 import { BrevetsSection } from './centre/BrevetsSection';
+import { RelectureQuestions } from './centre/RelectureQuestions';
 import { EncadrementSection } from './centre/EncadrementSection';
 import { EquipeUnifiee } from './centre/EquipeUnifiee';
 import {
@@ -3111,7 +3112,7 @@ export function CentreDashboardPage() {
   // Ils sont lus dans l'URL (/centre/equipe/encadrement) et donc conservés au rechargement.
   const messagesTab = (sousOngletValide('messages', segmentSousOnglet) ?? 'conversations') as 'conversations' | 'relances';
   const equipeTab = (sousOngletValide('equipe', segmentSousOnglet) ?? 'equipe') as 'encadrement' | 'equipe';
-  const academyTab = (sousOngletValide('academy', segmentSousOnglet) ?? 'quiz') as 'quiz' | 'pac' | 'brevets' | 'documents';
+  const academyTab = (sousOngletValide('academy', segmentSousOnglet) ?? 'pac') as 'quiz' | 'pac' | 'brevets' | 'questions' | 'documents';
   const setMessagesTab = useCallback((t: string) => navigate(urlDeSection('messages', t)), [navigate]);
   const setAcademyTab = useCallback((t: string) => navigate(urlDeSection('academy', t)), [navigate]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -3132,7 +3133,7 @@ export function CentreDashboardPage() {
   // « Ce qui attend une décision » : adhésions, attestations de carnet, sauts.
   // Une seule source (`compteurs_a_traiter`), sinon la pastille du menu et
   // l'écran finissent par annoncer deux nombres différents.
-  const [aTraiter, setATraiter] = useState({ adhesions: 0, carnets: 0, sauts: 0, brevets: 0 });
+  const [aTraiter, setATraiter] = useState({ adhesions: 0, carnets: 0, sauts: 0, brevets: 0, questions: 0 });
   const carnetsEnAttente = aTraiter.carnets;
   const [activeModules, setActiveModules] = useState<Set<string>>(new Set());
   // ── Avionnage : module optionnel, facturé à part ───────────────────────────
@@ -3293,9 +3294,11 @@ export function CentreDashboardPage() {
   const chargerCompteurs = useCallback(async (id: string) => {
     const { data, error } = await supabase.rpc('compteurs_a_traiter', { p_centre_id: id });
     if (error) { console.error('Comptage des dossiers à traiter échoué :', error); return; }
-    const r = (data ?? {}) as { adhesions?: number; carnets?: number; sauts?: number; brevets?: number };
-    setATraiter({ adhesions: r.adhesions ?? 0, carnets: r.carnets ?? 0,
-                  sauts: r.sauts ?? 0, brevets: r.brevets ?? 0 });
+    const r = (data ?? {}) as {
+      adhesions?: number; carnets?: number; sauts?: number; brevets?: number; questions?: number;
+    };
+    setATraiter({ adhesions: r.adhesions ?? 0, carnets: r.carnets ?? 0, sauts: r.sauts ?? 0,
+                  brevets: r.brevets ?? 0, questions: r.questions ?? 0 });
   }, []);
 
   useEffect(() => {
@@ -3354,7 +3357,10 @@ export function CentreDashboardPage() {
     { key: 'sauts', label: 'Activité des sauts', icon: Activity, badge: aTraiter.sauts },
     { key: 'briefing', label: 'Briefing du jour', icon: Megaphone },
     ...(activeModules.has('academy')
-      ? [{ key: 'academy', label: 'Academy', icon: GraduationCap, badge: aTraiter.brevets }]
+      // Épreuves déclarées prêtes ET questions en attente de relecture : deux
+      // décisions du DT, dans le même écran, donc une seule pastille.
+      ? [{ key: 'academy', label: 'Academy', icon: GraduationCap,
+           badge: aTraiter.brevets + aTraiter.questions }]
       : []),
     { key: 'planning', label: 'Planning DZ', icon: Calendar },
     ...(activeModules.has('avionnage') ? [{ key: 'rotations', label: 'Avionnage', icon: Plane }] : []),
@@ -3802,6 +3808,10 @@ export function CentreDashboardPage() {
                   { key: 'pac' as const, label: 'Carnet PAC' },
                   { key: 'brevets' as const, label: 'Progression des brevets' },
                   { key: 'quiz' as const, label: 'Académie (quiz sécurité)' },
+                  // La relecture vit À CÔTÉ du quiz : c'est le même sujet vu de
+                  // l'autre bout — ce qui sera servi, et par qui c'est signé.
+                  { key: 'questions' as const,
+                    label: `Questions à relire${aTraiter.questions > 0 ? ` (${aTraiter.questions})` : ''}` },
                   { key: 'documents' as const, label: 'Documents officiels FFP' },
                 ]}
                 active={academyTab}
@@ -3810,6 +3820,7 @@ export function CentreDashboardPage() {
               {academyTab === 'quiz' && <AcademyScoresDZ centreId={centreId} />}
               {academyTab === 'pac' && <PacStaff centreId={centreId} />}
               {academyTab === 'brevets' && <BrevetsSection centreId={centreId} />}
+              {academyTab === 'questions' && <RelectureQuestions centreId={centreId} />}
               {academyTab === 'documents' && <DocumentsFFPDZ centreId={centreId} dtId={profile?.id} />}
             </div>
           )}

@@ -71,7 +71,7 @@ export const SOUS_ONGLETS: Record<string, readonly string[]> = {
   messages: ['conversations', 'relances'],
   // Le premier est l'onglet par défaut : la PAC ouvre l'Académie, le quiz
   // vient en troisième, après la progression des brevets.
-  academy: ['pac', 'brevets', 'quiz', 'documents'],
+  academy: ['pac', 'brevets', 'quiz', 'questions', 'documents'],
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
