@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Plane, AlertTriangle, MapPin } from 'lucide-react';
 import { ErrorBoundary } from './ErrorBoundary';
 import { FileAvionnage } from './FileAvionnage';
@@ -68,6 +68,56 @@ function SelecteurDz({ dzs, choisie, onChoisir }: {
 function AvionnageInner({ userId }: { userId: string | undefined }) {
   const { dzs, chargement, erreur } = useResumeAvionnage(userId);
   const [choisie, setChoisie] = useState<string | null>(null);
+  const ancre = useRef<HTMLDivElement>(null);
+
+  // LE BOUTON « AVIONNAGE » DE LA BARRE MOBILE NE FAISAIT RIEN. Deux causes
+  // superposées, et il fallait les deux :
+  //
+  //   1. l'identifiant `avionnage` n'était posé QUE sur la branche « il se
+  //      passe quelque chose ». Le reste du temps — l'état le plus fréquent —
+  //      l'ancre n'existait pas du tout dans le document. Un lien vers une
+  //      ancre absente ne fait rien, en silence ;
+  //   2. React Router change l'URL par `pushState`, ce qui ne déclenche NI le
+  //      saut natif vers l'ancre, NI l'événement `hashchange`. C'est le piège
+  //      déjà rencontré sur le bouton « Présence ».
+  //
+  // On défile donc nous-mêmes, au montage et à chaque `hashchange`.
+  const [surligne, setSurligne] = useState(false);
+
+  useEffect(() => {
+    let effacer: number | undefined;
+    const aller = () => {
+      if (window.location.hash !== '#avionnage') return;
+      const el = ancre.current;
+      if (!el) return;
+      // `scrollIntoView({block:'center'})` ne bouge PAS quand le bloc est déjà
+      // à l'écran — ce qui est le cas le plus fréquent sur le tableau de bord.
+      // Taper « Avionnage » semblait alors ne rien faire. On vise donc le haut,
+      // sous l'en-tête collant, et on souligne brièvement le bloc : l'œil
+      // retrouve ce qu'il est venu chercher, même sans mouvement.
+      const cible = el.getBoundingClientRect().top + window.scrollY - 80;
+      window.scrollTo({ top: Math.max(0, cible), behavior: 'smooth' });
+      setSurligne(true);
+      effacer = window.setTimeout(() => setSurligne(false), 1400);
+    };
+    // Au montage, le bloc peut n'avoir pas encore sa hauteur : on laisse un
+    // tour de boucle au rendu.
+    const t = window.setTimeout(aller, 120);
+    window.addEventListener('hashchange', aller);
+    return () => {
+      window.clearTimeout(t);
+      if (effacer) window.clearTimeout(effacer);
+      window.removeEventListener('hashchange', aller);
+    };
+  }, [dzs]);
+
+  /** Le soulignement du bloc quand on vient de la barre du bas. */
+  const anneau: React.CSSProperties = surligne
+    // Pas de transition sur `outline-color` : la couleur restait à sa valeur de
+    // départ au moment où l'œil arrive, et le liseré ressortait en bleu nuit
+    // sur fond bleu nuit — donc invisible. Un éclair n'a pas besoin de fondu.
+    ? { outlineWidth: 2, outlineStyle: 'solid', outlineColor: '#F97316', outlineOffset: 3, borderRadius: 12 }
+    : {};
 
   // La DZ retenue suit le tri de la base tant que l'utilisateur n'a pas choisi
   // lui-même. Dès qu'un avion se programme ailleurs, la sélection le suit.
@@ -80,8 +130,8 @@ function AvionnageInner({ userId }: { userId: string | undefined }) {
 
   if (erreur) {
     return (
-      <div className="rounded-xl px-4 py-3 mb-6 text-xs flex items-start gap-2"
-        style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
+      <div ref={ancre} id="avionnage" className="rounded-xl px-4 py-3 mb-6 text-xs flex items-start gap-2"
+        style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5', ...anneau }}>
         <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-px" aria-hidden />
         <span>Avionnage indisponible — {erreur}. Rapproche-toi du chef d’avionnage.</span>
       </div>
@@ -93,8 +143,8 @@ function AvionnageInner({ userId }: { userId: string | undefined }) {
   // AUCUNE DZ N'A RIEN AUJOURD'HUI : une ligne, et on passe à autre chose.
   if (actives.length === 0) {
     return (
-      <div className="rounded-xl px-4 py-2.5 mb-6 flex items-center gap-2.5"
-        style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
+      <div ref={ancre} id="avionnage" className="rounded-xl px-4 py-2.5 mb-6 flex items-center gap-2.5"
+        style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', ...anneau }}>
         <Plane className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--c-dim)' }} aria-hidden />
         <span className="text-xs" style={{ color: 'var(--c-muted)' }}>
           Aucun avion programmé aujourd’hui
@@ -107,7 +157,7 @@ function AvionnageInner({ userId }: { userId: string | undefined }) {
   const dz = dzs.find(d => d.centre_id === choisie) ?? dzs[0];
 
   return (
-    <div className="mb-6" id="avionnage">
+    <div className="mb-6" id="avionnage" ref={ancre} style={anneau}>
       <SelecteurDz dzs={dzs} choisie={dz.centre_id} onChoisir={setChoisie} />
 
       {/* SE METTRE EN FILE SUPPOSE D'ÊTRE SUR LE TERRAIN. La base le refuse

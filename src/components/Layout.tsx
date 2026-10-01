@@ -510,7 +510,20 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
             // position en file si on y est, sinon nombre d'avions du jour.
             ...(avionnageDisponible
               ? [{ key: 'avionnage', label: 'Avionnage', icon: <Plane className="w-6 h-6" />,
-                   badge: avionnageBadge, onClick: () => navigate('/dashboard#avionnage') }]
+                   badge: avionnageBadge, onClick: () => {
+                     // MÊME PIÈGE QUE « PRÉSENCE ». React Router change l'URL par
+                     // `pushState` : ni saut vers l'ancre, ni `hashchange`. Déjà
+                     // sur le tableau de bord, le bouton ne faisait donc rien du
+                     // tout. On pose le hash, puis on rejoue l'événement que le
+                     // bloc écoute — et on le rejoue AUSSI quand le hash y est
+                     // déjà, pour qu'un second appui ramène au bloc.
+                     if (window.location.pathname === '/dashboard') {
+                       if (window.location.hash !== '#avionnage') window.location.hash = 'avionnage';
+                       else window.dispatchEvent(new HashChangeEvent('hashchange'));
+                     } else {
+                       navigate('/dashboard#avionnage');
+                     }
+                   } }]
               : []),
             { key: 'qr', label: 'QR', icon: <QrCode className="w-6 h-6" />, badge: null as string | null, onClick: () => navigate('/qr-code') },
           ].map((a) => (
@@ -518,15 +531,25 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
               className="flex-1 flex flex-col items-center justify-center gap-1 active:opacity-70"
               style={{ minHeight: 64, color: 'var(--c-text)', position: 'relative' }}
               aria-label={a.badge ? `${a.label} — ${a.badge}` : a.label}>
-              {a.icon}
-              {a.badge && (
-                <span className="absolute text-[10px] font-bold px-1.5 rounded-full"
-                  style={{ top: 6, right: '50%', transform: 'translateX(140%)',
-                           background: '#F97316', color: '#fff', lineHeight: '16px', minWidth: 16, textAlign: 'center' }}>
-                  {a.badge}
-                </span>
-              )}
-              <span className="text-[11px] font-semibold">{a.label}</span>
+              {/* La pastille s'accroche à L'ICÔNE, pas au bouton. Elle était
+                  placée par rapport au bouton avec un décalage exprimé en
+                  pourcentage de SA PROPRE largeur : « 3 » et « #12 » ne
+                  tombaient pas au même endroit, et la seconde mordait le bord. */}
+              <span style={{ position: 'relative', display: 'inline-flex' }}>
+                {a.icon}
+                {a.badge && (
+                  <span className="absolute text-[10px] font-bold px-1 rounded-full"
+                    style={{ top: -4, left: '100%', marginLeft: -6,
+                             background: '#F97316', color: '#fff', lineHeight: '15px',
+                             minWidth: 15, textAlign: 'center' }}>
+                    {a.badge}
+                  </span>
+                )}
+              </span>
+              {/* « Avionnage » tient sur 94 px à 11 px, mais de justesse : on
+                  interdit le retour à la ligne, qui décalerait la hauteur de
+                  cette seule cellule et ferait boiter toute la barre. */}
+              <span className="text-[11px] font-semibold" style={{ whiteSpace: 'nowrap' }}>{a.label}</span>
             </button>
           ))}
         </nav>
