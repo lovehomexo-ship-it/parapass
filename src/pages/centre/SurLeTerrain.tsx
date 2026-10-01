@@ -5,7 +5,8 @@ import { LoaderParaPass } from '../../components/LoaderParaPass';
 import { ModaleSaisie } from '../../components/ModaleSaisie';
 import { ymdLocal } from '../../lib/datetime';
 import { usePresencesDZ } from '../../lib/presence';
-import { Filter, Check } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Filter, Check, ChevronRight } from 'lucide-react';
 import { surface, rayure, pastille, action, enTeteSection, type Severite } from '../../lib/jetons';
 import { evaluerAptitude, signalerDivergence, RANG_STATUT } from '../../lib/aptitude';
 
@@ -129,6 +130,15 @@ function TerrainInner({ centreId }: { centreId: string }) {
             {aExaminer > 0 && `, ${aExaminer} à examiner`}
           </span>
         </h3>
+        {/* LE CHEMIN VERS LA LISTE NOMINATIVE. Ce bloc répond à « qui peut
+            sauter » ; la question « qui est là, avec quelles compétences » a son
+            écran, et il était introuvable depuis ici — c'est pourtant là qu'on
+            regarde. */}
+        <Link to="/centre/presents"
+          className="text-xs font-semibold inline-flex items-center gap-1 no-underline"
+          style={{ color: 'var(--action-texte)', minHeight: 36 }}>
+          Vue d’ensemble des présents <ChevronRight className="w-3.5 h-3.5" aria-hidden />
+        </Link>
         {aExaminer > 0 && (
           <button onClick={basculerFiltre} aria-pressed={seulementCeQuiCoince}
             className="flex items-center gap-1.5 px-3 rounded-full text-xs font-semibold"

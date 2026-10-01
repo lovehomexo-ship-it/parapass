@@ -34,6 +34,8 @@ interface Present {
   nom: string;
   photo_profil_url: string | null;
   brevet: string | null;
+  qualifications: string[] | null;
+  encadrant: boolean;
   heure_debut: string | null;
   heure_fin: string | null;
   statut: string;
@@ -74,7 +76,19 @@ function Ligne({ p }: { p: Present }) {
               style={{ background: 'rgba(148,163,184,0.15)', color: 'var(--c-dim)' }}>démo</span>
           )}
         </div>
-        <p className="text-[11px] truncate" style={{ color: 'var(--c-muted)' }}>
+        {/* CE QUE LA PERSONNE SAIT FAIRE. Un DT qui regarde son terrain cherche
+            d'abord ses largueurs et ses moniteurs, pas des numéros de licence. */}
+        {(p.qualifications?.length ?? 0) > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {p.qualifications!.map(q => (
+              <span key={q} className="text-[10px] px-1.5 py-0.5 rounded-full"
+                style={{ background: 'rgba(16,185,129,0.12)', color: '#6EE7B7', border: '1px solid rgba(16,185,129,0.25)' }}>
+                {q}
+              </span>
+            ))}
+          </div>
+        )}
+        <p className="text-[11px] truncate mt-0.5" style={{ color: 'var(--c-muted)' }}>
           arrivé à {hhmm(p.heure_debut)}
           {/* Certains modèles de voile SONT le chiffre de surface — « 182 ».
               Les afficher tous les deux donnait « 182 182 ft² ». */}
@@ -205,6 +219,11 @@ function Inner({ centreId }: { centreId: string }) {
       <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--c-text2)' }}>
         <Users className="w-4 h-4" style={{ color: 'var(--c-muted)' }} aria-hidden />
         <span><b>{presents.length}</b> sur le terrain</span>
+        {presents.filter(r => r.encadrant).length > 0 && (
+          <span style={{ color: '#6EE7B7' }}>
+            · {presents.filter(r => r.encadrant).length} encadrant{presents.filter(r => r.encadrant).length > 1 ? 's' : ''}
+          </span>
+        )}
         {partis.length > 0 && <span style={{ color: 'var(--c-dim)' }}>· {partis.length} reparti{partis.length > 1 ? 's' : ''}</span>}
         {!aujourdhui && <span style={{ color: 'var(--c-dim)' }}>· journée passée</span>}
       </div>

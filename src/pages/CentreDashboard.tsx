@@ -261,7 +261,14 @@ function SousOnglets<T extends string>({ tabs, active, onChange }: {
         <button
           key={t.key}
           onClick={() => onChange(t.key)}
-          className="px-4 text-sm font-semibold whitespace-nowrap transition rounded-t-lg"
+          // `flex-shrink-0` N'EST PAS DÉCORATIF ICI. Un enfant de `flex` se
+          // laisse comprimer par défaut ; avec `whitespace-nowrap` le texte ne
+          // suit pas et déborde de son bouton. Résultat sur un écran étroit :
+          // quatre libellés imprimés les uns SUR les autres — vu sur « Licenciés
+          // & équipe » dès que le groupe est passé à quatre onglets. Le
+          // `overflow-x-auto` du parent ne servait à rien, puisque rien ne
+          // dépassait jamais : tout se chevauchait à l'intérieur.
+          className="px-4 text-sm font-semibold whitespace-nowrap transition rounded-t-lg flex-shrink-0"
           style={{
             minHeight: 44,
             background: active === t.key ? 'var(--c-surface)' : 'transparent',
