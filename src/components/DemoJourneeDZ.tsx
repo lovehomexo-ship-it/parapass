@@ -63,12 +63,15 @@ function DemoJourneeInner({ centreId, centreNom, onDone }: { centreId: string; c
         + `${nb(r, 'tandem')} réservations tandem, ${nb(r, 'adhesions')} demandes d'adhésion, `
         + `${nb(r, 'carnets')} attestations de carnet, `
         + `${nb(r, 'qualifications')} qualifications d'encadrants et ${nb(r, 'delegations')} délégations, `
+        + `${nb(r, 'presents')} présences déclarées dont ${nb(r, 'arrivees_tardives')} arrivées l'après-midi, `
+        + `${nb(r, 'materiel_prete')} sacs du centre prêtés et ${nb(r, 'sacs_a_plier')} rentrés à plier, `
         + `briefing publié et dossiers à jour.`
         // Un module non souscrit ne fait plus échouer le reste — mais il ne
         // faut pas laisser croire qu'il a été généré.
         + (ignores.length ? ` Non générés, faute de souscription : ${ignores.join(', ')}.` : '')
       : `Démonstration retirée : ${nb(r, 'planches')} planches, ${nb(r, 'sauts')} sauts, `
-        + `${nb(r, 'pliages')} pliages, ${nb(r, 'tandem')} réservations, ${nb(r, 'presences')} présences.`);
+        + `${nb(r, 'pliages')} pliages, ${nb(r, 'tandem')} réservations, ${nb(r, 'presences')} présences, `
+        + `${nb(r, 'sacs_liberes')} sacs du centre rendus au rack.`);
     onDone?.(); // rafraîchit le dashboard sans rechargement complet
   };
 

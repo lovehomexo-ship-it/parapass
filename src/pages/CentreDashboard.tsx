@@ -55,6 +55,7 @@ import { BasculeMode, type ModeEcran } from '../components/BasculeMode';
 import { BarreEtat } from '../components/BarreEtat';
 import { Tiroir } from '../components/Tiroir';
 import { SurLeTerrain } from './centre/SurLeTerrain';
+import { ApercuPresents } from './centre/ApercuPresents';
 import { VigilanceVoileDZ } from '../components/VigilanceVoileDZ';
 import { BriefingSection } from './centre/BriefingSection';
 import { BrevetsSection } from './centre/BrevetsSection';
@@ -365,7 +366,7 @@ function ZoneTitre({ children }: { children: React.ReactNode }) {
 
 function DashboardHome({
   centre, stats, onNavigate, carnetsEnAttente, presentsDuJour = 0, mode,
-  briefingSlot, acquittementSlot, terrainSlot, meteoSlot, onAllerGestion, onChangerMode,
+  briefingSlot, acquittementSlot, terrainSlot, presentsSlot, meteoSlot, onAllerGestion, onChangerMode,
   encadrementSlot, relancesSlot, vigilanceSlot, avionnageSlot, enAttenteAvionnage = 0,
   avionnageDisponible = true,
 }: {
@@ -380,6 +381,7 @@ function DashboardHome({
   briefingSlot?: React.ReactNode;      // Briefing du jour (mode Journée)
   acquittementSlot?: React.ReactNode;  // F01 — carte compacte à côté du briefing
   terrainSlot?: React.ReactNode;       // F08 — tableau unique « Sur le terrain »
+  presentsSlot?: React.ReactNode;      // Aperçu nominatif des présents (mode Gestion)
   meteoSlot?: React.ReactNode;         // F03 — tiroir replié
   /** F07 — bascule en Gestion et ouvre la file visée. */
   onAllerGestion: (section: string, sousOnglet?: string) => void;
@@ -612,9 +614,15 @@ function DashboardHome({
       {mode === 'gestion' && (
       <>
       <ZoneTitre>Aujourd'hui</ZoneTitre>
+      {/* LE MODE GESTION NE MONTRAIT PERSONNE. Une tuile « Sauts aujourd'hui »
+          sous-titrée « Sur le terrain » : un chiffre d'activité qui empruntait
+          le vocabulaire des présences sans en donner une seule. L'aperçu
+          nominatif prend sa place en tête, et le compteur de sauts redevient
+          ce qu'il est — un compteur de sauts. */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {presentsSlot}
         {encadrementSlot}
-        <CentreKpiCard accent="var(--c-border-f)" label="Sauts aujourd'hui" value={stats.sautsAujourdhui} sub="Sur le terrain" />
+        <CentreKpiCard accent="var(--c-border-f)" label="Sauts aujourd'hui" value={stats.sautsAujourdhui} sub="Sauts enregistrés sur la journée" />
       </div>
 
       {/* ── 3 · À TRAITER — les actions en attente ── */}
@@ -3737,6 +3745,7 @@ export function CentreDashboardPage() {
                     briefingSlot={centreId ? <BriefingRecapDZ centreId={centreId} onOuvrir={() => setActiveSection('briefing')} /> : undefined}
                     acquittementSlot={centreId ? <SuiviAcquittements centreId={centreId} listerManquants={false} /> : undefined}
                     terrainSlot={centreId ? <SurLeTerrain centreId={centreId} /> : undefined}
+                    presentsSlot={centreId ? <ApercuPresents centreId={centreId} /> : undefined}
                     avionnageSlot={centreId && avionnageDisponible ? <Avionnage centreId={centreId} /> : undefined}
                     avionnageDisponible={avionnageDisponible}
                     enAttenteAvionnage={enAttenteAvionnage}
