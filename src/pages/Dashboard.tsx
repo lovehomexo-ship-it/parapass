@@ -140,12 +140,12 @@ function ShortcutTiles({ userId }: { userId: string }) {
     {
       key: 'reflexe',
       icon: reflexeDone
-        ? <CheckCircle2 className="w-5 h-5" style={{ color: '#34D399' }} />
+        ? <CheckCircle2 className="w-5 h-5" style={{ color: 'var(--sev-conforme)' }} />
         : <Target className="w-5 h-5" style={{ color: '#FCA5A5' }} />,
       label: 'Réflexe du jour',
       badge: reflexeLoading ? null : reflexeDone
-        ? <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.15)', color: '#34D399' }}>Fait</span>
-        : <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(239,68,68,0.12)', color: '#FCA5A5' }}>à faire</span>,
+        ? <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--sev-conforme)' }}>Fait</span>
+        : <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(239,68,68,0.12)', color: 'var(--sev-critique)' }}>à faire</span>,
       streak: streak > 0 ? streak : null,
       bg: reflexeDone ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.07)',
       border: reflexeDone ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(239,68,68,0.25)',
@@ -155,7 +155,7 @@ function ShortcutTiles({ userId }: { userId: string }) {
       key: 'academie',
       icon: <GraduationCap className="w-5 h-5" style={{ color: '#A78BFA' }} />,
       label: 'Académie',
-      badge: <span className="text-[10px]" style={{ color: '#A78BFA' }}>Quiz · XP</span>,
+      badge: <span className="text-[10px]" style={{ color: 'var(--c-pliage)' }}>Quiz · XP</span>,
       streak: null,
       bg: 'rgba(139,92,246,0.07)',
       border: '1px solid rgba(139,92,246,0.2)',
@@ -190,7 +190,7 @@ function ShortcutTiles({ userId }: { userId: string }) {
             <div className="flex items-center gap-1 flex-wrap justify-center">
               {t.badge}
               {t.streak !== null && (
-                <span className="flex items-center gap-0.5 text-[10px] font-bold" style={{ color: '#F97316' }}>
+                <span className="flex items-center gap-0.5 text-[10px] font-bold" style={{ color: 'var(--accent-texte)' }}>
                   <Flame className="w-2.5 h-2.5" />{t.streak}
                 </span>
               )}
@@ -230,7 +230,7 @@ function MonSacDuJour({ userId }: { userId: string }) {
   const etat = sac?.etat_journee ?? 'pris';
   const age = Math.floor((Date.now() - new Date(start_at).getTime()) / 60000);
   const etatCfg = etat === 'a_plier'
-    ? { label: 'Au tapis — à plier', color: '#F97316', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.3)' }
+    ? { label: 'Au tapis — à plier', color: 'var(--accent-texte)', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.3)' }
     : { label: 'En votre possession', color: '#60A5FA', bg: 'rgba(96,165,250,0.08)', border: 'rgba(96,165,250,0.25)' };
 
   const rendre = async (e: React.MouseEvent) => {
@@ -249,7 +249,7 @@ function MonSacDuJour({ userId }: { userId: string }) {
       <a href={`/sac/${sac_id}`}
         className="flex items-center gap-3 px-4 py-3 no-underline"
         style={{ textDecoration: 'none' }}>
-        <span className="flex-shrink-0" style={{ color: '#F97316' }}><Backpack className="w-6 h-6" /></span>
+        <span className="flex-shrink-0" style={{ color: 'var(--accent-texte)' }}><Backpack className="w-6 h-6" /></span>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold" style={{ color: 'var(--c-text)' }}>{nom}</p>
           <p className="text-xs" style={{ color: etatCfg.color }}>{etatCfg.label}</p>
@@ -263,7 +263,7 @@ function MonSacDuJour({ userId }: { userId: string }) {
           onClick={rendre}
           disabled={rendering}
           className="w-full py-2 rounded-lg text-xs font-semibold disabled:opacity-50 transition-all"
-          style={{ background: 'rgba(239,68,68,0.1)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.25)', cursor: 'pointer' }}
+          style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--sev-critique)', border: '1px solid rgba(239,68,68,0.25)', cursor: 'pointer' }}
         >
           {rendering ? 'Rendu en cours...' : '↩ Rendre le sac'}
         </button>
@@ -303,10 +303,10 @@ void TernaireBadge;
 // ─── Badge rarity styles ──────────────────────────────────────────────────────
 
 const RARETE_STYLES: Record<string, { border: string; glow: string; label: string; labelColor: string }> = {
-  commun:     { border: 'rgba(100,116,139,0.4)',  glow: 'rgba(100,116,139,0.1)',  label: 'Commun',     labelColor: '#94A3B8' },
-  rare:       { border: 'rgba(249,115,22,0.5)',   glow: 'rgba(249,115,22,0.12)',  label: 'Rare',       labelColor: '#F97316' },
-  epique:     { border: 'rgba(139,92,246,0.55)',  glow: 'rgba(139,92,246,0.14)', label: 'Épique',     labelColor: '#8B5CF6' },
-  legendaire: { border: 'rgba(245,158,11,0.6)',   glow: 'rgba(245,158,11,0.16)', label: 'Légendaire', labelColor: '#F59E0B' },
+  commun:     { border: 'rgba(100,116,139,0.4)',  glow: 'rgba(100,116,139,0.1)',  label: 'Commun',     labelColor: 'var(--sev-neutre)' },
+  rare:       { border: 'rgba(249,115,22,0.5)',   glow: 'rgba(249,115,22,0.12)',  label: 'Rare',       labelColor: 'var(--accent-texte)' },
+  epique:     { border: 'rgba(139,92,246,0.55)',  glow: 'rgba(139,92,246,0.14)', label: 'Épique',     labelColor: 'var(--c-pliage-fort)' },
+  legendaire: { border: 'rgba(245,158,11,0.6)',   glow: 'rgba(245,158,11,0.16)', label: 'Légendaire', labelColor: 'var(--sev-vigilance)' },
 };
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -553,7 +553,7 @@ export function DashboardPage() {
     if (saut.statut === 'valide') {
       const nom = saut.valide_par ? saut.valide_par.split(' ').pop() : '';
       return (
-        <span style={{ background: 'rgba(16,185,129,0.12)', color: '#10B981', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 500 }} className="inline-flex items-center gap-1">
+        <span style={{ background: 'rgba(16,185,129,0.12)', color: 'var(--sev-conforme)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 500 }} className="inline-flex items-center gap-1">
           <ShieldCheck className="w-3 h-3" />
           {nom || 'Validé'}
         </span>
@@ -561,21 +561,21 @@ export function DashboardPage() {
     }
     if (saut.statut === 'en_attente') {
       return (
-        <span style={{ background: 'rgba(249,115,22,0.12)', color: '#F97316', border: '1px solid rgba(249,115,22,0.25)', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 500 }} className="inline-flex items-center gap-1">
+        <span style={{ background: 'rgba(249,115,22,0.12)', color: 'var(--accent-texte)', border: '1px solid rgba(249,115,22,0.25)', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 500 }} className="inline-flex items-center gap-1">
           En attente
         </span>
       );
     }
     if (saut.statut === 'refuse') {
       return (
-        <span style={{ background: 'rgba(239,68,68,0.12)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 500 }} className="inline-flex items-center gap-1">
+        <span style={{ background: 'rgba(239,68,68,0.12)', color: 'var(--sev-critique)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 500 }} className="inline-flex items-center gap-1">
           {STATUT_LABELS[saut.statut] || saut.statut}
         </span>
       );
     }
     if (saut.statut === 'historique') {
       return (
-        <span style={{ background: 'rgba(100,116,139,0.12)', color: '#94A3B8', border: '1px solid rgba(100,116,139,0.25)', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 500 }} className="inline-flex items-center gap-1">
+        <span style={{ background: 'rgba(100,116,139,0.12)', color: 'var(--sev-neutre)', border: '1px solid rgba(100,116,139,0.25)', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 500 }} className="inline-flex items-center gap-1">
           Historique
         </span>
       );
@@ -706,7 +706,7 @@ export function DashboardPage() {
                   </div>
                   <button onClick={() => { setProposeShare(false); setShareOpen(true); }}
                     className="px-4 py-2.5 rounded-xl text-sm font-bold text-white flex-shrink-0"
-                    style={{ background: '#F97316' }}>Partager ma journée →</button>
+                    style={{ background: 'var(--accent-fond)' }}>Partager ma journée →</button>
                   <button onClick={() => setProposeShare(false)} className="text-xs px-2 py-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Plus tard</button>
                 </div>
               )}
@@ -751,7 +751,9 @@ export function DashboardPage() {
                       label="Total sauts"
                       value={
                         <span className="flex items-center gap-2">
-                          <ParachuteDropIcon className="w-6 h-6 text-orange-500" />
+                          {/* Le composant d'icône n'accepte qu'une classe : on porte la couleur
+                              sur un conteneur, l'icône hérite de `currentColor`. */}
+                          <span style={{ color: 'var(--accent-texte)', display: 'inline-flex' }}><ParachuteDropIcon className="w-6 h-6" /></span>
                           <AnimatedNumber value={totalSauts} />
                         </span>
                       }
@@ -769,7 +771,7 @@ export function DashboardPage() {
                       accent="#10B981"
                       label="Licence FFP"
                       value={
-                        <span style={{ fontSize: 15, fontWeight: 700, color: licenceFFP ? '#fff' : 'rgba(255,255,255,0.3)' }}>
+                        <span style={{ fontSize: 15, fontWeight: 700, color: licenceFFP ? 'var(--c-text)' : 'var(--c-dim)' }}>
                           {licenceFFP?.date_expiration
                             ? new Date(licenceFFP.date_expiration).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
                             : '—'}
@@ -779,9 +781,9 @@ export function DashboardPage() {
                       sub={
                         licenceFFP?.date_expiration
                           ? licenceMonths !== null && licenceMonths < 0
-                            ? <span style={{ color: '#EF4444', fontWeight: 600 }}>EXPIRÉE</span>
+                            ? <span style={{ color: 'var(--sev-critique)', fontWeight: 600 }}>EXPIRÉE</span>
                             : `Valide · ${licenceMonths} mois restants`
-                          : <Link to="/passeport?onglet=licence" className="inline-flex items-center gap-1 no-underline font-semibold" style={{ color: '#F97316' }}><Plus className="w-3 h-3" /> Ajouter ma licence</Link>
+                          : <Link to="/passeport?onglet=licence" className="inline-flex items-center gap-1 no-underline font-semibold" style={{ color: 'var(--accent-texte)' }}><Plus className="w-3 h-3" /> Ajouter ma licence</Link>
                       }
                     />
                     {/* Card 4 — Certificat médical */}
@@ -789,7 +791,7 @@ export function DashboardPage() {
                       accent="#8B5CF6"
                       label="Certificat médical"
                       value={
-                        <span style={{ fontSize: 15, fontWeight: 700, color: certifMedical ? '#fff' : 'rgba(255,255,255,0.3)' }}>
+                        <span style={{ fontSize: 15, fontWeight: 700, color: certifMedical ? 'var(--c-text)' : 'var(--c-dim)' }}>
                           {certifMedical?.date_expiration
                             ? new Date(certifMedical.date_expiration).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
                             : '—'}
@@ -799,9 +801,9 @@ export function DashboardPage() {
                       sub={
                         certifMedical?.date_expiration
                           ? certifMonths !== null && certifMonths < 0
-                            ? <span style={{ color: '#EF4444', fontWeight: 600 }}>EXPIRÉ</span>
+                            ? <span style={{ color: 'var(--sev-critique)', fontWeight: 600 }}>EXPIRÉ</span>
                             : `Valide · ${certifMonths} mois restants`
-                          : <Link to="/passeport?onglet=medical" className="inline-flex items-center gap-1 no-underline font-semibold" style={{ color: '#F97316' }}><Plus className="w-3 h-3" /> Ajouter mon certificat</Link>
+                          : <Link to="/passeport?onglet=medical" className="inline-flex items-center gap-1 no-underline font-semibold" style={{ color: 'var(--accent-texte)' }}><Plus className="w-3 h-3" /> Ajouter mon certificat</Link>
                       }
                     />
                   </div>
@@ -863,7 +865,7 @@ export function DashboardPage() {
                       onClick={() => { if (!blockIfDemo()) setShareOpen(true); }}
                       disabled={isDemo}
                       className="mt-2 w-full flex items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
-                      style={{ height: 44, background: 'rgba(249,115,22,0.14)', border: '1px solid rgba(249,115,22,0.4)', color: '#F97316' }}
+                      style={{ height: 44, background: 'rgba(249,115,22,0.14)', border: '1px solid rgba(249,115,22,0.4)', color: 'var(--accent-texte)' }}
                     >
                       <Share2 className="w-4 h-4" /> Partager ma progression
                     </button>
@@ -964,17 +966,22 @@ export function DashboardPage() {
                 <div className="rounded-2xl p-4 mt-3 flex items-center gap-3 flex-wrap"
                   style={{ background: 'rgba(249,115,22,0.14)', border: '1.5px solid rgba(249,115,22,0.45)' }}>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-extrabold" style={{ color: '#FFEDD5' }}>
+                    {/* #FFEDD5 est un orange PÂLE : lisible sur le bleu nuit,
+                        il tombe à 1,04:1 sur le fond orangé translucide du mode
+                        jour — l'invitation disparaissait, et avec elle la seule
+                        raison d'ouvrir l'écran. Le jeton d'accent tient des deux
+                        côtés. */}
+                    <p className="text-sm font-extrabold" style={{ color: 'var(--accent-texte)' }}>
                       {sautsAEvaluer.length} saut{sautsAEvaluer.length > 1 ? 's' : ''} validé{sautsAEvaluer.length > 1 ? 's' : ''} à évaluer
                     </p>
-                    <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--c-text2)' }}>
                       Évalue ton saut pour faire progresser ta courbe et tes éléments maîtrisés.
                     </p>
                   </div>
                   <button
                     onClick={() => { if (!blockIfDemo()) { setSautAEditer(sautsAEvaluer[0]); setModalOpen(true); } }}
                     className="px-4 py-2.5 rounded-xl text-sm font-bold text-white flex-shrink-0"
-                    style={{ background: '#F97316' }}>
+                    style={{ background: 'var(--accent-fond)' }}>
                     Évaluer ce saut →
                   </button>
                 </div>
@@ -988,7 +995,7 @@ export function DashboardPage() {
                 <div style={{ flex: 2, background: 'var(--c-dropdown)', border: '1px solid var(--c-border)', borderRadius: 12, overflow: 'hidden', minWidth: 0 }}>
                   <div style={{ borderBottom: '1px solid var(--c-border)' }} className="px-5 py-4 flex items-center justify-between">
                     <h2 style={{ color: 'var(--c-text)', fontSize: 15, fontWeight: 600 }}>Derniers sauts</h2>
-                    <button onClick={() => setActiveTab('carnet')} style={{ color: '#F97316', fontSize: 12 }} className="font-medium hover:opacity-80 transition-opacity">
+                    <button onClick={() => setActiveTab('carnet')} style={{ color: 'var(--accent-texte)', fontSize: 12 }} className="font-medium hover:opacity-80 transition-opacity">
                       Voir tout →
                     </button>
                   </div>
@@ -1015,7 +1022,7 @@ export function DashboardPage() {
                             className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm"
                             style={saut.source === 'soufflerie'
                               ? { background: 'rgba(96,165,250,0.15)', color: '#60A5FA' }
-                              : { background: 'rgba(249,115,22,0.15)', color: '#F97316' }}
+                              : { background: 'rgba(249,115,22,0.15)', color: 'var(--accent-texte)' }}
                           >
                             {saut.source === 'soufflerie' ? <Wind className="w-4 h-4" /> : (sautNumeroMap[saut.id] ?? '—')}
                           </div>
@@ -1046,15 +1053,15 @@ export function DashboardPage() {
                     <div style={{ background: 'var(--c-dropdown)', border: '1px solid var(--c-border)', borderRadius: 12, padding: 16 }}>
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <Award className="w-3.5 h-3.5 text-orange-400" />
+                          <Award className="w-3.5 h-3.5" style={{ color: 'var(--accent-texte)' }} />
                           <span className="text-xs font-bold" style={{ color: 'var(--c-text)' }}>Badges</span>
                           {badges.length > 0 && (
-                            <span style={{ background: 'rgba(249,115,22,0.2)', color: '#FB923C', fontSize: 10 }} className="font-semibold px-1.5 py-0.5 rounded-full">
+                            <span style={{ background: 'rgba(249,115,22,0.2)', color: 'var(--accent-texte)', fontSize: 10 }} className="font-semibold px-1.5 py-0.5 rounded-full">
                               {badges.length}
                             </span>
                           )}
                         </div>
-                        <button onClick={() => navigate('/badges')} style={{ color: '#F97316', fontSize: 11 }} className="font-medium hover:opacity-80 transition-opacity">
+                        <button onClick={() => navigate('/badges')} style={{ color: 'var(--accent-texte)', fontSize: 11 }} className="font-medium hover:opacity-80 transition-opacity">
                           Voir tout →
                         </button>
                       </div>
@@ -1124,7 +1131,7 @@ export function DashboardPage() {
                     title={isDemo ? 'Non disponible en mode démo' : undefined}
                     className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
                     style={{
-                      background: isDemo ? 'var(--c-muted)' : '#F97316',
+                      background: isDemo ? 'var(--c-muted)' : 'var(--accent-fond)',
                       cursor: isDemo ? 'not-allowed' : 'pointer',
                       opacity: isDemo ? 0.6 : 1,
                     }}
@@ -1245,7 +1252,7 @@ export function DashboardPage() {
           {activeTab === 'compte' && user && (
             <div className="max-w-2xl mx-auto pt-2">
               <div className="flex items-center gap-2 mb-5">
-                <Wallet className="w-5 h-5" style={{ color: '#F97316' }} />
+                <Wallet className="w-5 h-5" style={{ color: 'var(--accent-texte)' }} />
                 <h2 className="text-lg font-bold" style={{ color: 'var(--c-text)' }}>Mon compte</h2>
               </div>
               <MonComptePara userId={user.id} />
@@ -1373,7 +1380,7 @@ function SautCardMobile({
         <div className="flex items-center gap-2">
           {isSoufflerie
             ? <Wind className="w-4 h-4" aria-hidden="true" style={{ color: '#60A5FA' }} />
-            : <span style={{ color: '#F97316', fontSize: 12, fontFamily: 'monospace', fontWeight: 700 }}>{numero !== null ? `#${numero}` : '—'}</span>}
+            : <span style={{ color: 'var(--accent-texte)', fontSize: 12, fontFamily: 'monospace', fontWeight: 700 }}>{numero !== null ? `#${numero}` : '—'}</span>}
           <span style={{ color: 'var(--c-text)', fontSize: 13, fontWeight: 500 }}>{new Date(saut.date_saut).toLocaleDateString('fr-FR')}</span>
         </div>
         {!isSoufflerie && statutBadge(saut)}
@@ -1439,7 +1446,10 @@ function CompactBadgeCard({ def, earned, locked, sauts }: { def: BadgeDefinition
       )}
       <BadgeIcon type={def.type} nom={def.nom} couleur={def.couleur} locked={locked} className="w-6 h-6" />
       {/* Titre jamais tronqué à un seul caractère : 2 lignes + tooltip. */}
-      <span className="text-[9px] font-semibold text-white/70 text-center leading-tight line-clamp-2">{def.nom}</span>
+      {/* Le nom du badge sous sa pastille : `text-white/70` le rendait
+          invisible en mode jour — on voyait douze pastilles sans savoir
+          laquelle était laquelle. */}
+      <span className="text-[9px] font-semibold text-center leading-tight line-clamp-2" style={{ color: 'var(--c-text2)' }}>{def.nom}</span>
       <span className="text-[9px] font-medium" style={{ color: locked ? '#64748B' : rs.labelColor }}>
         {locked && sauts !== undefined ? `${sauts} restants` : rs.label}
       </span>
@@ -1520,7 +1530,7 @@ function SautRowCarnet({
         {hovered ? (
           canEdit ? (
             <div className="flex items-center gap-1.5">
-              <button onClick={() => onEdit(saut)} className="text-white/40 hover:text-orange-400 transition-colors" title="Modifier">
+              <button onClick={() => onEdit(saut)} className="transition-colors hover:opacity-80" style={{ color: 'var(--c-muted)' }} title="Modifier">
                 <Pencil className="w-4 h-4" />
               </button>
               <button onClick={() => onDelete(saut.id)} className="text-white/20 hover:text-red-500 transition-colors" title="Supprimer">
@@ -1801,7 +1811,7 @@ function BanniereOCR({ onClic }: { onClic: () => void }) {
           className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
           style={{ background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)' }}
         >
-          <Camera className="w-7 h-7" style={{ color: '#F97316' }} />
+          <Camera className="w-7 h-7" style={{ color: 'var(--accent-texte)' }} />
         </div>
 
         {/* Text block */}
@@ -1809,7 +1819,7 @@ function BanniereOCR({ onClic }: { onClic: () => void }) {
           <div className="flex items-center gap-2 mb-1">
             <span
               className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
-              style={{ background: 'rgba(249,115,22,0.2)', color: '#F97316', border: '1px solid rgba(249,115,22,0.35)' }}
+              style={{ background: 'rgba(249,115,22,0.2)', color: 'var(--accent-texte)', border: '1px solid rgba(249,115,22,0.35)' }}
             >
               Nouveau
             </span>
@@ -1837,7 +1847,7 @@ function BanniereOCR({ onClic }: { onClic: () => void }) {
           </div>
           <div
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-white transition-all whitespace-nowrap"
-            style={{ background: '#F97316', boxShadow: '0 4px 14px rgba(249,115,22,0.4)' }}
+            style={{ background: 'var(--accent-fond)', boxShadow: '0 4px 14px rgba(249,115,22,0.4)' }}
           >
             <Camera className="w-4 h-4" />
             Commencer →
@@ -2000,7 +2010,7 @@ function ProgressionCard({ userId }: { userId: string | null }) {
             Basé sur tes {data.length} dernier{data.length > 1 ? 's' : ''} saut{data.length > 1 ? 's' : ''} évalué{data.length > 1 ? 's' : ''}
           </p>
         </div>
-        <Link to="/progression" className="text-xs font-medium no-underline transition-opacity hover:opacity-70" style={{ color: '#F97316' }}>
+        <Link to="/progression" className="text-xs font-medium no-underline transition-opacity hover:opacity-70" style={{ color: 'var(--accent-texte)' }}>
           Voir le détail →
         </Link>
       </div>
@@ -2030,7 +2040,7 @@ function ProgressionCard({ userId }: { userId: string | null }) {
                 <Link
                   to="/dashboard?action=add-jump"
                   className="inline-flex items-center gap-1 mt-1 text-[11px] font-semibold no-underline"
-                  style={{ color: '#F97316' }}
+                  style={{ color: 'var(--accent-texte)' }}
                 >
                   <Plus className="w-3 h-3" /> Évaluer un saut
                 </Link>
@@ -2066,9 +2076,9 @@ function BadgeNotif({ newBadge, onDismiss }: { newBadge: string | null; onDismis
       <button onClick={onDismiss} className="absolute top-2 right-2 text-white/40 hover:text-white/60">
         <ChevronDown className="w-4 h-4" />
       </button>
-      <Award className="w-6 h-6 mb-2" style={{ color: '#F97316' }} />
+      <Award className="w-6 h-6 mb-2" style={{ color: 'var(--accent-texte)' }} />
       <div className="font-bold text-white text-sm">Nouveau badge débloqué !</div>
-      <div className="text-orange-500 font-semibold mt-0.5">{newBadge}</div>
+      <div className="font-semibold mt-0.5" style={{ color: 'var(--accent-texte)' }}>{newBadge}</div>
       <button onClick={onDismiss} className="mt-3 text-xs text-white/40 hover:text-white/60">Fermer</button>
     </div>
   );

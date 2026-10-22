@@ -53,11 +53,17 @@ export function getCurrencyStatus(
   return 'a_jour';
 }
 
+// LES COULEURS DE STATUT SONT DES JETONS, PAS DES HEXADÉCIMAUX.
+// Écrites en dur, elles avaient été choisies pour le fond sombre : #10B981 ne
+// fait que 2,3:1 sur le blanc du mode jour, sous le seuil AA. Les jetons de
+// sévérité portent une valeur PAR THÈME — même sens, contraste tenu des deux
+// côtés. Les fonds et filets restent translucides : posés sur n'importe quelle
+// surface, ils s'y adaptent d'eux-mêmes.
 export const CURRENCY_STATUS_CONFIG: Record<CurrencyStatus, { label: string; color: string; bg: string; border: string }> = {
-  a_jour:              { label: 'À jour',              color: '#10B981', bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.3)' },
-  reprise_conseillee:  { label: 'Reprise conseillée',  color: '#F59E0B', bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.3)' },
-  reprise_obligatoire: { label: 'Reprise obligatoire — selon les règles paramétrées', color: '#EF4444', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)' },
-  indetermine:         { label: 'Indéterminé',         color: '#94A3B8', bg: 'rgba(148,163,184,0.12)', border: 'rgba(148,163,184,0.3)' },
+  a_jour:              { label: 'À jour',              color: 'var(--sev-conforme)',  bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.3)' },
+  reprise_conseillee:  { label: 'Reprise conseillée',  color: 'var(--sev-vigilance)', bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.3)' },
+  reprise_obligatoire: { label: 'Reprise obligatoire — selon les règles paramétrées', color: 'var(--sev-critique)', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)' },
+  indetermine:         { label: 'Indéterminé',         color: 'var(--sev-neutre)',    bg: 'rgba(148,163,184,0.12)', border: 'rgba(148,163,184,0.3)' },
 };
 
 /** « il y a 4 mois », « il y a 12 jours »… */

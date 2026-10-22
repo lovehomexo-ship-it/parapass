@@ -724,8 +724,8 @@ function FlippableCard({
       <div className="mt-2 flex justify-center">
         <button
           onClick={() => setFlipped(f => !f)}
-          className="flex items-center justify-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors w-full sm:w-auto"
-          style={{ minHeight: 44, padding: '0 16px' }}
+          className="flex items-center justify-center gap-1.5 text-xs transition-opacity hover:opacity-70 w-full sm:w-auto"
+          style={{ minHeight: 44, padding: '0 16px', color: 'var(--c-muted)' }}
         >
           <RotateCcw className="w-3.5 h-3.5" />
           {flipped ? 'Voir le recto' : 'Retourner la carte'}
@@ -860,7 +860,7 @@ function ValiditySummary({ data, feuVert }: { data: PasseportData; feuVert?: Der
           <span className="text-sm text-gray-700">Licence FFP</span>
           <div className="flex items-center gap-2 flex-wrap justify-end">
             {licence?.date_expiration && (
-              <span className="text-xs text-gray-400 font-mono">{new Date(licence.date_expiration).toLocaleDateString('fr-FR')}</span>
+              <span className="text-xs text-gray-500 font-mono">{new Date(licence.date_expiration).toLocaleDateString('fr-FR')}</span>
             )}
             <StatusPill status={licStatus} days={licDays} />
           </div>
@@ -869,7 +869,7 @@ function ValiditySummary({ data, feuVert }: { data: PasseportData; feuVert?: Der
           <span className="text-sm text-gray-700">Certificat médical</span>
           <div className="flex items-center gap-2 flex-wrap justify-end">
             {certif?.date_expiration && (
-              <span className="text-xs text-gray-400 font-mono">{new Date(certif.date_expiration).toLocaleDateString('fr-FR')}</span>
+              <span className="text-xs text-gray-500 font-mono">{new Date(certif.date_expiration).toLocaleDateString('fr-FR')}</span>
             )}
             <StatusPill status={medStatus} days={medDays} />
           </div>
@@ -895,7 +895,7 @@ function ValiditySummary({ data, feuVert }: { data: PasseportData; feuVert?: Der
               <StatusPill status="manquant" days={null} />
             ) : (
               <div className="flex items-center gap-2 flex-wrap justify-end">
-                <span className="text-xs text-gray-400 font-mono">
+                <span className="text-xs text-gray-500 font-mono">
                   {new Date(feuVert.evalue_le).toLocaleDateString('fr-FR')}
                   {feuVert.centre_nom ? ` · ${feuVert.centre_nom}` : ''}
                   {feuVert.regles_controlees !== null ? ` · ${feuVert.regles_controlees} règle(s) contrôlée(s)` : ''}
@@ -906,7 +906,7 @@ function ValiditySummary({ data, feuVert }: { data: PasseportData; feuVert?: Der
           </div>
         )}
       </div>
-      <p className="text-[10px] text-gray-400 text-right">
+      <p className="text-[10px] text-gray-500 text-right">
         Données à jour au {data.loadedAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
       </p>
     </div>
@@ -1196,7 +1196,7 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
       {/* Action bar */}
       <div className="flex flex-col gap-2">
         {/* Shield badge */}
-        <div className="flex items-center gap-1.5 text-xs text-gray-400">
+        <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--c-muted)' }}>
           <Shield className="w-3.5 h-3.5 flex-shrink-0" />
           <span>Données à jour en temps réel</span>
         </div>

@@ -30,27 +30,31 @@ export function MaRepriseCard({ userId, niveau, onPlanifierReprise }: { userId: 
   }
 
   return (
-    <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid ${cfg.border}` }}>
+    // LE MODE JOUR RENDAIT CETTE CARTE ILLISIBLE. Fond et textes étaient
+    // écrits en blanc translucide — pensés pour le bleu nuit, posés tels quels
+    // sur le blanc du thème clair : la carte entière disparaissait, titre
+    // compris. Tout passe par les jetons, qui ont une valeur par thème.
+    <div className="rounded-2xl p-4" style={{ background: 'var(--c-card)', border: `1px solid ${cfg.border}` }}>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: cfg.bg }}>
             <Wind className="w-4 h-4" style={{ color: cfg.color }} />
           </div>
-          <h3 className="text-sm font-bold text-white">Ma reprise</h3>
+          <h3 className="text-sm font-bold" style={{ color: 'var(--c-text)' }}>Ma reprise</h3>
         </div>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.border}` }}>
           {status === 'reprise_obligatoire' ? 'Reprise obligatoire*' : cfg.label}
         </span>
       </div>
       {lastJumpDate && (
-        <p className="text-xs mb-1.5" style={{ color: 'rgba(255,255,255,0.6)' }}>
-          Dernier saut : <span className="font-semibold text-white">{new Date(lastJumpDate).toLocaleDateString('fr-FR')}</span>
-          {lastJumpIsUnvalidated && <span style={{ color: '#FBBF24' }}> (saut importé non validé)</span>}
+        <p className="text-xs mb-1.5" style={{ color: 'var(--c-text2)' }}>
+          Dernier saut : <span className="font-semibold" style={{ color: 'var(--c-text)' }}>{new Date(lastJumpDate).toLocaleDateString('fr-FR')}</span>
+          {lastJumpIsUnvalidated && <span style={{ color: 'var(--sev-vigilance)' }}> (saut importé non validé)</span>}
         </p>
       )}
-      <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>{phrase}</p>
+      <p className="text-xs leading-relaxed" style={{ color: 'var(--c-text2)' }}>{phrase}</p>
       {status !== 'indetermine' && (
-        <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
+        <p className="text-[10px] mt-2" style={{ color: 'var(--c-dim)' }}>
           Seuils pour {niveauLabel} : conseillé {rule.seuil_conseille_jours} j · reprise {rule.seuil_obligatoire_jours} j — selon les règles paramétrées{status === 'reprise_obligatoire' ? ' (*)' : ''}.
         </p>
       )}
