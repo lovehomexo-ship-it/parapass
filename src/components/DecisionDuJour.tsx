@@ -178,6 +178,13 @@ function DecisionInner({ centreId }: { centreId: string }) {
     : readinessLocal;
   const ui = verdict ? LEVEL_UI[verdict.level] : null;
 
+  // LE DÉTAIL PAR PUBLIC SE DÉPLIE, IL NE S'IMPOSE PAS. Cinq lignes de seuils
+  // et deux lignes de source occupaient le tiers de la largeur en permanence,
+  // alors que la question du matin tient dans un chiffre : combien de publics
+  // peuvent voler. Le détail reste à un clic, pour celui qui veut savoir
+  // POURQUOI — c'est-à-dire au moment où il en a besoin, pas avant.
+  const [detailMeteo, setDetailMeteo] = useState(false);
+
   return (
     <section className="p-4 sm:p-5" style={surface(1)}>
       {/* P14.3 — 13 px / 700 / 0,08 em sur un filet qui traverse la colonne.
@@ -203,7 +210,10 @@ function DecisionInner({ centreId }: { centreId: string }) {
         </p>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {/* Trois colonnes dont une disait « Rien à vérifier » : un tiers de la
+          largeur pour annoncer une absence. La colonne n'existe que si elle a
+          quelque chose à dire. */}
+      <div className={`grid grid-cols-1 gap-3 ${readiness.bloquesDetail.length > 0 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
         {/* Verdict météo */}
         <div className="rounded-xl p-3 sm:col-span-1" style={{ background: ui?.bg ?? 'var(--c-hover)', border: `1px solid ${ui?.border ?? 'var(--c-border-s)'}` }}>
           <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--c-text2)' }}>Météo par public</div>
@@ -219,7 +229,11 @@ function DecisionInner({ centreId }: { centreId: string }) {
                 style={{ color: FEU_COULEUR[pireFeu] }}>
                 {nbPraticables}/{verdictsPublics.length} praticable{nbPraticables > 1 ? 's' : ''}
               </div>
-              <ul className="mt-1 space-y-0.5">
+              <button type="button" onClick={() => setDetailMeteo(d => !d)}
+                className="mt-1 text-xs font-semibold" style={{ ...action('texte'), minHeight: 28 }}>
+                {detailMeteo ? 'masquer le détail' : `voir les ${verdictsPublics.length} publics`}
+              </button>
+              <ul className="mt-1 space-y-0.5" hidden={!detailMeteo}>
                 {verdictsPublics.map(v => (
                   <li key={v.public_cible} className="flex items-baseline gap-1.5 text-xs">
                     <span className="w-1.5 h-1.5 rounded-full flex-shrink-0"
@@ -238,7 +252,7 @@ function DecisionInner({ centreId }: { centreId: string }) {
                   Vent {libelleVent(ventPrevu)}
                 </p>
               )}
-              {ventBriefing && (
+              {ventBriefing && detailMeteo && (
                 <p style={{ fontSize: 12, color: 'var(--c-muted)' }}>
                   Relevé du jour : {libelleVent(ventBriefing)}
                 </p>
@@ -269,26 +283,25 @@ function DecisionInner({ centreId }: { centreId: string }) {
           </div>
         </div>
 
-        {/* Alertes bloquantes */}
-        <div className="rounded-xl p-3" style={{ background: 'var(--c-hover)', border: '1px solid var(--c-border-s)' }}>
-          <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--c-text2)' }}>À vérifier</div>
-          {readiness.bloquesDetail.length === 0 ? (
-            <div className="text-sm mt-1 font-medium" style={{ color: 'var(--sev-conforme)' }}>Rien à vérifier</div>
-          ) : (
-            <>
-              <div className="text-2xl font-extrabold mt-0.5" style={{ color: SEVERITE_COULEUR.vigilance }}>
-                {readiness.bloquesDetail.length}
-              </div>
-              {/* Règle 3 : les motifs ont UN endroit qui fait autorité, le
-                  tableau « Sur le terrain ». Ici on renvoie, on ne redit pas. */}
-              <button type="button" style={action('texte')}
-                onClick={() => document.getElementById('sur-le-terrain')
-                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
-                voir qui, sur le terrain
-              </button>
-            </>
-          )}
-        </div>
+        {/* Alertes bloquantes — LA CARTE N'EXISTE QUE S'IL Y A QUELQUE CHOSE À
+            VÉRIFIER. « Rien à vérifier » était déjà dit juste à gauche par
+            « aucun blocage détecté » : deux fois la même absence, sur deux
+            tiers de la largeur. */}
+        {readiness.bloquesDetail.length > 0 && (
+          <div className="rounded-xl p-3" style={{ background: 'var(--c-hover)', border: '1px solid var(--c-border-s)' }}>
+            <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--c-text2)' }}>À vérifier</div>
+            <div className="text-2xl font-extrabold mt-0.5" style={{ color: SEVERITE_COULEUR.vigilance }}>
+              {readiness.bloquesDetail.length}
+            </div>
+            {/* Règle 3 : les motifs ont UN endroit qui fait autorité, le
+                tableau « Sur le terrain ». Ici on renvoie, on ne redit pas. */}
+            <button type="button" style={action('texte')}
+              onClick={() => document.getElementById('sur-le-terrain')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+              voir qui, sur le terrain
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );

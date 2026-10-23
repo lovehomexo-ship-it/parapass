@@ -54,8 +54,16 @@ function TerrainInner({ centreId }: { centreId: string }) {
   const [erreur, setErreur] = useState<string | null>(null);
   // Le filtre était déjà la bonne idée au bon endroit : on le garde, et son
   // état survit à la visite.
+  // LE DÉFAUT S'INVERSE. Afficher les vingt lignes par défaut, c'est demander
+  // au DT de lire vingt fois « Peut sauter » pour trouver les deux qui ne le
+  // disent pas. Le bloc s'ouvre donc sur CE QUI COINCE ; le reste se déplie à
+  // la demande. Un choix explicite du DT reste mémorisé, dans un sens comme
+  // dans l'autre.
   const [seulementCeQuiCoince, setFiltre] = useState(() => {
-    try { return localStorage.getItem(CLE_FILTRE) === '1'; } catch { return false; }
+    try {
+      const v = localStorage.getItem(CLE_FILTRE);
+      return v === null ? true : v === '1';
+    } catch { return true; }
   });
   const [levee, setLevee] = useState<{ ligne: Ligne; motif: Motif } | null>(null);
 
@@ -125,9 +133,21 @@ function TerrainInner({ centreId }: { centreId: string }) {
         style={{ borderBottom: '1px solid var(--n3-filet)' }}>
         <h3 style={{ ...enTeteSection, marginBottom: 0, paddingBottom: 0, borderBottom: 'none' }}>
           Sur le terrain
-          <span className="font-normal" style={{ color: 'var(--c-muted)' }}>
-            {' · '}{lignes.length} présent{lignes.length > 1 ? 's' : ''}
-            {aExaminer > 0 && `, ${aExaminer} à examiner`}
+          {/* LA PHRASE AVANT LE CHIFFRE. « 20 présents, 0 à examiner » oblige à
+              faire la soustraction soi-même ; « les 20 présents peuvent sauter »
+              est la réponse. */}
+          {/* DEUX CHIFFRES DE PRÉSENCE SUR LE MÊME ÉCRAN, ET ILS NE DISAIENT PAS
+              LA MÊME CHOSE : la barre d'état comptait 18 têtes encore sur place,
+              ce bloc en annonçait 20 — les deux repartis compris. Le compte de
+              présence a UN endroit, la barre d'état. Ici on ne parle plus que
+              de ce qu'on sait faire : examiner des dossiers. */}
+          <span className="font-normal" style={{ color: aExaminer > 0 ? 'var(--sev-vigilance)' : 'var(--sev-conforme)' }}>
+            {' · '}
+            {lignes.length === 0
+              ? 'aucun dossier du jour'
+              : aExaminer === 0
+                ? 'rien à examiner'
+                : `${aExaminer} dossier${aExaminer > 1 ? 's' : ''} à examiner`}
           </span>
         </h3>
         {/* LE CHEMIN VERS LA LISTE NOMINATIVE. Ce bloc répond à « qui peut
@@ -139,24 +159,24 @@ function TerrainInner({ centreId }: { centreId: string }) {
           style={{ color: 'var(--action-texte)', minHeight: 36 }}>
           Vue d’ensemble des présents <ChevronRight className="w-3.5 h-3.5" aria-hidden />
         </Link>
-        {aExaminer > 0 && (
-          <button onClick={basculerFiltre} aria-pressed={seulementCeQuiCoince}
+        {lignes.length > 0 && (
+          <button onClick={basculerFiltre} aria-pressed={!seulementCeQuiCoince}
             className="flex items-center gap-1.5 px-3 rounded-full text-xs font-semibold"
-            style={{ minHeight: 36,
-              background: seulementCeQuiCoince ? 'var(--action-fond)' : 'transparent',
-              color: seulementCeQuiCoince ? '#fff' : 'var(--action-texte)',
-              border: `1px solid ${seulementCeQuiCoince ? 'var(--action-fond)' : 'var(--action-texte)'}` }}>
+            style={{ minHeight: 36, background: 'transparent',
+              color: 'var(--action-texte)', border: '1px solid var(--action-texte)' }}>
             <Filter className="w-3.5 h-3.5" aria-hidden />
-            Ne montrer que ce qui coince
+            {seulementCeQuiCoince
+              ? `Voir les ${lignes.length} dossiers du jour`
+              : 'Ne montrer que ce qui coince'}
           </button>
         )}
       </header>
 
       {affichees.length === 0 ? (
-        <p className="text-sm text-center py-6" style={{ color: 'var(--c-muted)' }}>
+        <p className="text-sm text-center py-5" style={{ color: 'var(--c-muted)' }}>
           {lignes.length === 0
             ? 'Aucune présence enregistrée aujourd’hui.'
-            : 'Rien ne coince : tout le monde est en règle.'}
+            : 'Aucun motif à examiner — les dossiers du jour sont en règle.'}
         </p>
       ) : (
         <ul>

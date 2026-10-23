@@ -15,7 +15,7 @@ import { surface, SEVERITE_COULEUR, action } from '../../lib/jetons';
 //   • a acquitté une version ANTÉRIEURE → « relisez la mise à jour »
 // ═══════════════════════════════════════════════════════════════════════════
 
-function SuiviInner({ centreId, listerManquants = true }: { centreId: string; listerManquants?: boolean }) {
+function SuiviInner({ centreId, listerManquants = true, masquerSiComplet = false }: { centreId: string; listerManquants?: boolean; masquerSiComplet?: boolean }) {
   // F01 — SOURCE UNIQUE : ce composant faisait sa propre lecture (RPC +
   // comptage des présences + révision courante). Trois lectures pour un même
   // chiffre, c'était la cause de la divergence.
@@ -74,6 +74,14 @@ function SuiviInner({ centreId, listerManquants = true }: { centreId: string; li
 
   const pct = presents > 0 ? Math.round((ack.acquittes / presents) * 100) : 100;
   const aRelire = manquants.filter(m => m.acquitte_revision_anterieure);
+
+  // DEUX BLOCS DISAIENT LA MÊME CHOSE. Le récapitulatif du briefing écrit déjà
+  // « acquitté par 20 des 20 présents » ; ce bandeau le répétait juste en
+  // dessous, avec une barre de progression à 100 %. Sur le tableau de bord il
+  // ne s'affiche donc QUE s'il reste quelqu'un à relancer — c'est-à-dire quand
+  // il porte une action. L'écran Briefing, lui, le garde en permanence : c'est
+  // là qu'on vient suivre les acquittements.
+  if (masquerSiComplet && manquants.length === 0) return null;
 
   return (
     <div className="p-4 space-y-3" style={surface(2)}>
@@ -176,8 +184,8 @@ function SuiviInner({ centreId, listerManquants = true }: { centreId: string; li
  *   autorité sur les noms. Variante, pas modification en place : le mode
  *   Gestion et l'écran Briefing gardent le comportement d'origine.
  */
-export function SuiviAcquittements({ centreId, listerManquants = true }: {
-  centreId: string; listerManquants?: boolean;
+export function SuiviAcquittements({ centreId, listerManquants = true, masquerSiComplet = false }: {
+  centreId: string; listerManquants?: boolean; masquerSiComplet?: boolean;
 }) {
-  return <ErrorBoundary><SuiviInner centreId={centreId} listerManquants={listerManquants} /></ErrorBoundary>;
+  return <ErrorBoundary><SuiviInner centreId={centreId} listerManquants={listerManquants} masquerSiComplet={masquerSiComplet} /></ErrorBoundary>;
 }

@@ -576,29 +576,30 @@ function DashboardHome({
               chiffre, ce que la règle 3 interdit.
               Un compteur de DÉFAUT porte une gravité et une action obligatoire ;
               un compteur d'ACTIVITÉ est neutre et ne mène nulle part. */}
+          {/* Les libellés sont COURTS : ce ne sont plus des tuiles mais des
+              pastilles en ligne, et une pastille se lit d'un regard ou ne se
+              lit pas. Les deux chiffres d'activité passent en tête — c'est
+              l'état du terrain, pas une tâche. */}
           <BarreEtat compteurs={[
+            { genre: 'activite', cle: 'presents', valeur: presentsDuJour,
+              libelle: 'présents' },
+            { genre: 'activite', cle: 'sauts', valeur: stats.sautsAujourdhui,
+              libelle: 'sauts aujourd’hui' },
             { genre: 'defaut', cle: 'encadrement', valeur: exigencesNonCouvertes,
-              libelle: 'exigences d’encadrement non couvertes', gravite: 'critique',
+              libelle: 'encadrement à couvrir', gravite: 'critique',
               onAller: () => onAllerGestion('equipe', 'encadrement') },
             { genre: 'defaut', cle: 'licences', valeur: licencesExpirees,
-              libelle: 'licences FFP expirées', gravite: 'critique',
+              libelle: 'licences expirées', gravite: 'critique',
               onAller: () => onAllerGestion('licencies') },
             { genre: 'defaut', cle: 'carnets', valeur: carnetsEnAttente,
               libelle: 'carnets à valider', gravite: 'vigilance',
               onAller: () => onAllerGestion('validations') },
             { genre: 'defaut', cle: 'medical', valeur: alerteMedical,
-              libelle: 'certificats médicaux à renouveler', gravite: 'vigilance',
+              libelle: 'certificats à renouveler', gravite: 'vigilance',
               onAller: () => onAllerGestion('licencies') },
             { genre: 'defaut', cle: 'adhesions', valeur: stats.demandesAttente,
-              libelle: 'demandes d’adhésion en attente', gravite: 'vigilance',
+              libelle: 'adhésions en attente', gravite: 'vigilance',
               onAller: () => onAllerGestion('demandes') },
-            { genre: 'activite', cle: 'sauts', valeur: stats.sautsAujourdhui,
-              libelle: 'sauts aujourd’hui' },
-            // COMBIEN DE TÊTES SUR LE TERRAIN. Le chiffre existait dans la
-            // base depuis le premier check-in, et n'apparaissait nulle part :
-            // le DT devait le deviner. Il mène à la liste nominative.
-            { genre: 'activite', cle: 'presents', valeur: presentsDuJour,
-              libelle: 'présents sur la DZ' },
           ]} />
 
           {meteoSlot}
@@ -3743,7 +3744,7 @@ export function CentreDashboardPage() {
                     onChangerMode={changerMode}
                     onAllerGestion={(section, sousOnglet) => { changerMode('gestion'); setActiveSection(section, sousOnglet); }}
                     briefingSlot={centreId ? <BriefingRecapDZ centreId={centreId} onOuvrir={() => setActiveSection('briefing')} /> : undefined}
-                    acquittementSlot={centreId ? <SuiviAcquittements centreId={centreId} listerManquants={false} /> : undefined}
+                    acquittementSlot={centreId ? <SuiviAcquittements centreId={centreId} listerManquants={false} masquerSiComplet /> : undefined}
                     terrainSlot={centreId ? <SurLeTerrain centreId={centreId} /> : undefined}
                     presentsSlot={centreId ? <ApercuPresents centreId={centreId} /> : undefined}
                     avionnageSlot={centreId && avionnageDisponible ? <Avionnage centreId={centreId} /> : undefined}
