@@ -31,12 +31,13 @@ import { lireTout } from '../lib/lireTout';
 import { formatDateTimeParis } from '../lib/datetime';
 import { useDemo } from '../lib/useDemo';
 import { EnTeteAccueil, TitreBloc, CarteWallet, CarteCarnet, CarteProgression } from './accueil/AccueilBlocs';
+import { CarnetListe } from './accueil/CarnetListe';
 import { CelebrationBurst } from '../components/CelebrationBurst';
 import {
   Plus, FileDown,
-  ChevronDown, ChevronUp, ChevronLeft, Trash2, X, ShieldCheck, Hash,
-  Pencil, Lock, Award, ChevronRight, Camera, Wallet, Flame, Share2,
-  Target, GraduationCap, ScanLine, Wind, CheckCircle2, Backpack,
+  ChevronDown, ChevronLeft, X, ShieldCheck, Hash,
+  Award, ChevronRight, Camera, Wallet, Flame, Share2,
+  Target, GraduationCap, ScanLine, CheckCircle2, Backpack,
   ClipboardList, AlertTriangle,
 } from 'lucide-react';
 
@@ -250,8 +251,6 @@ export function DashboardPage() {
   const [centreNom, setCentreNom] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);   // écran de partage (V2)
   const [proposeShare, setProposeShare] = useState(false); // invite « à chaud » après un saut
-  const [sortField, setSortField] = useState<'date_saut' | 'lieu' | 'hauteur_m'>('date_saut');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [selectedSaut, setSelectedSaut] = useState<Saut | null>(null);
   const [centrePlan, setCentrePlan] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -464,14 +463,6 @@ export function DashboardPage() {
   const sautsCetteAnnee = vraisSauts.filter((s) => new Date(s.date_saut).getFullYear() === new Date().getFullYear()).length;
   const sortedByDate = [...sauts].sort((a, b) => b.date_saut.localeCompare(a.date_saut));
 
-  const sortedSauts = [...sauts].sort((a, b) => {
-    const dir = sortDir === 'asc' ? 1 : -1;
-    if (sortField === 'hauteur_m') return (a.hauteur_m - b.hauteur_m) * dir;
-    const cmp = (a[sortField] ?? '').localeCompare(b[sortField] ?? '') * dir;
-    // tri par date : les sauts du même jour restent dans l'ordre du carnet
-    if (cmp === 0 && sortField === 'date_saut') return ((a.created_at ?? '').localeCompare(b.created_at ?? '')) * dir;
-    return cmp;
-  });
 
   // Numérotation séquentielle uniquement sur les vrais sauts (pas soufflerie)
   // Calculé sur tous les sauts triés par date asc → attribue un numéro croissant aux non-soufflerie
@@ -485,15 +476,7 @@ export function DashboardPage() {
     return map;
   })();
 
-  const toggleSort = (field: typeof sortField) => {
-    if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    else { setSortField(field); setSortDir('desc'); }
-  };
 
-  const SortIcon = ({ field }: { field: typeof sortField }) => {
-    if (sortField !== field) return null;
-    return sortDir === 'asc' ? <ChevronUp className="w-3 h-3 inline" /> : <ChevronDown className="w-3 h-3 inline" />;
-  };
 
   const statutBadge = (saut: Saut) => {
     if (saut.statut === 'valide') {
@@ -746,15 +729,34 @@ export function DashboardPage() {
 
           {/* ─── CARNET ──────────────────────────────────────────────────────── */}
           {activeTab === 'carnet' && (
-            <div style={{ background: 'var(--c-dropdown)', border: '1px solid var(--c-border)' }} className="rounded-xl overflow-hidden">
-              <div style={{ borderBottom: '1px solid var(--c-border)' }} className="px-5 py-4 flex items-center justify-between">
-                <div>
-                  <h2 className="font-bold" style={{ fontSize: 20, color: 'var(--c-text)' }}>Mon carnet</h2>
-                  <p className="text-[13px] mt-0.5" style={{ color: 'var(--c-muted)' }}>{totalSauts} sauts enregistrés</p>
+            // Pas d'overflow-hidden ici : il empêchait les en-têtes de mois de
+            // rester collés en haut pendant le défilement.
+            <div style={{ background: 'var(--c-dropdown)', border: '1px solid var(--c-border)' }} className="rounded-xl max-w-3xl mx-auto">
+              {/* En-tête sur deux lignes : à 375 px, titre + quatre boutons
+                  débordaient et « Ajouter » était coupé au bord. */}
+              <div style={{ borderBottom: '1px solid var(--c-border)' }} className="px-4 py-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="font-bold" style={{ fontSize: 22, color: 'var(--c-text)' }}>Mon carnet</h2>
+                  <button
+                    onClick={() => { if (!blockIfDemo()) setModalOpen(true); }}
+                    disabled={isDemo}
+                    title={isDemo ? 'Non disponible en mode démo' : undefined}
+                    className="flex items-center gap-2 text-white px-4 rounded-xl text-sm font-semibold"
+                    style={{ minHeight: 40, background: isDemo ? 'var(--c-muted)' : 'var(--accent-fond)',
+                             cursor: isDemo ? 'not-allowed' : 'pointer', opacity: isDemo ? 0.6 : 1 }}>
+                    <Plus className="w-4 h-4" aria-hidden /> Ajouter
+                  </button>
                 </div>
-                <div className="flex items-center gap-2">
-                  {/* Exporter et partager vivent avec le carnet qu'ils exportent :
-                      ils occupaient deux lignes de boutons sur l'accueil. */}
+                <div className="flex items-center gap-2 mt-2">
+                  <p className="flex-1 text-[13px]" style={{ color: 'var(--c-muted)' }}>{totalSauts} sauts enregistrés</p>
+                  {/* Importer, exporter, partager : trois gestes rares, en icônes. */}
+                  {!isDemo && (
+                    <button onClick={() => setShowOCR(true)} aria-label="Importer un carnet papier" title="Importer un carnet papier"
+                      className="w-10 h-10 flex items-center justify-center rounded-xl"
+                      style={{ border: '1px solid var(--c-border-f)', color: 'var(--c-text2)' }}>
+                      <Camera className="w-4 h-4" aria-hidden />
+                    </button>
+                  )}
                   <button
                     onClick={async () => {
                       if (blockIfDemo() || !user) return;
@@ -777,31 +779,6 @@ export function DashboardPage() {
                     className="w-10 h-10 flex items-center justify-center rounded-xl disabled:opacity-40"
                     style={{ border: '1px solid var(--c-border-f)', color: 'var(--c-text2)' }}>
                     <Share2 className="w-4 h-4" aria-hidden />
-                  </button>
-                  {!isDemo && (
-                    <button
-                      onClick={() => setShowOCR(true)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-                      style={{ border: '1px solid var(--c-border-f)', color: 'var(--c-text2)', background: 'var(--c-surface)' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--c-hover)')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--c-surface)')}
-                      title="Importer depuis un carnet papier via Claude Vision"
-                    >
-                      <Camera className="w-4 h-4" /> Carnet papier
-                    </button>
-                  )}
-                  <button
-                    onClick={() => { if (!blockIfDemo()) setModalOpen(true); }}
-                    disabled={isDemo}
-                    title={isDemo ? 'Non disponible en mode démo' : undefined}
-                    className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-                    style={{
-                      background: isDemo ? 'var(--c-muted)' : 'var(--accent-fond)',
-                      cursor: isDemo ? 'not-allowed' : 'pointer',
-                      opacity: isDemo ? 0.6 : 1,
-                    }}
-                  >
-                    <Plus className="w-4 h-4" /> Ajouter
                   </button>
                 </div>
               </div>
@@ -847,71 +824,8 @@ export function DashboardPage() {
                   <p className="text-sm mt-1" style={{ color: 'var(--c-dim)' }}>Cliquez sur "Ajouter" pour commencer</p>
                 </div>
               ) : (
-                <>
-                  {/* Desktop table */}
-                  <div className="hidden md:block overflow-x-auto w-full">
-                    <table className="w-full text-sm table-fixed">
-                      <colgroup>
-                        <col style={{ width: '6%' }} />
-                        <col style={{ width: '11%' }} />
-                        <col style={{ width: '16%' }} />
-                        <col style={{ width: '12%' }} />
-                        <col style={{ width: '9%' }} />
-                        <col style={{ width: '12%' }} />
-                        <col style={{ width: '9%' }} />
-                        <col style={{ width: '21%' }} />
-                        <col style={{ width: '4%' }} />
-                      </colgroup>
-                      <thead>
-                        <tr style={{ background: 'var(--c-card)', color: 'var(--c-muted)' }}>
-                          <th className="px-4 py-3 text-left font-medium">N°</th>
-                          <th className="px-4 py-3 text-left font-medium cursor-pointer select-none" onClick={() => toggleSort('date_saut')}>
-                            Date <SortIcon field="date_saut" />
-                          </th>
-                          <th className="px-4 py-3 text-left font-medium cursor-pointer select-none" onClick={() => toggleSort('lieu')}>
-                            Lieu / DZ <SortIcon field="lieu" />
-                          </th>
-                          <th className="px-4 py-3 text-left font-medium">Nature</th>
-                          <th className="px-4 py-3 text-left font-medium cursor-pointer select-none" onClick={() => toggleSort('hauteur_m')}>
-                            Hauteur <SortIcon field="hauteur_m" />
-                          </th>
-                          <th className="px-4 py-3 text-left font-medium">Fonction</th>
-                          <th className="px-4 py-3 text-left font-medium">Position</th>
-                          <th className="px-4 py-3 text-left font-medium">Statut</th>
-                          <th className="px-4 py-3 text-left font-medium w-10"></th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y" style={{ borderColor: 'var(--c-border-s)' }}>
-                        {sortedSauts.map((saut) => (
-                          <SautRowCarnet
-                            key={saut.id}
-                            saut={saut}
-                            numero={sautNumeroMap[saut.id] ?? null}
-                            statutBadge={statutBadge}
-                            onEdit={openEdit}
-                            onDetail={setSelectedSaut}
-                            onDelete={handleDelete}
-                          />
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Mobile card list */}
-                  <div className="md:hidden p-3 space-y-2">
-                    {sortedSauts.map((saut) => (
-                      <SautCardMobile
-                        key={saut.id}
-                        saut={saut}
-                        numero={sautNumeroMap[saut.id] ?? null}
-                        statutBadge={statutBadge}
-                        onEdit={openEdit}
-                        onDetail={setSelectedSaut}
-                        onDelete={handleDelete}
-                      />
-                    ))}
-                  </div>
-                </>
+                <CarnetListe sauts={sortedByDate} numeros={sautNumeroMap} statutBadge={statutBadge}
+                  onDetail={setSelectedSaut} onEdit={openEdit} onDelete={handleDelete} />
               )}
             </div>
           )}
@@ -1015,184 +929,9 @@ export function DashboardPage() {
 
 // ─── Saut card for mobile Carnet ─────────────────────────────────────────────
 
-function SautCardMobile({
-  saut, numero, statutBadge, onEdit, onDetail, onDelete,
-}: {
-  saut: Saut;
-  numero: number | null;
-  statutBadge: (s: Saut) => React.ReactNode;
-  onEdit: (s: Saut) => void;
-  onDetail: (s: Saut) => void;
-  onDelete: (id: string) => void;
-}) {
-  const canEdit = saut.statut !== 'valide' && saut.statut !== 'refuse';
-  const isSoufflerie = saut.source === 'soufflerie' || saut.is_tunnel === true;
-
-  if (saut.statut === 'declaration_honneur') {
-    return (
-      <div
-        style={{ background: 'rgba(167,139,250,0.06)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: 10, padding: '12px 14px' }}
-      >
-        <div className="flex items-center gap-2">
-          <ClipboardList className="w-4 h-4" aria-hidden="true" style={{ color: '#A78BFA' }} />
-          <div>
-            <p className="text-sm font-semibold" style={{ color: '#A78BFA' }}>
-              Solde antérieur — {saut.nb_sauts_declares ?? '?'} sauts déclarés sur l'honneur
-            </p>
-            <p className="text-xs" style={{ color: 'var(--c-dim)' }}>
-              Déclaré le {new Date(saut.created_at).toLocaleDateString('fr-FR')} · Déclaré sur l'honneur
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      style={{ background: 'var(--c-dropdown)', border: '1px solid var(--c-border)', borderRadius: 10, padding: '12px 14px', cursor: 'pointer' }}
-      onClick={() => onDetail(saut)}
-    >
-      <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-2">
-          {isSoufflerie
-            ? <Wind className="w-4 h-4" aria-hidden="true" style={{ color: '#60A5FA' }} />
-            : <span style={{ color: 'var(--accent-texte)', fontSize: 12, fontFamily: 'monospace', fontWeight: 700 }}>{numero !== null ? `#${numero}` : '—'}</span>}
-          <span style={{ color: 'var(--c-text)', fontSize: 13, fontWeight: 500 }}>{new Date(saut.date_saut).toLocaleDateString('fr-FR')}</span>
-        </div>
-        {!isSoufflerie && statutBadge(saut)}
-      </div>
-      <p style={{ color: 'var(--c-text)', fontSize: 14, fontWeight: 600, marginBottom: 2 }}>{saut.lieu}</p>
-      <div className="flex items-center gap-1" style={{ color: 'var(--c-muted)', fontSize: 12 }}>
-        {isSoufflerie ? (
-          <>
-            <span className="px-1.5 py-0.5 rounded text-[11px] font-semibold" style={{ background: 'rgba(96,165,250,0.15)', color: '#60A5FA' }}>Soufflerie</span>
-            {(saut as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes && <><span>·</span><span style={{ color: '#93C5FD' }}>{(saut as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes} min</span></>}
-            {(saut as { tunnel_discipline?: string | null }).tunnel_discipline && <><span>·</span><span>{(saut as { tunnel_discipline?: string | null }).tunnel_discipline}</span></>}
-          </>
-        ) : (
-          <>
-            <span>{NATURE_SAUT_LABELS[saut.nature_saut] || saut.nature_saut}</span>
-            <span>·</span>
-            <span title={saut.hauteur_ouverture ? `Largage : ${saut.hauteur_m}m · Ouverture : ${saut.hauteur_ouverture}m` : undefined}>
-              ↑{saut.hauteur_m}m{saut.hauteur_ouverture ? ` · ↓${saut.hauteur_ouverture}m` : ''}
-            </span>
-            <span>·</span>
-            <span>{FONCTION_LABELS[saut.fonction] || saut.fonction}</span>
-          </>
-        )}
-        {(canEdit) && (
-          <>
-            <span className="ml-auto" />
-            <button
-              onClick={(e) => { e.stopPropagation(); onEdit(saut); }}
-              style={{ color: '#5A7A9A', padding: '4px 4px', minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}
-            >
-              <Pencil className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); onDelete(saut.id); }}
-              style={{ color: '#5A7A9A', padding: '4px 0', minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
 // ─── Compact badge card (4-col grid) ─────────────────────────────────────────
 
 // ─── Saut row for Carnet tab ──────────────────────────────────────────────────
-
-function SautRowCarnet({
-  saut,
-  numero,
-  statutBadge,
-  onEdit,
-  onDetail,
-  onDelete,
-}: {
-  saut: Saut;
-  numero: number | null;
-  statutBadge: (s: Saut) => React.ReactNode;
-  onEdit: (s: Saut) => void;
-  onDetail: (s: Saut) => void;
-  onDelete: (id: string) => void;
-}) {
-  const [hovered, setHovered] = useState(false);
-  const canEdit = saut.statut !== 'valide' && saut.statut !== 'refuse';
-  const isSoufflerie = saut.source === 'soufflerie' || saut.is_tunnel === true;
-
-  if (saut.statut === 'declaration_honneur') {
-    return (
-      <tr style={{ background: 'rgba(167,139,250,0.06)' }}>
-        <td colSpan={9} className="px-4 py-3">
-          <div className="flex items-center gap-3">
-            <ClipboardList className="w-4 h-4" aria-hidden="true" style={{ color: '#A78BFA' }} />
-            <div>
-              <p className="text-sm font-semibold" style={{ color: '#A78BFA' }}>
-                Solde antérieur — {saut.nb_sauts_declares ?? '?'} sauts déclarés sur l'honneur
-              </p>
-              <p className="text-xs" style={{ color: 'var(--c-dim)' }}>
-                Déclaré le {new Date(saut.created_at).toLocaleDateString('fr-FR')} · Déclaré sur l'honneur
-              </p>
-            </div>
-          </div>
-        </td>
-      </tr>
-    );
-  }
-
-  return (
-    <tr
-      className="transition-colors cursor-pointer"
-      style={{ background: hovered ? 'var(--c-hover)' : 'transparent' }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => onDetail(saut)}
-    >
-      <td className="px-4 py-3">
-        {isSoufflerie
-          ? <Wind className="w-4 h-4" aria-hidden="true" style={{ color: '#60A5FA' }} />
-          : <span className="font-mono text-xs font-semibold" style={{ color: 'var(--c-dim)' }}>{numero !== null ? `#${numero}` : '—'}</span>}
-      </td>
-      <td className="px-4 py-3 whitespace-nowrap" style={{ color: 'var(--c-text)' }}>{new Date(saut.date_saut).toLocaleDateString('fr-FR')}</td>
-      <td style={{ color: 'var(--c-text2)' }} className="px-4 py-3 truncate">{saut.lieu}</td>
-      <td style={{ color: 'var(--c-text2)' }} className="px-4 py-3 truncate">
-        {isSoufflerie
-          ? <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold" style={{ background: 'rgba(96,165,250,0.15)', color: '#60A5FA' }}><Wind className="w-3 h-3" aria-hidden="true" /> Soufflerie</span>
-          : (NATURE_SAUT_LABELS[saut.nature_saut] || saut.nature_saut)}
-      </td>
-      <td style={{ color: 'var(--c-text2)' }} className="px-4 py-3">
-        {isSoufflerie
-          ? <span style={{ color: '#93C5FD', fontSize: 12 }}>{(saut as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes ? `${(saut as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes} min` : '—'}{(saut as { tunnel_discipline?: string | null }).tunnel_discipline ? ` · ${(saut as { tunnel_discipline?: string | null }).tunnel_discipline}` : ''}</span>
-          : <span title={saut.hauteur_ouverture ? `Largage : ${saut.hauteur_m}m · Ouverture : ${saut.hauteur_ouverture}m` : undefined}>↑{saut.hauteur_m}m{saut.hauteur_ouverture ? ` · ↓${saut.hauteur_ouverture}m` : ''}</span>}
-      </td>
-      <td style={{ color: 'var(--c-text2)' }} className="px-4 py-3 truncate">{FONCTION_LABELS[saut.fonction] || saut.fonction}</td>
-      <td className="px-4 py-3"><MiniStars value={saut.position_globale} /></td>
-      <td className="px-4 py-3">{statutBadge(saut)}</td>
-      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-        {hovered ? (
-          canEdit ? (
-            <div className="flex items-center gap-1.5">
-              <button onClick={() => onEdit(saut)} className="transition-colors hover:opacity-80" style={{ color: 'var(--c-muted)' }} title="Modifier">
-                <Pencil className="w-4 h-4" />
-              </button>
-              <button onClick={() => onDelete(saut.id)} className="text-white/20 hover:text-red-500 transition-colors" title="Supprimer">
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <Lock className="w-4 h-4 text-white/25" title="Saut validé — non modifiable" />
-          )
-        ) : null}
-      </td>
-    </tr>
-  );
-}
 
 // ─── Saut Detail Modal ────────────────────────────────────────────────────────
 
