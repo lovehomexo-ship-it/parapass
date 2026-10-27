@@ -668,7 +668,7 @@ function DashboardHome({
             </>
           )}
         </div>
-        <span className="text-sm font-bold flex-shrink-0" style={{ color: carnetsEnAttente > 0 ? '#F97316' : 'var(--c-dim)' }}>{carnetsEnAttente > 0 ? 'Valider →' : 'Voir →'}</span>
+        <span className="text-sm font-bold flex-shrink-0" style={{ color: carnetsEnAttente > 0 ? 'var(--accent-texte)' : 'var(--c-dim)' }}>{carnetsEnAttente > 0 ? 'Valider →' : 'Voir →'}</span>
       </button>
 
       {/* Alertes ponctuelles (faible volume) — SOUS le chiffre dominant. */}
@@ -1727,7 +1727,7 @@ function SautsSection({ centreId, onNavigate }: { centreId: string | undefined; 
           {tab === 'attente' && sauts.some(s => s.statut === 'en_attente') && (
             <button onClick={handleBatchPresents} disabled={batching}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white disabled:opacity-50 transition"
-              style={{ background: '#10B981' }}>
+              style={{ background: '#047857' }}>
               <CheckCircle className="w-4 h-4" /> {batching ? 'Validation…' : 'Valider la séance (présents du jour)'}
             </button>
           )}

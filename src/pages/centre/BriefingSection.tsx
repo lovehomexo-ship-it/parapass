@@ -776,7 +776,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
 
           <button onClick={publish} disabled={saving || !circuitActifId}
             className="w-full py-3.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
-            style={{ background: '#F97316', boxShadow: '0 4px 14px rgba(249,115,22,0.35)' }}>
+            style={{ background: 'var(--accent-fond)', boxShadow: '0 4px 14px rgba(249,115,22,0.35)' }}>
             {saving
               ? 'Publication…'
               : circuitActif
