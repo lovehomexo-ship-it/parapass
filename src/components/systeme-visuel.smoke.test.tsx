@@ -31,13 +31,19 @@ describe('système visuel — rendu réel', () => {
     expect(html).toMatch(/border-left:5px solid/);
   });
 
-  it('BasculeMode expose ses deux modes au clavier', () => {
+  it('BasculeMode expose ses modes au clavier, et dit ce que ses comptes comptent', () => {
     const html = renderToStaticMarkup(
-      <BasculeMode mode="journee" onChange={() => {}} enAttenteGestion={4} />);
+      <BasculeMode mode="journee" onChange={() => {}} enAttenteGestion={4} enAttenteAvionnage={6} />);
     expect(html).toContain('aria-pressed="true"');
     expect(html).toContain('Gestion');
-    // La pastille n'apparaît que sur le mode INACTIF.
-    expect(html).toContain('4 en attente sur Gestion');
+    // Un compte s'écrit avec ce qu'il compte, en clair : un chiffre nu au coin
+    // d'un bouton ne disait ni six quoi, ni deux quoi.
+    expect(html).toContain('4 à traiter');
+    expect(html).toContain('6 en file');
+    // À zéro, rien ne s'affiche.
+    const vide = renderToStaticMarkup(<BasculeMode mode="journee" onChange={() => {}} />);
+    expect(vide).not.toContain('à traiter');
+    expect(vide).not.toContain('en file');
   });
 
   it('Tiroir est un vrai dépliant accessible', () => {
