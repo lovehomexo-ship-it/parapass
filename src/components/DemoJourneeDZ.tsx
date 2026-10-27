@@ -58,7 +58,11 @@ function DemoJourneeInner({ centreId, centreNom, onDone }: { centreId: string; c
     const r = (data ?? {}) as Record<string, unknown>;
     const ignores = (r.modules_non_souscrits ?? []) as string[];
     setInfo(mode === 'gen'
-      ? `Journée générée : ${nb(r, 'planches')} planches, ${nb(r, 'places')} embarqués, `
+      // `planches` ne compte que les planches à venir ; la matinée déjà jouée
+      // (un avion clôturé, un largué, un en vol) arrive dans `avions_partis`.
+      ? `Journée générée : ${nb(r, 'planches') + nb(r, 'avions_partis')} planches`
+        + (nb(r, 'avions_partis') > 0 ? ` (dont ${nb(r, 'avions_partis')} déjà parties : clôturée, larguée, en vol)` : '')
+        + `, ${nb(r, 'places')} embarqués sur les planches à venir, `
         + `${nb(r, 'sauts')} sauts (dont ceux à valider), ${nb(r, 'pliages')} pliages, `
         + `${nb(r, 'tandem')} réservations tandem, ${nb(r, 'adhesions')} demandes d'adhésion, `
         + `${nb(r, 'carnets')} attestations de carnet, `
