@@ -6,8 +6,8 @@ import { useBriefingDuJour, useBriefingAck } from '../lib/briefing';
 import type { Materiel } from '../lib/types';
 
 const inputStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
-  color: 'white', borderRadius: 8, padding: '10px 12px', fontSize: 14, outline: 'none', width: '100%',
+  background: 'var(--c-hover)', border: '1px solid var(--c-border)',
+  color: 'var(--c-text)', borderRadius: 8, padding: '10px 12px', fontSize: 14, outline: 'none', width: '100%',
   boxSizing: 'border-box',
 };
 
@@ -137,23 +137,23 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
   if (presence?.statut === 'present' && !ouvert) {
     return (
       <div className="rounded-2xl px-4 py-3 mb-3 flex items-center gap-2 flex-wrap"
-        style={{ background: 'rgba(16,185,129,0.1)', border: '1.5px solid rgba(16,185,129,0.4)' }}>
-        <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: '#34D399' }} />
-        <span className="text-sm font-bold" style={{ color: '#6EE7B7' }}>
+        style={{ background: 'color-mix(in srgb, var(--sev-conforme) 10%, var(--c-card))', border: '1.5px solid color-mix(in srgb, var(--sev-conforme) 40%, transparent)' }}>
+        <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--sev-conforme)' }} />
+        <span className="text-sm font-bold" style={{ color: 'var(--sev-conforme)' }}>
           Présent{dzs.length > 1 ? ` à ${dzNom}` : ''} — de {hhmm(presence.heure_debut)} à {hhmm(presence.heure_fin)}
         </span>
-        {okMsg && <span className="text-xs" style={{ color: '#34D399' }}>enregistré ✓</span>}
+        {okMsg && <span className="text-xs" style={{ color: 'var(--sev-conforme)' }}>enregistré ✓</span>}
         <span className="ml-auto flex items-center gap-1.5">
           <button onClick={() => setOuvert(true)} className="flex items-center gap-1 text-xs font-semibold px-2.5 rounded-lg"
-            style={{ background: 'rgba(255,255,255,0.08)', color: '#E2E8F0', minHeight: 36 }}>
+            style={{ background: 'var(--c-hover)', color: 'var(--c-text)', minHeight: 36 }}>
             <Pencil className="w-3 h-3" /> Modifier
           </button>
           <button onClick={quitter} className="flex items-center gap-1 text-xs font-semibold px-2.5 rounded-lg"
-            style={{ background: 'rgba(239,68,68,0.15)', color: '#FCA5A5', minHeight: 36 }}>
+            style={{ background: 'color-mix(in srgb, var(--sev-critique) 12%, transparent)', color: 'var(--sev-critique)', minHeight: 36 }}>
             <LogOut className="w-3 h-3" /> Je quitte la DZ
           </button>
         </span>
-        {error && <p className="w-full text-xs" style={{ color: '#FCA5A5' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}</p>}
+        {error && <p className="w-full text-xs" style={{ color: 'var(--sev-critique)' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}</p>}
       </div>
     );
   }
@@ -171,14 +171,14 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
 
   // ── Formulaire court ──
   return (
-    <div className="rounded-2xl p-4 mb-3 space-y-3" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(37,99,235,0.4)' }}>
-      <h3 className="text-sm font-bold text-white flex items-center gap-2">
+    <div className="rounded-2xl p-4 mb-3 space-y-3" style={{ background: 'var(--c-card)', border: '1px solid rgba(37,99,235,0.4)' }}>
+      <h3 className="text-sm font-bold  flex items-center gap-2" style={{ color: 'var(--c-text)' }}>
         <MapPin className="w-4 h-4" style={{ color: '#60A5FA' }} /> Ma présence aujourd'hui
       </h3>
 
       {dzs.length > 1 && (
         <div>
-          <label className="block text-xs font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.6)' }}>DZ</label>
+          <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--c-muted)' }}>DZ</label>
           <select value={dzId ?? ''} onChange={e => setDzId(e.target.value)} style={inputStyle}>
             {dzs.map(d => <option key={d.id} value={d.id}>{d.nom}</option>)}
           </select>
@@ -187,11 +187,11 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.6)' }}>De</label>
+          <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--c-muted)' }}>De</label>
           <input type="time" value={debut} onChange={e => setDebut(e.target.value)} style={timeInputStyle} />
         </div>
         <div>
-          <label className="block text-xs font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.6)' }}>À</label>
+          <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--c-muted)' }}>À</label>
           <input type="time" value={fin} onChange={e => setFin(e.target.value)} style={timeInputStyle} />
         </div>
       </div>
@@ -200,25 +200,25 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
           par les kilos avant de remplir par les sièges. Facultative — une
           présence ne se refuse pas parce qu'on n'a pas dit son poids. */}
       <div>
-        <label className="block text-xs font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.6)' }}>
+        <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--c-muted)' }}>
           Masse équipée (kg) <span style={{ fontWeight: 400, opacity: 0.6 }}>— facultatif</span>
         </label>
         <input type="number" inputMode="decimal" min={20} max={250} step={0.5}
           value={masse} onChange={e => setMasse(e.target.value)}
           placeholder="ex : 82"
           style={timeInputStyle} />
-        <p className="text-[11px] mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
+        <p className="text-[11px] mt-1" style={{ color: 'var(--c-dim)' }}>
           Sert au chargement de l’avion. Retenue pour les prochaines fois.
         </p>
       </div>
 
       <div>
-        <label className="block text-xs font-semibold mb-1.5" style={{ color: 'rgba(255,255,255,0.6)' }}>Matériel</label>
-        <div className="flex rounded-lg overflow-hidden mb-2" style={{ border: '1px solid rgba(255,255,255,0.15)' }}>
+        <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--c-muted)' }}>Matériel</label>
+        <div className="flex rounded-lg overflow-hidden mb-2" style={{ border: '1px solid var(--c-border)' }}>
           {([['perso', 'Voile perso'], ['location', 'Location DZ']] as const).map(([k, label]) => (
             <button key={k} onClick={() => setMaterielType(k)}
               className="flex-1 py-2.5 text-xs font-semibold"
-              style={{ background: materielType === k ? '#2563EB' : 'transparent', color: materielType === k ? 'white' : 'rgba(255,255,255,0.5)' }}>
+              style={{ background: materielType === k ? 'var(--action-fond)' : 'transparent', color: materielType === k ? 'white' : 'var(--c-muted)' }}>
               {label}
             </button>
           ))}
@@ -245,24 +245,24 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
       {/* Briefing du jour — intégré, jamais bloquant : l'appli informe */}
       {briefing && (
         ackAt ? (
-          <p className="text-xs flex items-center gap-1.5" style={{ color: '#34D399' }}>
+          <p className="text-xs flex items-center gap-1.5" style={{ color: 'var(--sev-conforme)' }}>
             <CheckCircle className="w-3.5 h-3.5" /> Briefing acquitté — circuit {sensLabel}
           </p>
         ) : (
           <div className="rounded-xl px-3 py-2.5 flex items-center justify-between gap-2 flex-wrap"
             style={{ background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.35)' }}>
-            <span className="text-xs font-semibold" style={{ color: '#FDBA74' }}>Briefing du jour non acquitté</span>
+            <span className="text-xs font-semibold" style={{ color: 'var(--accent-texte)' }}>Briefing du jour non acquitté</span>
             <button
               onClick={() => document.querySelector('[id^="briefing-card-"]')?.scrollIntoView({ behavior: 'smooth' })}
-              className="text-xs font-bold px-3 rounded-lg text-white" style={{ background: '#F97316', minHeight: 36 }}>
+              className="text-xs font-bold px-3 rounded-lg text-white" style={{ background: 'var(--accent-fond)', minHeight: 36 }}>
               Lire le briefing
             </button>
           </div>
         )
       )}
 
-      {erreurPlage && <p className="text-xs" style={{ color: '#FCA5A5' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {erreurPlage}</p>}
-      {error && <p className="text-xs" style={{ color: '#FCA5A5' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}</p>}
+      {erreurPlage && <p className="text-xs" style={{ color: 'var(--sev-critique)' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {erreurPlage}</p>}
+      {error && <p className="text-xs" style={{ color: 'var(--sev-critique)' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}</p>}
 
       <div className="flex gap-2">
         <button onClick={valider} disabled={saving}
@@ -270,7 +270,7 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
           style={{ background: '#2563EB', minHeight: 48 }}>
           {saving ? 'Enregistrement…' : 'Valider ma présence'}
         </button>
-        <button onClick={() => setOuvert(false)} className="px-4 rounded-xl text-sm" style={{ color: 'rgba(255,255,255,0.5)', minHeight: 48 }}>
+        <button onClick={() => setOuvert(false)} className="px-4 rounded-xl text-sm" style={{ color: 'var(--c-muted)', minHeight: 48 }}>
           Annuler
         </button>
       </div>

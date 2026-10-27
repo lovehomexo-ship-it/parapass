@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { QrScanner } from '../components/QrScanner';
-import { ParachuteIcon, ParachuteDropIcon } from '../components/ParachuteIcon';
+import { ParachuteIcon } from '../components/ParachuteIcon';
 import { PlanningDZ } from './PlanningDZ';
 import { Layout } from '../components/Layout';
 import { MonComptePara } from '../components/MonComptePara';
@@ -13,7 +13,7 @@ import { DeclarationHonneur } from '../components/DeclarationHonneur';
 import { BandeauAlertes } from '../components/AlertsPanel';
 import { useAlertesContext } from '../lib/AlertesContext';
 import { generatePDF } from '../lib/pdf';
-import type { Saut, NotationTernaire, BadgeDefinition, Materiel, Maintenance } from '../lib/types';
+import type { Saut, NotationTernaire, Materiel, Maintenance } from '../lib/types';
 import { NATURE_SAUT_LABELS, CATEGORIE_LABELS, FONCTION_LABELS, STATUT_LABELS, BADGES, TYPE_MATERIEL_LABELS } from '../lib/types';
 import { useAlertes, type MaterielEcheance } from '../lib/useAlertes';
 import { useComplianceRules, getMaterielEcheance } from '../lib/compliance';
@@ -26,89 +26,21 @@ import { ShareCardModal } from '../components/ShareCardModal';
 import { useDzMembre } from '../lib/briefing';
 import { useBadges } from '../lib/useBadges';
 import { usePassport } from '../lib/usePassport';
-import { countMasteredElements, sautsAEvaluer } from '../lib/progression';
+import { sautsAEvaluer } from '../lib/progression';
 import { lireTout } from '../lib/lireTout';
 import { formatDateTimeParis } from '../lib/datetime';
 import { useDemo } from '../lib/useDemo';
-import { PasseportCardView } from '../components/PasseportCardView';
-import { BadgeIcon } from '../design/BadgeIcon';
-import { AnimatedNumber, AnimatedBar } from '../components/AnimatedNumber';
+import { EnTeteAccueil, TitreBloc, CarteWallet, CarteCarnet, CarteProgression } from './accueil/AccueilBlocs';
 import { CelebrationBurst } from '../components/CelebrationBurst';
 import {
-  Plus, FileDown, QrCode, TrendingUp,
+  Plus, FileDown,
   ChevronDown, ChevronUp, Trash2, X, ShieldCheck, Hash,
   Pencil, Lock, Award, ChevronRight, Camera, Wallet, Flame, Share2,
-  Target, GraduationCap, ScanLine, Wind, CheckCircle2, Clock, Activity, BarChart3, Backpack, Brain,
+  Target, GraduationCap, ScanLine, Wind, CheckCircle2, Backpack,
   ClipboardList, AlertTriangle,
 } from 'lucide-react';
 
 // ─── Weather helpers (reused from PlanningDZ) ────────────────────────────────
-
-// ─── KPI Card helpers ──────────────────────────────────────────────────────────
-
-function monthsUntil(dateStr: string | null): number | null {
-  if (!dateStr) return null;
-  const exp = new Date(dateStr);
-  const now = new Date();
-  return Math.floor((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30));
-}
-
-function expiryBarColor(months: number | null): string {
-  if (months === null) return '#64748B';
-  if (months < 0) return '#EF4444';
-  if (months < 3) return '#F59E0B';
-  return '#10B981';
-}
-
-// Titre de zone du dashboard — matérialise les 3 grandes sections
-// (Aujourd'hui / Ma progression / Mon activité). Le vrai regroupement vient de
-// l'espacement ; ce titre discret ne fait que le confirmer.
-function ZoneTitre({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-2 mt-8 mb-3 first:mt-0">
-      <span style={{ color: 'var(--c-muted)' }}>{icon}</span>
-      <h2 className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--c-muted)', letterSpacing: '0.14em' }}>{children}</h2>
-    </div>
-  );
-}
-
-interface KpiCardProps {
-  accent: string;
-  label: string;
-  value: React.ReactNode;
-  sub: React.ReactNode;
-  expiry?: { date: string | null; months: number | null };
-}
-
-function KpiCard({ accent, label, value, sub, expiry }: KpiCardProps) {
-  const barColor = expiry ? expiryBarColor(expiry.months) : null;
-  const barPct = expiry?.months !== null && expiry?.months !== undefined
-    ? Math.max(0, Math.min(100, ((expiry.months ?? 0) / 12) * 100))
-    : 0;
-
-  return (
-    <div
-      style={{
-        background: 'var(--c-card)',
-        border: '1px solid var(--c-border)',
-        borderRadius: 12,
-        borderLeft: `3px solid ${accent}`,
-        borderTopLeftRadius: 0,
-        borderBottomLeftRadius: 0,
-        padding: 20,
-      }}
-    >
-      <p style={{ color: 'var(--c-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8, fontWeight: 500 }}>{label}</p>
-      <p style={{ color: 'var(--c-text)', fontSize: 28, fontWeight: 700, lineHeight: 1, marginBottom: 4 }}>{value}</p>
-      {expiry !== undefined && (
-        <div style={{ height: 6, borderRadius: 3, background: 'var(--c-hover)', margin: '10px 0 6px', overflow: 'hidden' }}>
-          <div className="progress-fill" style={{ height: '100%', width: `${barPct}%`, background: barColor ?? '#64748B', borderRadius: 3 }} />
-        </div>
-      )}
-      <p style={{ color: 'var(--c-muted)', fontSize: 12, marginTop: expiry !== undefined ? 0 : 6 }}>{sub}</p>
-    </div>
-  );
-}
 
 type DashTab = 'accueil' | 'carnet' | 'planning' | 'compte';
 
@@ -118,7 +50,7 @@ const STAR_COLORS = ['', '#EF4444', '#F59E0B', '#EAB308', '#84CC16', '#10B981'];
 
 // ─── Raccourcis secondaires (grille 3 tuiles) ────────────────────────────────
 
-function ShortcutTiles({ userId }: { userId: string }) {
+export function ShortcutTiles({ userId }: { userId: string }) {
   const navigate = useNavigate();
   const [reflexeDone, setReflexeDone] = useState(false);
   const [streak, setStreak]           = useState(0);
@@ -303,13 +235,6 @@ void TernaireBadge;
 
 // ─── Badge rarity styles ──────────────────────────────────────────────────────
 
-const RARETE_STYLES: Record<string, { border: string; glow: string; label: string; labelColor: string }> = {
-  commun:     { border: 'rgba(100,116,139,0.4)',  glow: 'rgba(100,116,139,0.1)',  label: 'Commun',     labelColor: 'var(--sev-neutre)' },
-  rare:       { border: 'rgba(249,115,22,0.5)',   glow: 'rgba(249,115,22,0.12)',  label: 'Rare',       labelColor: 'var(--accent-texte)' },
-  epique:     { border: 'rgba(139,92,246,0.55)',  glow: 'rgba(139,92,246,0.14)', label: 'Épique',     labelColor: 'var(--c-pliage-fort)' },
-  legendaire: { border: 'rgba(245,158,11,0.6)',   glow: 'rgba(245,158,11,0.16)', label: 'Légendaire', labelColor: 'var(--sev-vigilance)' },
-};
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function DashboardPage() {
@@ -368,6 +293,19 @@ export function DashboardPage() {
   const { licences, certificats, qualifications, brevets, centresLicencies } = usePassport(user?.id);
   const briefingDzs = useDzMembre(user?.id);
   const { rules: complianceRules } = useComplianceRules();
+
+  // La DZ OÙ L'ON EST aujourd'hui (présence déclarée), parmi celles dont on est
+  // membre : elle titre le bloc du jour et choisit la météo. Il y avait une
+  // carte de vent par DZ, celle où l'on n'est pas comprise.
+  const [presenceDzId, setPresenceDzId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase.from('dz_presences').select('dz_id')
+      .eq('user_id', user.id).eq('date_presence', new Date().toISOString().slice(0, 10)).neq('statut', 'parti')
+      .limit(1).maybeSingle()
+      .then(({ data }) => setPresenceDzId((data as { dz_id: string } | null)?.dz_id ?? null));
+  }, [user?.id, checkinSignal]);
+  const dzDuJour = briefingDzs.find(d => d.id === presenceDzId) ?? null;
 
   // Échéances matériel (pliage secours, AAD…) pour le bandeau d'alertes
   const [materielEcheances, setMaterielEcheances] = useState<MaterielEcheance[]>([]);
@@ -519,9 +457,6 @@ export function DashboardPage() {
 
   const sautsCetteAnnee = vraisSauts.filter((s) => new Date(s.date_saut).getFullYear() === new Date().getFullYear()).length;
   const sortedByDate = [...sauts].sort((a, b) => b.date_saut.localeCompare(a.date_saut));
-  const dernierSaut = sortedByDate.find((s) => !s.is_tunnel)
-    ? new Date(sortedByDate.find((s) => !s.is_tunnel)!.date_saut).toLocaleDateString('fr-FR')
-    : null;
 
   const sortedSauts = [...sauts].sort((a, b) => {
     const dir = sortDir === 'asc' ? 1 : -1;
@@ -607,14 +542,10 @@ export function DashboardPage() {
     [1000, 'legende'], [2000, 'icone'], [5000, 'mythe'], [10000, 'immortel'],
   ];
   const nextVolume = volumeThresholds.find(([, type]) => !earnedTypes.has(type));
-  const nextBadgeDef = nextVolume ? BADGES.find((b) => b.type === nextVolume[1]) : null;
-  const nextBadgeSautsRestants = nextVolume ? Math.max(0, nextVolume[0] - validSauts) : 0;
 
   // ─── Licence & certificat médical data ───────────────────────────────────
   const licenceFFP = licences.find((l) => l.organisme === 'FFP') ?? licences[0] ?? null;
   const certifMedical = certificats[0] ?? null;
-  const licenceMonths = monthsUntil(licenceFFP?.date_expiration ?? null);
-  const certifMonths = monthsUntil(certifMedical?.date_expiration ?? null);
 
   // ─── Statut autorisation calculé depuis les dates (pas depuis Supabase alertes) ─
   const _docNow = new Date();
@@ -670,7 +601,7 @@ export function DashboardPage() {
           <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" /> DONNÉES DE DÉMONSTRATION — Les informations affichées sont fictives
         </div>
       )}
-      <BandeauAlertes alertes={alertes} acquittees={acquittees} onAcquitter={acquitterAlertes} statutDocs={statutDocs} licenceExpiration={licenceFFP?.date_expiration ?? null} certifExpiration={certifMedical?.date_expiration ?? null} userId={user?.id} />
+      <BandeauAlertes alertes={alertes} acquittees={acquittees} onAcquitter={acquitterAlertes} statutDocs={statutDocs} licenceExpiration={licenceFFP?.date_expiration ?? null} certifExpiration={certifMedical?.date_expiration ?? null} userId={user?.id} masquerSiValide />
 
       {/* Sub-nav */}
       <div style={{ background: 'var(--c-nav)', borderBottom: '1px solid var(--c-border-s)' }} className="sticky top-14 z-30">
@@ -716,203 +647,12 @@ export function DashboardPage() {
                 </div>
               )}
 
-              {/* 0 — Briefing du jour : PREMIER élément visible, sans scroll
-                  (bandeau + carte pour chaque DZ active via licencies_centres) */}
-              {briefingDzs.map(dz => (
-                <BriefingDuJourBlock key={dz.id} dzId={dz.id} dzNom={dz.nom} userId={user?.id} />
-              ))}
-
-              {/* 0 bis — AVIONNAGE, juste après le briefing : c'est l'ordre du
-                  geste (je lis les consignes, puis je me manifeste). Le
-                  composant ne rend RIEN tant que la DZ n'a pas ouvert la file,
-                  donc il n'encombre pas l'écran hors journée de saut. */}
-              {/* UN SEUL BLOC, quel que soit le nombre d'affiliations. Il y en
-                  avait un PAR CENTRE : deux DZ donnaient deux bandeaux vides,
-                  cinq en donnaient cinq, et la licence numérique passait sous
-                  la ligne de flottaison. On ne saute pas sur cinq drop zones le
-                  même jour — cf. AvionnageDuJour. */}
-              <AvionnageDuJour userId={user?.id} />
-
-              {/* Note : le bandeau « Documents à jour / Brevet X » a été retiré —
-                  l'info figure sur la licence numérique (badge statut + brevet).
-                  « Ma reprise » est déplacée sous les cartes d'échéances ci-dessous. */}
-
-              {/* 2 — Layout 2 colonnes desktop : carte (gauche) + tuiles+boutons (droite) */}
-              <div className="flex flex-col lg:flex-row lg:items-start lg:gap-6 mb-6">
-
-                {/* Colonne gauche : carte dématérialisée */}
-                <div className="lg:flex-shrink-0 lg:w-[480px] mb-6 lg:mb-0">
-                  <PasseportCardView userId={user!.id} compact={true} sautsCountOverride={totalSauts} validSautsCountOverride={validSauts} />
-                </div>
-
-                {/* Colonne droite : KPI tiles + bouton ajouter un saut */}
-                <div className="flex-1 min-w-0 flex flex-col gap-4">
-
-                  {/* 4 KPI cards */}
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Card 1 — Total sauts */}
-                    <KpiCard
-                      accent="#F97316"
-                      label="Total sauts"
-                      value={
-                        <span className="flex items-center gap-2">
-                          {/* Le composant d'icône n'accepte qu'une classe : on porte la couleur
-                              sur un conteneur, l'icône hérite de `currentColor`. */}
-                          <span style={{ color: 'var(--accent-texte)', display: 'inline-flex' }}><ParachuteDropIcon className="w-6 h-6" /></span>
-                          <AnimatedNumber value={totalSauts} />
-                        </span>
-                      }
-                      sub={`+${sautsCetteAnnee} cette année`}
-                    />
-                    {/* Card 2 — Cette année */}
-                    <KpiCard
-                      accent="#003082"
-                      label="Cette année"
-                      value={<span className="flex items-center gap-2"><TrendingUp className="w-5 h-5 text-blue-400" /><AnimatedNumber value={sautsCetteAnnee} /></span>}
-                      sub={dernierSaut ? `Dernier : ${dernierSaut}` : 'Aucun saut encore'}
-                    />
-                    {/* Card 3 — Licence FFP */}
-                    <KpiCard
-                      accent="#10B981"
-                      label="Licence FFP"
-                      value={
-                        <span style={{ fontSize: 15, fontWeight: 700, color: licenceFFP ? 'var(--c-text)' : 'var(--c-dim)' }}>
-                          {licenceFFP?.date_expiration
-                            ? new Date(licenceFFP.date_expiration).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
-                            : '—'}
-                        </span>
-                      }
-                      expiry={{ date: licenceFFP?.date_expiration ?? null, months: licenceMonths }}
-                      sub={
-                        licenceFFP?.date_expiration
-                          ? licenceMonths !== null && licenceMonths < 0
-                            ? <span style={{ color: 'var(--sev-critique)', fontWeight: 600 }}>EXPIRÉE</span>
-                            : `Valide · ${licenceMonths} mois restants`
-                          : <Link to="/passeport?onglet=licence" className="inline-flex items-center gap-1 no-underline font-semibold" style={{ color: 'var(--accent-texte)' }}><Plus className="w-3 h-3" /> Ajouter ma licence</Link>
-                      }
-                    />
-                    {/* Card 4 — Certificat médical */}
-                    <KpiCard
-                      accent="#8B5CF6"
-                      label="Certificat médical"
-                      value={
-                        <span style={{ fontSize: 15, fontWeight: 700, color: certifMedical ? 'var(--c-text)' : 'var(--c-dim)' }}>
-                          {certifMedical?.date_expiration
-                            ? new Date(certifMedical.date_expiration).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
-                            : '—'}
-                        </span>
-                      }
-                      expiry={{ date: certifMedical?.date_expiration ?? null, months: certifMonths }}
-                      sub={
-                        certifMedical?.date_expiration
-                          ? certifMonths !== null && certifMonths < 0
-                            ? <span style={{ color: 'var(--sev-critique)', fontWeight: 600 }}>EXPIRÉ</span>
-                            : `Valide · ${certifMonths} mois restants`
-                          : <Link to="/passeport?onglet=medical" className="inline-flex items-center gap-1 no-underline font-semibold" style={{ color: 'var(--accent-texte)' }}><Plus className="w-3 h-3" /> Ajouter mon certificat</Link>
-                      }
-                    />
-                  </div>
-
-                  {/* Bouton Ajouter un saut */}
-                  <div>
-                    <button
-                      onClick={() => { if (!blockIfDemo()) setModalOpen(true); }}
-                      disabled={isDemo}
-                      title={isDemo ? 'Non disponible en mode démo' : undefined}
-                      className="flex items-center justify-center gap-2 text-white px-5 rounded-lg text-sm font-bold transition-colors shadow-lg w-full"
-                      style={{
-                        height: 48,
-                        // L'orange reste : c'est l'identité parachutiste
-                        // (onglets, carte, badges). Mais le blanc sur #F97316
-                        // ne fait que 2,80:1 — sous AA. Même teinte, assombrie
-                        // du minimum (5,18:1).
-                        background: isDemo ? 'var(--c-muted)' : 'var(--accent-fond)',
-                        cursor: isDemo ? 'not-allowed' : 'pointer',
-                        opacity: isDemo ? 0.6 : 1,
-                      }}
-                    >
-                      <Plus className="w-5 h-5" /> Ajouter un saut
-                    </button>
-                    <div className="flex gap-2 mt-2">
-                      <button
-                        onClick={() => navigate('/qr-code')}
-                        className="flex items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors flex-1"
-                        style={{ height: 44, background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)' }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--c-hover)')}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--c-surface)')}
-                      >
-                        <QrCode className="w-4 h-4" /> Mon QR Code
-                      </button>
-                      <button
-                        onClick={async () => {
-                          if (blockIfDemo() || !user) return;
-                          // Totaux depuis la source unique (Prompt T) ; repli tableau si indisponible.
-                          const { data, error } = await supabase.rpc('get_regulatory_snapshot', { p_user_id: user.id }).maybeSingle();
-                          if (error) console.error('Snapshot export échoué :', error);
-                          const c = data as { total: number; valid: number } | null;
-                          generatePDF(profile, sauts, c ? { total: c.total, valid: c.valid } : undefined);
-                        }}
-                        disabled={sauts.length === 0 || isDemo}
-                        title={isDemo ? 'Non disponible en mode démo' : undefined}
-                        className="flex items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 flex-1"
-                        style={{
-                          height: 44, background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)',
-                          cursor: isDemo ? 'not-allowed' : 'pointer',
-                        }}
-                        onMouseEnter={(e) => { if (!isDemo) e.currentTarget.style.background = 'var(--c-hover)'; }}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--c-surface)')}
-                      >
-                        <FileDown className="w-4 h-4" /> Exporter PDF
-                      </button>
-                    </div>
-                    {/* Entrée « à froid » (V2) : partage permanent de la progression. */}
-                    <button
-                      onClick={() => { if (!blockIfDemo()) setShareOpen(true); }}
-                      disabled={isDemo}
-                      className="mt-2 w-full flex items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
-                      style={{ height: 44, background: 'rgba(249,115,22,0.14)', border: '1px solid rgba(249,115,22,0.4)', color: 'var(--accent-texte)' }}
-                    >
-                      <Share2 className="w-4 h-4" /> Partager ma progression
-                    </button>
-                  </div>
-
-                </div>
-              </div>{/* fin layout 2 colonnes */}
-
-              {/* ═══ ZONE — Aujourd'hui (reprise, sac, présence, météo) ═══ */}
-              <ZoneTitre icon={<Clock className="w-3.5 h-3.5" />}>Aujourd'hui</ZoneTitre>
-              <div className="space-y-3">
-                <MaRepriseCard userId={user?.id} niveau={topBrevet} onPlanifierReprise={() => setActiveTab('planning')} />
-                <MonSacDuJour userId={user!.id} />
-                <div id="checkin" className="scroll-mt-20"><CheckInPresence dzs={briefingDzs} userId={user?.id} openSignal={checkinSignal} /></div>
-                {/* Météo INTÉGRÉE à la zone du jour, même traitement de carte
-                    (fini le bandeau orphelin en pied de page). */}
-                {briefingDzs.map(dz => (
-                  <MeteoAltitudeCard key={`meteo-${dz.id}`} dzId={dz.id} dzNom={briefingDzs.length > 1 ? dz.nom : undefined} />
-                ))}
-              </div>
-
-              {(profile.type_pratiquant === 'professionnel' || !!(profile.preferences as Record<string, unknown> | null | undefined)?.suivi_dgac) && (() => {
-                const now = new Date();
-                const twelveMonthsAgo = new Date(now);
-                twelveMonthsAgo.setMonth(now.getMonth() - 12);
-                const sauts12m = sauts.filter((s) => new Date(s.date_saut) >= twelveMonthsAgo).length;
-                const pct = Math.min(100, Math.round((sauts12m / 20) * 100));
-                return (
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-amber-800">Seuil DGAC : {sauts12m} / 20 sauts (12 mois)</span>
-                      <span className="text-xs text-amber-600">{pct}%</span>
-                    </div>
-                    <div className="w-full bg-amber-200 rounded-full h-2.5">
-                      <div className="bg-amber-500 h-2.5 rounded-full" style={{ width: `${pct}%` }} />
-                    </div>
-                    {sauts12m < 20 && (
-                      <p className="text-xs text-amber-700 mt-2">Obligation réglementaire SNPP : 20 sauts minimum sur les 12 derniers mois.</p>
-                    )}
-                  </div>
-                );
-              })()}
+              {/* ═══ L'ACCUEIL, EN CINQ BLOCS (cf. pages/accueil/AccueilBlocs) ═══
+                  Une colonne, comme une app iPhone, même sur ordinateur : on lit
+                  de haut en bas, dans l'ordre où la journée se vit. */}
+              <div className="max-w-2xl mx-auto">
+              {/* 1 — Qui je suis, et si je suis en règle (UNE pastille). */}
+              <EnTeteAccueil prenom={profile.prenom} statutDocs={statutDocs} />
 
               {/* Onboarding guide for new users */}
               {!loading && totalSauts === 0 && (
@@ -955,156 +695,72 @@ export function DashboardPage() {
               )}
 
 
-              {!aDejaImporte && !isDemo && (
-                <BanniereOCR onClic={() => setShowOCR(true)} />
-              )}
-
-              {/* ═══ ZONE — Ma progression ═══ */}
-              <ZoneTitre icon={<BarChart3 className="w-3.5 h-3.5" />}>Ma progression</ZoneTitre>
-              <ProgressionCard userId={user?.id ?? null} />
-
-              {/* Invite à évaluer un saut validé (Prompt R) — placée ENTRE « Ma
-                  progression » et « Mon activité » : elle fait le lien entre la
-                  courbe (ce que l'évaluation alimente) et l'activité récente d'où
-                  proviennent les sauts à évaluer. Nombre issu de la source unique. */}
-              {aEvaluer.length > 0 && (
-                <div className="rounded-2xl p-4 mt-3 flex items-center gap-3 flex-wrap"
-                  style={{ background: 'rgba(249,115,22,0.14)', border: '1.5px solid rgba(249,115,22,0.45)' }}>
-                  <div className="flex-1 min-w-0">
-                    {/* #FFEDD5 est un orange PÂLE : lisible sur le bleu nuit,
-                        il tombe à 1,04:1 sur le fond orangé translucide du mode
-                        jour — l'invitation disparaissait, et avec elle la seule
-                        raison d'ouvrir l'écran. Le jeton d'accent tient des deux
-                        côtés. */}
-                    <p className="text-sm font-extrabold" style={{ color: 'var(--accent-texte)' }}>
-                      {aEvaluer.length} saut{aEvaluer.length > 1 ? 's' : ''} à évaluer
-                    </p>
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--c-text2)' }}>
-                      Évalue ton saut pour faire progresser ta courbe et tes éléments maîtrisés.
-                    </p>
+              {(profile.type_pratiquant === 'professionnel' || !!(profile.preferences as Record<string, unknown> | null | undefined)?.suivi_dgac) && (() => {
+                const now = new Date();
+                const twelveMonthsAgo = new Date(now);
+                twelveMonthsAgo.setMonth(now.getMonth() - 12);
+                const sauts12m = sauts.filter((s) => new Date(s.date_saut) >= twelveMonthsAgo).length;
+                const pct = Math.min(100, Math.round((sauts12m / 20) * 100));
+                return (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold text-amber-800">Seuil DGAC : {sauts12m} / 20 sauts (12 mois)</span>
+                      <span className="text-xs text-amber-600">{pct}%</span>
+                    </div>
+                    <div className="w-full bg-amber-200 rounded-full h-2.5">
+                      <div className="bg-amber-500 h-2.5 rounded-full" style={{ width: `${pct}%` }} />
+                    </div>
+                    {sauts12m < 20 && (
+                      <p className="text-xs text-amber-700 mt-2">Obligation réglementaire SNPP : 20 sauts minimum sur les 12 derniers mois.</p>
+                    )}
                   </div>
-                  <button
-                    onClick={() => { if (!blockIfDemo()) { setSautAEditer(aEvaluer[0]); setModalOpen(true); } }}
-                    className="px-4 py-2.5 rounded-xl text-sm font-bold text-white flex-shrink-0"
-                    style={{ background: 'var(--accent-fond)' }}>
-                    Évaluer ce saut →
-                  </button>
-                </div>
+                );
+              })()}
+
+
+              {/* 2 — À LA DZ AUJOURD'HUI. Le briefing d'abord (on lit les
+                  consignes), puis l'avion, la présence, le sac, le vent de CETTE
+                  DZ. Ce qui était éparpillé en quatre blocs — briefing tout en
+                  bas, météo pour chaque DZ — se lit ici d'un seul tenant. */}
+              {briefingDzs.length > 0 && (
+                <section aria-label="À la DZ aujourd'hui" className="space-y-3">
+                  <TitreBloc>{dzDuJour ? `Aujourd’hui à ${dzDuJour.nom}` : 'À la DZ'}</TitreBloc>
+                  {briefingDzs.map(dz => (
+                    <BriefingDuJourBlock key={dz.id} dzId={dz.id} dzNom={dz.nom} userId={user?.id} />
+                  ))}
+                  <AvionnageDuJour userId={user?.id} />
+                  <div id="checkin" className="scroll-mt-20"><CheckInPresence dzs={briefingDzs} userId={user?.id} openSignal={checkinSignal} /></div>
+                  <MonSacDuJour userId={user!.id} />
+                  <MeteoAltitudeCard dzId={(dzDuJour ?? briefingDzs[0]).id} />
+                  {briefingDzs.map(dz => (
+                    <BriefingDuJourBlock key={`bas-${dz.id}`} dzId={dz.id} dzNom={dz.nom} userId={user?.id} position="bas" />
+                  ))}
+                </section>
               )}
 
-              {/* ═══ ZONE — Mon activité (derniers sauts + badges) ═══ */}
-              <ZoneTitre icon={<Activity className="w-3.5 h-3.5" />}>Mon activité</ZoneTitre>
-              <div className="flex flex-col md:flex-row gap-3">
+              {/* La reprise ne parle que lorsqu'elle a quelque chose à dire. */}
+              <div className="mt-3"><MaRepriseCard userId={user?.id} niveau={topBrevet} masquerSiAJour onPlanifierReprise={() => setActiveTab('planning')} /></div>
 
-                {/* Left — Derniers sauts (2/3) */}
-                <div style={{ flex: 2, background: 'var(--c-dropdown)', border: '1px solid var(--c-border)', borderRadius: 12, overflow: 'hidden', minWidth: 0 }}>
-                  <div style={{ borderBottom: '1px solid var(--c-border)' }} className="px-5 py-4 flex items-center justify-between">
-                    <h2 style={{ color: 'var(--c-text)', fontSize: 15, fontWeight: 600 }}>Derniers sauts</h2>
-                    <button onClick={() => setActiveTab('carnet')} style={{ color: 'var(--accent-texte)', fontSize: 12 }} className="font-medium hover:opacity-80 transition-opacity">
-                      Voir tout →
-                    </button>
-                  </div>
-                  {loading ? (
-                    <div className="p-8 text-center text-sm" style={{ color: 'var(--c-muted)' }}>Chargement...</div>
-                  ) : sauts.length === 0 ? (
-                    <div className="p-10 text-center">
-                      <ParachuteIcon className="w-24 h-24 mx-auto mb-3" style={{ color: 'var(--c-border-f)' }} />
-                      <p className="text-sm" style={{ color: 'var(--c-muted)' }}>Aucun saut enregistré</p>
-                      <p className="text-xs mt-1" style={{ color: 'var(--c-dim)' }}>Cliquez sur "Ajouter un saut" pour commencer</p>
-                    </div>
-                  ) : (
-                    <div>
-                      {sortedByDate.slice(0, 5).map((saut, idx) => (
-                        <div
-                          key={saut.id}
-                          className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors"
-                          style={{ borderBottom: idx < Math.min(sortedByDate.length, 5) - 1 ? '1px solid var(--c-border-s)' : 'none' }}
-                          onClick={() => setSelectedSaut(saut)}
-                          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--c-hover)')}
-                          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                        >
-                          <div
-                            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm"
-                            style={saut.source === 'soufflerie'
-                              ? { background: 'rgba(96,165,250,0.15)', color: '#60A5FA' }
-                              : { background: 'rgba(249,115,22,0.15)', color: 'var(--accent-texte)' }}
-                          >
-                            {saut.source === 'soufflerie' ? <Wind className="w-4 h-4" /> : (sautNumeroMap[saut.id] ?? '—')}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold truncate" style={{ color: 'var(--c-text)' }}>{saut.lieu}</p>
-                            <p className="text-xs mt-0.5" style={{ color: 'var(--c-muted)' }}>
-                              {new Date(saut.date_saut).toLocaleDateString('fr-FR')}
-                              {saut.source === 'soufflerie'
-                                ? ` · Soufflerie${(saut as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes ? ` · ${(saut as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes} min` : ''}`
-                                : ` · ↑${saut.hauteur_m}m${saut.hauteur_ouverture ? ` · ↓${saut.hauteur_ouverture}m` : ''} · ${NATURE_SAUT_LABELS[saut.nature_saut] || saut.nature_saut}`}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {statutBadge(saut)}
-                            <ChevronRight className="w-4 h-4" style={{ color: 'var(--c-dim)' }} />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+              {/* 3 — Ma licence, à montrer. */}
+              <TitreBloc lien="/passeport" libelleLien="Passeport">Ma licence</TitreBloc>
+              <CarteWallet prenom={profile.prenom ?? ''} nom={profile.nom ?? ''} photo={profile.avatar_url}
+                brevet={topBrevet} totalSauts={totalSauts}
+                licenceFin={licenceFFP?.date_expiration ?? null} medicalFin={certifMedical?.date_expiration ?? null}
+                statutDocs={statutDocs} />
 
-                {/* Right column (1/3) */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
+              {/* 4 — Mon carnet, en une ligne. */}
+              <TitreBloc>Mon carnet</TitreBloc>
+              {loading
+                ? <div className="rounded-2xl p-6 text-center text-sm" style={{ background: 'var(--c-card)', color: 'var(--c-muted)' }}>Chargement…</div>
+                : <CarteCarnet total={totalSauts} cetteAnnee={sautsCetteAnnee} derniers={sortedByDate}
+                    numeros={sautNumeroMap} onOuvrir={() => setActiveTab('carnet')} onSaut={setSelectedSaut} />}
 
-                  {/* 5 — Badges compact grid */}
-                  {(last4Badges.length > 0 || nextBadgeDef) && (
-                    <div style={{ background: 'var(--c-dropdown)', border: '1px solid var(--c-border)', borderRadius: 12, padding: 16 }}>
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <Award className="w-3.5 h-3.5" style={{ color: 'var(--accent-texte)' }} />
-                          <span className="text-xs font-bold" style={{ color: 'var(--c-text)' }}>Badges</span>
-                          {badges.length > 0 && (
-                            <span style={{ background: 'rgba(249,115,22,0.2)', color: 'var(--accent-texte)', fontSize: 10 }} className="font-semibold px-1.5 py-0.5 rounded-full">
-                              {badges.length}
-                            </span>
-                          )}
-                        </div>
-                        <button onClick={() => navigate('/badges')} style={{ color: 'var(--accent-texte)', fontSize: 11 }} className="font-medium hover:opacity-80 transition-opacity">
-                          Voir tout →
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-4 gap-2">
-                        {last4Badges.map((b) => (
-                          <CompactBadgeCard key={b.type} def={b} earned />
-                        ))}
-                        {nextBadgeDef && (
-                          <CompactBadgeCard def={nextBadgeDef} earned={false} locked sauts={nextBadgeSautsRestants} />
-                        )}
-                      </div>
-                      {last4Badges.length === 0 && (
-                        <p style={{ color: '#5A7A9A', fontSize: 11 }} className="mt-1">
-                          Commencez à sauter pour débloquer vos premiers badges !
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* La météo vit désormais dans l'unique carte compacte
-                      « Vent en altitude » en haut de page (détail au clic) */}
-                </div>
-              </div>
-
-              {/* Raccourcis secondaires — dé-emphasés, en fin de page. */}
-              {!isDemo && (
-                <>
-                  <ZoneTitre icon={<ScanLine className="w-3.5 h-3.5" />}>Raccourcis</ZoneTitre>
-                  <ShortcutTiles userId={user!.id} />
-                </>
-              )}
-
-              {/* Briefing du jour acquitté : version compacte en bas de page,
-                  consultable sans monopoliser le haut de l'écran. */}
-              <div className="mt-4">
-                {briefingDzs.map(dz => (
-                  <BriefingDuJourBlock key={`bas-${dz.id}`} dzId={dz.id} dzNom={dz.nom} userId={user?.id} position="bas" />
-                ))}
+              {/* 5 — Où j'en suis. */}
+              <TitreBloc lien="/progression" libelleLien="Progression">Ma progression</TitreBloc>
+              <CarteProgression aEvaluer={aEvaluer.length}
+                onEvaluer={() => { if (!blockIfDemo() && aEvaluer[0]) { setSautAEditer(aEvaluer[0]); setModalOpen(true); } }}
+                palier={nextVolume ? nextVolume[0] : null} sautsValides={validSauts}
+                dernierBadge={last4Badges[0] ?? null} nbBadges={badges.length} />
               </div>
             </>
           )}
@@ -1114,10 +770,35 @@ export function DashboardPage() {
             <div style={{ background: 'var(--c-dropdown)', border: '1px solid var(--c-border)' }} className="rounded-xl overflow-hidden">
               <div style={{ borderBottom: '1px solid var(--c-border)' }} className="px-5 py-4 flex items-center justify-between">
                 <div>
-                  <h2 className="font-bold" style={{ fontSize: 20, color: 'var(--c-text)' }}>Mon Carnet de sauts</h2>
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--c-muted)' }}>{totalSauts} sauts enregistrés</p>
+                  <h2 className="font-bold" style={{ fontSize: 20, color: 'var(--c-text)' }}>Mon carnet</h2>
+                  <p className="text-[13px] mt-0.5" style={{ color: 'var(--c-muted)' }}>{totalSauts} sauts enregistrés</p>
                 </div>
                 <div className="flex items-center gap-2">
+                  {/* Exporter et partager vivent avec le carnet qu'ils exportent :
+                      ils occupaient deux lignes de boutons sur l'accueil. */}
+                  <button
+                    onClick={async () => {
+                      if (blockIfDemo() || !user) return;
+                      // Totaux depuis la source unique (Prompt T) ; repli tableau si indisponible.
+                      const { data, error } = await supabase.rpc('get_regulatory_snapshot', { p_user_id: user.id }).maybeSingle();
+                      if (error) console.error('Snapshot export échoué :', error);
+                      const c = data as { total: number; valid: number } | null;
+                      generatePDF(profile, sauts, c ? { total: c.total, valid: c.valid } : undefined);
+                    }}
+                    disabled={sauts.length === 0 || isDemo}
+                    aria-label="Exporter le carnet en PDF" title="Exporter en PDF"
+                    className="w-10 h-10 flex items-center justify-center rounded-xl disabled:opacity-40"
+                    style={{ border: '1px solid var(--c-border-f)', color: 'var(--c-text2)' }}>
+                    <FileDown className="w-4 h-4" aria-hidden />
+                  </button>
+                  <button
+                    onClick={() => { if (!blockIfDemo()) setShareOpen(true); }}
+                    disabled={isDemo}
+                    aria-label="Partager ma progression" title="Partager ma progression"
+                    className="w-10 h-10 flex items-center justify-center rounded-xl disabled:opacity-40"
+                    style={{ border: '1px solid var(--c-border-f)', color: 'var(--c-text2)' }}>
+                    <Share2 className="w-4 h-4" aria-hidden />
+                  </button>
                   {!isDemo && (
                     <button
                       onClick={() => setShowOCR(true)}
@@ -1145,6 +826,12 @@ export function DashboardPage() {
                   </button>
                 </div>
               </div>
+
+              {/* L'import du carnet papier (payant) vit ici, à côté d'« Ajouter » :
+                  c'est là qu'on en a besoin, pas sur l'accueil. */}
+              {!aDejaImporte && !isDemo && (
+                <div className="px-4 pt-4"><BanniereOCR onClic={() => setShowOCR(true)} /></div>
+              )}
 
               {/* Bandeau invitation déclaration sur l'honneur */}
               {!profile?.declaration_honneur_faite && totalSauts < 10 && (
@@ -1432,35 +1119,6 @@ function SautCardMobile({
 }
 
 // ─── Compact badge card (4-col grid) ─────────────────────────────────────────
-
-function CompactBadgeCard({ def, earned, locked, sauts }: { def: BadgeDefinition; earned: boolean; locked?: boolean; sauts?: number }) {
-  const rs = RARETE_STYLES[def.rarete] ?? RARETE_STYLES.commun;
-  return (
-    <div
-      className="relative flex flex-col items-center gap-1 p-2 rounded-lg"
-      style={{
-        background: earned && !locked ? rs.glow : 'rgba(255,255,255,0.03)',
-        border: `0.5px solid ${earned && !locked ? rs.border : 'rgba(255,255,255,0.08)'}`,
-        opacity: locked ? 0.7 : 1,
-      }}
-      title={def.nom}
-    >
-      {/* Badge verrouillé : cadenas explicite + icône dégrisée, distinct d'un badge obtenu. */}
-      {locked && (
-        <span className="absolute top-1 right-1"><Lock className="w-3 h-3" style={{ color: '#64748B' }} /></span>
-      )}
-      <BadgeIcon type={def.type} nom={def.nom} couleur={def.couleur} locked={locked} className="w-6 h-6" />
-      {/* Titre jamais tronqué à un seul caractère : 2 lignes + tooltip. */}
-      {/* Le nom du badge sous sa pastille : `text-white/70` le rendait
-          invisible en mode jour — on voyait douze pastilles sans savoir
-          laquelle était laquelle. */}
-      <span className="text-[9px] font-semibold text-center leading-tight line-clamp-2" style={{ color: 'var(--c-text2)' }}>{def.nom}</span>
-      <span className="text-[9px] font-medium" style={{ color: locked ? '#64748B' : rs.labelColor }}>
-        {locked && sauts !== undefined ? `${sauts} restants` : rs.label}
-      </span>
-    </div>
-  );
-}
 
 // ─── Saut row for Carnet tab ──────────────────────────────────────────────────
 
@@ -1864,213 +1522,6 @@ function BanniereOCR({ onClic }: { onClic: () => void }) {
 }
 
 // ─── Progression Card (dashboard) ────────────────────────────────────────────
-
-interface JumpProgSummary {
-  note_globale: number | null;
-  note_tete: number | null;
-  note_bassin: number | null;
-  note_jambes: number | null;
-  note_bras: number | null;
-  note_ouverture_voile: number | null;
-  note_atterrissage: number | null;
-  note_mental: number | null;
-  precision_metres: number | null;
-  sortie_avion: string | null;
-  retour_face_sol: string | null;
-  vigilance_altitude: string | null;
-  ouverture: string | null;
-  separation: string | null;
-  trajectoire: string | null;
-  declenchement: string | null;
-  pilotage_voile: string | null;
-  circuit_atterro: string | null;
-  precision_atterro: string | null;
-  gestion_urgences: string | null;
-  created_at: string;
-}
-
-function avg(arr: (number | null)[]): number | null {
-  const vals = arr.filter((v): v is number => v !== null);
-  return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
-}
-
-function noteColor(n: number | null): string {
-  if (n === null) return '#64748B';
-  if (n < 2.5) return '#EF4444';
-  if (n < 3.5) return '#F59E0B';
-  return '#10B981';
-}
-
-function ProgressionCard({ userId }: { userId: string | null }) {
-  const [data, setData] = useState<JumpProgSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!userId) { setLoading(false); return; }
-    (async () => {
-      const { data: rows } = await supabase
-        .from('jump_progression')
-        .select('note_globale,note_tete,note_bassin,note_jambes,note_bras,note_ouverture_voile,note_atterrissage,note_mental,precision_metres,sortie_avion,retour_face_sol,vigilance_altitude,ouverture,separation,trajectoire,declenchement,pilotage_voile,circuit_atterro,precision_atterro,gestion_urgences,created_at')
-        .eq('user_id', userId)
-        .not('note_globale', 'is', null)
-        .order('created_at', { ascending: false })
-        .limit(100);
-      setData((rows as JumpProgSummary[]) ?? []);
-      setLoading(false);
-    })();
-  }, [userId]);
-
-  if (loading) return null;
-  if (data.length < 1) return null;
-
-  const noteGlobaleAvg = avg(data.map((d) => d.note_globale));
-  const positionAvg = avg(data.map((d) => {
-    const vals = [d.note_tete, d.note_bassin, d.note_jambes, d.note_bras].filter((v): v is number => v !== null);
-    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
-  }));
-  const mentalAvg = avg(data.map((d) => d.note_mental));
-
-  const precisions = data.map((d) => d.precision_metres).filter((v): v is number => v !== null);
-  const precisionAvg = precisions.length ? Math.round(precisions.reduce((a, b) => a + b, 0) / precisions.length) : null;
-
-  // Source unique (progression.ts) : nombre d'éléments techniques maîtrisés —
-  // même calcul que la page /progression (sinon 8/11 vs 11/11).
-  const { mastered: techScore, total: techTotal } = countMasteredElements(data as unknown as Record<string, unknown>[]);
-
-  const atterrissageDebout = data.filter((d) => (d.note_atterrissage ?? 0) >= 4).length;
-
-  // Trend
-  const half = Math.ceil(data.length / 2);
-  const recent = avg(data.slice(0, half).map((d) => d.note_globale));
-  const older = avg(data.slice(half).map((d) => d.note_globale));
-  const trend = recent !== null && older !== null ? (recent > older ? 'up' : recent < older - 0.2 ? 'down' : 'stable') : 'stable';
-
-  // Alert banners
-  const last3Notes = data.slice(0, 3).map((d) => d.note_globale).filter((v): v is number => v !== null);
-  const showLowAlert = last3Notes.length === 3 && last3Notes.every((n) => n < 3);
-  const last5Notes = data.slice(0, 5).map((d) => d.note_globale).filter((v): v is number => v !== null);
-  const showHighAlert = last5Notes.length === 5 && last5Notes.every((n, i, arr) => i === 0 || n >= arr[i - 1]);
-
-  const kpis = [
-    {
-      label: 'Note globale',
-      value: noteGlobaleAvg !== null ? `${noteGlobaleAvg.toFixed(1)} ★` : '—',
-      animate: noteGlobaleAvg !== null ? { value: noteGlobaleAvg, decimals: 1, suffix: ' ★' } : undefined,
-      color: noteColor(noteGlobaleAvg),
-      sub: trend === 'up' ? '↑ En hausse' : trend === 'down' ? '↓ En baisse' : '→ Stable',
-      subColor: trend === 'up' ? '#10B981' : trend === 'down' ? '#EF4444' : 'var(--c-dim)',
-    },
-    {
-      label: 'Position corps',
-      value: positionAvg !== null ? `${positionAvg.toFixed(1)} / 5` : '—',
-      color: noteColor(positionAvg),
-      sub: 'Tête · Bassin · Jambes · Bras',
-      subColor: 'var(--c-muted)',
-    },
-    {
-      label: 'Posés debout',
-      value: `${atterrissageDebout} / ${data.length}`,
-      animate: { value: atterrissageDebout, decimals: 0, suffix: ` / ${data.length}` },
-      color: '#10B981',
-      sub: null,
-      bar: data.length > 0 ? (atterrissageDebout / data.length) * 100 : 0,
-      barColor: '#10B981',
-    },
-    {
-      label: 'Éléments maîtrisés',
-      value: `${techScore} / ${techTotal}`,
-      animate: { value: techScore, decimals: 0, suffix: ` / ${techTotal}` },
-      color: '#003082',
-      sub: null,
-      bar: techScore / techTotal * 100,
-      barColor: '#003082',
-    },
-    {
-      label: 'Précision atterro',
-      value: precisionAvg !== null ? `${precisionAvg} m` : '—',
-      animate: precisionAvg !== null ? { value: precisionAvg, decimals: 0, suffix: ' m' } : undefined,
-      color: precisionAvg !== null && precisionAvg < 10 ? '#10B981' : '#F59E0B',
-      sub: precisionAvg !== null ? 'du cible' : 'Pas de données',
-      subColor: 'var(--c-muted)',
-    },
-    {
-      label: 'Mental',
-      value: mentalAvg !== null ? `${mentalAvg.toFixed(1)} / 5` : '—',
-      animate: mentalAvg !== null ? { value: mentalAvg, decimals: 1, suffix: ' / 5' } : undefined,
-      color: noteColor(mentalAvg),
-      // Icône vectorielle (nette, indépendante de l'OS) à la couleur d'accent
-      // du Mental — remplace l'emoji système 🧠.
-      sub: <Brain className="w-3.5 h-3.5" strokeWidth={2} />,
-      subColor: noteColor(mentalAvg),
-    },
-  ];
-
-  return (
-    <div className="mb-6" style={{ background: 'var(--c-dropdown)', border: '1px solid var(--c-border)', borderRadius: 12, overflow: 'hidden' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--c-border-s)' }}>
-        <div>
-          <h2 style={{ color: 'var(--c-text)', fontSize: 15, fontWeight: 600 }}>Ma Progression</h2>
-          <p className="text-xs mt-0.5" style={{ color: 'var(--c-muted)' }}>
-            Basé sur tes {data.length} dernier{data.length > 1 ? 's' : ''} saut{data.length > 1 ? 's' : ''} évalué{data.length > 1 ? 's' : ''}
-          </p>
-        </div>
-        <Link to="/progression" className="text-xs font-medium no-underline transition-opacity hover:opacity-70" style={{ color: 'var(--accent-texte)' }}>
-          Voir le détail →
-        </Link>
-      </div>
-
-      {/* Alert banners */}
-      {showLowAlert && (
-        <div className="px-5 py-2 text-xs font-medium" style={{ background: 'rgba(245,158,11,0.1)', color: '#FCD34D', borderBottom: '1px solid rgba(245,158,11,0.15)' }}>
-          Tes derniers sauts sont en dessous de ta moyenne — parle-en à ton moniteur
-        </div>
-      )}
-      {showHighAlert && !showLowAlert && (
-        <div className="px-5 py-2 text-xs font-medium" style={{ background: 'rgba(16,185,129,0.1)', color: '#6EE7B7', borderBottom: '1px solid rgba(16,185,129,0.15)' }}>
-          Tu progresses bien sur tes 5 derniers sauts ! Continue comme ça
-        </div>
-      )}
-
-      {/* KPI grid */}
-      <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {kpis.map((kpi) => (
-          <div key={kpi.label} className="rounded-lg p-4" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-            <p className="text-[10px] uppercase tracking-wider mb-2 font-medium" style={{ color: 'var(--c-muted)', letterSpacing: '0.5px' }}>{kpi.label}</p>
-            {kpi.value === '—' ? (
-              // État vide = invitation à agir (pas une absence terne) : message clair
-              // + micro-CTA vers l'évaluation d'un saut, qui alimente cet indicateur.
-              <div className="leading-tight">
-                <p className="text-sm italic" style={{ color: 'var(--c-dim)' }}>Pas encore évalué</p>
-                <Link
-                  to="/dashboard?action=add-jump"
-                  className="inline-flex items-center gap-1 mt-1 text-[11px] font-semibold no-underline"
-                  style={{ color: 'var(--accent-texte)' }}
-                >
-                  <Plus className="w-3 h-3" /> Évaluer un saut
-                </Link>
-              </div>
-            ) : (
-              <p className="text-xl font-bold leading-tight" style={{ color: kpi.color }}>
-                {'animate' in kpi && kpi.animate
-                  ? <AnimatedNumber value={kpi.animate.value} decimals={kpi.animate.decimals} suffix={kpi.animate.suffix} />
-                  : kpi.value}
-              </p>
-            )}
-            {'bar' in kpi && kpi.bar !== undefined && (
-              <div style={{ margin: '8px 0 4px' }}>
-                <AnimatedBar pct={kpi.bar} color={kpi.barColor as string} height={6} />
-              </div>
-            )}
-            {kpi.sub && (
-              <p className="text-[10px] mt-1.5" style={{ color: kpi.subColor }}>{kpi.sub}</p>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 // ─── Badge notification popup ─────────────────────────────────────────────────
 

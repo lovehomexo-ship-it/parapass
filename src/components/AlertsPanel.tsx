@@ -276,7 +276,7 @@ function isSoon(d: string) {
 function lsKey(userId: string) { return `bandeau_acquitte_${userId}`; }
 function todayIso() { return new Date().toISOString().split('T')[0]; }
 
-export function BandeauAlertes({ alertes, acquittees, onAcquitter, statutDocs, licenceExpiration, certifExpiration, userId }: BandeauProps) {
+export function BandeauAlertes({ alertes, acquittees, onAcquitter, statutDocs, licenceExpiration, certifExpiration, userId, masquerSiValide = false }: BandeauProps & { masquerSiValide?: boolean }) {
   const [detailOuvert, setDetailOuvert] = useState(false);
   const [sessionDismissed, setSessionDismissed] = useState(() => {
     if (!userId) return false;
@@ -308,6 +308,9 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter, statutDocs, l
 
   if (sessionDismissed || (!isRouge && !isOrange && !isVert)) return null;
 
+  // « Tout est en règle » ne s'affiche plus en bandeau : la pastille de
+  // l'accueil le dit, une fois. Le bandeau ne paraît que s'il y a à faire.
+  if (isVert && masquerSiValide) return null;
   if (isVert) {
     return (
       <div

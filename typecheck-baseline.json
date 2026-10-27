@@ -1,5 +1,5 @@
 {
-  "maximum": 92,
+  "maximum": 91,
   "signatures": [
     "src/components/AddSautModal.tsx|TS2322|Type '{ className: string; style: { color: \"rgba(255,255,255,0.4)\"; }; title: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.",
     "src/components/AddSautModal.tsx|TS2322|Type '{ className: string; style: { color: \"rgba(255,255,255,0.4)\"; }; title: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.",
@@ -41,7 +41,6 @@
     "src/pages/CentreDashboard.tsx|TS2345|Argument of type '(d: { statut: string; date_adhesion: string | null; profiles: { id: string; nom: string; prenom: string; email: string; numero_licence: string; photo_profil_url: string | null; role: string; }; }) => { ...; }' is not assignable to parameter of type '(value: { statut: any; date_adhesion: any; profiles: { id: any; nom: any; prenom: any; email: any; numero_licence: any; photo_profil_url: any; created_at: any; role: any; est_demo: any; }[]; }, index: number, array: { ...; }[]) => { ...; }'.",
     "src/pages/CentreDashboard.tsx|TS2345|Argument of type '(d: { statut: string; date_adhesion: string | null; profiles: { id: string; nom: string; prenom: string; email: string; numero_licence: string; photo_profil_url: string | null; role: string; }; }) => { ...; }' is not assignable to parameter of type '(value: { statut: any; date_adhesion: any; profiles: { id: any; nom: any; prenom: any; email: any; numero_licence: any; photo_profil_url: any; role: any; }[]; }, index: number, array: { statut: any; date_adhesion: any; profiles: { ...; }[]; }[]) => { ...; }'.",
     "src/pages/CentreDashboard.tsx|TS2554|Expected 2-3 arguments, but got 1.",
-    "src/pages/Dashboard.tsx|TS2322|Type '{ className: string; style: { color: string; }; }' is not assignable to type 'IntrinsicAttributes & { className?: string | undefined; }'.",
     "src/pages/Dashboard.tsx|TS2322|Type '{ className: string; style: { color: string; }; }' is not assignable to type 'IntrinsicAttributes & { className?: string | undefined; }'.",
     "src/pages/Dashboard.tsx|TS2322|Type '{ className: string; title: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.",
     "src/pages/demo/DemoCentre.tsx|TS2339|Property 'sautsAujourdhui' does not exist on type '{ totalLicencies: number; licenciesActifs: number; totalSautsAnnee: number; moniteurs: number; alertesCritiques: number; alertesWarning: number; planningCreneaux: number; }'.",

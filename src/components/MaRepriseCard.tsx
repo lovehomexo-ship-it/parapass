@@ -8,7 +8,12 @@ import { TYPE_BREVET_LABELS } from '../lib/types';
 
 /** Carte « Ma reprise » : récence du dernier saut vs règles paramétrées par niveau.
  *  Signale seulement — la décision reste au moniteur / à la DZ. */
-export function MaRepriseCard({ userId, niveau, onPlanifierReprise }: { userId: string | undefined; niveau: string | null | undefined; onPlanifierReprise?: () => void }) {
+export function MaRepriseCard({ userId, niveau, onPlanifierReprise, masquerSiAJour = false }: {
+  userId: string | undefined; niveau: string | null | undefined; onPlanifierReprise?: () => void;
+  /** L'accueil ne montre la carte que lorsqu'il y a une reprise à prévoir :
+   *  452 px pour dire « À jour » répétaient ce que la pastille d'état dit déjà. */
+  masquerSiAJour?: boolean;
+}) {
   const { lastJumpDate, lastJumpIsUnvalidated } = useJumpCounts(userId);
   const { rules } = useCurrencyRules();
 
@@ -17,6 +22,8 @@ export function MaRepriseCard({ userId, niveau, onPlanifierReprise }: { userId: 
   const rule = getCurrencyRule(niveau, rules);
   const jours = daysSince(lastJumpDate);
   const niveauLabel = niveau ? (TYPE_BREVET_LABELS[niveau] ?? niveau) : 'niveau non renseigné';
+
+  if (masquerSiAJour && status === 'a_jour') return null;
 
   let phrase: string;
   if (status === 'indetermine') {

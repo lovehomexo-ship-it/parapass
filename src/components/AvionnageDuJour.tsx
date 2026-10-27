@@ -46,7 +46,7 @@ function SelecteurDz({ dzs, choisie, onChoisir }: {
             style={{
               minHeight: 30,
               background: actif ? 'rgba(249,115,22,0.16)' : 'var(--c-surface)',
-              color: actif ? '#FDBA74' : 'var(--c-muted)',
+              color: actif ? 'var(--accent-texte)' : 'var(--c-muted)',
               border: `1px solid ${actif ? 'rgba(249,115,22,0.4)' : 'var(--c-border)'}`,
             }}>
             {/* Le point ne dit pas « ouvert » mais « il s'y passe quelque chose
@@ -166,8 +166,8 @@ function AvionnageInner({ userId }: { userId: string | undefined }) {
       {!dz.je_suis_present && dz.ma_position === null && dz.ouvert && (
         <div className="rounded-xl px-3 py-2 mb-2 flex items-start gap-2"
           style={{ background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.3)' }}>
-          <MapPin className="w-4 h-4 flex-shrink-0 mt-px" style={{ color: '#FDBA74' }} aria-hidden />
-          <span className="text-xs leading-relaxed" style={{ color: '#FDBA74' }}>
+          <MapPin className="w-4 h-4 flex-shrink-0 mt-px" style={{ color: 'var(--accent-texte)' }} aria-hidden />
+          <span className="text-xs leading-relaxed" style={{ color: 'var(--accent-texte)' }}>
             Déclare ta présence à {dz.centre_nom} pour pouvoir te mettre en file.
           </span>
         </div>
