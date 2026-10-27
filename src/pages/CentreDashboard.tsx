@@ -22,6 +22,7 @@ import { formatDateTimeParis, ymdLocal } from '../lib/datetime';
 import { DecisionDuJour } from '../components/DecisionDuJour';
 import { sautsToCSV } from '../lib/sautsExport';
 import { DemoJourneeDZ } from '../components/DemoJourneeDZ';
+import { DemoQuotidienne } from '../components/DemoQuotidienne';
 import { useCurrencyRules, getCurrencyStatus, CURRENCY_STATUS_CONFIG } from '../lib/currency';
 import { useEncadrement, compterExigencesNonCouvertes } from '../lib/encadrement';
 import { MeteoAltitudeDZ } from '../components/MeteoAltitudeCard';
@@ -3687,6 +3688,11 @@ export function CentreDashboardPage() {
               {/* L'ordre du menu se règle ICI, avec le reste de l'identité du
                   centre — pas dans un écran à part que personne ne trouve. */}
               <OrdreDuMenu centre={centre} entrees={navItems} onSaved={fetchCentreData} />
+              {/* Même garde que la zone de test : compte interne ParaPass et
+                  administrateur du centre. Un vrai club ne voit pas ce réglage. */}
+              {centreId && profile?.role === 'admin_centre' && profile?.compte_interne && (
+                <DemoQuotidienne centreId={centreId} centreNom={centre?.nom} onDone={fetchCentreData} />
+              )}
             </div>
           )}
           {activeSection === 'pliage' && centreId && activeModules.has('pliage') && (
