@@ -43,15 +43,29 @@ export function techStatus(
 }
 
 /**
- * Sauts « à évaluer » (Prompt R) : vrais sauts (hors soufflerie) sans évaluation
- * saisie (aucune ligne jump_progression avec une note globale). Sert au compteur
- * de la page progression et à l'invitation post-validation.
+ * Sauts « à évaluer » (Prompt R) — UNE règle, partagée par l'accueil et la page
+ * Progression, qui affichaient 28 et 200 pour le même parachutiste.
+ *
+ * Comptent : les vrais sauts (hors soufflerie) VALIDÉS ou EN ATTENTE de
+ * validation — on évalue son saut au retour du posé, avant que le moniteur
+ * signe. Ne comptent pas : l'historique importé d'un carnet papier (personne
+ * n'évalue un saut d'il y a dix ans), les déclarations sur l'honneur, les
+ * sauts refusés. Un saut est évalué dès qu'il a une note globale.
  */
+const STATUTS_EVALUABLES = new Set(['valide', 'en_attente']);
+
+export function sautsAEvaluer<T extends { id: string; is_tunnel?: boolean | null; statut?: string | null }>(
+  sauts: ReadonlyArray<T>,
+  evaluatedJumpIds: ReadonlySet<string>
+): T[] {
+  return sauts.filter(s => s.is_tunnel !== true && STATUTS_EVALUABLES.has(s.statut ?? '') && !evaluatedJumpIds.has(s.id));
+}
+
 export function countSautsAEvaluer(
   sauts: ReadonlyArray<{ id: string; is_tunnel?: boolean | null; statut?: string | null }>,
   evaluatedJumpIds: ReadonlySet<string>
 ): number {
-  return sauts.filter(s => s.is_tunnel !== true && !evaluatedJumpIds.has(s.id)).length;
+  return sautsAEvaluer(sauts, evaluatedJumpIds).length;
 }
 
 /**

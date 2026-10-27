@@ -12,6 +12,7 @@ import { ParachuteGlyph } from '../design/BadgeIcon';
 import { Link, useNavigate } from 'react-router-dom';
 import { ParachuteIcon } from '../components/ParachuteIcon';
 import { TECH_ELEMENTS, techStatus, countMasteredElements, countSautsAEvaluer } from '../lib/progression';
+import { lireTout } from '../lib/lireTout';
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, BarElement,
@@ -164,20 +165,22 @@ export function ProgressionPage() {
     if (!user) return;
     (async () => {
       setLoading(true);
+      // TOUT le carnet, pas les 200 derniers : la page annonçait « 200 sauts
+      // enregistrés » quand l'accueil en comptait 269 (cf. lireTout).
       const [{ data: jpData }, { data: sautsData }] = await Promise.all([
-        supabase
+        lireTout<JumpProg>((d, f) => supabase
           .from('jump_progression')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
-          .limit(100),
-        supabase
+          .range(d, f)),
+        lireTout<SautRow>((d, f) => supabase
           .from('sauts')
           .select('id, date_saut, lieu, hauteur_m, statut, nature_saut, categorie, created_at, source')
           .eq('parachutiste_id', user.id)
           .eq('is_tunnel', false)
           .order('date_saut', { ascending: false })
-          .limit(200),
+          .range(d, f)),
       ]);
       // Fuse saut data into jump_progression rows client-side
       const sautMap: Record<string, SautRow> = {};

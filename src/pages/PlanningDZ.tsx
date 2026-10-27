@@ -492,13 +492,13 @@ function DayCell({
       onClick={onClick}
       className="aspect-square rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all relative overflow-hidden"
       style={{
-        background: sc ? sc.bgLight : isToday ? '#EFF6FF' : 'transparent',
-        border: isToday ? '2px solid #2563EB' : `1px solid ${sc ? sc.bg + '30' : '#E2E8F0'}`,
+        background: sc ? sc.bgLight : isToday ? 'color-mix(in srgb, var(--action-texte) 14%, transparent)' : 'transparent',
+        border: isToday ? '2px solid var(--action-texte)' : `1px solid ${sc ? sc.bg + '30' : 'var(--c-border)'}`,
         opacity: isCurrentMonth ? 1 : 0.35,
         cursor: main ? 'pointer' : 'default',
       }}
     >
-      <span className={`text-xs font-semibold ${isToday ? 'text-blue-600' : sc ? '' : 'text-gray-500'}`}
+      <span className={`text-xs font-semibold ${isToday ? 'text-[var(--action-texte)]' : sc ? '' : 'text-[var(--c-muted)]'}`}
         style={sc ? { color: sc.text } : undefined}>
         {day}
       </span>
@@ -664,7 +664,7 @@ export function PlanningDZ() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Ma DZ</h1>
+          <h1 className="text-2xl font-bold text-[var(--c-text)]">Ma DZ</h1>
         </div>
       </div>
 
@@ -677,9 +677,9 @@ export function PlanningDZ() {
               onClick={() => { setCentreId(centre.id); setSelectedCreneau(null); }}
               className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all"
               style={{
-                background: centreId === centre.id ? '#2563EB' : '#fff',
-                color: centreId === centre.id ? '#fff' : '#374151',
-                border: centreId === centre.id ? '1.5px solid #2563EB' : '1.5px solid #E5E7EB',
+                background: centreId === centre.id ? 'var(--action-fond)' : 'var(--c-card)',
+                color: centreId === centre.id ? '#fff' : 'var(--c-text2)',
+                border: centreId === centre.id ? '1.5px solid var(--action-fond)' : '1.5px solid var(--c-border)',
                 boxShadow: centreId === centre.id ? '0 2px 8px rgba(37,99,235,0.25)' : '0 1px 3px rgba(0,0,0,0.05)',
               }}
             >
@@ -693,24 +693,24 @@ export function PlanningDZ() {
 
       {/* Single centre label */}
       {mesCentres.length === 1 && centreActif && (
-        <div className="flex items-center gap-1.5 text-sm text-gray-500">
+        <div className="flex items-center gap-1.5 text-sm text-[var(--c-muted)]">
           <MapPin className="w-3.5 h-3.5" />
           {centreActif.nom} · {centreActif.ville}
         </div>
       )}
 
       {!centreId ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-14 text-center">
-          <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 font-medium">Aucun centre associé</p>
-          <p className="text-sm text-gray-400 mt-1">Rejoignez un centre de parachutisme pour voir son planning.</p>
+        <div className="bg-[var(--c-card)] rounded-2xl border border-[var(--c-border)] p-14 text-center">
+          <Calendar className="w-10 h-10 text-[var(--c-dim)] mx-auto mb-3" />
+          <p className="text-[var(--c-muted)] font-medium">Aucun centre associé</p>
+          <p className="text-sm text-[var(--c-dim)] mt-1">Rejoignez un centre de parachutisme pour voir son planning.</p>
         </div>
       ) : (
         <>
           {/* Prochains créneaux inscrits */}
           {prochains.length > 0 && (
             <div className="space-y-2">
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Mes prochains créneaux</h2>
+              <h2 className="text-sm font-semibold text-[var(--c-muted)] uppercase tracking-wide">Mes prochains créneaux</h2>
               {prochains.map(c => {
                 const insc = inscriptions.find(i => i.creneau_id === c.id);
                 const meteoEval = c.meteo_data ? evaluerConditions(c.meteo_data, userBrevet) : null;
@@ -719,20 +719,20 @@ export function PlanningDZ() {
                   <button
                     key={c.id}
                     onClick={() => setSelectedCreneau(c)}
-                    className="w-full bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-4 hover:border-blue-200 hover:shadow-sm transition-all text-left"
+                    className="w-full bg-[var(--c-card)] rounded-2xl border border-[var(--c-border)] p-4 flex items-center gap-4 hover:border-[var(--c-border-f)] hover:shadow-sm transition-all text-left"
                     style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
                   >
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
                       style={{ background: '#DCFCE7' }}><span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: '#10B981' }} /></div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-gray-900 capitalize">{dateLabel} — {c.centres?.nom}</div>
-                      <div className="text-sm text-gray-500">{c.heure_debut.slice(0, 5)}-{c.heure_fin.slice(0, 5)} · Tu y vas ✓</div>
+                      <div className="font-semibold text-[var(--c-text)] capitalize">{dateLabel} — {c.centres?.nom}</div>
+                      <div className="text-sm text-[var(--c-muted)]">{c.heure_debut.slice(0, 5)}-{c.heure_fin.slice(0, 5)} · Tu y vas ✓</div>
                     </div>
                     {meteoEval && (
                       <span className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: meteoEval.couleur }} />
                     )}
                     {insc?.commentaire && (
-                      <span className="text-xs text-gray-400 hidden sm:block truncate max-w-[120px]">{insc.commentaire}</span>
+                      <span className="text-xs text-[var(--c-dim)] hidden sm:block truncate max-w-[120px]">{insc.commentaire}</span>
                     )}
                   </button>
                 );
@@ -741,24 +741,24 @@ export function PlanningDZ() {
           )}
 
           {/* Calendar */}
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden" style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
+          <div className="bg-[var(--c-card)] rounded-2xl border border-[var(--c-border)] overflow-hidden" style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
             {/* Nav */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <button onClick={() => setCurrentMonth(new Date(year, month - 1, 1))} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-                <ChevronLeft className="w-5 h-5 text-gray-500" />
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--c-border)]">
+              <button onClick={() => setCurrentMonth(new Date(year, month - 1, 1))} className="p-1.5 hover:bg-[var(--c-hover)] rounded-lg transition-colors">
+                <ChevronLeft className="w-5 h-5 text-[var(--c-muted)]" aria-hidden />
               </button>
-              <h2 className="font-semibold text-gray-900 capitalize">
+              <h2 className="font-semibold text-[var(--c-text)] capitalize">
                 {currentMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
               </h2>
-              <button onClick={() => setCurrentMonth(new Date(year, month + 1, 1))} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-                <ChevronRight className="w-5 h-5 text-gray-500" />
+              <button onClick={() => setCurrentMonth(new Date(year, month + 1, 1))} className="p-1.5 hover:bg-[var(--c-hover)] rounded-lg transition-colors">
+                <ChevronRight className="w-5 h-5 text-[var(--c-muted)]" />
               </button>
             </div>
 
             {/* Day headers */}
             <div className="grid grid-cols-7 px-3 pt-3 pb-1">
               {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map(d => (
-                <div key={d} className="text-center text-xs font-semibold text-gray-400 pb-1">{d}</div>
+                <div key={d} className="text-center text-xs font-semibold text-[var(--c-dim)] pb-1">{d}</div>
               ))}
             </div>
 
@@ -787,7 +787,7 @@ export function PlanningDZ() {
               {Object.values(STATUT_CONFIG).map(s => (
                 <div key={s.label} className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded-sm" style={{ background: s.bgLight, border: `1px solid ${s.bg + '50'}` }} />
-                  <span className="text-xs text-gray-500">{s.label}</span>
+                  <span className="text-xs text-[var(--c-muted)]">{s.label}</span>
                 </div>
               ))}
             </div>
@@ -796,7 +796,7 @@ export function PlanningDZ() {
           {/* Liste complète du mois */}
           {creneaux.filter(c => c.statut === 'ouvert').length > 0 && (
             <div className="space-y-2">
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Créneaux ouverts ce mois</h2>
+              <h2 className="text-sm font-semibold text-[var(--c-muted)] uppercase tracking-wide">Créneaux ouverts ce mois</h2>
               {creneaux.filter(c => c.statut === 'ouvert').map(c => {
                 const insc = inscriptions.find(i => i.creneau_id === c.id);
                 const nbInscrits = c.nb_places_total - c.nb_places_restantes;
@@ -805,12 +805,12 @@ export function PlanningDZ() {
                   <button
                     key={c.id}
                     onClick={() => setSelectedCreneau(c)}
-                    className="w-full bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-3 hover:border-blue-200 hover:shadow-sm transition-all text-left"
+                    className="w-full bg-[var(--c-card)] rounded-xl border border-[var(--c-border)] p-4 flex items-center gap-3 hover:border-[var(--c-border-f)] hover:shadow-sm transition-all text-left"
                   >
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-base" style={{ background: '#DCFCE7' }}><span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: '#10B981' }} /></div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold text-gray-900 capitalize">{dateLabel}</div>
-                      <div className="text-xs text-gray-500">{c.heure_debut.slice(0, 5)}-{c.heure_fin.slice(0, 5)} · {nbInscrits}/{c.nb_places_total} inscrits</div>
+                      <div className="text-sm font-semibold text-[var(--c-text)] capitalize">{dateLabel}</div>
+                      <div className="text-xs text-[var(--c-muted)]">{c.heure_debut.slice(0, 5)}-{c.heure_fin.slice(0, 5)} · {nbInscrits}/{c.nb_places_total} inscrits</div>
                     </div>
                     {insc ? (
                       <span className="text-xs px-2 py-1 rounded-full font-semibold flex-shrink-0"
@@ -821,7 +821,7 @@ export function PlanningDZ() {
                         {insc.statut === 'present' ? '✓ Je viens' : insc.statut === 'peut_etre' ? '? Peut-être' : '✗ Non'}
                       </span>
                     ) : (
-                      <span className="text-xs text-gray-400 flex-shrink-0">S'inscrire →</span>
+                      <span className="text-xs text-[var(--c-dim)] flex-shrink-0">S'inscrire →</span>
                     )}
                   </button>
                 );

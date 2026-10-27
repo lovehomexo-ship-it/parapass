@@ -42,6 +42,14 @@ function AvatarBadge({ url, initials, px }: { url?: string | null; initials: str
   );
 }
 
+const TITRES_PAGES: Record<string, string> = {
+  '/dashboard': 'Aujourd’hui', '/passeport': 'Passeport', '/stats': 'Statistiques',
+  '/progression': 'Progression', '/materiel': 'Matériel', '/badges': 'Badges',
+  '/communaute': 'Communauté', '/validations': 'Validations', '/regles-ffp': 'Règles FFP',
+  '/messages': 'Messages', '/qr-code': 'QR code', '/profil': 'Profil', '/parametres': 'Réglages',
+  '/moi': 'Moi',
+};
+
 export function Layout({ children, noPadding = false }: { children: React.ReactNode; noPadding?: boolean }) {
   const { user, profile, signOut, delegation, sautsEnAttente, isDemo, isDemoAccount } = useAuth();
   const navigate = useNavigate();
@@ -69,6 +77,14 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
   const { isDark, toggleTheme } = useTheme();
 
   const hasActiveDelegation = useMemo(() => isDelegationActive(delegation), [delegation]);
+
+  // UN TITRE PAR PAGE. Toutes portaient « ParaPass — Carnet de sauts numérique
+  // FFP » (ou le titre resté de l'espace centre) : dix onglets ouverts, dix
+  // onglets identiques, et un historique illisible.
+  useEffect(() => {
+    const titre = TITRES_PAGES[location.pathname];
+    document.title = titre ? `${titre} · ParaPass` : 'ParaPass — Carnet de sauts numérique FFP';
+  }, [location.pathname]);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {

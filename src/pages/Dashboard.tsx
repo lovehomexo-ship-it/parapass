@@ -26,7 +26,8 @@ import { ShareCardModal } from '../components/ShareCardModal';
 import { useDzMembre } from '../lib/briefing';
 import { useBadges } from '../lib/useBadges';
 import { usePassport } from '../lib/usePassport';
-import { countMasteredElements } from '../lib/progression';
+import { countMasteredElements, sautsAEvaluer } from '../lib/progression';
+import { lireTout } from '../lib/lireTout';
 import { formatDateTimeParis } from '../lib/datetime';
 import { useDemo } from '../lib/useDemo';
 import { PasseportCardView } from '../components/PasseportCardView';
@@ -403,12 +404,15 @@ export function DashboardPage() {
 
   const fetchSauts = useCallback(async () => {
     if (!user) return;
-    const { data, error } = await supabase
+    // Par pages : une lecture simple est coupée à 1 000 lignes, et un moniteur
+    // à 3 000 sauts voyait « 1 000 » au total (cf. lireTout).
+    const { data, error } = await lireTout<Saut>((d, f) => supabase
       .from('sauts')
       .select('*')
       .eq('parachutiste_id', user.id)
-      .order('date_saut', { ascending: false });
-    if (!error && data) setSauts(data as Saut[]);
+      .order('date_saut', { ascending: false })
+      .range(d, f));
+    if (!error) setSauts(data);
     setLoading(false);
   }, [user]);
 
@@ -436,10 +440,11 @@ export function DashboardPage() {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data, error } = await supabase
-        .from('jump_progression').select('jump_id').eq('user_id', user.id).not('note_globale', 'is', null);
+      const { data, error } = await lireTout<{ jump_id: string }>((d, f) => supabase
+        .from('jump_progression').select('jump_id').eq('user_id', user.id).not('note_globale', 'is', null)
+        .range(d, f));
       if (error) { console.error('Chargement évaluations échoué :', error); return; }
-      setEvaluatedIds(new Set((data ?? []).map((d: { jump_id: string }) => d.jump_id)));
+      setEvaluatedIds(new Set(data.map((d) => d.jump_id)));
     };
     load();
     const ch = supabase
@@ -505,8 +510,8 @@ export function DashboardPage() {
 
   const vraisSauts = sauts.filter((s) => !s.is_tunnel);
   const totalSauts = vraisSauts.length;
-  // Sauts validés pas encore évalués (Prompt R) — invite à évaluer, le plus récent d'abord.
-  const sautsAEvaluer = vraisSauts.filter((s) => s.statut === 'valide' && !evaluatedIds.has(s.id));
+  // Sauts à évaluer (Prompt R) — la règle partagée avec la page Progression, le plus récent d'abord.
+  const aEvaluer = sautsAEvaluer(vraisSauts, evaluatedIds);
   // Sauts enregistrés aujourd'hui (variante de la carte de partage — V2).
   const todayYmd = new Date().toISOString().slice(0, 10);
   const sautsAujourdhui = vraisSauts.filter((s) => s.date_saut === todayYmd).length;
@@ -962,7 +967,7 @@ export function DashboardPage() {
                   progression » et « Mon activité » : elle fait le lien entre la
                   courbe (ce que l'évaluation alimente) et l'activité récente d'où
                   proviennent les sauts à évaluer. Nombre issu de la source unique. */}
-              {sautsAEvaluer.length > 0 && (
+              {aEvaluer.length > 0 && (
                 <div className="rounded-2xl p-4 mt-3 flex items-center gap-3 flex-wrap"
                   style={{ background: 'rgba(249,115,22,0.14)', border: '1.5px solid rgba(249,115,22,0.45)' }}>
                   <div className="flex-1 min-w-0">
@@ -972,14 +977,14 @@ export function DashboardPage() {
                         raison d'ouvrir l'écran. Le jeton d'accent tient des deux
                         côtés. */}
                     <p className="text-sm font-extrabold" style={{ color: 'var(--accent-texte)' }}>
-                      {sautsAEvaluer.length} saut{sautsAEvaluer.length > 1 ? 's' : ''} validé{sautsAEvaluer.length > 1 ? 's' : ''} à évaluer
+                      {aEvaluer.length} saut{aEvaluer.length > 1 ? 's' : ''} à évaluer
                     </p>
                     <p className="text-xs mt-0.5" style={{ color: 'var(--c-text2)' }}>
                       Évalue ton saut pour faire progresser ta courbe et tes éléments maîtrisés.
                     </p>
                   </div>
                   <button
-                    onClick={() => { if (!blockIfDemo()) { setSautAEditer(sautsAEvaluer[0]); setModalOpen(true); } }}
+                    onClick={() => { if (!blockIfDemo()) { setSautAEditer(aEvaluer[0]); setModalOpen(true); } }}
                     className="px-4 py-2.5 rounded-xl text-sm font-bold text-white flex-shrink-0"
                     style={{ background: 'var(--accent-fond)' }}>
                     Évaluer ce saut →

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { countMasteredElements, countSautsAEvaluer, techStatus, TECH_ELEMENTS } from './progression';
+import { countMasteredElements, countSautsAEvaluer, sautsAEvaluer, techStatus, TECH_ELEMENTS } from './progression';
 
 describe('countSautsAEvaluer', () => {
   const sauts = [
@@ -7,6 +7,8 @@ describe('countSautsAEvaluer', () => {
     { id: 'b', is_tunnel: false, statut: 'valide' },
     { id: 'c', is_tunnel: true, statut: 'valide' },   // soufflerie → jamais compté
     { id: 'd', is_tunnel: false, statut: 'en_attente' },
+    { id: 'e', is_tunnel: false, statut: 'historique' },          // carnet importé → jamais compté
+    { id: 'f', is_tunnel: false, statut: 'declaration_honneur' }, // → jamais compté
   ];
 
   it('compte les vrais sauts sans évaluation, hors soufflerie', () => {
@@ -16,6 +18,10 @@ describe('countSautsAEvaluer', () => {
 
   it('un saut non évalué n’est jamais compté comme évalué', () => {
     expect(countSautsAEvaluer(sauts, new Set())).toBe(3);
+  });
+
+  it('l’historique importé et les déclarations ne sont jamais à évaluer', () => {
+    expect(sautsAEvaluer(sauts, new Set()).map(s => s.id)).toEqual(['a', 'b', 'd']);
   });
 
   it('tout évalué ⇒ 0', () => {

@@ -135,37 +135,37 @@ export function QRCodePage() {
   return (
     <Layout>
       <div className="max-w-lg mx-auto px-4 py-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center relative overflow-hidden">
+        <div className="rounded-2xl p-8 text-center relative overflow-hidden" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
           <div className="absolute -top-6 -right-6 opacity-[0.04] pointer-events-none">
-            <ParachuteIcon className="w-96 h-96 text-[#001A4D]" />
+            <span style={{ color: 'var(--c-text)', display: 'inline-flex' }}><ParachuteIcon className="w-96 h-96" /></span>
           </div>
 
           <img src="/logo-parapass.webp" alt="ParaPass" className="h-12 w-auto mx-auto mb-3" />
-          <h1 className="text-xl font-bold text-[#001A4D] mb-2">Mon QR Code</h1>
-          <p className="text-sm text-gray-500 mb-6">Présentez ce QR code lors des contrôles DGAC ou gendarmerie</p>
+          <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--c-text)' }}>Mon QR Code</h1>
+          <p className="text-sm mb-6" style={{ color: 'var(--c-muted)' }}>Présentez ce QR code lors des contrôles DGAC ou gendarmerie</p>
 
           {jws ? (
-            <div className="inline-block bg-white p-4 rounded-xl border-2 border-gray-100">
+            <div className="inline-block bg-white p-4 rounded-xl">
               <QRCodeSVG value={qrUrl} size={200} level="M" />
             </div>
           ) : (
-            <div className="w-[200px] h-[200px] bg-gray-100 rounded-xl mx-auto flex items-center justify-center">
-              <p className="text-gray-400 text-sm">{jwsLoading ? 'Génération…' : 'Chargement...'}</p>
+            <div className="w-[200px] h-[200px] rounded-xl mx-auto flex items-center justify-center" style={{ background: 'var(--c-hover)' }}>
+              <p className="text-sm" style={{ color: 'var(--c-dim)' }}>{jwsLoading ? 'Génération…' : 'Chargement...'}</p>
             </div>
           )}
 
           <div className="mt-6 space-y-3">
             <button onClick={() => setFullscreen(true)}
-              className="w-full flex items-center justify-center gap-2 bg-[#001A4D] hover:bg-[#1E3A5F] text-white py-2.5 rounded-lg text-sm font-semibold transition-colors">
+              className="w-full flex items-center justify-center gap-2 text-white rounded-xl text-sm font-semibold transition-colors" style={{ minHeight: 48, background: 'var(--action-fond)' }}>
               <Maximize2 className="w-4 h-4" /> Plein écran
             </button>
             <button onClick={regenerateQr} disabled={jwsLoading}
-              className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
+              className="w-full flex items-center justify-center gap-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50" style={{ minHeight: 44, color: 'var(--c-text2)', border: '1px solid var(--c-border)' }}>
               <RefreshCw className={`w-4 h-4 ${jwsLoading ? 'animate-spin' : ''}`} /> Régénérer le QR code
             </button>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-gray-100 text-left space-y-2.5">
+          <div className="mt-6 pt-4 text-left space-y-2.5" style={{ borderTop: '1px solid var(--c-border)' }}>
             <InfoRow label="Nom" value={`${profile.nom} ${profile.prenom}`} />
             <InfoRow label="Licence FFP" value={cleanLicence(profile.numero_licence)} />
             <InfoRow label="Brevet" value={brevet ? (TYPE_BREVET_LABELS[brevet.type_brevet] || brevet.type_brevet) : 'Non renseigné'} />
@@ -183,11 +183,10 @@ export function QRCodePage() {
               <InfoRow label="dont validés" value={String(validSauts)} />
             )}
             <div className="flex items-center justify-between py-0.5">
-              <span className="text-sm text-gray-500 font-medium">Statut</span>
-              <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                licenceActif ? 'bg-green-100 text-green-700' :
-                licenceExpired ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500'
-              }`}>
+              <span className="text-sm font-medium" style={{ color: 'var(--c-muted)' }}>Statut</span>
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full" style={{
+                color: licenceActif ? 'var(--sev-conforme)' : licenceExpired ? 'var(--sev-critique)' : 'var(--sev-neutre)',
+                background: `color-mix(in srgb, ${licenceActif ? 'var(--sev-conforme)' : licenceExpired ? 'var(--sev-critique)' : 'var(--sev-neutre)'} 14%, transparent)` }}>
                 {licenceActif ? 'ACTIF' : licenceExpired ? 'EXPIRÉ' : 'NON RENSEIGNÉ'}
               </span>
             </div>
@@ -201,11 +200,9 @@ export function QRCodePage() {
 function InfoRow({ label, value, highlight }: { label: string; value: string; highlight?: 'green' | 'red' }) {
   return (
     <div className="flex items-center justify-between py-0.5">
-      <span className="text-sm text-gray-500 font-medium">{label}</span>
-      <span className={`text-sm font-semibold ${
-        highlight === 'green' ? 'text-green-600' :
-        highlight === 'red' ? 'text-red-600' : 'text-[#001A4D]'
-      }`}>{value}</span>
+      <span className="text-sm font-medium" style={{ color: 'var(--c-muted)' }}>{label}</span>
+      <span className="text-sm font-semibold" style={{
+        color: highlight === 'green' ? 'var(--sev-conforme)' : highlight === 'red' ? 'var(--sev-critique)' : 'var(--c-text)' }}>{value}</span>
     </div>
   );
 }
