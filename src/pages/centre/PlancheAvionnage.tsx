@@ -10,6 +10,7 @@ import {
   libelleDiscipline, teinteDiscipline, radioAttendue, type Discipline,
   libelleDT48, type VerdictDT48, SOURCE_DT48, type AnomaliePlanche,
   verifierPlanche, blocsDePlanche, masseEmbarquee, libelleMasse,
+  phaseRotation, PHASE_ROTATION,
 } from '../../lib/avionnage';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -300,11 +301,21 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
               </span>
             )}
           </p>
-          <p className="mt-1 font-extrabold leading-none"
-            style={{ fontSize: 17, color: close ? 'var(--c-muted)' : SEVERITE_COULEUR[sev] }}>
-            {r.cloturee_le !== null || r.statut === 'terminee' ? 'clôturé'
-             : figee ? 'embarquement validé' : formaterRetard(call.libelle)}
-          </p>
+          {/* Une fois parti, l'avion ne « calle » plus : on dit sa PHASE, dans la
+              couleur commune à la frise du tableau de bord et à l'avionnage. */}
+          {(() => {
+            const ph = phaseRotation(r);
+            const enAir = ph === 'en_vol' || ph === 'largue';
+            return (
+              <p className="mt-1 font-extrabold leading-none"
+                style={{ fontSize: 17, color: enAir ? PHASE_ROTATION[ph].trait : close ? 'var(--c-muted)' : SEVERITE_COULEUR[sev] }}>
+                {ph === 'cloturee' ? 'clôturé'
+                 : ph === 'largue' ? `largué${r.heure_largage ? ` à ${hhmm(r.heure_largage)}` : ''}`
+                 : ph === 'en_vol' ? `en vol${r.heure_decollage ? ` · décollé à ${hhmm(r.heure_decollage)}` : ''}`
+                 : figee ? 'embarquement validé' : formaterRetard(call.libelle)}
+              </p>
+            );
+          })()}
           <p className="mt-1 flex items-center gap-1.5 flex-wrap" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
             {/* QUEL AVION PORTE CETTE PLANCHE. C'etait un simple texte, et la
                 planche etait ouverte en silence sur le premier appareil du

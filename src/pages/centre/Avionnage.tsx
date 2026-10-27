@@ -10,6 +10,7 @@ import { action, enTeteSection, SEVERITE_COULEUR } from '../../lib/jetons';
 import { brevetPrincipal } from '../../lib/brevets';
 import { siegesOccupes, messageErreur, type Discipline, type VerdictDT48 } from '../../lib/avionnage';
 import { FileAvionnageDZ } from './FileAvionnageDZ';
+import { FriseRotations } from './FriseRotations';
 import { FlotteAeronefs, type Aeronef } from './Rotations';
 import { RechercheLicencie } from './RechercheLicencie';
 import { ReglagesAvionnage } from './ReglagesAvionnage';
@@ -812,6 +813,29 @@ function AvionnageInner({ centreId }: { centreId: string }) {
           fontSize: 13, borderLeft: '5px solid var(--sev-critique)', color: 'var(--c-text2)',
           background: 'color-mix(in srgb, var(--sev-critique) 10%, transparent)' }}>{erreur}</p>
       )}
+
+      {/* LA JOURNÉE EN ROTATIONS, ICI AUSSI. Le chef d'avionnage vit dans cet
+          écran : il doit y lire d'un coup d'œil où en est chaque avion — en vol,
+          largué, clôturé — et ce qui s'est passé depuis le matin, sans repasser
+          par le tableau de bord. Mêmes rotations que les planches ci-dessous,
+          tenues à jour par le même canal temps réel. */}
+      {(() => {
+        const coucher = coords ? coucherSoleil(maintenant, coords.lat, coords.lon) : null;
+        return (
+          <FriseRotations maintenant={maintenant} coucher={coucher} lienPlanches={false} detail
+            libelleCoucher={libelleCoucher(coucher, maintenant)?.heure}
+            rotations={rotations.map(r => {
+              const av = aeronefs.find(a => a.id === r.aeronef_id);
+              return {
+                id: r.id, numero: r.numero, statut: r.statut, heure_prevue: r.heure_prevue,
+                heure_decollage: r.heure_decollage, heure_largage: r.heure_largage,
+                cloturee_le: r.cloturee_le, embarquement_valide_le: r.embarquement_valide_le,
+                immatriculation: av?.immatriculation ?? null, capacite: av?.places ?? null,
+                prises: siegesOccupes(places.filter(p => p.rotation_id === r.id)),
+              };
+            })} />
+        );
+      })()}
 
       {/* Sans avion, pas de planche : la saisie est ici, là où le manque se voit. */}
       <FlotteAeronefs centreId={centreId} aeronefs={aeronefs} onFait={charger} />

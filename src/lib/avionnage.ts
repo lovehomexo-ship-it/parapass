@@ -994,3 +994,63 @@ export function useResumeAvionnage(userId: string | undefined) {
 
   return { dzs, chargement, erreur, recharger: charger };
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LA PHASE D'UNE ROTATION — une seule définition pour tout l'espace DZ.
+//
+// La frise du tableau de bord, le résumé de l'avionnage et le badge des
+// rotations disaient chacun l'état d'un avion à leur façon : « partie » en gris
+// d'un côté, « En vol » en vert de l'autre, « Terminée » en gris encore. Un DT
+// qui passait d'un écran à l'autre devait réapprendre les couleurs.
+//
+// Les phases suivent l'ordre réel d'une rotation, et chacune se lit dans une
+// colonne écrite par un geste de l'avionnage — jamais déduite de l'heure :
+//   préparation  → planche ouverte
+//   embarquement → embarquement validé (embarquement_valide_le)
+//   en vol       → bouton Décollage (heure_decollage)
+//   largué       → bouton Largage (heure_largage)
+//   clôturé      → clôture, sauts créés (cloturee_le, ou statut « terminee »)
+//
+// Couleurs : des FONDS assez sombres pour porter du texte blanc (≥ 4,5:1)
+// dans les deux thèmes. Ce qui est fini s'efface — contour seul — pour que le
+// regard aille à ce qui se passe encore. Ni vert, ni ambre, ni rouge pour les
+// phases ouvertes : ces trois couleurs disent une gravité (P13), et un avion
+// en vol n'est pas une alerte.
+// ═══════════════════════════════════════════════════════════════════════════
+
+export type PhaseRotation = 'preparation' | 'embarquement' | 'en_vol' | 'largue' | 'cloturee' | 'annulee';
+
+export function phaseRotation(r: {
+  statut: string;
+  heure_decollage?: string | null;
+  heure_largage?: string | null;
+  cloturee_le?: string | null;
+  embarquement_valide_le?: string | null;
+}): PhaseRotation {
+  if (r.statut === 'annulee') return 'annulee';
+  if (r.cloturee_le || r.statut === 'terminee') return 'cloturee';
+  if (r.heure_largage) return 'largue';
+  if (r.heure_decollage || r.statut === 'en_vol') return 'en_vol';
+  if (r.embarquement_valide_le || r.statut === 'embarquement') return 'embarquement';
+  return 'preparation';
+}
+
+export interface StylePhase {
+  libelle: string;
+  /** Fond plein (texte blanc dessus), ou null : la phase se dessine en contour. */
+  fond: string | null;
+  /** Couleur du trait et du texte quand la phase est en contour, et de la puce. */
+  trait: string;
+}
+
+export const PHASE_ROTATION: Record<PhaseRotation, StylePhase> = {
+  preparation:  { libelle: 'en préparation', fond: '#64748B',            trait: '#64748B' },
+  embarquement: { libelle: 'embarquement',   fond: 'var(--accent-fond)', trait: 'var(--accent-texte)' },
+  en_vol:       { libelle: 'en vol',         fond: '#0E7490',            trait: '#0891B2' },
+  largue:       { libelle: 'largué',         fond: '#6D28D9',            trait: '#8B5CF6' },
+  cloturee:     { libelle: 'clôturé',        fond: null,                 trait: 'var(--c-muted)' },
+  annulee:      { libelle: 'annulé',         fond: null,                 trait: 'var(--sev-critique)' },
+};
+
+/** L'ordre dans lequel on lit une journée : ce qui vole d'abord. */
+export const ORDRE_PHASES: PhaseRotation[] = ['en_vol', 'largue', 'embarquement', 'preparation', 'cloturee', 'annulee'];

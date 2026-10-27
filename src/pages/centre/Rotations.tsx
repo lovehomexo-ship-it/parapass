@@ -7,7 +7,8 @@ import {
   Plane, Plus, Users, ArrowDownUp, Lock, AlertTriangle, ShieldCheck,
   XCircle, ChevronRight, Trash2,
 } from 'lucide-react';
-import { siegesOccupes, libelleCapacite } from '../../lib/avionnage';
+import { siegesOccupes, libelleCapacite, phaseRotation } from '../../lib/avionnage';
+import { PastillePhase } from './FriseRotations';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // P3 — MANIFEST : rotations, chargements, ordre de sortie.
@@ -28,15 +29,6 @@ const TYPES_SAUT = [
   ['groupe', 'Groupe'], ['tandem', 'Tandem'], ['wingsuit', 'Wingsuit'], ['video', 'Vidéo'],
 ] as const;
 
-const STATUTS_ROTATION = [
-  ['preparation', 'En préparation', '#94A3B8'],
-  ['complete', 'Complète', '#60A5FA'],
-  ['embarquement', 'Embarquement', '#FBBF24'],
-  ['en_vol', 'En vol', '#34D399'],
-  ['terminee', 'Terminée', '#94A3B8'],
-  ['annulee', 'Annulée', '#F87171'],
-] as const;
-
 const STATUTS_PLACE = [
   ['inscrit', 'Inscrit'], ['embarque', 'Embarqué'], ['largue', 'Largué'],
   ['pose', 'Posé'], ['sorti', 'Sorti'],
@@ -46,6 +38,7 @@ interface Rotation {
   id: string; numero: number; pilote: string | null;
   altitude_largage_m: number | null; heure_prevue: string | null;
   statut: string; aeronef_id: string | null; cloturee_le: string | null;
+  heure_decollage: string | null; heure_largage: string | null; embarquement_valide_le: string | null;
 }
 export interface Aeronef {
   id: string; immatriculation: string; places: number;
@@ -230,7 +223,6 @@ function RotationsInner({ centreId }: { centreId: string }) {
         const pl = places.filter(p => p.rotation_id === r.id)
           .sort((a, b) => (a.rang_sortie ?? 99) - (b.rang_sortie ?? 99));
         const av = aeronefs.find(a => a.id === r.aeronef_id);
-        const s = STATUTS_ROTATION.find(([c]) => c === r.statut);
         // siegesOccupes compte le moniteur accompagnant, que pl.length
         // ignorait : « 3/4 » s'affichait sur un avion déjà plein.
         const sieges = siegesOccupes(pl);
@@ -244,10 +236,8 @@ function RotationsInner({ centreId }: { centreId: string }) {
               <span className="text-lg font-extrabold" style={{ color: 'var(--c-text)' }}>
                 Rotation {r.numero}
               </span>
-              <span className="text-xs font-semibold px-2 rounded-full"
-                style={{ background: `${s?.[2] ?? '#94A3B8'}22`, color: s?.[2] ?? '#94A3B8' }}>
-                {lib(STATUTS_ROTATION, r.statut)}
-              </span>
+              {/* La phase commune — mêmes mots, mêmes couleurs que la frise. */}
+              <PastillePhase phase={phaseRotation(r)} />
               <span className="text-xs" style={{ color: 'var(--c-dim)' }}>
                 {av?.immatriculation ?? 'aéronef ?'} · {r.altitude_largage_m ?? '?'} m
                 {' · '}{libelleCapacite(sieges, av?.places ?? null)}
