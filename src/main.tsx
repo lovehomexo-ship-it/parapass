@@ -3,9 +3,13 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
-// Apply saved theme immediately to prevent flash of unstyled content
-const savedTheme = localStorage.getItem('parapass_theme');
-document.documentElement.setAttribute('data-theme', savedTheme === 'light' ? 'light' : 'dark');
+// Thème posé AVANT le premier rendu (pas d'éclair) : le choix explicite s'il y
+// en a un, sinon celui du téléphone — même règle que ThemeContext.
+const prefTheme = (() => { try { return localStorage.getItem('parapass_theme_pref'); } catch { return null; } })();
+const themeInitial = prefTheme === 'light' || prefTheme === 'dark'
+  ? prefTheme
+  : (window.matchMedia?.('(prefers-color-scheme: dark)').matches === false ? 'light' : 'dark');
+document.documentElement.setAttribute('data-theme', themeInitial);
 
 // ─── Mise à jour du bundle PWA ────────────────────────────────────────────────
 // Sans ceci, un téléphone qui garde l'app ouverte (ou installée) reste sur

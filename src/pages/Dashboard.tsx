@@ -34,7 +34,7 @@ import { EnTeteAccueil, TitreBloc, CarteWallet, CarteCarnet, CarteProgression } 
 import { CelebrationBurst } from '../components/CelebrationBurst';
 import {
   Plus, FileDown,
-  ChevronDown, ChevronUp, Trash2, X, ShieldCheck, Hash,
+  ChevronDown, ChevronUp, ChevronLeft, Trash2, X, ShieldCheck, Hash,
   Pencil, Lock, Award, ChevronRight, Camera, Wallet, Flame, Share2,
   Target, GraduationCap, ScanLine, Wind, CheckCircle2, Backpack,
   ClipboardList, AlertTriangle,
@@ -252,24 +252,30 @@ export function DashboardPage() {
   const [proposeShare, setProposeShare] = useState(false); // invite « à chaud » après un saut
   const [sortField, setSortField] = useState<'date_saut' | 'lieu' | 'hauteur_m'>('date_saut');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
-  const [activeTab, setActiveTab] = useState<DashTab>('accueil');
   const [selectedSaut, setSelectedSaut] = useState<Saut | null>(null);
   const [centrePlan, setCentrePlan] = useState<string | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Handle query params from external navigation (e.g., Ma Progression page)
+  // L'ONGLET VIT DANS L'URL (?tab=carnet), plus dans un état interne : la barre
+  // d'onglets du bas doit savoir ce qui est affiché. Ouvert depuis la carte
+  // « Mon carnet », le carnet laissait sinon « Aujourd'hui » allumé.
+  const tabUrl = searchParams.get('tab');
+  const activeTab: DashTab = tabUrl === 'carnet' || tabUrl === 'planning' || tabUrl === 'compte' ? tabUrl : 'accueil';
+  const setActiveTab = useCallback((t: DashTab) => {
+    if (t === activeTab) return;
+    navigate(t === 'accueil' ? '/dashboard' : `/dashboard?tab=${t}`);
+    window.scrollTo(0, 0);
+  }, [activeTab, navigate]);
+
+  // « + » de la barre d'onglets : ouvre l'ajout d'un saut, puis retire le
+  // paramètre en gardant l'onglet courant.
   useEffect(() => {
-    const action = searchParams.get('action');
-    const tab = searchParams.get('tab') as DashTab | null;
-    if (tab && ['accueil', 'carnet', 'planning', 'compte'].includes(tab)) {
-      setActiveTab(tab);
+    if (searchParams.get('action') === 'add-jump') {
+      if (!blockIfDemo()) setModalOpen(true);
+      navigate(activeTab === 'accueil' ? '/dashboard' : `/dashboard?tab=${activeTab}`, { replace: true });
     }
-    if (action === 'add-jump' && !blockIfDemo()) {
-      setModalOpen(true);
-      // Clean up URL without triggering a re-render loop
-      navigate('/dashboard', { replace: true });
-    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   // Ancre #checkin (bouton « Présence » de la barre mobile). Le hash ne change
@@ -587,13 +593,6 @@ export function DashboardPage() {
 
   const hasFinances = centrePlan ? ['pro', 'enterprise'].includes(centrePlan) : false;
 
-  const subTabs: { key: DashTab; label: string }[] = [
-    { key: 'accueil', label: 'Vue d\'ensemble' },
-    { key: 'carnet', label: 'Mon Carnet' },
-    { key: 'planning', label: 'Ma DZ' },
-    ...(hasFinances ? [{ key: 'compte' as DashTab, label: 'Mon compte' }] : []),
-  ];
-
   return (
     <Layout noPadding>
       {isDemo && (
@@ -603,29 +602,9 @@ export function DashboardPage() {
       )}
       <BandeauAlertes alertes={alertes} acquittees={acquittees} onAcquitter={acquitterAlertes} statutDocs={statutDocs} licenceExpiration={licenceFFP?.date_expiration ?? null} certifExpiration={certifMedical?.date_expiration ?? null} userId={user?.id} masquerSiValide />
 
-      {/* Sub-nav */}
-      <div style={{ background: 'var(--c-nav)', borderBottom: '1px solid var(--c-border-s)' }} className="sticky top-14 z-30">
-        {/* Défilement horizontal DÉDIÉ à la barre (pas de scroll de page) : à
-            320/375/414 px les onglets restent lisibles et cliquables, sans
-            chevauchement. */}
-        <div className="max-w-7xl mx-auto flex overflow-x-auto scrollbar-hide">
-          {subTabs.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setActiveTab(t.key)}
-              className={`flex-shrink-0 px-3 sm:px-4 py-3 text-sm border-b-2 transition-colors whitespace-nowrap font-medium ${
-                activeTab === t.key
-                  ? 'border-[#F97316] font-semibold'
-                  : 'border-transparent'
-              }`}
-              style={{ color: activeTab === t.key ? 'var(--c-text)' : 'var(--c-muted)' }}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
+      {/* La sous-navigation (Vue d'ensemble / Mon Carnet / Ma DZ) disparaît :
+          la barre d'onglets du bas porte Aujourd'hui et Carnet ; Planning et
+          Mon compte s'ouvrent depuis « Moi » et gardent un retour. */}
       <div className="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8" style={{ background: 'var(--c-bg)', minHeight: 'calc(100vh - 112px)' }}>
         <div className="max-w-7xl mx-auto">
 
@@ -938,10 +917,16 @@ export function DashboardPage() {
           )}
 
           {/* ─── PLANNING ────────────────────────────────────────────────────── */}
+          {(activeTab === 'planning' || activeTab === 'compte') && (
+            <button type="button" onClick={() => setActiveTab('accueil')}
+              className="inline-flex items-center gap-1 text-sm font-semibold mb-4" style={{ color: 'var(--accent-texte)', minHeight: 36 }}>
+              <ChevronLeft className="w-4 h-4" aria-hidden /> Aujourd’hui
+            </button>
+          )}
           {activeTab === 'planning' && <PlanningDZ />}
 
           {/* ─── MON COMPTE ──────────────────────────────────────────────────── */}
-          {activeTab === 'compte' && user && (
+          {activeTab === 'compte' && user && hasFinances && (
             <div className="max-w-2xl mx-auto pt-2">
               <div className="flex items-center gap-2 mb-5">
                 <Wallet className="w-5 h-5" style={{ color: 'var(--accent-texte)' }} />

@@ -1,24 +1,11 @@
-import { useEffect, useState } from 'react';
-import { useJumpCount } from '../lib/useJumpCount';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useDemo } from '../lib/useDemo';
-import { useTheme } from '../lib/ThemeContext';
 import { supabase } from '../lib/supabase';
 import { Layout } from '../components/Layout';
 import { PushNotifCard } from '../components/PushNotifCard';
-import { QRCodeSVG } from 'qrcode.react';
-import {
-  QrCode, Palette, Bell, Shield, User, Trash2,
-  Maximize2, Minimize2, RefreshCw, Moon, Sun, ChevronRight,
-} from 'lucide-react';
-import type { Licence, Brevet } from '../lib/types';
-import { TYPE_BREVET_LABELS } from '../lib/types';
-
-function cleanLicence(num: string | null | undefined): string {
-  if (!num) return '—';
-  return num.replace(/[°\s]+/g, '-').replace(/-{2,}/g, '-').replace(/^-|-$/g, '');
-}
+import { Bell, Shield, User, Trash2, ChevronRight } from 'lucide-react';
 
 function Section({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
@@ -55,14 +42,7 @@ function ToggleRow({ label, checked, onChange }: { label: string; checked: boole
 export function ParametresPage() {
   const { user, profile } = useAuth();
   const { blockIfDemo } = useDemo();
-  const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
-
-  const [token, setToken] = useState<string | null>(null);
-  const [fullscreen, setFullscreen] = useState(false);
-  const [licence, setLicence] = useState<Licence | null>(null);
-  const [brevet, setBrevet] = useState<Brevet | null>(null);
-  const totalSauts = useJumpCount(user?.id);
 
   // Notification prefs — stored in profile.preferences
   const prefs = (profile?.preferences ?? {}) as Record<string, boolean>;
@@ -73,27 +53,6 @@ export function ParametresPage() {
 
   const [deleteConfirm, setDeleteConfirm] = useState(false);
 
-  useEffect(() => {
-    if (!user) return;
-    supabase.from('qr_tokens').select('token').eq('parachutiste_id', user.id).maybeSingle()
-      .then(({ data }) => {
-        if (data) setToken(data.token);
-        else supabase.from('qr_tokens').insert({ parachutiste_id: user.id }).select('token').single()
-          .then(({ data: d }) => { if (d) setToken(d.token); });
-      });
-    supabase.from('licences').select('*').eq('parachutiste_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
-      .then(({ data }) => setLicence(data as Licence | null));
-    supabase.from('brevets').select('*').eq('parachutiste_id', user.id).order('date_obtention', { ascending: false }).limit(1).maybeSingle()
-      .then(({ data }) => setBrevet(data as Brevet | null));
-  }, [user]);
-
-  const regenerateToken = async () => {
-    if (!user || blockIfDemo()) return;
-    await supabase.from('qr_tokens').delete().eq('parachutiste_id', user.id);
-    const { data } = await supabase.from('qr_tokens').insert({ parachutiste_id: user.id }).select('token').single();
-    if (data) setToken(data.token);
-  };
-
   const saveNotifPref = async (key: string, val: boolean) => {
     if (!user || blockIfDemo()) return;
     setSavingNotif(true);
@@ -103,95 +62,21 @@ export function ParametresPage() {
     setSavingNotif(false);
   };
 
-  const qrUrl = token ? `${window.location.origin}/verify/${token}` : '';
-  const brevetLabel = brevet ? (TYPE_BREVET_LABELS[brevet.type_brevet] ?? brevet.type_brevet) : null;
 
   if (!profile) return null;
-
-  // QR fullscreen overlay
-  if (fullscreen && token) {
-    return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-6" style={{ background: '#001A4D' }}>
-        <button onClick={() => setFullscreen(false)} className="absolute top-4 right-4 transition-colors" style={{ color: 'rgba(255,255,255,0.6)' }}>
-          <Minimize2 className="w-6 h-6" />
-        </button>
-        <div className="bg-white rounded-2xl p-8 max-w-xs w-full text-center shadow-2xl">
-          <img src="/logo-parapass.webp" alt="ParaPass" className="h-10 w-auto mx-auto mb-3" />
-          <p className="font-bold text-[#001A4D] mb-1">{profile.prenom} {profile.nom}</p>
-          <p className="text-xs text-gray-400 mb-4">{cleanLicence(profile.numero_licence)}</p>
-          <div className="flex justify-center mb-4">
-            <QRCodeSVG value={qrUrl} size={200} level="H" />
-          </div>
-          {brevetLabel && <p className="text-xs text-gray-500">Brevet {brevetLabel} · {totalSauts} sauts</p>}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <Layout>
       <div className="max-w-2xl mx-auto space-y-5">
         {/* Header */}
         <div className="mb-2">
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--c-text)' }}>Paramètres</h1>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--c-text)' }}>Réglages</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--c-muted)' }}>Gérez votre compte et vos préférences</p>
         </div>
 
-        {/* QR Code */}
-        <Section icon={<QrCode className="w-4 h-4" />} title="Mon QR Code">
-          <div className="flex flex-col items-center gap-4">
-            <div className="bg-white rounded-2xl p-5 shadow-sm">
-              {token ? (
-                <QRCodeSVG value={qrUrl} size={160} level="H" />
-              ) : (
-                <div className="w-40 h-40 flex items-center justify-center" style={{ background: 'var(--c-hover)', borderRadius: 8 }}>
-                  <div className="w-8 h-8 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setFullscreen(true)}
-                disabled={!token}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50"
-                style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)' }}
-              >
-                <Maximize2 className="w-4 h-4" /> Plein écran
-              </button>
-              <button
-                onClick={regenerateToken}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition"
-                style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)' }}
-              >
-                <RefreshCw className="w-4 h-4" /> Régénérer
-              </button>
-            </div>
-            <div className="text-center text-sm space-y-0.5">
-              <p className="font-semibold" style={{ color: 'var(--c-text)' }}>{profile.prenom} {profile.nom}</p>
-              <p style={{ color: 'var(--c-muted)' }}>Licence {cleanLicence(profile.numero_licence)}{brevetLabel ? ` · Brevet ${brevetLabel}` : ''}</p>
-              <p style={{ color: 'var(--c-dim)', fontSize: 12 }}>{totalSauts} saut{totalSauts !== 1 ? 's' : ''} · {licence?.statut === 'actif' ? 'ACTIF' : 'INACTIF'}</p>
-            </div>
-          </div>
-          <p className="text-xs text-center" style={{ color: 'var(--c-dim)' }}>Présentez ce code lors des contrôles DGAC ou pour partager votre passeport.</p>
-        </Section>
-
-        {/* Apparence */}
-        <Section icon={<Palette className="w-4 h-4" />} title="Apparence">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium" style={{ color: 'var(--c-text)' }}>Thème</p>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--c-muted)' }}>{isDark ? 'Mode sombre activé' : 'Mode clair activé'}</p>
-            </div>
-            <button
-              onClick={toggleTheme}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition"
-              style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)' }}
-            >
-              {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-blue-400" />}
-              {isDark ? 'Passer en clair' : 'Passer en sombre'}
-            </button>
-          </div>
-        </Section>
+        {/* Le QR code et l'apparence vivent ailleurs, une fois : le QR dans
+            « Passeport » (cette page en générait un second, à un autre jeton),
+            l'apparence dans « Moi », avec « Comme le téléphone ». */}
 
         {/* Notifications */}
         <Section icon={<Bell className="w-4 h-4" />} title="Notifications">

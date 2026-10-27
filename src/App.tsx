@@ -28,6 +28,7 @@ import { StatsRoute } from './pages/StatsRoute';
 import { TamponAdminPage } from './pages/TamponAdmin';
 import { ProfilPage } from './pages/Profil';
 import { ParametresPage } from './pages/Parametres';
+import { MoiPage } from './pages/Moi';
 import { ReglesFFPPage } from './pages/ReglesFFP';
 import { CommunautePage } from './pages/Communaute';
 import { ProfilPublicPage } from './pages/ProfilPublic';
@@ -189,6 +190,7 @@ function App() {
                 <Route path="/tampon" element={<ProtectedRoute roles={['admin']}><TamponAdminPage /></ProtectedRoute>} />
                 <Route path="/profil" element={<ProtectedRoute roles={['parachutiste', 'moniteur', 'moniteur_delegue', 'admin']}><ProfilPage /></ProtectedRoute>} />
                 <Route path="/parametres" element={<ProtectedRoute roles={['parachutiste', 'moniteur', 'moniteur_delegue']}><ParametresPage /></ProtectedRoute>} />
+                <Route path="/moi" element={<ProtectedRoute roles={['parachutiste', 'moniteur', 'moniteur_delegue']}><MoiPage /></ProtectedRoute>} />
                 {/* Espace Centre : chaque écran a désormais son URL (P1).
                     L'ancienne adresse unique reste valable et redirige, pour ne
                     casser aucun favori ni lien déjà partagé. */}

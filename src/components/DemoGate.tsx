@@ -3,7 +3,7 @@ import { useAuth } from '../lib/auth';
 import { Lock } from 'lucide-react';
 
 // Only these routes are accessible in parachutiste demo
-const ALLOWED_PARA = ['/dashboard', '/passeport'];
+const ALLOWED_PARA = ['/dashboard', '/passeport', '/moi'];
 // Only these routes are accessible in centre demo
 const ALLOWED_CENTRE = ['/centre']; // couvre /centre/journee, /centre/licencies/... (routes P1)
 

@@ -4,7 +4,7 @@ import { useResumeAvionnage, badgeAvionnage } from '../lib/avionnage';
 import {
   Menu, X, LogOut, BookOpen, Bell, MessageSquare,
   Settings, User, Award, ChevronDown, CheckCircle, AlertTriangle,
-  Sun, Moon, QrCode, MapPin, Plus, Plane, CalendarDays, XCircle, KeyRound, Eye,
+  Sun, Moon, QrCode, Plus, CalendarDays, XCircle, KeyRound, Eye,
 } from 'lucide-react';
 import { ParachuteGlyph } from '../design/BadgeIcon';
 import { useState, useRef, useEffect, useMemo } from 'react';
@@ -106,7 +106,13 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
     ? `${profile.prenom?.[0] ?? ''}${profile.nom?.[0] ?? ''}`.toUpperCase()
     : '?';
 
-  const isActive = (path: string) => location.pathname === path;
+  const tabUrl = new URLSearchParams(location.search).get('tab');
+  const isActive = (path: string) => {
+    const [p, q] = path.split('?');
+    if (p !== location.pathname) return false;
+    // « Aujourd'hui » et « Carnet » partagent /dashboard : c'est ?tab qui tranche.
+    return q ? `tab=${tabUrl}` === q : p !== '/dashboard' || !tabUrl || tabUrl === 'planning' || tabUrl === 'compte';
+  };
 
   // Le fond/texte du badge portent déjà la couleur de statut → pas besoin d'un
   // rond emoji redondant (et OS-dépendant). Libellé texte seul.
@@ -118,12 +124,14 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
     ? { label: 'Documents à jour', bg: 'rgba(16,185,129,0.15)', color: '#6EE7B7', border: 'rgba(16,185,129,0.3)' }
     : null;
 
+  // Les mêmes noms que la barre d'onglets du téléphone : on ne réapprend pas
+  // l'application en changeant d'écran.
   const parachutisteItems = [
-    { to: '/dashboard', label: 'Tableau de bord' },
-    { to: '/passeport', label: 'Mon Passeport' },
-    { to: '/stats', label: 'Mes Stats' },
-    { to: '/progression', label: 'Ma Progression' },
-    { to: '/materiel', label: 'Mon Matériel' },
+    { to: '/dashboard', label: 'Aujourd’hui' },
+    { to: '/dashboard?tab=carnet', label: 'Carnet' },
+    { to: '/passeport', label: 'Passeport' },
+    { to: '/progression', label: 'Progression' },
+    { to: '/stats', label: 'Statistiques' },
     { to: '/badges', label: 'Badges' },
     { to: '/communaute', label: 'Communauté' },
   ];
@@ -323,7 +331,8 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
 
               {/* Mobile right */}
               <div className="flex md:hidden items-center gap-1 ml-auto">
-                {hasActiveDelegation && sautsEnAttente > 0 && (
+                {/* Les validations ont leur ligne, et leur pastille, dans « Moi ». */}
+                {!isPratiquant && hasActiveDelegation && sautsEnAttente > 0 && (
                   <Link
                     to="/validations"
                     className="relative w-9 h-9 flex items-center justify-center no-underline"
@@ -335,8 +344,10 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
                     </span>
                   </Link>
                 )}
-                {/* Mobile theme toggle */}
-                <ThemeToggle isDark={isDark} onToggle={toggleTheme} />
+                {/* L'EN-TÊTE DU TÉLÉPHONE NE GARDE QUE LA CLOCHE. Thème, avatar
+                    et menu y faisaient cinq icônes ; ils vivent dans « Moi ».
+                    Les comptes sans barre d'onglets gardent leur menu. */}
+                {!isPratiquant && <ThemeToggle isDark={isDark} onToggle={toggleTheme} />}
                 <div className="relative" ref={notifRef}>
                   <button
                     onClick={() => setNotifOpen((o) => !o)}
@@ -363,14 +374,19 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
                     />
                   )}
                 </div>
-                <AvatarBadge url={profile?.avatar_url} initials={initials} px={34} />
-                <button
-                  onClick={() => setDrawerOpen(true)}
-                  className="w-9 h-9 flex items-center justify-center rounded-lg ml-0.5"
-                  style={{ color: 'var(--c-muted)' }}
-                >
-                  <Menu className="w-5 h-5" />
-                </button>
+                {!isPratiquant && (
+                  <>
+                    <AvatarBadge url={profile?.avatar_url} initials={initials} px={34} />
+                    <button
+                      onClick={() => setDrawerOpen(true)}
+                      aria-label="Menu"
+                      className="w-9 h-9 flex items-center justify-center rounded-lg ml-0.5"
+                      style={{ color: 'var(--c-muted)' }}
+                    >
+                      <Menu className="w-5 h-5" />
+                    </button>
+                  </>
+                )}
               </div>
             </>
           )}
@@ -500,76 +516,57 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
         <DemoGate>{children}</DemoGate>
       </main>
 
-      {/* ── Barre d'actions rapides mobile (Prompt U) — usage terrain, une main.
-             Grandes cibles, atteignables en 1 tap depuis l'accueil. Desktop : masquée. */}
-      {isPratiquant && !isDemo && (
-        <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 flex items-stretch"
-          style={{ background: 'var(--c-nav)', borderTop: '1px solid var(--c-border-s)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
-          {[
-            { key: 'presence', label: 'Présence', icon: <MapPin className="w-6 h-6" />, onClick: () => {
-              // Déjà sur le dashboard : React Router (pushState) ne déclenche PAS
-              // l'événement natif `hashchange` que le dashboard écoute, et le
-              // composant ne se remonte pas → le check-in ne s'ouvrirait jamais.
-              // On force donc un hashchange nous-mêmes (ou on le rejoue si le
-              // hash vaut déjà #checkin, pour rouvrir à chaque appui).
-              if (window.location.pathname === '/dashboard') {
-                if (window.location.hash !== '#checkin') window.location.hash = 'checkin';
-                else window.dispatchEvent(new HashChangeEvent('hashchange'));
-              } else {
-                navigate('/dashboard#checkin');
-              }
-            } },
-            { key: 'saut', label: 'Saut', icon: <Plus className="w-7 h-7" />, badge: null as string | null, onClick: () => navigate('/dashboard?action=add-jump') },
-            // L'avionnage a sa place ICI, au pouce, et pas seulement en haut de
-            // l'accueil : au hangar on regarde son téléphone d'une main. La
-            // pastille dit d'un coup d'œil s'il se passe quelque chose —
-            // position en file si on y est, sinon nombre d'avions du jour.
-            ...(avionnageDisponible
-              ? [{ key: 'avionnage', label: 'Avionnage', icon: <Plane className="w-6 h-6" />,
-                   badge: avionnageBadge, onClick: () => {
-                     // MÊME PIÈGE QUE « PRÉSENCE ». React Router change l'URL par
-                     // `pushState` : ni saut vers l'ancre, ni `hashchange`. Déjà
-                     // sur le tableau de bord, le bouton ne faisait donc rien du
-                     // tout. On pose le hash, puis on rejoue l'événement que le
-                     // bloc écoute — et on le rejoue AUSSI quand le hash y est
-                     // déjà, pour qu'un second appui ramène au bloc.
-                     if (window.location.pathname === '/dashboard') {
-                       if (window.location.hash !== '#avionnage') window.location.hash = 'avionnage';
-                       else window.dispatchEvent(new HashChangeEvent('hashchange'));
-                     } else {
-                       navigate('/dashboard#avionnage');
-                     }
-                   } }]
-              : []),
-            { key: 'qr', label: 'QR', icon: <QrCode className="w-6 h-6" />, badge: null as string | null, onClick: () => navigate('/qr-code') },
-          ].map((a) => (
-            <button key={a.key} onClick={a.onClick}
-              className="flex-1 flex flex-col items-center justify-center gap-1 active:opacity-70"
-              style={{ minHeight: 64, color: 'var(--c-text)', position: 'relative' }}
-              aria-label={a.badge ? `${a.label} — ${a.badge}` : a.label}>
-              {/* La pastille s'accroche à L'ICÔNE, pas au bouton. Elle était
-                  placée par rapport au bouton avec un décalage exprimé en
-                  pourcentage de SA PROPRE largeur : « 3 » et « #12 » ne
-                  tombaient pas au même endroit, et la seconde mordait le bord. */}
-              <span style={{ position: 'relative', display: 'inline-flex' }}>
-                {a.icon}
-                {a.badge && (
-                  <span className="absolute text-xs font-bold px-1 rounded-full"
-                    style={{ top: -4, left: '100%', marginLeft: -6,
-                             background: '#F97316', color: '#fff', lineHeight: '18px',
-                             minWidth: 18, textAlign: 'center' }}>
-                    {a.badge}
+      {/* ── LA BARRE D'ONGLETS (téléphone) ─────────────────────────────────────
+             Cinq onglets, comme sur iPhone, et c'est la SEULE navigation du
+             téléphone : elle remplace les onglets de l'accueil, le menu latéral
+             de treize entrées et l'ancienne barre Présence / Saut / Avionnage /
+             QR. Présence et avionnage vivent dans « Aujourd'hui » (la pastille
+             d'avionnage y reste accrochée) ; le QR, dans « Passeport ». */}
+      {isPratiquant && !isDemo && (() => {
+        const p = location.pathname;
+        const onglets = [
+          { cle: 'aujourdhui', libelle: 'Aujourd’hui', icone: <Sun className="w-6 h-6" />, vers: '/dashboard',
+            actif: p === '/dashboard' && tabUrl !== 'carnet', pastille: avionnageDisponible ? avionnageBadge : null },
+          { cle: 'carnet', libelle: 'Carnet', icone: <BookOpen className="w-6 h-6" />, vers: '/dashboard?tab=carnet',
+            actif: p === '/dashboard' && tabUrl === 'carnet', pastille: null },
+          { cle: 'saut', libelle: 'Saut', icone: <Plus className="w-7 h-7" />, vers: '/dashboard?action=add-jump', actif: false, pastille: null },
+          { cle: 'passeport', libelle: 'Passeport', icone: <QrCode className="w-6 h-6" />, vers: '/passeport',
+            actif: p === '/passeport' || p === '/qr-code', pastille: null },
+          { cle: 'moi', libelle: 'Moi', icone: <User className="w-6 h-6" />, vers: '/moi',
+            actif: !['/dashboard', '/passeport', '/qr-code'].includes(p),
+            pastille: (msgUnread + (hasActiveDelegation ? sautsEnAttente : 0)) > 0 ? String(msgUnread + (hasActiveDelegation ? sautsEnAttente : 0)) : null },
+        ];
+        return (
+          <nav aria-label="Navigation principale" className="md:hidden fixed bottom-0 inset-x-0 z-40 flex items-stretch"
+            style={{ background: 'var(--c-nav)', borderTop: '1px solid var(--c-border-s)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+            {onglets.map(o => (
+              <button key={o.cle} type="button" onClick={() => navigate(o.vers)}
+                aria-current={o.actif ? 'page' : undefined}
+                aria-label={o.pastille ? `${o.libelle} — ${o.pastille}` : o.libelle}
+                className="flex-1 flex flex-col items-center justify-center gap-1 active:opacity-70"
+                style={{ minHeight: 60, color: o.actif ? 'var(--accent-texte)' : 'var(--c-muted)' }}>
+                {o.cle === 'saut' ? (
+                  // Le « + » au centre, plein : c'est le geste de la journée.
+                  <span className="w-11 h-11 -mt-1 rounded-full flex items-center justify-center text-white"
+                    style={{ background: 'var(--accent-fond)', boxShadow: '0 4px 12px rgba(194,65,12,0.35)' }}>{o.icone}</span>
+                ) : (
+                  <span style={{ position: 'relative', display: 'inline-flex' }}>
+                    {o.icone}
+                    {o.pastille && (
+                      <span className="absolute text-xs font-bold px-1 rounded-full"
+                        style={{ top: -4, left: '100%', marginLeft: -6, background: 'var(--accent-fond)', color: '#fff',
+                                 lineHeight: '18px', minWidth: 18, textAlign: 'center' }}>
+                        {o.pastille}
+                      </span>
+                    )}
                   </span>
                 )}
-              </span>
-              {/* « Avionnage » tient sur 94 px à 12 px, mais de justesse : on
-                  interdit le retour à la ligne, qui décalerait la hauteur de
-                  cette seule cellule et ferait boiter toute la barre. */}
-              <span className="text-xs font-semibold" style={{ whiteSpace: 'nowrap' }}>{a.label}</span>
-            </button>
-          ))}
-        </nav>
-      )}
+                {o.cle !== 'saut' && <span className="text-xs font-semibold" style={{ whiteSpace: 'nowrap' }}>{o.libelle}</span>}
+              </button>
+            ))}
+          </nav>
+        );
+      })()}
 
       {/* ── Footer ──────────────────────────────────────────────────────────── */}
       <footer style={{ background: 'var(--c-nav)', borderTop: '1px solid var(--c-border-s)', padding: '16px 24px' }}>
