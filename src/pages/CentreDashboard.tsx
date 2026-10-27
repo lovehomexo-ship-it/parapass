@@ -564,7 +564,9 @@ function DashboardHome({
       {/* F14 — la bascule, en tête de la zone de contenu. */}
       <div className="mb-4">
         <BasculeMode mode={mode} onChange={onChangerMode}
-          enAttenteGestion={carnetsEnAttente + licencesExpirees + stats.demandesAttente}
+          // Le même total que la barre « À traiter » : un chiffre qui diffère
+          // d'un endroit à l'autre pour la même question ne vaut rien.
+          enAttenteGestion={exigencesNonCouvertes + licencesExpirees + carnetsEnAttente + alerteMedical + stats.demandesAttente}
           enAttenteAvionnage={enAttenteAvionnage}
           avionnageDisponible={avionnageDisponible} />
       </div>

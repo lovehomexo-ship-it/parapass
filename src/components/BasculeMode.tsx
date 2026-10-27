@@ -18,7 +18,7 @@ export function BasculeMode({ mode, onChange, enAttenteGestion = 0, enAttenteAvi
   avionnageDisponible = true }: {
   mode: ModeEcran;
   onChange: (m: ModeEcran) => void;
-  /** Somme des files en attente côté Gestion. La pastille disparaît à zéro. */
+  /** Ce qui reste à traiter côté Gestion — le MÊME total que la barre « À traiter ». */
   enAttenteGestion?: number;
   /** Personnes en file d'avionnage. Sa propre pastille : deux files
    *  différentes ne se confondent pas dans un seul chiffre (règle 3). */
@@ -51,34 +51,42 @@ export function BasculeMode({ mode, onChange, enAttenteGestion = 0, enAttenteAvi
 
   return (
     <div role="group" aria-label="Mode d'affichage"
-      className="inline-flex rounded-xl p-1 gap-1"
+      className="flex w-full sm:inline-flex sm:w-auto rounded-xl p-1 gap-1"
       style={surface(2)}>
       {modes.map((m, i) => {
         const actif = mode === m.cle;
-        // La pastille ne s'affiche que sur le mode INACTIF : sur le mode courant
-        // le compte est déjà lisible dans les blocs eux-mêmes.
+        // UN CHIFFRE NU NE DIT RIEN. Les anciennes pastilles affichaient « 6 »
+        // et « 2 » sans dire six quoi ni deux quoi — et le « 2 » de Gestion ne
+        // comptait même pas la même chose que la barre « À traiter ». Le compte
+        // est désormais écrit en clair, avec ce qu'il compte, à côté du nom.
         const compte = m.cle === 'gestion' ? enAttenteGestion
                      : m.cle === 'avionnage' ? enAttenteAvionnage : 0;
-        const pastille = !actif && compte > 0;
+        const precision = compte > 0
+          ? (m.cle === 'gestion' ? `${compte} à traiter` : `${compte} en file`)
+          : null;
         return (
           <button key={m.cle}
             ref={el => { refs.current[i] = el; }}
             onClick={() => onChange(m.cle)}
             onKeyDown={e => auClavier(e, i)}
             aria-pressed={actif}
-            className="relative px-4 rounded-lg text-sm font-bold transition"
+            // Sur téléphone, le compte passe SOUS le nom : trois boutons et deux
+            // précisions ne tiennent pas sur une ligne de 343 px.
+            className="flex-1 sm:flex-none px-3 sm:px-4 py-1 rounded-lg text-sm font-bold transition inline-flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 whitespace-nowrap"
             style={{
-              minHeight: 40,
+              minHeight: 44,
               background: actif ? 'var(--action-fond)' : 'transparent',
               color: actif ? '#fff' : 'var(--c-muted)',
             }}>
             {m.label}
-            {pastille && (
-              <span aria-label={`${compte} en attente sur ${m.label}`}
-                className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full
-                           text-[11px] font-bold flex items-center justify-center"
-                style={{ background: 'var(--sev-vigilance)', color: 'var(--sev-vigilance-encre)' /* le noir sur le brun du thème clair ne tenait que 2,6:1 */ }}>
-                {compte > 99 ? '99+' : compte}
+            {precision && (
+              <span className="text-xs font-semibold rounded-full px-2"
+                style={{
+                  lineHeight: '20px',
+                  background: actif ? 'rgba(255,255,255,0.18)' : 'color-mix(in srgb, var(--sev-vigilance) 14%, transparent)',
+                  color: actif ? '#fff' : 'var(--sev-vigilance)',
+                }}>
+                {precision}
               </span>
             )}
           </button>
