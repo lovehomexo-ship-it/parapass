@@ -603,6 +603,10 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
   const [monAccept, setMonAccept] = useState(false);
 
   const isMoniteur = profile?.role === 'moniteur' || profile?.role === 'admin';
+  // « Saut rapide » : un nouveau saut dont DZ et avion sont déjà connus
+  // s'affiche en résumé ; les champs complets attendent « Modifier les détails ».
+  const [details, setDetails] = useState(false);
+  const [prerempli, setPrerempli] = useState<string | null>(null);
   // PAC/A brevetés → blocs position corps remplis par moniteur (lecture seule)
   // B+ → masqués complètement car non pertinents pour autonomes
   const moniteurProfile = profile as (typeof profile & { numero_brevet_moniteur?: string; type_brevet_moniteur?: string; moniteur_valide_par_dt?: boolean }) | null;
@@ -652,6 +656,71 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
     })();
   }, [user?.id, isMoniteur]);
 
+  // PRÉREMPLIR UN NOUVEAU SAUT. Le formulaire s'ouvrait vide alors que
+  // l'application savait presque tout : la DZ où le parachutiste s'est déclaré
+  // présent, l'avion de sa planche, et le reste de son saut précédent. Trois
+  // sources, de la plus générale à la plus précise ; chacune n'écrase que ce
+  // qu'elle sait.
+  useEffect(() => {
+    if (!open || sautAEditer || !user?.id) return;
+    let annule = false;
+    (async () => {
+      const jour = new Date().toISOString().slice(0, 10);
+      const [precedent, presence, place] = await Promise.all([
+        supabase.from('sauts')
+          .select('aeronef_immat, hauteur_m, hauteur_ouverture, nature_saut, categorie, fonction, voilure_principale, parachute')
+          .eq('parachutiste_id', user.id).eq('is_tunnel', false)
+          .order('date_saut', { ascending: false }).order('created_at', { ascending: false })
+          .limit(1).maybeSingle(),
+        supabase.from('dz_presences').select('dz_id, centres:dz_id(nom)')
+          .eq('user_id', user.id).eq('date_presence', jour).neq('statut', 'parti')
+          .limit(1).maybeSingle(),
+        supabase.from('places_rotation')
+          .select('altitude_largage_m, rotations!inner(date_jour, altitude_largage_m, heure_decollage, aeronefs(immatriculation))')
+          .eq('parachutiste_id', user.id).eq('rotations.date_jour', jour)
+          .order('created_at', { ascending: false }).limit(1).maybeSingle(),
+      ]);
+      if (annule) return;
+      const p = precedent.data as Partial<Saut> | null;
+      const dz = presence.data as { dz_id: string; centres: { nom: string } | null } | null;
+      const pl = place.data as { altitude_largage_m: number | null;
+        rotations: { altitude_largage_m: number | null; aeronefs: { immatriculation: string | null } | null } | null } | null;
+      const avion = pl?.rotations?.aeronefs?.immatriculation ?? null;
+      const hauteur = pl?.altitude_largage_m ?? pl?.rotations?.altitude_largage_m ?? null;
+      setForm(f => ({
+        ...f,
+        ...(p ? {
+          aeronef_immat: p.aeronef_immat || f.aeronef_immat,
+          hauteur_m: p.hauteur_m ?? f.hauteur_m,
+          hauteur_ouverture: p.hauteur_ouverture ?? f.hauteur_ouverture,
+          nature_saut: p.nature_saut || f.nature_saut,
+          categorie: p.categorie && p.categorie !== 'soufflerie' ? p.categorie : f.categorie,
+          fonction: p.fonction || f.fonction,
+          voilure_principale: p.voilure_principale || f.voilure_principale,
+          parachute: p.parachute || f.parachute,
+        } : {}),
+        ...(dz?.centres?.nom ? { lieu: dz.centres.nom } : {}),
+        ...(avion ? { aeronef_immat: avion } : {}),
+        ...(hauteur ? { hauteur_m: hauteur } : {}),
+      }));
+      if (dz?.dz_id) { setDzSelection(dz.dz_id); setDzAutreText(''); }
+      setPrerempli(avion ? 'votre planche du jour' : dz ? 'votre présence du jour' : p ? 'votre saut précédent' : null);
+    })();
+    return () => { annule = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, sautAEditer, user?.id]);
+
+  // Par défaut, un nouveau saut part vers TOUS les validateurs des DZ du
+  // parachutiste : le premier disponible signe. Le choix reste visible et
+  // modifiable ; sans ce défaut, « Enregistrer » restait grisé tant qu'on
+  // n'avait pas cherché un nom.
+  useEffect(() => {
+    if (open && !sautAEditer && !isMoniteur && !moniteurSelectionne && allMoniteurs.length > 0) {
+      setMoniteurSelectionne(ENVOI_TOUS_SENTINEL);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, sautAEditer, allMoniteurs.length]);
+
   // Load centres for DZ dropdown
   useEffect(() => {
     if (!open) return;
@@ -665,8 +734,10 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
         const userCentreId = (profile as (typeof profile & { centre_id?: string | null }) | null)?.centre_id ?? null;
         if (userCentreId && list.find((c) => c.id === userCentreId)) {
           const found = list.find((c) => c.id === userCentreId)!;
-          setDzSelection(found.id);
-          setForm((f) => ({ ...f, lieu: found.nom }));
+          // Repli seulement : la DZ de la présence du jour, si elle est déjà
+          // posée, reste celle du saut.
+          setDzSelection(prev => prev || found.id);
+          setForm((f) => (f.lieu ? f : { ...f, lieu: found.nom }));
         }
       }
     })();
@@ -796,6 +867,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
   };
 
   const isTunnel = form.categorie === 'soufflerie';
+  const voirChamps = isEditMode || isTunnel || details || !(form.lieu.trim() && form.aeronef_immat.trim());
 
   const validate = () => {
     const errors: Record<string, string> = {};
@@ -1118,10 +1190,13 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
       note_mental: null,
       precision_metres: null,
     });
-    setMoniteurSelectionne(null);
+    // Le défaut « tous les validateurs » survit à la remise à zéro, qui
+    // s'exécute à chaque ouverture (sinon elle effaçait le choix posé juste avant).
+    setMoniteurSelectionne(!isMoniteur && allMoniteurs.length > 0 ? ENVOI_TOUS_SENTINEL : null);
     setFieldErrors({}); setShowObs(false); setSigDataUrl(null);
     setMonAccept(false); setMonConfirmed(false);
     setDzSelection(''); setDzAutreText('');
+    setDetails(false); setPrerempli(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -1181,6 +1256,30 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
             <div className="flex-1 overflow-y-auto p-5 space-y-4">
             {error && <div className="rounded-lg p-3 text-sm" style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#F87171' }}>{error}</div>}
 
+            {/* ── SAUT RAPIDE ── la DZ et l'avion sont connus : un résumé, pas
+                   trois écrans de champs. Tout reste modifiable d'un geste. */}
+            {!voirChamps && (
+              <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)' }}>
+                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                  Prérempli depuis {prerempli ?? 'votre carnet'}
+                </p>
+                <p className="text-lg font-bold mt-1 text-white">{form.lieu}</p>
+                <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                  {new Date(`${form.date_saut}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  {' · '}{form.aeronef_immat}{' · '}{form.hauteur_m.toLocaleString('fr-FR')} m
+                  {form.hauteur_ouverture ? ` · ouverture ${form.hauteur_ouverture.toLocaleString('fr-FR')} m` : ''}
+                </p>
+                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                  {NATURE_SAUT_LABELS[form.nature_saut] ?? form.nature_saut} · {CATEGORIE_LABELS[form.categorie] ?? form.categorie}
+                </p>
+                <button type="button" onClick={() => setDetails(true)}
+                  className="mt-3 text-sm font-semibold underline" style={{ color: '#FDBA74', minHeight: 32 }}>
+                  Modifier les détails
+                </button>
+              </div>
+            )}
+
+            {voirChamps && (<>
             {/* Date + Lieu */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
@@ -1370,7 +1469,10 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
             </div>}
 
             {/* Hauteur + Fonction — masqués pour soufflerie */}
+            </>)}
+
             {!isTunnel && <>
+            {voirChamps && (<>
             <div className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -1446,6 +1548,8 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
               </div>
             </div>
 
+            </>)}
+
             {/* Moniteur validateur (non-moniteurs) */}
             {!isMoniteur && (
               <div>
@@ -1457,8 +1561,10 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
             )}
             </>}
 
-            {/* ── NOTE GLOBALE (obligatoire) — TOUJOURS VISIBLE, hors accordéon :
-                   elle conditionne la validation, elle ne doit jamais être cachée. ── */}
+            {/* ── NOTE GLOBALE (facultative) — toujours visible, hors accordéon.
+                   Elle bloquait l'enregistrement : on ne pouvait pas inscrire un
+                   saut vite au retour du posé et l'évaluer plus tard. Elle reste
+                   proposée, en évidence, et se rattrape depuis Ma progression. ── */}
             {!isTunnel && (
               <div id="note-globale-field" className="rounded-xl p-4 scroll-mt-4"
                 style={{ background: 'rgba(249,115,22,0.06)', border: `1px solid ${form.note_globale ? 'rgba(249,115,22,0.25)' : 'rgba(249,115,22,0.5)'}` }}>
@@ -1466,12 +1572,12 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                   <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest" style={{ color: '#FB923C' }}>
                     <Star className="w-3.5 h-3.5" /> Note globale
                   </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(249,115,22,0.2)', color: '#FB923C', border: '1px solid rgba(249,115,22,0.35)' }}>
-                    Obligatoire *
+                  <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.75)' }}>
+                    Facultatif
                   </span>
                 </div>
                 <GlobalRating value={form.note_globale} onChange={(v) => update('note_globale', v)} />
-                <p className="text-[11px] mt-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Requise pour valider · alimente Ma Progression</p>
+                <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.6)' }}>Alimente Ma progression · à donner maintenant ou plus tard</p>
               </div>
             )}
 
@@ -1740,7 +1846,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                   Annuler
                 </button>
                 <button type="submit"
-                  disabled={loading || (!isTunnel && ((!isMoniteur && !moniteurSelectionne) || !form.note_globale))}
+                  disabled={loading || (!isTunnel && !isMoniteur && !moniteurSelectionne)}
                   className="flex-1 rounded-xl text-sm font-semibold transition-colors"
                   style={{
                     height: 52,
@@ -1748,20 +1854,17 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                       ? { background: 'rgba(245,158,11,0.4)', color: 'rgba(255,255,255,0.5)', cursor: 'not-allowed' }
                       : isTunnel
                       ? { background: '#60A5FA', color: '#fff' }
-                      : !form.note_globale
-                      ? { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.3)', cursor: 'not-allowed', border: '1px solid rgba(255,255,255,0.1)' }
                       : (!isMoniteur && !moniteurSelectionne)
                       ? { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.3)', cursor: 'not-allowed' }
-                      : moniteurSelectionne?.id === ENVOI_TOUS_ID
-                      ? { background: '#003082', color: '#fff' }
-                      : { background: '#F59E0B', color: '#fff' })
+                      // L'action principale, lisible : le bleu nuit #003082
+                      // disparaissait sur le fond du panneau, et le blanc sur
+                      // #F59E0B ne tenait que 2,1:1.
+                      : { background: 'var(--accent-fond)', color: '#fff' })
                   }}>
                   {loading
                     ? (isEditMode ? 'Modification...' : 'Ajout...')
                     : isTunnel
                     ? (isEditMode ? 'Modifier la session' : 'Enregistrer la session')
-                    : !form.note_globale
-                    ? 'Note globale requise'
                     : isMoniteur
                     ? (isEditMode ? 'Modifier (sans signer)' : 'Ajouter (sans signer)')
                     : moniteurSelectionne?.id === ENVOI_TOUS_ID
@@ -1772,14 +1875,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                 </button>
               </div>
               {/* Message explicite du champ manquant + accès direct (un clic → le champ). */}
-              {!isTunnel && !form.note_globale && (
-                <button type="button"
-                  onClick={() => document.getElementById('note-globale-field')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-                  className="mt-2 w-full flex items-center justify-center gap-1.5 text-xs font-semibold"
-                  style={{ color: '#FB923C' }}>
-                  <Star className="w-3.5 h-3.5" /> Renseignez la note globale pour valider — y aller ↑
-                </button>
-              )}
+
               {!isMoniteur && !moniteurSelectionne && (
                 <p className="text-center text-xs mt-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
                   Un moniteur breveté doit valider chaque saut pour qu'il soit enregistré dans votre carnet.
