@@ -325,7 +325,11 @@ export function CycleHelpPanel({ pliageCount }: { pliageCount: number }) {
   }
 
   return (
-    <div className="rounded-xl overflow-hidden mb-6" style={{ border: '1px solid rgba(124,147,171,0.2)', background: 'rgba(11,31,58,0.6)' }}>
+    // UN PANNEAU SOMBRE ASSUMÉ, dans les deux thèmes. Le schéma est dessiné en
+    // traits et textes clairs ; sur un voile bleu nuit à 60 % posé sur le fond
+    // clair, il devenait gris sur gris. Opaque, il se lit partout — comme la
+    // version agrandie, déjà sur ce même fond.
+    <div className="rounded-xl overflow-hidden mb-6" style={{ border: '1px solid rgba(124,147,171,0.2)', background: '#0B1F3A' }}>
       <button
         onClick={toggle}
         className="w-full flex items-center justify-between px-4 py-3 text-left transition-all"

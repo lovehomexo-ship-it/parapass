@@ -90,7 +90,7 @@ function DemoJourneeInner({ centreId, centreNom, onDone }: { centreId: string; c
       <div className="flex gap-3 flex-wrap items-center">
         <button onClick={() => run('gen')} disabled={busy !== null}
           className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-bold disabled:opacity-50"
-          style={{ background: '#F97316', color: 'white', minHeight: 40 }}>
+          style={{ background: 'var(--accent-fond)', color: 'white', minHeight: 40 }}>
           <Sparkles className="w-3.5 h-3.5" /> {busy === 'gen' ? 'Génération…' : 'Générer la journée de démonstration'}
         </button>
         {/* Le retrait n'est PAS un second bouton d'égale importance : c'est la
@@ -102,8 +102,8 @@ function DemoJourneeInner({ centreId, centreNom, onDone }: { centreId: string; c
         </button>
       </div>
       {dialogue}
-      {info && <p className="text-[11px] font-medium" style={{ color: '#34D399' }}>{info}</p>}
-      {error && <p role="alert" className="text-[11px] font-medium" style={{ color: '#F87171' }}>{error}</p>}
+      {info && <p className="text-[11px] font-medium" style={{ color: 'var(--sev-conforme)' }}>{info}</p>}
+      {error && <p role="alert" className="text-[11px] font-medium" style={{ color: 'var(--sev-critique)' }}>{error}</p>}
     </div>
   );
 }

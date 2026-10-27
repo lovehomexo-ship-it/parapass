@@ -28,16 +28,18 @@ interface Entree {
 }
 
 const TYPES: Record<string, { label: string; couleur: string; Icone: typeof Circle }> = {
-  ouverture:        { label: 'Ouverture',        couleur: '#34D399', Icone: DoorOpen },
-  decision_meteo:   { label: 'Décision météo',   couleur: '#60A5FA', Icone: CloudSun },
-  briefing_publie:  { label: 'Briefing',         couleur: '#A78BFA', Icone: Megaphone },
-  acquittement:     { label: 'Acquittement',     couleur: '#38BDF8', Icone: CheckCheck },
-  rotation_ouverte: { label: 'Rotation ouverte', couleur: '#FBBF24', Icone: DoorOpen },
-  rotation_cloturee:{ label: 'Rotation close',   couleur: '#FBBF24', Icone: DoorClosed },
-  derogation:       { label: 'Dérogation',       couleur: '#FB923C', Icone: ShieldOff },
-  incident:         { label: 'Incident',         couleur: '#F87171', Icone: AlertTriangle },
-  fermeture:        { label: 'Fermeture',        couleur: '#94A3B8', Icone: DoorClosed },
-  autre:            { label: 'Autre',            couleur: '#94A3B8', Icone: Circle },
+  // Couleurs de type en jetons : écrites en dur pour le fond sombre, elles
+  // tombaient à 2,1:1 sur le blanc (#38BDF8, 46 « Acquittement » illisibles).
+  ouverture:        { label: 'Ouverture',        couleur: 'var(--sev-conforme)', Icone: DoorOpen },
+  decision_meteo:   { label: 'Décision météo',   couleur: 'var(--action-texte)', Icone: CloudSun },
+  briefing_publie:  { label: 'Briefing',         couleur: 'var(--c-pliage-fort)', Icone: Megaphone },
+  acquittement:     { label: 'Acquittement',     couleur: 'var(--action-texte)', Icone: CheckCheck },
+  rotation_ouverte: { label: 'Rotation ouverte', couleur: 'var(--sev-vigilance)', Icone: DoorOpen },
+  rotation_cloturee:{ label: 'Rotation close',   couleur: 'var(--sev-vigilance)', Icone: DoorClosed },
+  derogation:       { label: 'Dérogation',       couleur: 'var(--accent-texte)', Icone: ShieldOff },
+  incident:         { label: 'Incident',         couleur: 'var(--sev-critique)', Icone: AlertTriangle },
+  fermeture:        { label: 'Fermeture',        couleur: 'var(--sev-neutre)', Icone: DoorClosed },
+  autre:            { label: 'Autre',            couleur: 'var(--sev-neutre)', Icone: Circle },
 };
 
 const heureDe = (iso: string) =>
@@ -200,11 +202,11 @@ function JournalInner({ centreId }: { centreId: string }) {
                     style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-xs font-mono" style={{ color: 'var(--c-dim)' }}>{heureDe(e.survenu_a)}</span>
-                      <span className="flex items-center gap-1 text-[11px] font-semibold px-1.5 rounded-full"
-                        style={{ color: t.couleur, background: `${t.couleur}1A` }}>
+                      <span className="flex items-center gap-1 text-xs font-semibold px-1.5 rounded-full"
+                        style={{ color: t.couleur, background: `color-mix(in srgb, ${t.couleur} 10%, transparent)` }}>
                         <Icone className="w-3 h-3" aria-hidden />{t.label}
                       </span>
-                      <span className="text-[11px]" style={{ color: 'var(--c-dim)' }}>{e.auteur_nom}</span>
+                      <span className="text-xs" style={{ color: 'var(--c-dim)' }}>{e.auteur_nom}</span>
                     </div>
                     <p className="text-sm mt-1 break-words" style={{ color: 'var(--c-text2)' }}>{e.texte}</p>
                   </div>

@@ -67,18 +67,18 @@ async function resolveParticipantDisplay(userId: string): Promise<ParticipantDis
         const initiales = words.length >= 2
           ? (words[0][0] + words[1][0]).toUpperCase()
           : centre.nom.substring(0, 2).toUpperCase();
-        result = { nom: centre.nom, initiales, couleur: '#F59E0B', avatar_url: centre.logo_url ?? null };
+        result = { nom: centre.nom, initiales, couleur: '#B45309', avatar_url: centre.logo_url ?? null };
       } else {
         // Fallback: use personal name if centre join returned nothing
         const nom = `${data.prenom ?? ''} ${data.nom ?? ''}`.trim() || 'Centre';
-        result = { nom, initiales: nom.substring(0, 2).toUpperCase(), couleur: '#F59E0B', avatar_url: data.avatar_url ?? null };
+        result = { nom, initiales: nom.substring(0, 2).toUpperCase(), couleur: '#B45309', avatar_url: data.avatar_url ?? null };
       }
     } else if (data.role === 'moniteur') {
       const prenom = data.prenom?.trim() ?? '';
       const nom = data.nom?.trim() ?? '';
       const nomComplet = `${prenom} ${nom}`.trim() || 'Moniteur';
       const initiales = ((prenom[0] ?? '') + (nom[0] ?? '')).toUpperCase() || 'MO';
-      result = { nom: nomComplet, initiales, couleur: '#10B981', avatar_url: data.avatar_url ?? null };
+      result = { nom: nomComplet, initiales, couleur: '#047857', avatar_url: data.avatar_url ?? null };
     } else {
       const prenom = data.prenom?.trim() ?? '';
       const nom = data.nom?.trim() ?? '';

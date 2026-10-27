@@ -212,7 +212,7 @@ function AlertBannerClickable({
       <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: styles.iconColor }} />
       <span className="flex-1 text-sm" style={{ color: 'var(--c-text2)' }}>{message}</span>
       {onView && (
-        <button onClick={onView} className="text-xs font-semibold flex-shrink-0 transition-opacity hover:opacity-70" style={{ color: '#F97316' }}>
+        <button onClick={onView} className="text-xs font-semibold flex-shrink-0 transition-opacity hover:opacity-70" style={{ color: 'var(--accent-texte)' }}>
           Voir →
         </button>
       )}
@@ -222,7 +222,10 @@ function AlertBannerClickable({
 
 // ─── AvatarCircle ──────────────────────────────────────────────────────────────
 
-const AVATAR_PALETTE = ['#003082', '#10B981', '#F97316', '#EF4444', '#8B5CF6', '#06B6D4', '#F59E0B', '#EC4899'];
+// Pastilles d'initiales : chaque teinte porte du blanc à 4,5:1 au moins, dans
+// les deux thèmes. Les initiales étaient écrites en `--c-text`, donc bleu nuit
+// sur bleu nuit en thème clair.
+const AVATAR_PALETTE = ['#003082', '#047857', '#C2410C', '#B91C1C', '#6D28D9', '#0E7490', '#92400E', '#BE185D'];
 
 function avatarColor(name: string): string {
   let hash = 0;
@@ -244,7 +247,7 @@ function AvatarCircle({
   }
   const bg = avatarColor(`${nom}${prenom}`);
   return (
-    <div className={`${sizeClass} rounded-full flex items-center justify-center font-bold flex-shrink-0`} style={{ background: bg, color: 'var(--c-text)' }}>
+    <div className={`${sizeClass} rounded-full flex items-center justify-center font-bold flex-shrink-0`} style={{ background: bg, color: '#fff' }}>
       {initials(nom, prenom)}
     </div>
   );
@@ -295,7 +298,7 @@ export function SousPartieAVenir({ icone, titre, detail }: { icone: React.ReactN
       <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4" style={{ background: 'rgba(37,99,235,0.12)' }}>
         {icone}
       </div>
-      <p className="font-bold text-white">{titre}</p>
+      <p className="font-bold" style={{ color: 'var(--c-text)' }}>{titre}</p>
       <p className="text-sm mt-1 max-w-sm" style={{ color: 'var(--c-dim)' }}>{detail}</p>
       <span className="mt-4 text-[11px] px-3 py-1 rounded-full font-semibold"
         style={{ background: 'rgba(245,158,11,0.12)', color: '#FCD34D', border: '1px solid rgba(245,158,11,0.3)' }}>
@@ -325,7 +328,7 @@ function TuileEncadrementDZ({ centreId, onGo }: { centreId: string; onGo: (secti
             ? <CheckCircle2 className="w-7 h-7" />
             : manque}
       </p>
-      <p className="text-xs mt-1" style={{ color: enc.seances.length === 0 ? '#F97316' : 'var(--c-dim)' }}>
+      <p className="text-xs mt-1" style={{ color: enc.seances.length === 0 ? 'var(--accent-texte)' : 'var(--c-dim)' }}>
         {enc.seances.length === 0
           ? 'Aucune séance ouverte — en ouvrir une →'
           : manque === 0
@@ -496,7 +499,7 @@ function DashboardHome({
   const conformite = totalMembers > 0
     ? Math.round(((licencesValides + certifOk) / (totalMembers * 2)) * 100)
     : 100;
-  const conformiteColor = conformite >= 80 ? '#10B981' : conformite >= 50 ? '#F97316' : '#EF4444';
+  const conformiteColor = conformite >= 80 ? 'var(--sev-conforme)' : conformite >= 50 ? 'var(--sev-vigilance)' : 'var(--sev-critique)';
 
   return (
     <div className="space-y-6">
@@ -655,7 +658,7 @@ function DashboardHome({
         <div className="flex-1 min-w-0">
           {carnetsEnAttente > 0 ? (
             <>
-              <div className="text-3xl font-extrabold leading-none" style={{ color: '#F97316' }}>{carnetsEnAttente}</div>
+              <div className="text-3xl font-extrabold leading-none" style={{ color: 'var(--accent-texte)' }}>{carnetsEnAttente}</div>
               <div className="text-sm font-semibold mt-1" style={{ color: 'var(--c-text)' }}>Carnets à valider</div>
             </>
           ) : (
@@ -684,12 +687,12 @@ function DashboardHome({
           {!centre?.logo_url && (
             <button onClick={() => onNavigate('centre')} className="w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl transition"
               style={{ background: 'rgba(249,115,22,0.07)', border: '1px solid rgba(249,115,22,0.2)' }}>
-              <span className="flex-shrink-0" style={{ color: '#F97316' }}><Palette className="w-5 h-5" /></span>
+              <span className="flex-shrink-0" style={{ color: 'var(--accent-texte)' }}><Palette className="w-5 h-5" /></span>
               <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium" style={{ color: '#F97316' }}>Ajoutez votre logo officiel</span>
+                <span className="text-sm font-medium" style={{ color: 'var(--accent-texte)' }}>Ajoutez votre logo officiel</span>
                 <span className="text-xs ml-2" style={{ color: 'rgba(249,115,22,0.7)' }}>Il apparaîtra sur les carnets de vos licenciés → Mon centre</span>
               </div>
-              <span className="text-xs font-semibold flex-shrink-0" style={{ color: '#F97316' }}>Configurer →</span>
+              <span className="text-xs font-semibold flex-shrink-0" style={{ color: 'var(--accent-texte)' }}>Configurer →</span>
             </button>
           )}
         </div>
@@ -710,7 +713,7 @@ function DashboardHome({
         <div style={{ flex: 2, background: 'var(--c-dropdown)', border: '1px solid var(--c-border)', borderRadius: 12, overflow: 'hidden', minWidth: 0 }}>
           <div className="flex items-center justify-between px-5 py-3.5" style={{ borderBottom: '1px solid var(--c-border-s)' }}>
             <h2 style={{ color: 'var(--c-text)', fontSize: 14, fontWeight: 600 }}>Activité récente</h2>
-            <button onClick={() => onNavigate('sauts')} style={{ color: '#F97316', fontSize: 12 }} className="font-medium hover:opacity-70 transition-opacity">
+            <button onClick={() => onNavigate('sauts')} style={{ color: 'var(--accent-texte)', fontSize: 12 }} className="font-medium hover:opacity-70 transition-opacity">
               Voir tout →
             </button>
           </div>
@@ -737,8 +740,8 @@ function DashboardHome({
                       s.statut === 'valide'
                         ? { background: 'rgba(16,185,129,0.12)', color: 'var(--sev-conforme)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 20, padding: '3px 10px' }
                         : s.statut === 'refuse'
-                        ? { background: 'rgba(239,68,68,0.12)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 20, padding: '3px 10px' }
-                        : { background: 'rgba(249,115,22,0.12)', color: '#F97316', border: '1px solid rgba(249,115,22,0.25)', borderRadius: 20, padding: '3px 10px' }
+                        ? { background: 'rgba(239,68,68,0.12)', color: 'var(--sev-critique)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 20, padding: '3px 10px' }
+                        : { background: 'rgba(249,115,22,0.12)', color: 'var(--accent-texte)', border: '1px solid rgba(249,115,22,0.25)', borderRadius: 20, padding: '3px 10px' }
                     }>
                       {s.statut === 'valide' ? 'Validé' : s.statut === 'refuse' ? 'Refusé' : 'En attente'}
                     </span>
@@ -825,7 +828,7 @@ function ModalPromotion({ licencie, onConfirm, onClose }: {
             <GraduationCap className="w-5 h-5 text-green-400" />
           </div>
           <div>
-            <h2 className="font-bold text-white text-base">Promouvoir en moniteur délégué</h2>
+            <h2 className="font-bold text-base" style={{ color: '#fff' }}>Promouvoir en moniteur délégué</h2>
             <p className="text-xs mt-0.5" style={{ color: 'var(--c-muted)' }}>{licencie.prenom} {licencie.nom}</p>
           </div>
         </div>
@@ -1227,7 +1230,7 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
       )}
 
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-bold text-white">Mes licenciés <span className="font-normal text-lg" style={{ color: 'var(--c-dim)' }}>({licencies.length})</span></h1>
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--c-text)' }}>Mes licenciés <span className="font-normal text-lg" style={{ color: 'var(--c-dim)' }}>({licencies.length})</span></h1>
         <div className="flex items-center gap-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--c-dim)' }} />
@@ -1235,8 +1238,8 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Rechercher..."
-              className="pl-9 pr-4 py-2 rounded-xl text-sm focus:outline-none w-52 text-white placeholder:text-white/30"
-              style={{ background: 'var(--c-border)', border: '1px solid var(--c-border-f)' }}
+              className="pl-9 pr-4 py-2 rounded-xl text-sm focus:outline-none w-52 placeholder:opacity-60"
+              style={{ background: 'var(--c-border)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)' }}
             />
           </div>
           <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid var(--c-border-f)' }}>
@@ -1260,16 +1263,17 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
           // expire + bientot + ok + inconnu === effectif total (« Tous »).
           const count = f.key === 'tous' ? licencies.length : licencies.filter(l => (conformiteMap[l.id] ?? 'inconnu') === f.key).length;
           const active = filtreConformite === f.key;
-          const color = f.key === 'expire' ? '#EF4444' : f.key === 'bientot' ? '#F59E0B' : f.key === 'ok' ? '#10B981' : '#60A5FA';
+          const color = f.key === 'expire' ? 'var(--sev-critique)' : f.key === 'bientot' ? 'var(--sev-vigilance)' : f.key === 'ok' ? 'var(--sev-conforme)' : 'var(--action-texte)';
           return (
             <button
               key={f.key}
               onClick={() => setFiltreConformite(f.key)}
-              className="text-xs font-semibold px-3 py-1.5 rounded-full transition"
+              className="text-xs font-semibold px-3 rounded-full transition"
               style={{
-                background: active ? `${color}26` : 'var(--c-border)',
+                minHeight: 36,
+                background: active ? `color-mix(in srgb, ${color} 15%, transparent)` : 'var(--c-border)',
                 color: active ? color : 'var(--c-muted)',
-                border: `1px solid ${active ? `${color}66` : 'var(--c-border-f)'}`,
+                border: `1px solid ${active ? `color-mix(in srgb, ${color} 40%, transparent)` : 'var(--c-border-f)'}`,
               }}
             >
               {f.label} ({count})
@@ -1306,7 +1310,7 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
 
                 <AvatarCircle url={l.photo_profil_url} nom={l.nom} prenom={l.prenom} size="lg" />
                 <div>
-                  <p className="font-semibold text-white flex items-center justify-center gap-2">
+                  <p className="font-semibold flex items-center justify-center gap-2" style={{ color: 'var(--c-text)' }}>
                     <ComplianceDot status={conformiteMap[l.id] ?? 'inconnu'} />
                     {l.prenom} {l.nom}
                   </p>
@@ -1360,7 +1364,7 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
                       <div className="flex items-center gap-3">
                         <AvatarCircle url={l.photo_profil_url} nom={l.nom} prenom={l.prenom} size="sm" />
                         <div>
-                          <p className="font-medium text-white flex items-center gap-2">
+                          <p className="font-medium flex items-center gap-2" style={{ color: 'var(--c-text)' }}>
                             <ComplianceDot status={conformiteMap[l.id] ?? 'inconnu'} />
                             {l.prenom} {l.nom}
                           </p>
@@ -1399,7 +1403,7 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
                         if (!briefingDuJourId) return <span className="text-xs" style={{ color: 'var(--c-dim)' }}>—</span>;
                         const st = acksSet.has(l.id)
                           ? { label: 'Acquitté', color: 'var(--sev-conforme)', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)' }
-                          : { label: 'Non lu', color: '#EF4444', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)' };
+                          : { label: 'Non lu', color: 'var(--sev-critique)', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)' };
                         return (
                           <span className="text-xs rounded-full px-2 py-0.5 inline-flex items-center gap-1.5" style={{ background: st.bg, color: st.color, border: `1px solid ${st.border}` }}>
                             <span className="w-1.5 h-1.5 rounded-full" style={{ background: st.color }} />
@@ -1507,7 +1511,7 @@ function DemandesSection({ centreId, onAccepted }: { centreId: string | undefine
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold text-white">Demandes d'adhésion <span className="font-normal text-lg" style={{ color: 'var(--c-dim)' }}>({demandes.length})</span></h1>
+      <h1 className="text-2xl font-bold" style={{ color: 'var(--c-text)' }}>Demandes d'adhésion <span className="font-normal text-lg" style={{ color: 'var(--c-dim)' }}>({demandes.length})</span></h1>
       {demandes.length === 0 ? (
         <div className="rounded-2xl p-16 text-center" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
           <CheckCircle className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--sev-conforme)' }} />
@@ -1519,7 +1523,7 @@ function DemandesSection({ centreId, onAccepted }: { centreId: string | undefine
             <div key={d.id} className="rounded-2xl p-5 flex items-center gap-4" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border-f)' }}>
               <AvatarCircle url={d.photo_profil_url} nom={d.nom} prenom={d.prenom} size="md" />
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-white">{d.prenom} {d.nom}</p>
+                <p className="font-semibold" style={{ color: 'var(--c-text)' }}>{d.prenom} {d.nom}</p>
                 <p className="text-xs" style={{ color: 'var(--c-dim)' }}>{d.numero_licence}</p>
                 {d.date_adhesion && (
                   <p className="text-xs flex items-center gap-1 mt-0.5" style={{ color: 'var(--c-dim)' }}>
@@ -2145,7 +2149,7 @@ function MonCentreSection({ centre, onSaved }: { centre: Centre | null; onSaved:
       {/* ── Identité visuelle ── */}
       <div className="rounded-2xl overflow-hidden shadow-sm border border-gray-100" style={{ background: 'linear-gradient(135deg, #001A4D 0%, #0f1a30 100%)' }}>
         <div className="px-6 pt-5 pb-4 border-b border-white/10">
-          <h2 className="text-base font-semibold text-white">Identité visuelle du centre</h2>
+          <h2 className="text-base font-semibold" style={{ color: 'var(--c-text)' }}>Identité visuelle du centre</h2>
           <p className="text-xs mt-0.5" style={{ color: 'var(--c-dim)' }}>
             Votre logo apparaît comme cachet officiel sur le verso des carnets de vos parachutistes
           </p>
@@ -2170,7 +2174,7 @@ function MonCentreSection({ centre, onSaved }: { centre: Centre | null; onSaved:
                 <span className="text-2xl font-black text-white/30">{centre?.nom?.substring(0, 2).toUpperCase() || 'DZ'}</span>
               )}
             </div>
-            <p className="text-[11px] text-white/50 text-center max-w-[120px] leading-snug">{centre?.nom}</p>
+            <p className="text-xs text-center max-w-[120px] leading-snug" style={{ color: 'var(--c-muted)' }}>{centre?.nom}</p>
             {logoUrl && !logoPreview && (
               <button
                 onClick={handleDeleteLogo}
@@ -2195,7 +2199,7 @@ function MonCentreSection({ centre, onSaved }: { centre: Centre | null; onSaved:
               onClick={() => logoInputRef.current?.click()}
             >
               <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: 'rgba(249,115,22,0.12)' }}>
-                <Upload className="w-4 h-4" style={{ color: '#F97316' }} />
+                <Upload className="w-4 h-4" style={{ color: 'var(--accent-texte)' }} />
               </div>
               <p className="text-xs text-center font-medium" style={{ color: 'var(--c-text2)' }}>
                 {uploadingLogo ? 'Upload en cours…' : 'Glisser-déposer ou cliquer'}
@@ -2476,7 +2480,7 @@ function StatsSection({ centreId }: { centreId: string | undefined }) {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Statistiques</h1>
+      <h1 className="text-2xl font-bold " style={{ color: 'var(--c-text)' }}>Statistiques</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Sauts par mois */}
@@ -2529,7 +2533,7 @@ function StatsSection({ centreId }: { centreId: string | undefined }) {
           <div className="space-y-3">
             {topParas.map((p, i) => (
               <div key={i} className="flex items-center gap-4">
-                <span className="text-lg font-bold text-gray-300 w-6 text-center">{i + 1}</span>
+                <span className="text-lg font-bold w-6 text-center text-gray-500">{i + 1}</span>
                 <AvatarCircle url={p.photo_profil_url} nom={p.nom} prenom={p.prenom} size="sm" />
                 <p className="flex-1 text-sm font-medium text-gray-900">{p.prenom} {p.nom}</p>
                 <span className="text-sm font-bold text-[#001A4D]">{p.count} sauts</span>
@@ -3030,7 +3034,7 @@ function MessagesSection({ currentUserId }: { currentUserId: string }) {
         </div>
         <div className="flex-1 overflow-y-auto">
           {conversations.length === 0 ? (
-            <div className="text-center text-gray-400 text-sm p-8">Aucune conversation</div>
+            <div className="text-center text-gray-500 text-sm p-8">Aucune conversation</div>
           ) : conversations.map(conv => {
             const isActive = conv.id === selectedConvId;
             return (
@@ -3050,7 +3054,7 @@ function MessagesSection({ currentUserId }: { currentUserId: string }) {
                       <span className="text-xs bg-red-500 text-white rounded-full px-1.5 py-0.5 ml-1 flex-shrink-0">{conv.non_lus}</span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-400 truncate mt-0.5">{conv.dernier_message || 'Nouvelle conversation'}</p>
+                  <p className="text-xs text-gray-500 truncate mt-0.5">{conv.dernier_message || 'Nouvelle conversation'}</p>
                 </div>
               </button>
             );
@@ -3061,7 +3065,7 @@ function MessagesSection({ currentUserId }: { currentUserId: string }) {
       {/* Chat area */}
       <div className={`flex-1 flex flex-col ${!selectedConvId ? 'hidden md:flex' : 'flex'}`}>
         {!selectedConvId ? (
-          <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
+          <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">
             Sélectionnez une conversation
           </div>
         ) : (
@@ -3441,9 +3445,9 @@ export function CentreDashboardPage() {
       <div className="min-h-screen flex items-center justify-center p-6" style={{ background: '#001A4D' }}>
         <div className="rounded-2xl p-10 max-w-md text-center space-y-4" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border-f)' }}>
           <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ background: 'rgba(245,158,11,0.15)' }}>
-            <Clock className="w-8 h-8" style={{ color: '#F59E0B' }} />
+            <Clock className="w-8 h-8" style={{ color: 'var(--sev-vigilance)' }} />
           </div>
-          <h2 className="text-xl font-bold text-white">Centre en cours de validation</h2>
+          <h2 className="text-xl font-bold" style={{ color: 'var(--c-text)' }}>Centre en cours de validation</h2>
           <p className="text-sm leading-relaxed" style={{ color: 'var(--c-dim)' }}>
             Votre centre est en cours de validation. Nous vérifions votre agrément FFP sous 24-48h.
             Vous recevrez une notification dès que votre centre sera approuvé.
@@ -3473,7 +3477,7 @@ export function CentreDashboardPage() {
             </div>
           )}
           <div className={`min-w-0 flex-1 ${compact ? 'hidden' : ''}`}>
-            <p className="font-bold text-white truncate" style={{ fontSize: 13 }}>{centre.nom}</p>
+            <p className="font-bold truncate" style={{ color: 'var(--c-text)',  fontSize: 13 }}>{centre.nom}</p>
             <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{
               background: isActivePlan ? 'rgba(37,99,235,0.2)' : 'rgba(249,115,22,0.2)',
               color: isActivePlan ? '#60A5FA' : '#F97316',
@@ -3927,14 +3931,14 @@ export function CentreDashboardPage() {
                 <div className="flex items-center justify-center py-16 px-6">
                   <div className="max-w-md w-full rounded-2xl p-8 text-center space-y-4" style={{ background: 'var(--c-surface)', border: '1px solid rgba(249,115,22,0.3)' }}>
                     <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto" style={{ background: 'rgba(249,115,22,0.12)' }}>
-                      <Euro className="w-7 h-7" style={{ color: '#F97316' }} />
+                      <Euro className="w-7 h-7" style={{ color: 'var(--accent-texte)' }} />
                     </div>
                     <h3 className="text-xl font-bold" style={{ color: 'var(--c-text)' }}>Module Finances</h3>
                     <p className="text-sm leading-relaxed" style={{ color: 'var(--c-dim)' }}>
                       Gérez les tarifs, suivez les soldes de vos licenciés et encaissez en ligne via Stripe.
                     </p>
                     <div className="rounded-xl py-3 px-4" style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.2)' }}>
-                      <p className="text-lg font-bold" style={{ color: '#F97316' }}>{MODULES.find(m => m.id === 'finances')?.prix?.toFixed(2).replace('.', ',')} € / mois</p>
+                      <p className="text-lg font-bold" style={{ color: 'var(--accent-texte)' }}>{MODULES.find(m => m.id === 'finances')?.prix?.toFixed(2).replace('.', ',')} € / mois</p>
                       <p className="text-xs mt-0.5" style={{ color: 'var(--c-dim)' }}>Sans engagement</p>
                     </div>
                     <a href="mailto:contact@parapass.fr?subject=Activation module Finances"

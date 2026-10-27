@@ -65,7 +65,7 @@ function Inner({ centreId }: { centreId: string }) {
       <div className="flex items-center justify-between gap-2">
         <span className="text-[11px] font-bold uppercase tracking-wider inline-flex items-center gap-1.5"
           style={{ color: 'var(--c-dim)', letterSpacing: '1px' }}>
-          <MapPin className="w-3.5 h-3.5" style={{ color: '#F97316' }} aria-hidden /> Présents du jour
+          <MapPin className="w-3.5 h-3.5" style={{ color: 'var(--accent-texte)' }} aria-hidden /> Présents du jour
         </span>
         <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--c-dim)' }} aria-hidden />
       </div>
@@ -82,8 +82,8 @@ function Inner({ centreId }: { centreId: string }) {
             </span>
             <span className="text-xs" style={{ color: 'var(--c-muted)' }}>
               sur le terrain
-              {encadrants > 0 && <span style={{ color: '#6EE7B7' }}> · {encadrants} encadrant{encadrants > 1 ? 's' : ''}</span>}
-              {sacsDz > 0 && <span style={{ color: '#93C5FD' }}> · {sacsDz} sac{sacsDz > 1 ? 's' : ''} du centre</span>}
+              {encadrants > 0 && <span style={{ color: 'var(--sev-conforme)' }}> · {encadrants} encadrant{encadrants > 1 ? 's' : ''}</span>}
+              {sacsDz > 0 && <span style={{ color: 'var(--action-texte)' }}> · {sacsDz} sac{sacsDz > 1 ? 's' : ''} du centre</span>}
             </span>
           </div>
 
@@ -116,7 +116,7 @@ function Inner({ centreId }: { centreId: string }) {
               </div>
 
               {enVol > 0 && (
-                <p className="text-[11px] mt-2 inline-flex items-center gap-1" style={{ color: '#FDBA74' }}>
+                <p className="text-[11px] mt-2 inline-flex items-center gap-1" style={{ color: 'var(--accent-texte)' }}>
                   <Plane className="w-3 h-3" aria-hidden /> {enVol} en file ou embarqué{enVol > 1 ? 's' : ''}
                 </p>
               )}

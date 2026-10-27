@@ -17,7 +17,7 @@ import { SEVERITE_COULEUR } from '../../lib/jetons';
 type EditTool = 'aucun' | 'trace' | 'lz' | 'zone_evolution' | 'sock' | 'obstacle' | 'nofly';
 
 const inputStyle: React.CSSProperties = {
-  background: 'var(--c-border)', border: '1px solid var(--c-border-f)', color: 'white',
+  background: 'var(--c-border)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)',
   borderRadius: 8, padding: '8px 12px', fontSize: 13, outline: 'none', width: '100%',
 };
 
@@ -430,8 +430,8 @@ export function BriefingSection({ centreId }: { centreId: string }) {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Megaphone className="w-6 h-6" style={{ color: '#F97316' }} /> Briefing du jour
+        <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--c-text)' }}>
+          <Megaphone className="w-6 h-6" style={{ color: 'var(--accent-texte)' }} /> Briefing du jour
         </h1>
         <p className="text-xs mt-1" style={{ color: 'var(--c-dim)' }}>
           Les circuits sont tracés une fois, à la main, selon le terrain. Le vent détermine seulement lequel est actif aujourd'hui.
@@ -445,7 +445,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
         </div>
       )}
       {okMsg && (
-        <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', color: '#6EE7B7' }}>
+        <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', color: 'var(--sev-conforme)' }}>
           <CheckCircle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {okMsg}
         </div>
       )}
@@ -485,7 +485,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-xs no-underline"
-              style={{ color: '#60A5FA' }}
+              style={{ color: 'var(--action-texte)' }}
               title="Ouvrir Géoportail (IGN) — photographies aériennes"
             >
               <ExternalLink className="w-3.5 h-3.5" /> Trouver ma DZ sur Géoportail
@@ -497,7 +497,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
               value={editCircuitId ?? ''}
               onChange={e => { if (e.target.value) changerCircuitEdite(e.target.value); }}
               className="text-xs rounded-lg px-2 py-2"
-              style={{ background: 'var(--c-border)', color: 'white', border: '1px solid var(--c-border-f)' }}
+              style={{ background: 'var(--c-border)', color: 'var(--c-text)', border: '1px solid var(--c-border-f)' }}
             >
               {circuits.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
             </select>
@@ -561,7 +561,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
           {selectedObject && selectedLabel && (
             <div className="flex items-center gap-2 mt-2 rounded-xl px-3 py-2"
               style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.2)' }}>
-              <span className="text-xs text-white flex-1">Sélection : {selectedLabel}</span>
+              <span className="text-xs flex-1" style={{ color: 'var(--c-text)' }}>Sélection : {selectedLabel}</span>
               <button onClick={deleteSelected}
                 className="flex items-center gap-1.5 text-xs font-bold px-3 rounded-lg text-white"
                 style={{ background: '#EF4444', minHeight: 40 }}>
@@ -580,15 +580,15 @@ export function BriefingSection({ centreId }: { centreId: string }) {
                 Début de circuit (m)
                 <input type="number" min={0} step={50} value={draftCircuit.altitude_debut_m}
                   onChange={e => setDraftCircuit({ ...draftCircuit, altitude_debut_m: parseInt(e.target.value, 10) || 0 })}
-                  className="w-24 rounded-lg px-2.5 py-2 text-sm text-white text-center outline-none"
-                  style={{ background: 'var(--c-border)', border: '1px solid var(--c-border-f)' }} />
+                  className="w-24 rounded-lg px-2.5 py-2 text-sm text-center outline-none"
+                  style={{ color: 'var(--c-text)',  background: 'var(--c-border)', border: '1px solid var(--c-border-f)' }} />
               </label>
               <label className="text-xs flex items-center gap-2" style={{ color: 'var(--c-text2)' }}>
                 Sens
                 <select value={draftCircuit.sens}
                   onChange={e => setDraftCircuit({ ...draftCircuit, sens: e.target.value as DzCircuit['sens'] })}
                   className="rounded-lg px-2 py-2 text-sm"
-                  style={{ background: 'var(--c-border)', color: 'white', border: '1px solid var(--c-border-f)' }}>
+                  style={{ background: 'var(--c-border)', color: 'var(--c-text)', border: '1px solid var(--c-border-f)' }}>
                   <option value="main_gauche">Main gauche</option>
                   <option value="main_droite">Main droite</option>
                 </select>
@@ -602,8 +602,8 @@ export function BriefingSection({ centreId }: { centreId: string }) {
                     vent_reference_deg: e.target.value === '' ? null
                       : Math.max(0, Math.min(359, parseInt(e.target.value, 10) || 0)) })}
                   placeholder="—"
-                  className="w-20 rounded-lg px-2.5 py-2 text-sm text-white text-center outline-none"
-                  style={{ background: 'var(--c-border)', border: '1px solid var(--c-border-f)' }} />
+                  className="w-20 rounded-lg px-2.5 py-2 text-sm text-center outline-none"
+                  style={{ color: 'var(--c-text)',  background: 'var(--c-border)', border: '1px solid var(--c-border-f)' }} />
               </label>
               <label className="text-xs flex items-center gap-2" style={{ color: 'var(--c-text2)' }}>
                 <input type="checkbox" checked={draftCircuit.actif}
@@ -622,7 +622,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
               même manière (insensible aux superpositions sur la carte) */}
           <div className="flex flex-wrap gap-2 mt-3">
             {draftCircuit?.zone_evolution && (
-              <span className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full" style={{ background: 'rgba(167,139,250,0.1)', color: '#C4B5FD', border: '1px solid rgba(167,139,250,0.3)' }}>
+              <span className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full" style={{ background: 'rgba(167,139,250,0.1)', color: 'var(--c-pliage-fort)', border: '1px solid rgba(167,139,250,0.3)' }}>
                 Zone d'évolution ({draftCircuit.nom})
                 <button onClick={deleteZoneEvolution} aria-label="Supprimer la zone d'évolution" style={{ minWidth: 24, minHeight: 24 }}>
                   <Trash2 className="w-3 h-3" />
@@ -630,7 +630,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
               </span>
             )}
             {draftSettings.sock_x != null && (
-              <span className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full" style={{ background: 'rgba(226,232,240,0.08)', color: '#E2E8F0', border: '1px solid rgba(226,232,240,0.25)' }}>
+              <span className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full" style={{ background: 'rgba(226,232,240,0.08)', color: 'var(--c-text2)', border: '1px solid rgba(226,232,240,0.25)' }}>
                 Manche à air · commune à tous les circuits
                 <button onClick={deleteSock} aria-label="Supprimer la manche à air" style={{ minWidth: 24, minHeight: 24 }}>
                   <Trash2 className="w-3 h-3" />
@@ -638,7 +638,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
               </span>
             )}
             {draftSettings.obstacles.map((z, i) => (
-              <span key={`o${i}`} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full" style={{ background: 'rgba(56,189,248,0.1)', color: '#7DD3FC', border: '1px solid rgba(56,189,248,0.3)' }}>
+              <span key={`o${i}`} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full" style={{ background: 'rgba(56,189,248,0.1)', color: 'var(--action-texte)', border: '1px solid rgba(56,189,248,0.3)' }}>
                 Obstacle : {z.nom}
                 <button onClick={() => deleteObstacle(i)} aria-label={`Supprimer ${z.nom}`} style={{ minWidth: 24, minHeight: 24 }}>
                   <Trash2 className="w-3 h-3" />
@@ -655,7 +655,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
             ))}
             {/* Circuits : coûteux à refaire → confirmation avant suppression */}
             {circuits.map(c => (
-              <span key={c.id} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full" style={{ background: 'rgba(251,191,36,0.08)', color: '#FDE68A', border: '1px solid rgba(251,191,36,0.3)' }}>
+              <span key={c.id} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full" style={{ background: 'rgba(251,191,36,0.08)', color: 'var(--sev-vigilance)', border: '1px solid rgba(251,191,36,0.3)' }}>
                 Circuit : {c.nom}
                 <button
                   onClick={async () => {
@@ -695,7 +695,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
                 <button
                   onClick={() => { setVentDir(dirPrev); setVentVitesse(String(ktPrev)); }}
                   className="text-[11px] underline underline-offset-2 mt-1"
-                  style={{ color: '#7DD3FC', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                  style={{ color: 'var(--action-texte)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                 >
                   Utiliser le vent prévu : {dirPrev}° · {ktPrev} kt (prévision indicative — à confirmer)
                 </button>
@@ -708,7 +708,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold mb-1.5 uppercase tracking-wide" style={{ color: '#F97316' }}>
+            <label className="block text-xs font-bold mb-1.5 uppercase tracking-wide" style={{ color: 'var(--accent-texte)' }}>
               Circuit qui sera publié aujourd'hui
             </label>
             <div className="flex flex-col gap-1.5">
@@ -758,7 +758,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
           {/* Sens d'atterrissage dérivé, lecture seule */}
           <div className="rounded-lg px-3 py-2.5" style={{ background: 'var(--c-border)', border: '1px solid var(--c-border-f)' }}>
             <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>Sens d'atterrissage (dérivé du tracé, indicatif)</p>
-            <p className="text-sm font-bold text-white">
+            <p className="text-sm font-bold" style={{ color: 'var(--c-text)' }}>
               {circuitActif && sensAtterrissageDerive(circuitActif.trace) !== null
                 ? `${sensAtterrissageDerive(circuitActif.trace)}°`
                 : '— (tracé incomplet)'}

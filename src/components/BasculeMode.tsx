@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { surface, SEVERITE_COULEUR } from '../lib/jetons';
+import { surface } from '../lib/jetons';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // F14 — Deux métiers, deux modes explicites.
@@ -77,7 +77,7 @@ export function BasculeMode({ mode, onChange, enAttenteGestion = 0, enAttenteAvi
               <span aria-label={`${compte} en attente sur ${m.label}`}
                 className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full
                            text-[11px] font-bold flex items-center justify-center"
-                style={{ background: SEVERITE_COULEUR.vigilance, color: '#1C1917' }}>
+                style={{ background: 'var(--sev-vigilance)', color: 'var(--sev-vigilance-encre)' /* le noir sur le brun du thème clair ne tenait que 2,6:1 */ }}>
                 {compte > 99 ? '99+' : compte}
               </span>
             )}

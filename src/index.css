@@ -47,6 +47,8 @@
   /* Sévérités — la RAYURE est le signal primaire, le texte le secondaire. */
   --sev-critique:  #F87171;   /* 6.07:1 */
   --sev-vigilance: #FBBF24;   /* 10.06:1 */
+  /* Encre posée SUR la vigilance (pastille de compteur) : noir sur l'ambre. */
+  --sev-vigilance-encre: #1C1917;
   --sev-conforme:  #34D399;   /* 8.73:1 */
   --sev-neutre:    #7A9CC0;   /* 5.87:1 */
 
@@ -105,6 +107,8 @@
      elles ne peuvent pas porter de texte ici. Teintes assombries, même sens. */
   --sev-critique:  #B91C1C;   /* 5.85:1 */
   --sev-vigilance: #8A5100;   /* 5.83:1 */
+  /* Le jeton devient brun foncé en clair : l'encre s'inverse (blanc, 6,6:1). */
+  --sev-vigilance-encre: #FFFFFF;
   --sev-conforme:  #047857;   /* 4.96:1 */
   --sev-neutre:    #4B647E;
   --c-pliage:      #5B21B6;   /* violet 800 — 7,4:1 sur blanc */

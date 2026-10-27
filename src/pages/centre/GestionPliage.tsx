@@ -45,17 +45,19 @@ interface PliageJour {
 function statutPaiementBadge(s: string) {
   switch (s) {
     case 'paye_app': return { label: 'Payé app', color: 'var(--sev-conforme)', bg: 'rgba(16,185,129,0.12)' };
-    case 'paye_comptoir': return { label: 'Payé comptoir', color: '#60A5FA', bg: 'rgba(96,165,250,0.12)' };
+    case 'paye_comptoir': return { label: 'Payé comptoir', color: 'var(--action-texte)', bg: 'rgba(96,165,250,0.12)' };
     case 'auto_plie': return { label: 'Auto-plié', color: 'var(--c-pliage-fort)', bg: 'rgba(167,139,250,0.12)' };
-    case 'a_regler': return { label: 'À régler', color: '#F97316', bg: 'rgba(249,115,22,0.12)' };
-    default: return { label: 'Non attribué', color: '#94A3B8', bg: 'rgba(148,163,184,0.12)' };
+    case 'a_regler': return { label: 'À régler', color: 'var(--accent-texte)', bg: 'rgba(249,115,22,0.12)' };
+    default: return { label: 'Non attribué', color: 'var(--sev-neutre)', bg: 'rgba(148,163,184,0.12)' };
   }
 }
 
 function KpiCard({ label, val, color }: { label: string; val: number | string; color: string }) {
   return (
     <div className="rounded-xl p-4 flex flex-col" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)', borderLeft: `3px solid ${color}`, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}>
-      <p className="text-2xl font-bold mb-1" style={{ color }}>{val}</p>
+      {/* Le chiffre en couleur de texte, l'accent sur le filet : #F97316 en
+          chiffre ne faisait que 2,8:1 sur le blanc. */}
+      <p className="text-2xl font-bold mb-1" style={{ color: 'var(--c-text)' }}>{val}</p>
       <p className="text-xs" style={{ color: 'var(--c-muted)' }}>{label}</p>
     </div>
   );
@@ -430,9 +432,9 @@ function FileDePliage({ centreId }: { centreId: string }) {
   return (
     <div className="rounded-xl overflow-hidden mb-6" style={{ border: '1px solid rgba(249,115,22,0.3)', background: 'rgba(249,115,22,0.05)' }}>
       <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '1px solid rgba(249,115,22,0.2)' }}>
-        <Clock className="w-4 h-4" style={{ color: '#F97316' }} />
-        <p className="text-sm font-bold" style={{ color: '#F97316' }}>File de pliage — {sacs.length} sac{sacs.length > 1 ? 's' : ''} en attente</p>
-        <span className="ml-auto text-xs" style={{ color: 'rgba(249,115,22,0.6)' }}>Temps réel</span>
+        <Clock className="w-4 h-4" style={{ color: 'var(--accent-texte)' }} />
+        <p className="text-sm font-bold" style={{ color: 'var(--accent-texte)' }}>File de pliage — {sacs.length} sac{sacs.length > 1 ? 's' : ''} en attente</p>
+        <span className="ml-auto text-xs" style={{ color: 'var(--accent-texte)' }}>Temps réel</span>
       </div>
       {sacs.map((s, i) => {
         const nom = s.nom_court || [s.marque, s.modele].filter(Boolean).join(' ') || 'Sac sans nom';
@@ -451,7 +453,7 @@ function FileDePliage({ centreId }: { centreId: string }) {
               )}
             </div>
             <span className="text-[11px] font-bold px-2.5 py-1 rounded-full"
-              style={{ background: 'rgba(249,115,22,0.15)', color: '#F97316', border: '1px solid rgba(249,115,22,0.3)' }}>
+              style={{ background: 'rgba(249,115,22,0.15)', color: 'var(--accent-texte)', border: '1px solid rgba(249,115,22,0.3)' }}>
               À plier
             </span>
           </div>
@@ -535,7 +537,7 @@ function OngletPliageDuJour({ centreId }: { centreId: string }) {
       {flagges > 0 && (
         <div className="rounded-xl px-4 py-3 mb-4 flex items-center gap-3" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
           <AlertTriangle className="w-5 h-5" aria-hidden />
-          <p className="text-sm" style={{ color: '#FCD34D' }}>
+          <p className="text-sm" style={{ color: 'var(--sev-vigilance)' }}>
             {flagges} pliage{flagges > 1 ? 's' : ''} flagué{flagges > 1 ? 's' : ''} — qualification plieur non renseignée
           </p>
         </div>
@@ -597,8 +599,8 @@ function OngletPliageDuJour({ centreId }: { centreId: string }) {
                 </div>
                 {p.statut_paiement === 'a_regler' && (
                   <button onClick={() => marquerPaye(p.id)}
-                    className="flex-shrink-0 text-xs font-bold px-3 py-1.5 rounded-lg text-white"
-                    style={{ background: '#10B981' }}>
+                    className="flex-shrink-0 text-xs font-bold px-3 rounded-lg text-white"
+                    style={{ background: '#047857', minHeight: 40 }}>
                     Marquer payé
                   </button>
                 )}
@@ -780,7 +782,7 @@ function OngletStats({ centreId }: { centreId: string }) {
           <div className="space-y-2">
             {[
               { label: 'Payé app', val: stats.payeApp, color: 'var(--sev-conforme)' },
-              { label: 'Payé comptoir', val: stats.payeComptoir, color: '#60A5FA' },
+              { label: 'Payé comptoir', val: stats.payeComptoir, color: 'var(--action-texte)' },
               { label: 'Auto-plié', val: stats.autoPlies, color: 'var(--c-pliage-fort)' },
               { label: 'À régler', val: stats.aRegler, color: '#F97316' },
               { label: 'Non attribué', val: stats.nonAttribues, color: '#94A3B8' },
@@ -804,7 +806,7 @@ function OngletStats({ centreId }: { centreId: string }) {
       {stats.flagues > 0 && (
         <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
           <AlertTriangle className="w-5 h-5" aria-hidden />
-          <p className="text-sm" style={{ color: '#FCD34D' }}>{stats.flagues} pliage{stats.flagues > 1 ? 's' : ''} avec qualification plieur non renseignée</p>
+          <p className="text-sm" style={{ color: 'var(--sev-vigilance)' }}>{stats.flagues} pliage{stats.flagues > 1 ? 's' : ''} avec qualification plieur non renseignée</p>
         </div>
       )}
     </div>
@@ -960,7 +962,7 @@ function OngletRelevePlieurs({ centreId }: { centreId: string }) {
                   {r.prenom} {r.nom}
                 </span>
               </div>
-              <span className="text-center text-sm font-bold" style={{ color: '#60A5FA' }}>{r.nbPliages}</span>
+              <span className="text-center text-sm font-bold" style={{ color: 'var(--action-texte)' }}>{r.nbPliages}</span>
               <span className="text-right text-sm font-semibold" style={{ color: 'var(--sev-conforme)' }}>
                 {r.montantAReverse.toFixed(0)} €
               </span>
@@ -1043,7 +1045,7 @@ function OngletParcSacs({ centreId }: { centreId: string }) {
 
   const etatConfig = {
     libre: { label: 'Libre', color: 'var(--sev-conforme)', bg: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.25)' },
-    pris: { label: 'Pris', color: '#60A5FA', bg: 'rgba(96,165,250,0.1)', border: 'rgba(96,165,250,0.25)' },
+    pris: { label: 'Pris', color: 'var(--action-texte)', bg: 'rgba(96,165,250,0.1)', border: 'rgba(96,165,250,0.25)' },
     a_plier: { label: 'À plier', color: '#F97316', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.25)' },
     hors_service: { label: 'Hors service', color: '#94A3B8', bg: 'rgba(148,163,184,0.1)', border: 'rgba(148,163,184,0.25)' },
   };
@@ -1065,7 +1067,7 @@ function OngletParcSacs({ centreId }: { centreId: string }) {
       <div className="grid grid-cols-4 gap-3 mb-6">
         {([
           { label: 'Libres', val: libres.length, color: 'var(--sev-conforme)' },
-          { label: 'Sortis', val: pris.length, color: '#60A5FA' },
+          { label: 'Sortis', val: pris.length, color: 'var(--action-texte)' },
           { label: 'À plier', val: aPlier.length, color: '#F97316' },
           { label: 'Hors service', val: horsService.length, color: '#94A3B8' },
         ] as { label: string; val: number; color: string }[]).map(k => (
@@ -1342,7 +1344,7 @@ export function GestionPliage({ centreId }: { centreId: string }) {
           <h2 className="text-xl font-bold" style={{ color: 'var(--c-text)' }}><ParachuteGlyph className="w-5 h-5 inline-block mr-2 align-[-2px]" aria-hidden />Gestion du pliage</h2>
           <p className="text-sm mt-0.5" style={{ color: 'var(--c-muted)' }}>Sac → QR → 1 tap · Tout est traçé</p>
         </div>
-        <span className="text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: 'rgba(249,115,22,0.12)', color: '#F97316', border: '1px solid rgba(249,115,22,0.3)' }}>
+        <span className="text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: 'rgba(249,115,22,0.12)', color: 'var(--accent-texte)', border: '1px solid rgba(249,115,22,0.3)' }}>
           <Sparkles className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> Option Pro
         </span>
       </div>

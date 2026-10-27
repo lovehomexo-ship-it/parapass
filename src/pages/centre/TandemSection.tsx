@@ -115,11 +115,11 @@ function statutBadge(s: string) {
   const map: Record<string, { label: string; color: string; bg: string }> = {
     confirme: { label: 'Confirmé', color: 'var(--sev-conforme)', bg: 'rgba(16,185,129,0.12)' },
     en_attente: { label: 'En attente', color: 'var(--sev-vigilance)', bg: 'rgba(245,158,11,0.12)' },
-    effectue: { label: 'Effectué', color: '#60A5FA', bg: 'rgba(96,165,250,0.12)' },
-    annule: { label: 'Annulé', color: '#EF4444', bg: 'rgba(239,68,68,0.12)' },
-    reporte: { label: 'Reporté', color: '#A78BFA', bg: 'rgba(167,139,250,0.12)' },
+    effectue: { label: 'Effectué', color: 'var(--action-texte)', bg: 'rgba(96,165,250,0.12)' },
+    annule: { label: 'Annulé', color: 'var(--sev-critique)', bg: 'rgba(239,68,68,0.12)' },
+    reporte: { label: 'Reporté', color: 'var(--c-pliage-fort)', bg: 'rgba(167,139,250,0.12)' },
   };
-  return map[s] ?? { label: s, color: '#94A3B8', bg: 'rgba(148,163,184,0.12)' };
+  return map[s] ?? { label: s, color: 'var(--sev-neutre)', bg: 'rgba(148,163,184,0.12)' };
 }
 
 function KpiCard({ label, val, color }: { label: string; val: string | number; color: string }) {
@@ -240,7 +240,7 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
         <button
           onClick={() => setShowNewSlot(true)}
           className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-white"
-          style={{ background: '#F97316' }}
+          style={{ background: 'var(--accent-fond)' }}
         >
           <Plus className="w-3.5 h-3.5" /> Nouveau créneau
         </button>
@@ -310,7 +310,7 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
                     <button
                       onClick={() => annulerMeteo(slot.id)}
                       className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg"
-                      style={{ border: '1px solid rgba(239,68,68,0.3)', color: '#EF4444', background: 'transparent', cursor: 'pointer' }}
+                      style={{ border: '1px solid rgba(239,68,68,0.3)', color: 'var(--sev-critique)', background: 'transparent', cursor: 'pointer' }}
                     >
                       <Cloud className="w-3 h-3" /> Annuler météo
                     </button>
@@ -342,8 +342,8 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
                                   {b.passager_nom || b.offreur_nom}
                                 </p>
                                 <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold" style={{ background: badge.bg, color: badge.color }}>{badge.label}</span>
-                                {b.avec_video && <span className="text-[10px] px-1.5 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(139,92,246,0.12)', color: '#A78BFA' }}><Video className="w-3 h-3" aria-hidden />Vidéo</span>}
-                                {b.avec_photos && <span className="text-[10px] px-1.5 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(249,115,22,0.12)', color: '#F97316' }}><Camera className="w-3 h-3" aria-hidden />Photos</span>}
+                                {b.avec_video && <span className="text-[10px] px-1.5 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(139,92,246,0.12)', color: 'var(--c-pliage-fort)' }}><Video className="w-3 h-3" aria-hidden />Vidéo</span>}
+                                {b.avec_photos && <span className="text-[10px] px-1.5 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(249,115,22,0.12)', color: 'var(--accent-texte)' }}><Camera className="w-3 h-3" aria-hidden />Photos</span>}
                                 {b.dossier_complete ? (
                                   <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.1)', color: 'var(--sev-conforme)' }}>✓ Dossier OK</span>
                                 ) : (
@@ -356,7 +356,7 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
                                   <button
                                     onClick={() => marquerSoldeComptoir(b.id)}
                                     className="text-[11px] px-2.5 py-1 rounded-lg font-semibold"
-                                    style={{ background: 'rgba(249,115,22,0.12)', color: '#F97316', border: '1px solid rgba(249,115,22,0.25)', cursor: 'pointer' }}
+                                    style={{ background: 'rgba(249,115,22,0.12)', color: 'var(--accent-texte)', border: '1px solid rgba(249,115,22,0.25)', cursor: 'pointer' }}
                                   >
                                     Encaisser {b.montant_solde} € comptoir
                                   </button>
@@ -368,7 +368,7 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
                                   <button
                                     onClick={() => marquerEffectue(b.id)}
                                     className="text-[11px] px-2.5 py-1 rounded-lg font-semibold"
-                                    style={{ background: 'rgba(96,165,250,0.12)', color: '#60A5FA', border: '1px solid rgba(96,165,250,0.25)', cursor: 'pointer' }}
+                                    style={{ background: 'rgba(96,165,250,0.12)', color: 'var(--action-texte)', border: '1px solid rgba(96,165,250,0.25)', cursor: 'pointer' }}
                                   >
                                     ✓ Marquer effectué
                                   </button>
@@ -438,8 +438,8 @@ function OngletBons({ centreId }: { centreId: string }) {
 
   const statutBon = (s: string) => {
     if (s === 'actif') return { label: 'Actif', color: 'var(--sev-conforme)', bg: 'rgba(16,185,129,0.12)' };
-    if (s === 'utilise') return { label: 'Utilisé', color: '#60A5FA', bg: 'rgba(96,165,250,0.12)' };
-    return { label: 'Expiré', color: '#EF4444', bg: 'rgba(239,68,68,0.12)' };
+    if (s === 'utilise') return { label: 'Utilisé', color: 'var(--action-texte)', bg: 'rgba(96,165,250,0.12)' };
+    return { label: 'Expiré', color: 'var(--sev-critique)', bg: 'rgba(239,68,68,0.12)' };
   };
 
   return (
@@ -554,7 +554,7 @@ function OngletStats({ centreId }: { centreId: string }) {
         </div>
         <div className="rounded-xl p-4" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
           <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--c-muted)' }}>Taux vidéo</p>
-          <p className="text-3xl font-black" style={{ color: '#A78BFA' }}>{stats.videoTaux}%</p>
+          <p className="text-3xl font-black" style={{ color: 'var(--c-pliage-fort)' }}>{stats.videoTaux}%</p>
         </div>
       </div>
     </div>
@@ -757,7 +757,7 @@ export function TandemSection({ centreId }: { centreId: string }) {
             className="flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full transition-all disabled:opacity-50"
             style={config?.actif
               ? { background: 'rgba(16,185,129,0.12)', color: 'var(--sev-conforme)', border: '1px solid rgba(16,185,129,0.3)' }
-              : { background: 'rgba(148,163,184,0.12)', color: '#94A3B8', border: '1px solid rgba(148,163,184,0.3)' }
+              : { background: 'rgba(148,163,184,0.12)', color: 'var(--sev-neutre)', border: '1px solid rgba(148,163,184,0.3)' }
             }
           >
             <div className="w-6 h-3.5 rounded-full relative flex-shrink-0" style={{ background: config?.actif ? '#10B981' : '#94A3B8' }}>

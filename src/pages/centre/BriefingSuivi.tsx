@@ -89,7 +89,7 @@ export function BriefingSuiviDuJour({ centreId }: { centreId: string }) {
     <div className="space-y-4">
       <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
         <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--sev-conforme)' }} />
-        <p className="text-sm font-bold text-white">
+        <p className="text-sm font-bold" style={{ color: 'var(--c-text)' }}>
           {acquittes.length} / {membres.length} licenciés ont pris connaissance
         </p>
         <span className="text-[11px] ml-auto" style={{ color: 'var(--c-dim)' }}>mise à jour en direct</span>
@@ -104,7 +104,7 @@ export function BriefingSuiviDuJour({ centreId }: { centreId: string }) {
             <ul className="space-y-1.5">
               {acquittes.map(m => (
                 <li key={m.id} className="flex items-center justify-between text-sm">
-                  <span className="text-white">{m.prenom} {m.nom}</span>
+                  <span className="" style={{ color: 'var(--c-text)' }}>{m.prenom} {m.nom}</span>
                   <span className="text-xs font-mono" style={{ color: 'var(--c-dim)' }}>{heure(m.at)}</span>
                 </li>
               ))}
@@ -199,9 +199,9 @@ export function BriefingArchive({ centreId, circuits }: { centreId: string; circ
           <div key={b.id} className="rounded-xl overflow-hidden" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
             <button onClick={() => setOpen(isOpen ? null : b.id)}
               className="w-full px-4 py-3 flex items-center gap-3 text-left flex-wrap">
-              <span className="text-sm font-bold text-white">{new Date(b.date_briefing).toLocaleDateString('fr-FR')}</span>
+              <span className="text-sm font-bold" style={{ color: 'var(--c-text)' }}>{new Date(b.date_briefing).toLocaleDateString('fr-FR')}</span>
               <span className="text-xs" style={{ color: 'var(--c-dim)' }}>{circuit?.nom ?? 'circuit supprimé'}</span>
-              <span className="text-xs" style={{ color: '#7DD3FC' }}>
+              <span className="text-xs" style={{ color: 'var(--action-texte)' }}>
                 {b.vent_direction_deg}°{b.vent_vitesse_kt != null ? ` · ${b.vent_vitesse_kt} kt` : ''}
               </span>
               <span className="text-xs ml-auto" style={{ color: 'var(--sev-conforme)' }}>{acks.length} acquittement{acks.length > 1 ? 's' : ''}</span>
@@ -214,7 +214,7 @@ export function BriefingArchive({ centreId, circuits }: { centreId: string; circ
                   <ul className="space-y-1 pt-1">
                     {[...acks].sort((x, y) => y.acknowledged_at.localeCompare(x.acknowledged_at)).map(a => (
                       <li key={a.user_id} className="flex items-center justify-between text-xs">
-                        <span className="text-white">{nomMembre(a.user_id)}</span>
+                        <span className="" style={{ color: 'var(--c-text)' }}>{nomMembre(a.user_id)}</span>
                         <span className="font-mono" style={{ color: 'var(--c-dim)' }}>{new Date(a.acknowledged_at).toLocaleString('fr-FR')}</span>
                       </li>
                     ))}
