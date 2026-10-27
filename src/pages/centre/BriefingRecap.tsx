@@ -131,7 +131,7 @@ export function BriefingRecapDZ({ centreId, onOuvrir }: { centreId: string; onOu
 
           <button onClick={onOuvrir}
             className="flex items-center gap-1.5 text-sm font-bold px-4 rounded-lg text-white"
-            style={{ background: '#F97316', minHeight: 44 }}>
+            style={{ background: 'var(--accent-fond)', minHeight: 44 }}>
             Ouvrir le briefing <ArrowRight className="w-4 h-4" />
           </button>
         </div>

@@ -80,7 +80,12 @@ export function BarreEtat({ compteurs }: { compteurs: Compteur[] }) {
         </span>
       ))}
 
-      <span className="flex-1" />
+      {/* Sans chiffre d'activité à sa gauche (le cockpit les porte en mode
+          Journée), la barre se titre elle-même : sinon une pastille isolée à
+          droite flotte au bout d'une bande vide. */}
+      {activites.length === 0
+        ? <span className="text-[13px] font-semibold" style={{ color: 'var(--c-muted)' }}>À traiter</span>
+        : <span className="flex-1" />}
 
       {defauts.length === 0 ? (
         <span className="inline-flex items-center gap-1.5 text-sm font-semibold"
@@ -88,7 +93,7 @@ export function BarreEtat({ compteurs }: { compteurs: Compteur[] }) {
           <Check className="w-4 h-4" aria-hidden /> Rien à traiter aujourd’hui
         </span>
       ) : (
-        <div className="flex items-center gap-2 flex-wrap justify-end">
+        <div className={`flex items-center gap-2 flex-wrap ${activites.length === 0 ? '' : 'justify-end'}`}>
           {defauts.map(d => (
             // RÈGLE 5 : LA FORME PORTE LA SÉVÉRITÉ, la couleur ne fait que la
             // confirmer. Deux pastilles qui ne se distinguent que par leur

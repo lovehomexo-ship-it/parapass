@@ -56,6 +56,7 @@ import { BarreEtat } from '../components/BarreEtat';
 import { Tiroir } from '../components/Tiroir';
 import { SurLeTerrain } from './centre/SurLeTerrain';
 import { ApercuPresents } from './centre/ApercuPresents';
+import { CockpitDuJour } from './centre/CockpitDuJour';
 import { VigilanceVoileDZ } from '../components/VigilanceVoileDZ';
 import { BriefingSection } from './centre/BriefingSection';
 import { BrevetsSection } from './centre/BrevetsSection';
@@ -499,6 +500,9 @@ function DashboardHome({
 
   return (
     <div className="space-y-6">
+      {/* En mode Journée, la bannière d'identité cède la place au cockpit : c'était
+          la bande la plus visible de l'écran, et la seule qui ne change jamais. */}
+      {mode !== 'journee' && (<>
       {/* ── 1 · EN-TÊTE — bandeau Centre DZ (identité + licenciés) ── */}
       <div className="rounded-2xl p-5 relative overflow-hidden"
         style={{ background: 'linear-gradient(135deg, var(--c-dropdown) 0%, #12294d 55%, #1a3a6e 100%)', border: '1px solid var(--c-border-f)', boxShadow: '0 8px 28px rgba(0,0,0,0.28)' }}>
@@ -552,6 +556,8 @@ function DashboardHome({
         </div>
       </div>
 
+      </>)}
+
       {/* F14 — la bascule, en tête de la zone de contenu. */}
       <div className="mb-4">
         <BasculeMode mode={mode} onChange={onChangerMode}
@@ -565,10 +571,12 @@ function DashboardHome({
           ciel → décision → briefing → personnes. */}
       {mode === 'journee' && (
         <>
-          <DecisionDuJour centreId={centre?.id} />
-          {briefingSlot}
-          {acquittementSlot}
-          {terrainSlot}
+          {/* LE COCKPIT : l'état du jour en grand, d'abord. Il lit, il ne
+              décide rien — mêmes compteurs que la barre d'état. */}
+          <CockpitDuJour centreId={centre?.id} centreNom={centre?.nom ?? ''}
+            logoUrl={centre?.logo_url ?? null} presents={presentsDuJour}
+            sauts={stats.sautsAujourdhui} enFile={enAttenteAvionnage}
+            avionnageDisponible={avionnageDisponible} />
 
           {/* F07 + F12 — six pastilles au lieu de six rangées pleine largeur.
               La barre est construite ICI, où licencesExpirees et alerteMedical
@@ -580,11 +588,9 @@ function DashboardHome({
               pastilles en ligne, et une pastille se lit d'un regard ou ne se
               lit pas. Les deux chiffres d'activité passent en tête — c'est
               l'état du terrain, pas une tâche. */}
+          {/* Les chiffres d'activité vivent désormais dans les tuiles du
+              cockpit : la barre ne garde que ce qui reste À FAIRE. */}
           <BarreEtat compteurs={[
-            { genre: 'activite', cle: 'presents', valeur: presentsDuJour,
-              libelle: 'présents' },
-            { genre: 'activite', cle: 'sauts', valeur: stats.sautsAujourdhui,
-              libelle: 'sauts aujourd’hui' },
             { genre: 'defaut', cle: 'encadrement', valeur: exigencesNonCouvertes,
               libelle: 'encadrement à couvrir', gravite: 'critique',
               onAller: () => onAllerGestion('equipe', 'encadrement') },
@@ -601,6 +607,14 @@ function DashboardHome({
               libelle: 'adhésions en attente', gravite: 'vigilance',
               onAller: () => onAllerGestion('demandes') },
           ]} />
+
+          {/* DÉCISION ET BRIEFING CÔTE À CÔTE. Empilés pleine largeur, ils
+              faisaient deux bandes à moitié vides — l'effet « clairsemé ». */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
+            <DecisionDuJour centreId={centre?.id} />
+            <div className="space-y-4">{briefingSlot}{acquittementSlot}</div>
+          </div>
+          {terrainSlot}
 
           {meteoSlot}
         </>
