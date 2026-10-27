@@ -316,7 +316,7 @@ export function FinancesSection({ dzId }: { dzId: string }) {
     if (notifSending) return;
     setNotifSending(para.parachutiste_id);
     await supabase.from('notifications').insert({
-      profile_id: para.parachutiste_id,
+      user_id: para.parachutiste_id,
       titre: 'Règlement en attente',
       message: `Vous avez ${euros(para.solde_du)} à régler à votre DZ. Rendez-vous dans l'onglet "Mon compte" pour payer en ligne.`,
       type: 'info',

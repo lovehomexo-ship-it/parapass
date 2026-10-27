@@ -516,7 +516,7 @@ export function ValidationsPage() {
     });
 
     await supabase.from('notifications').insert({
-      profile_id: saut.parachutiste_id, titre: 'Saut validé',
+      user_id: saut.parachutiste_id, titre: 'Saut validé',
       message: `Votre saut du ${fr(saut.date_saut)} à ${saut.lieu} a été validé par ${validateur}.`,
       type: 'success', lue: false,
     });
@@ -544,7 +544,7 @@ export function ValidationsPage() {
       hash_donnees: null, timestamp_utc: now,
     });
     await supabase.from('notifications').insert({
-      profile_id: saut.parachutiste_id, titre: 'Saut refusé',
+      user_id: saut.parachutiste_id, titre: 'Saut refusé',
       message: `Votre saut du ${fr(saut.date_saut)} a été refusé par ${validateur}. Motif : ${motifFull}.`,
       type: 'warning', lue: false,
     });
@@ -570,7 +570,7 @@ export function ValidationsPage() {
         validation_hash: hash, validation_timestamp: now,
       }).eq('id', saut.id).eq('statut', 'en_attente');
       await supabase.from('notifications').insert({
-        profile_id: saut.parachutiste_id, titre: 'Saut validé',
+        user_id: saut.parachutiste_id, titre: 'Saut validé',
         message: `Votre saut du ${fr(saut.date_saut)} à ${saut.lieu} a été validé par ${validateur}.`,
         type: 'success', lue: false,
       });

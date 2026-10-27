@@ -641,7 +641,7 @@ export function MoniteurPage() {
 
     // Notify parachutiste
     await supabase.from('notifications').insert({
-      profile_id: saut.parachutiste_id,
+      user_id: saut.parachutiste_id,
       titre: 'Saut validé',
       message: `Votre saut du ${fr(saut.date_saut)} à ${saut.lieu} a été validé par ${validateur} (délégation DT).`,
       type: 'success',
@@ -681,7 +681,7 @@ export function MoniteurPage() {
     });
 
     await supabase.from('notifications').insert({
-      profile_id: saut.parachutiste_id,
+      user_id: saut.parachutiste_id,
       titre: 'Saut refusé',
       message: `Votre saut du ${fr(saut.date_saut)} a été refusé par ${validateur}. Motif : ${motifFull}.`,
       type: 'warning',

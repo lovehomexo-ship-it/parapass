@@ -1180,7 +1180,7 @@ function LicenciesSection({ centreId, onOpenDrawer, onOpenMessages }: { centreId
 
     // 3. Send notification
     await supabase.from('notifications').insert({
-      profile_id: promoLicencie.id,
+      user_id: promoLicencie.id,
       titre: 'Délégation de validation accordée',
       message: `${adminProfile.prenom} ${adminProfile.nom} vous a accordé une délégation de validation à ${(await supabase.from('centres').select('nom').eq('id', centreId).maybeSingle()).data?.nom ?? 'votre centre'}.`,
       type: 'success',
@@ -1486,7 +1486,7 @@ function DemandesSection({ centreId, onAccepted }: { centreId: string | undefine
       .eq('centre_id', centreId)
       .eq('parachutiste_id', profileId);
     await supabase.from('notifications').insert({
-      profile_id: profileId,
+      user_id: profileId,
       titre: 'Demande acceptée',
       message: `${centre?.nom ?? 'Le centre'} a accepté votre demande d'adhésion.`,
       lue: false,
@@ -1503,7 +1503,7 @@ function DemandesSection({ centreId, onAccepted }: { centreId: string | undefine
       .eq('centre_id', centreId)
       .eq('parachutiste_id', profileId);
     await supabase.from('notifications').insert({
-      profile_id: profileId,
+      user_id: profileId,
       titre: 'Demande refusée',
       message: `${centre?.nom ?? 'Le centre'} a refusé votre demande d'adhésion.`,
       lue: false,
@@ -3259,7 +3259,7 @@ export function CentreDashboardPage() {
     supabase
       .from('notifications')
       .select('*', { count: 'exact', head: true })
-      .eq('profile_id', profile.id)
+      .eq('user_id', profile.id)
       .eq('lue', false)
       .then(({ count }) => setNotifCount(count ?? 0));
   }, [profile]);

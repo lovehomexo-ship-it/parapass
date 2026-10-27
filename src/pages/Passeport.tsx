@@ -248,7 +248,7 @@ function ValidationDZStatus({ activeLicencie, userId }: { activeLicencie: Centre
         titre: 'Demande de validation carnet',
         message: 'Un parachutiste demande la validation de son carnet.',
         type: 'info',
-        lu: false,
+        lue: false,
       });
     }
     // Marquer la demande en attente (idempotent)

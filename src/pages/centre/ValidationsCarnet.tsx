@@ -170,7 +170,7 @@ function ValidationForm({
       titre: 'Carnet validé ✓',
       message: `Votre carnet parachutiste a été validé${form.nomDt ? ' par ' + form.nomDt : ''}.`,
       type: 'success',
-      lu: false,
+      lue: false,
     });
     set({ saving: false });
     onDone();
@@ -191,7 +191,7 @@ function ValidationForm({
       titre: 'Validation carnet refusée',
       message: `Votre demande de validation de carnet a été refusée. Motif : ${motifRefus}`,
       type: 'warning',
-      lu: false,
+      lue: false,
     });
     set({ saving: false });
     onDone();
