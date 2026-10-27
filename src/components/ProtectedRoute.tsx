@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import { accueilDuRole } from '../lib/accueil';
 
 export function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
   const { user, profile, loading } = useAuth();
@@ -13,7 +14,9 @@ export function ProtectedRoute({ children, roles }: { children: React.ReactNode;
   }
 
   if (!user) return <Navigate to="/login" replace />;
-  if (roles && profile && !roles.includes(profile.role)) return <Navigate to="/dashboard" replace />;
+  // Un rôle non autorisé ici rentre CHEZ LUI. Le renvoyer vers « /dashboard »
+  // bouclait pour un compte centre (page réservée aux parachutistes) : écran blanc.
+  if (roles && profile && !roles.includes(profile.role)) return <Navigate to={accueilDuRole(profile.role)} replace />;
 
   return <>{children}</>;
 }

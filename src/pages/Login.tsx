@@ -1,3 +1,4 @@
+import { accueilDuRole } from '../lib/accueil';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
@@ -15,12 +16,7 @@ const TEST_ACCOUNTS = [
 ];
 const TEST_PASS = 'Test1234!';
 
-function getRolePath(role: string) {
-  if (role === 'admin_centre') return '/centre/journee';
-  if (role === 'admin') return '/admin';
-  // moniteur and parachutiste both use the unified dashboard
-  return '/dashboard';
-}
+const getRolePath = accueilDuRole;
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
