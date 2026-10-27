@@ -166,7 +166,7 @@ export function AlertsPanel({ alertes, unreadCount, onMarkRead, onMarkAllRead, a
       >
         <Bell className="w-5 h-5 text-white" />
         {bellCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
             {bellCount > 9 ? '9+' : bellCount}
           </span>
         )}
@@ -200,7 +200,7 @@ export function AlertsPanel({ alertes, unreadCount, onMarkRead, onMarkAllRead, a
           {/* Alertes critiques non acquittées (section dédiée) */}
           {critiquesNonAcquittees.length > 0 && onAcquitter && (
             <div className="px-3 pt-3 space-y-2">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-red-500 px-1">Alertes critiques</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-red-500 px-1">Alertes critiques</p>
               {critiquesNonAcquittees.map((a) => {
                 const enriched = enrichirAlerte(a);
                 return (
@@ -208,10 +208,10 @@ export function AlertsPanel({ alertes, unreadCount, onMarkRead, onMarkAllRead, a
                     <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: '#EF4444' }} aria-hidden />
                     <div className="flex-1 min-w-0">
                       <p className="text-red-800 font-semibold text-xs">{a.titre}</p>
-                      <p className="text-red-700 text-[11px] mt-0.5 leading-relaxed line-clamp-2">{a.message}</p>
+                      <p className="text-red-700 text-xs mt-0.5 leading-relaxed line-clamp-2">{a.message}</p>
                       <button
                         onClick={() => { navigate(enriched.lien); setOpen(false); }}
-                        className="text-red-600 text-[11px] font-medium mt-1 hover:underline"
+                        className="text-red-600 text-xs font-medium mt-1 hover:underline"
                       >
                         {enriched.action} →
                       </button>
@@ -239,7 +239,7 @@ export function AlertsPanel({ alertes, unreadCount, onMarkRead, onMarkAllRead, a
             ) : sorted.length === 0 ? null : (
               <>
                 {critiquesNonAcquittees.length > 0 && (
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 px-1 pt-1">Historique</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-gray-400 px-1 pt-1">Historique</p>
                 )}
                 {sorted.map((a) => <AlertCard key={a.id} alerte={a} onMarkRead={onMarkRead} />)}
               </>
@@ -391,7 +391,7 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter, statutDocs, l
             {alertesPourAffichage.slice(0, 3).map((a) => (
               <span
                 key={a.id}
-                className="text-[11px] px-2 py-0.5 rounded-full whitespace-nowrap"
+                className="text-xs px-2 py-0.5 rounded-full whitespace-nowrap"
                 style={{ background: sev.chip, color: sev.text }}
               >
                 {a.titre.split(' ').slice(0, 3).join(' ')}

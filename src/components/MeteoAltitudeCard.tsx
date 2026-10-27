@@ -57,7 +57,7 @@ function BarreEtage({ label, speed, dir, gust, seuil, maxSpeed, sol }: {
   const title = `${label} : ${Math.round(speed)} km/h (${kmhEnKt(speed)} kt) · vient de ${Math.round(dir)}°${sol && gust != null ? ` · rafales ${Math.round(gust)} km/h` : ''}`;
   return (
     <div className="flex items-center gap-2 py-0.5" title={title}>
-      <span className="w-11 text-[11px] font-mono text-right flex-shrink-0"
+      <span className="w-11 text-xs font-mono text-right flex-shrink-0"
         style={{ color: sol ? 'var(--c-text)' : 'var(--c-muted)', fontWeight: sol ? 700 : 400 }}>
         {label}
       </span>
@@ -75,12 +75,12 @@ function BarreEtage({ label, speed, dir, gust, seuil, maxSpeed, sol }: {
           // contre le bout de la barre — jamais contre le bord de la piste,
           // qui est l'erreur d'origine. Le fond est alors une couleur saturée,
           // le blanc y tient dans les deux thèmes.
-          <span className="absolute inset-y-0 flex items-center text-[10px] font-bold whitespace-nowrap"
+          <span className="absolute inset-y-0 flex items-center text-xs font-bold whitespace-nowrap"
             style={{ right: `calc(${100 - pct}% + 6px)`, color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>
             {Math.round(speed)}{sol && gust != null ? ` · raf ${Math.round(gust)}` : ''}
           </span>
         ) : (
-          <span className="absolute inset-y-0 flex items-center text-[10px] font-bold whitespace-nowrap"
+          <span className="absolute inset-y-0 flex items-center text-xs font-bold whitespace-nowrap"
             style={{ left: `calc(${pct}% + 6px)`, color: 'var(--c-text)' }}>
             {Math.round(speed)}{sol && gust != null ? ` · raf ${Math.round(gust)}` : ''}
           </span>
@@ -107,7 +107,7 @@ export function ProfilVertical({ payload, heure, seuilAltitude, seuilSol }: {
         <BarreEtage label="sol" speed={solSpeed} dir={payload.sol.dir[heure] ?? 0}
           gust={payload.sol.gusts[heure] ?? 0} seuil={seuilSol} maxSpeed={maxSpeed} sol />
       </div>
-      <p className="text-[10px] mt-1.5" style={{ color: 'var(--c-dim)' }}>
+      <p className="text-xs mt-1.5" style={{ color: 'var(--c-dim)' }}>
         Barre = force du vent · flèche = sens où il souffle · <span style={{ color: 'var(--sev-conforme)' }}>vert</span> dans les seuils, <span style={{ color: 'var(--sev-vigilance)' }}>orange</span> à surveiller, <span style={{ color: 'var(--sev-critique)' }}>rouge</span> hors seuils.
       </p>
     </div>
@@ -161,7 +161,7 @@ function EvolutionViz({ payload, indices, seuilSol, seuilAlt, largage }: {
         })}
       </svg>
       {/* Lecture exacte du créneau sélectionné (survol/tap) — valeurs jamais supprimées */}
-      <div className="mt-1 flex items-center gap-3 flex-wrap text-[11px] rounded-lg px-2.5 py-1.5" style={{ background: 'var(--c-hover)' }}>
+      <div className="mt-1 flex items-center gap-3 flex-wrap text-xs rounded-lg px-2.5 py-1.5" style={{ background: 'var(--c-hover)' }}>
         <span className="font-mono font-bold" style={{ color: 'var(--c-text)' }}>{payload.times[selIdx].substring(11, 16)}</span>
         <span className="inline-flex items-center gap-1" style={{ color: seuilColor(payload.sol.speed[selIdx] ?? 0, seuilSol) }}>
           <FlecheVent dirProvenance={payload.sol.dir[selIdx] ?? 0} size={12} /> sol {Math.round(payload.sol.speed[selIdx] ?? 0)} km/h
@@ -180,7 +180,7 @@ function EvolutionViz({ payload, indices, seuilSol, seuilAlt, largage }: {
 export function MentionSource({ fetchedAt, perime }: { fetchedAt: string | null; perime: boolean }) {
   const heure = fetchedAt ? formatHeureParis(fetchedAt) : '—';
   return (
-    <p className="text-[10px] mt-2 flex items-center gap-1.5" style={{ color: 'var(--c-dim)' }}>
+    <p className="text-xs mt-2 flex items-center gap-1.5" style={{ color: 'var(--c-dim)' }}>
       {perime && <CloudOff className="w-3 h-3" style={{ color: 'var(--sev-vigilance)' }} />}
       Prévision indicative — Open-Meteo, {perime ? `prévision de ${heure} (API injoignable)` : heure} ·
       aide à la décision, pas une source aéronautique certifiée. La décision reste au DT et au parachutiste.
@@ -195,10 +195,10 @@ function Jours3({ payload }: { payload: MeteoAltitudePayload }) {
     <div className="grid grid-cols-3 gap-2">
       {payload.jours.slice(0, 3).map((j, i) => (
         <div key={j.date} className="rounded-xl p-2.5 text-center" style={{ background: 'var(--c-hover)' }}>
-          <p className="text-[10px] mb-0.5" style={{ color: 'var(--c-muted)' }}>{labels[i] ?? j.date}</p>
+          <p className="text-xs mb-0.5" style={{ color: 'var(--c-muted)' }}>{labels[i] ?? j.date}</p>
           <div className="flex justify-center mb-1"><IconeMeteo code={j.code} className="w-5 h-5" style={{ color: 'var(--action-texte)' }} /></div>
           <p className="text-xs font-bold" style={{ color: 'var(--c-text)' }}>{Math.round(j.tempMax)}° · {Math.round(j.ventMax)} km/h</p>
-          <p className="text-[10px]" style={{ color: 'var(--c-muted)' }}>raf. {Math.round(j.rafalesMax)}</p>
+          <p className="text-xs" style={{ color: 'var(--c-muted)' }}>raf. {Math.round(j.rafalesMax)}</p>
         </div>
       ))}
     </div>
@@ -257,7 +257,7 @@ export function MeteoAltitudeCard({ dzId, dzNom }: { dzId: string | undefined; d
         <span className="text-xs" style={{ color: 'var(--c-muted)' }}>
           {Math.round(payload.sol.dir[i] ?? 0)}°{dzNom ? ` · ${dzNom}` : ''}
         </span>
-        <span className="text-[11px] ml-auto mr-1" style={{ color: 'var(--c-muted)' }}>Météo</span>
+        <span className="text-xs ml-auto mr-1" style={{ color: 'var(--c-muted)' }}>Météo</span>
         <span className="flex-shrink-0" style={{ color: 'var(--c-muted)' }}>
           {deplie ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </span>
@@ -268,27 +268,27 @@ export function MeteoAltitudeCard({ dzId, dzNom }: { dzId: string | undefined; d
         <div className="px-4 pb-3">
           <div className="grid grid-cols-3 gap-2">
             <div className="rounded-xl p-2.5" style={{ background: 'var(--c-hover)' }}>
-              <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: 'var(--c-muted)' }}>Sol</p>
+              <p className="text-xs uppercase tracking-wide mb-1" style={{ color: 'var(--c-muted)' }}>Sol</p>
               <div className="flex items-center gap-1.5" style={{ color: solFort ? 'var(--sev-critique)' : 'var(--c-text)' }}>
                 <FlecheVent dirProvenance={payload.sol.dir[i] ?? 0} size={16} />
                 <span className="text-sm font-bold">{Math.round(payload.sol.speed[i] ?? 0)} km/h</span>
               </div>
-              <p className="text-[10px]" style={{ color: 'var(--c-muted)' }}>raf. {Math.round(payload.sol.gusts[i] ?? 0)} · {Math.round(payload.sol.dir[i] ?? 0)}°</p>
+              <p className="text-xs" style={{ color: 'var(--c-muted)' }}>raf. {Math.round(payload.sol.gusts[i] ?? 0)} · {Math.round(payload.sol.dir[i] ?? 0)}°</p>
             </div>
             <div className="rounded-xl p-2.5" style={{ background: 'var(--c-hover)' }}>
-              <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: 'var(--c-muted)' }}>Plafond</p>
+              <p className="text-xs uppercase tracking-wide mb-1" style={{ color: 'var(--c-muted)' }}>Plafond</p>
               <p className="text-xs font-semibold leading-snug" style={{ color: 'var(--c-text)' }}>{estimePlafond(payload.nuages, i)}</p>
-              <p className="text-[10px]" style={{ color: 'var(--c-muted)' }}>{Math.round(payload.nuages.total[i] ?? 0)} % couvert</p>
+              <p className="text-xs" style={{ color: 'var(--c-muted)' }}>{Math.round(payload.nuages.total[i] ?? 0)} % couvert</p>
             </div>
             <div className="rounded-xl p-2.5" style={{ background: 'var(--c-hover)' }}>
-              <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: 'var(--c-muted)' }}>Largage ~4 200 m</p>
+              <p className="text-xs uppercase tracking-wide mb-1" style={{ color: 'var(--c-muted)' }}>Largage ~4 200 m</p>
               {largage && (
                 <>
                   <div className="flex items-center gap-1.5" style={{ color: (largage.speed[i] ?? 0) >= seuilAlt ? 'var(--sev-critique)' : 'var(--c-text)' }}>
                     <FlecheVent dirProvenance={largage.dir[i] ?? 0} size={16} />
                     <span className="text-sm font-bold">{Math.round(largage.speed[i] ?? 0)} km/h</span>
                   </div>
-                  <p className="text-[10px]" style={{ color: 'var(--c-muted)' }}>{kmhEnKt(largage.speed[i] ?? 0)} kt · {Math.round(largage.dir[i] ?? 0)}°</p>
+                  <p className="text-xs" style={{ color: 'var(--c-muted)' }}>{kmhEnKt(largage.speed[i] ?? 0)} kt · {Math.round(largage.dir[i] ?? 0)}°</p>
                 </>
               )}
             </div>
@@ -353,7 +353,7 @@ export function MeteoAltitudeDZ({ dzId }: { dzId: string }) {
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--c-dim)' }}>Évolution de la journée</p>
           <EvolutionViz payload={payload} indices={heuresProj} seuilSol={seuilSol} seuilAlt={seuilAlt} largage={largage} />
-          <p className="text-[10px] mt-1 flex items-center gap-2 flex-wrap" style={{ color: 'var(--c-dim)' }}>
+          <p className="text-xs mt-1 flex items-center gap-2 flex-wrap" style={{ color: 'var(--c-dim)' }}>
             <span className="inline-flex items-center gap-1"><span style={{ width: 10, height: 2, background: 'var(--c-text)', display: 'inline-block' }} /> vent sol</span>
             <span className="inline-flex items-center gap-1"><span style={{ width: 10, height: 0, borderTop: '1.5px dashed var(--action-texte)', display: 'inline-block' }} /> rafales</span>
             <span>· survolez / touchez un point pour les valeurs exactes (km/h)</span>

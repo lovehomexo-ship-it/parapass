@@ -33,7 +33,7 @@ function daysSince(d: string) {
 
 function HashBadge({ hash }: { hash: string }) {
   return (
-    <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md" style={{ background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}>
+    <span className="inline-flex items-center gap-1 text-xs font-mono px-2 py-0.5 rounded-md" style={{ background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}>
       <Hash className="w-2.5 h-2.5" />{hash.slice(0, 8)}
     </span>
   );
@@ -307,11 +307,11 @@ function SautCard({ saut, showActions, onValidate, onRefuse }: {
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <span className="font-semibold text-white text-sm">{saut.parachutiste_prenom} {saut.parachutiste_nom}</span>
               {saut.parachutiste_brevet && (
-                <span className="text-[11px] px-1.5 py-0.5 rounded font-medium" style={{ background: 'rgba(59,130,246,0.2)', color: '#93C5FD' }}>{saut.parachutiste_brevet}</span>
+                <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: 'rgba(59,130,246,0.2)', color: '#93C5FD' }}>{saut.parachutiste_brevet}</span>
               )}
               {saut.statut === 'valide' && saut.validation_hash && <HashBadge hash={saut.validation_hash} />}
               {saut.statut === 'refuse' && saut.motif_refus && (
-                <span className="text-[11px] px-2 py-0.5 rounded" style={{ background: 'rgba(239,68,68,0.15)', color: '#F87171' }}>Motif : {saut.motif_refus}</span>
+                <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(239,68,68,0.15)', color: '#F87171' }}>Motif : {saut.motif_refus}</span>
               )}
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
@@ -698,7 +698,7 @@ export function ValidationsPage() {
                       }}>
                       {tab.label}
                       {tab.count != null && tab.count > 0 && (
-                        <span className="text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1"
+                        <span className="text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1"
                           style={{ background: tab.id === 'pending' ? '#F59E0B' : 'rgba(255,255,255,0.15)', color: tab.id === 'pending' ? '#fff' : 'rgba(255,255,255,0.7)' }}>
                           {tab.count}
                         </span>

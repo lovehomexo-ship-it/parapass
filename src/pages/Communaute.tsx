@@ -177,7 +177,7 @@ function ProfileCard({ profile, followStatus, followLoading, onFollow, onNavigat
   return (
     <div className="rounded-xl shadow-sm border p-4 hover:shadow-md transition-shadow" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
       {raison && (
-        <p className="text-[10px] mb-2 font-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>{raison}</p>
+        <p className="text-xs mb-2 font-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>{raison}</p>
       )}
       <div className="flex items-start gap-3">
         <button onClick={() => onNavigate(profile)} className="flex-shrink-0">
@@ -791,7 +791,7 @@ export function CommunautePage() {
                     {tab.icon}
                     {tab.label}
                     {tab.key === 'abonnes' && pendingCount > 0 && (
-                      <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[#F97316] text-white text-[10px] font-bold flex items-center justify-center">
+                      <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[#F97316] text-white text-xs font-bold flex items-center justify-center">
                         {pendingCount}
                       </span>
                     )}

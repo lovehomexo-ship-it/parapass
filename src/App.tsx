@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import { MaintenancePage } from './pages/MaintenancePage';
 import { LoaderParaPass } from './components/LoaderParaPass';
-import { AdminSecretPage } from './pages/AdminSecret';
+const AdminSecretPage = lazy(() => import('./pages/AdminSecret').then(m => ({ default: m.AdminSecretPage })));
 import { AuthProvider, useAuth } from './lib/auth';
 import { Layout } from './components/Layout';
 import { AlertesProvider } from './lib/AlertesContext';
@@ -16,42 +16,42 @@ import { DashboardPage } from './pages/Dashboard';
 import { QRCodePage } from './pages/QRCode';
 import { VerifyPage } from './pages/Verify';
 import { VerifyOfflinePage } from './pages/VerifyOffline';
-import { MoniteurPage } from './pages/Moniteur';
+const MoniteurPage = lazy(() => import('./pages/Moniteur').then(m => ({ default: m.MoniteurPage })));
 import { ValidationsPage } from './pages/Validations';
-import { AdminPage } from './pages/Admin';
-import { ParachutisteViewPage } from './pages/ParachutisteView';
+const AdminPage = lazy(() => import('./pages/Admin').then(m => ({ default: m.AdminPage })));
+const ParachutisteViewPage = lazy(() => import('./pages/ParachutisteView').then(m => ({ default: m.ParachutisteViewPage })));
 import { PasseportPage } from './pages/Passeport';
 import { MaterielPage } from './pages/Materiel';
-import { BriefingTVPage } from './pages/BriefingTV';
-import { EmbarquementPage } from './pages/centre/Embarquement';
+const BriefingTVPage = lazy(() => import('./pages/BriefingTV').then(m => ({ default: m.BriefingTVPage })));
+const EmbarquementPage = lazy(() => import('./pages/centre/Embarquement').then(m => ({ default: m.EmbarquementPage })));
 import { StatsRoute } from './pages/StatsRoute';
-import { TamponAdminPage } from './pages/TamponAdmin';
+const TamponAdminPage = lazy(() => import('./pages/TamponAdmin').then(m => ({ default: m.TamponAdminPage })));
 import { ProfilPage } from './pages/Profil';
 import { ParametresPage } from './pages/Parametres';
 import { MoiPage } from './pages/Moi';
 import { ReglesFFPPage } from './pages/ReglesFFP';
 import { CommunautePage } from './pages/Communaute';
 import { ProfilPublicPage } from './pages/ProfilPublic';
-import { InscriptionCentrePage } from './pages/InscriptionCentre';
-import { CentreDashboardPage } from './pages/CentreDashboard';
+const InscriptionCentrePage = lazy(() => import('./pages/InscriptionCentre').then(m => ({ default: m.InscriptionCentrePage })));
+const CentreDashboardPage = lazy(() => import('./pages/CentreDashboard').then(m => ({ default: m.CentreDashboardPage })));
 import { MessagesPage } from './pages/Messages';
 import { BadgesPage } from './pages/Badges';
 import { ProgressionPage } from './pages/Progression';
-import { DemoPage } from './pages/Demo';
-import { DemoDashboardPage } from './pages/demo/DemoDashboard';
-import { DemoCentrePage } from './pages/demo/DemoCentre';
+const DemoPage = lazy(() => import('./pages/Demo').then(m => ({ default: m.DemoPage })));
+const DemoDashboardPage = lazy(() => import('./pages/demo/DemoDashboard').then(m => ({ default: m.DemoDashboardPage })));
+const DemoCentrePage = lazy(() => import('./pages/demo/DemoCentre').then(m => ({ default: m.DemoCentrePage })));
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { ScanPliagePage } from './pages/ScanPliage';
-import { SacPage } from './pages/SacPage';
-import { AcademiePage } from './pages/Academie';
-import { AcademieQuizPage } from './pages/AcademieQuiz';
-import { QuizAdminPage } from './pages/admin/QuizAdmin';
-import { ConformiteAdminPage } from './pages/admin/ConformiteAdmin';
-import { ReflexeDuJourPage } from './pages/ReflexeDuJour';
-import { DrillAdminPage } from './pages/admin/DrillAdmin';
-import { TandemPublicPage } from './pages/TandemPublicPage';
-import { TandemPreparerPage } from './pages/TandemPreparerPage';
-import { TandemCertifPage } from './pages/TandemCertifPage';
+const ScanPliagePage = lazy(() => import('./pages/ScanPliage').then(m => ({ default: m.ScanPliagePage })));
+const SacPage = lazy(() => import('./pages/SacPage').then(m => ({ default: m.SacPage })));
+const AcademiePage = lazy(() => import('./pages/Academie').then(m => ({ default: m.AcademiePage })));
+const AcademieQuizPage = lazy(() => import('./pages/AcademieQuiz').then(m => ({ default: m.AcademieQuizPage })));
+const QuizAdminPage = lazy(() => import('./pages/admin/QuizAdmin').then(m => ({ default: m.QuizAdminPage })));
+const ConformiteAdminPage = lazy(() => import('./pages/admin/ConformiteAdmin').then(m => ({ default: m.ConformiteAdminPage })));
+const ReflexeDuJourPage = lazy(() => import('./pages/ReflexeDuJour').then(m => ({ default: m.ReflexeDuJourPage })));
+const DrillAdminPage = lazy(() => import('./pages/admin/DrillAdmin').then(m => ({ default: m.DrillAdminPage })));
+const TandemPublicPage = lazy(() => import('./pages/TandemPublicPage').then(m => ({ default: m.TandemPublicPage })));
+const TandemPreparerPage = lazy(() => import('./pages/TandemPreparerPage').then(m => ({ default: m.TandemPreparerPage })));
+const TandemCertifPage = lazy(() => import('./pages/TandemCertifPage').then(m => ({ default: m.TandemCertifPage })));
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { supabase } from './lib/supabase';
 
@@ -153,6 +153,12 @@ function App() {
   return (
     <BrowserRouter>
       <MaintenanceGate>
+        {/* LE CODE EST DÉCOUPÉ. L'application tenait en un bloc de 3 Mo chargé
+            d'un coup au premier lancement — espace DZ, administration et démos
+            compris, qu'un parachutiste n'ouvre jamais. Ces écrans arrivent
+            maintenant à la demande ; le quotidien du parachutiste reste dans
+            le bloc principal et s'ouvre sans attente. */}
+        <Suspense fallback={<LoaderParaPass pleinEcran />}>
         <Routes>
           {/* Secret admin route — outside auth providers, always accessible */}
           <Route path="/admin-fp2026" element={<AdminSecretPage />} />
@@ -234,6 +240,7 @@ function App() {
             </GlobalDemoProvider>
           } />
         </Routes>
+        </Suspense>
       </MaintenanceGate>
     </BrowserRouter>
   );

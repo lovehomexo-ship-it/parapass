@@ -129,7 +129,7 @@ export function PasseportPage() {
               {t.icon}
               {t.label}
               {t.badge !== undefined && t.badge > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">
                   {t.badge}
                 </span>
               )}

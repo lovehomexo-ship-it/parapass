@@ -100,7 +100,7 @@ function StatusPill({ status, days }: { status: ValidityStatus; days: number | n
     manquant: { cls: 'bg-gray-100 text-gray-500 border-gray-200', icon: null, label: 'Manquant' },
   }[status];
   return (
-    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${cfg.cls}`}>
+    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${cfg.cls}`}>
       {cfg.icon}{cfg.label}
     </span>
   );
@@ -853,33 +853,33 @@ function ValiditySummary({ data, feuVert }: { data: PasseportData; feuVert?: Der
   const carnetValide = activeLicencie?.carnet_statut === 'valide' || licence?.tampon_statut === 'valide';
 
   return (
-    <div className="bg-gray-50 rounded-xl p-4 space-y-3 border border-gray-100">
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Récapitulatif des validités</p>
+    <div className="bg-[var(--c-card)] rounded-xl p-4 space-y-3 border border-[var(--c-border)]">
+      <p className="text-xs font-semibold text-[var(--c-muted)] uppercase tracking-wider">Récapitulatif des validités</p>
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <span className="text-sm text-gray-700">Licence FFP</span>
+          <span className="text-sm text-[var(--c-text)]">Licence FFP</span>
           <div className="flex items-center gap-2 flex-wrap justify-end">
             {licence?.date_expiration && (
-              <span className="text-xs text-gray-500 font-mono">{new Date(licence.date_expiration).toLocaleDateString('fr-FR')}</span>
+              <span className="text-xs text-[var(--c-muted)] font-mono">{new Date(licence.date_expiration).toLocaleDateString('fr-FR')}</span>
             )}
             <StatusPill status={licStatus} days={licDays} />
           </div>
         </div>
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <span className="text-sm text-gray-700">Certificat médical</span>
+          <span className="text-sm text-[var(--c-text)]">Certificat médical</span>
           <div className="flex items-center gap-2 flex-wrap justify-end">
             {certif?.date_expiration && (
-              <span className="text-xs text-gray-500 font-mono">{new Date(certif.date_expiration).toLocaleDateString('fr-FR')}</span>
+              <span className="text-xs text-[var(--c-muted)] font-mono">{new Date(certif.date_expiration).toLocaleDateString('fr-FR')}</span>
             )}
             <StatusPill status={medStatus} days={medDays} />
           </div>
         </div>
         <div className="flex items-center justify-between gap-2">
-          <span className="text-sm text-gray-700">Assurance</span>
+          <span className="text-sm text-[var(--c-text)]">Assurance</span>
           <StatusPill status={licence?.assurance_individuelle && licence?.assurance_rc ? 'valide' : 'expire'} days={null} />
         </div>
         <div className="flex items-center justify-between gap-2">
-          <span className="text-sm text-gray-700">Validation carnet DZ</span>
+          <span className="text-sm text-[var(--c-text)]">Validation carnet DZ</span>
           <StatusPill status={carnetValide ? 'valide' : 'manquant'} days={null} />
         </div>
         {/* « Contrôle documentaire DZ » a disparu : c'était une case à cocher
@@ -890,12 +890,12 @@ function ValiditySummary({ data, feuVert }: { data: PasseportData; feuVert?: Der
             CENTRE : le parachutiste voit ses validités, pas un jugement. */}
         {feuVert && (
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <span className="text-sm text-gray-700">Dernier contrôle Feu Vert</span>
+            <span className="text-sm text-[var(--c-text)]">Dernier contrôle Feu Vert</span>
             {feuVert === 'jamais' ? (
               <StatusPill status="manquant" days={null} />
             ) : (
               <div className="flex items-center gap-2 flex-wrap justify-end">
-                <span className="text-xs text-gray-500 font-mono">
+                <span className="text-xs text-[var(--c-muted)] font-mono">
                   {new Date(feuVert.evalue_le).toLocaleDateString('fr-FR')}
                   {feuVert.centre_nom ? ` · ${feuVert.centre_nom}` : ''}
                   {feuVert.regles_controlees !== null ? ` · ${feuVert.regles_controlees} règle(s) contrôlée(s)` : ''}
@@ -906,7 +906,7 @@ function ValiditySummary({ data, feuVert }: { data: PasseportData; feuVert?: Der
           </div>
         )}
       </div>
-      <p className="text-[10px] text-gray-500 text-right">
+      <p className="text-xs text-[var(--c-muted)] text-right">
         Données à jour au {data.loadedAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
       </p>
     </div>
@@ -1215,7 +1215,7 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
         <div className="flex items-center gap-2">
           <button
             onClick={load}
-            className="flex items-center justify-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition flex-1 sm:flex-none sm:px-3"
+            className="flex items-center justify-center gap-1.5 text-xs text-[var(--c-text2)] bg-[var(--c-hover)] rounded-lg transition flex-1 sm:flex-none sm:px-3"
             style={{ minHeight: 44 }}
           >
             <RefreshCw className="w-3.5 h-3.5 flex-shrink-0" /> Actualiser
@@ -1242,7 +1242,9 @@ export function PasseportCardView({ userId, centreId, adminId, compact = false, 
       </div>
 
       {/* Flippable card */}
-      <FlippableCard data={displayData} isOwner={isOwner} rectoId={rectoId} versoId={versoId} />
+      {/* .pp-carte : dessinée à taille fixe, comme une carte physique, elle
+          garde ses tailles de texte (le plancher de 13 px ne s'y applique pas). */}
+      <div className="pp-carte"><FlippableCard data={displayData} isOwner={isOwner} rectoId={rectoId} versoId={versoId} /></div>
 
       {/* Validity summary */}
       <ValiditySummary data={displayData} feuVert={feuVert} />

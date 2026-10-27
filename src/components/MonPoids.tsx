@@ -89,23 +89,23 @@ export function MonPoids({ userId }: { userId: string | undefined }) {
       </p>
 
       <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
-        <label style={{ fontSize: 12.5, color: 'var(--c-text2)' }}>
+        <label style={{ fontSize: 13, color: 'var(--c-text2)' }}>
           Poids sans équipement (kg)
           <input type="number" inputMode="decimal" min={30} max={200} step={1}
             value={nu} onChange={e => setNu(e.target.value)}
             placeholder="ex : 75" className="mt-1" style={champ} />
-          <span className="block mt-1" style={{ fontSize: 11.5, color: 'var(--c-muted)' }}>
+          <span className="block mt-1" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
             C’est ce poids-là que lit la DT 48 : le tableau fédéral ajoute
             l’équipement lui-même.
           </span>
         </label>
 
-        <label style={{ fontSize: 12.5, color: 'var(--c-text2)' }}>
+        <label style={{ fontSize: 13, color: 'var(--c-text2)' }}>
           Poids de l’équipement (kg)
           <input type="number" inputMode="decimal" min={0} max={60} step={1}
             value={equipement} onChange={e => setEquipement(e.target.value)}
             placeholder="ex : 11" className="mt-1" style={champ} />
-          <span className="block mt-1" style={{ fontSize: 11.5, color: 'var(--c-muted)' }}>
+          <span className="block mt-1" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
             Sac complet, casque, combinaison. Laissez vide si vous ne le
             connaissez pas encore.
           </span>
@@ -142,7 +142,7 @@ export function MonPoids({ userId }: { userId: string | undefined }) {
 
       {/* P5 : on dit ce qui sort d'ici et ce qui n'en sort pas. Un poids est une
           donnée personnelle ; la masse embarquée est une donnée de sécurité. */}
-      <p className="mt-3 flex items-start gap-1.5" style={{ fontSize: 11.5, color: 'var(--c-muted)' }}>
+      <p className="mt-3 flex items-start gap-1.5" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
         <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" aria-hidden />
         <span>
           Votre DZ voit la <strong>masse embarquée</strong>, dont elle a besoin pour

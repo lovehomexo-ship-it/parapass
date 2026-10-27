@@ -149,7 +149,7 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
       : [];
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--c-bg)' }}>
+    <div className={`min-h-screen ${isPratiquant ? 'parapass-para' : ''}`} style={{ background: 'var(--c-bg)' }}>
 
       {/* ── Demo Banner ────────────────────────────────────────────────────── */}
       {isDemoMode && <DemoBanner />}

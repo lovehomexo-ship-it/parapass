@@ -86,7 +86,7 @@ function PushNotifInner({ userId }: { userId: string | undefined }) {
             </p>
           )}
 
-          <p className="text-[10px] mt-2" style={{ color: 'var(--c-dim)' }}>
+          <p className="text-xs mt-2" style={{ color: 'var(--c-dim)' }}>
             Les notifications sont un complément : vos messages restent toujours
             accessibles dans l'application.
           </p>

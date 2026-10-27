@@ -23,7 +23,7 @@ export function ProgressionBrevets({ userId }: { userId: string | undefined }) {
         <GraduationCap className="w-5 h-5" style={{ color: '#F97316' }} />
         <h2 className="text-sm font-bold text-white">Ma progression brevets</h2>
       </div>
-      <p className="text-[10px] mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>
+      <p className="text-xs mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>
         Référentiel FFP 2026 (CA 27-03-2026) saisi comme donnée — à vérifier par votre DT ; la FFP reste seule source de vérité.
       </p>
 
@@ -50,8 +50,8 @@ export function ProgressionBrevets({ userId }: { userId: string | undefined }) {
               <div key={brevet.id} className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                   <span className="text-sm font-bold text-white">{brevet.libelle}</span>
-                  {delivre && <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.15)', color: '#34D399' }}>Obtenu ✓</span>}
-                  {pretADelivrer && <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(251,191,36,0.15)', color: '#FBBF24' }}>Prêt à délivrer — en attente du moniteur/DT</span>}
+                  {delivre && <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.15)', color: '#34D399' }}>Obtenu ✓</span>}
+                  {pretADelivrer && <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(251,191,36,0.15)', color: '#FBBF24' }}>Prêt à délivrer — en attente du moniteur/DT</span>}
                   <span className="text-xs ml-auto" style={{ color: 'rgba(255,255,255,0.45)' }}>{validees}/{eps.length}</span>
                 </div>
                 <div className="rounded-full overflow-hidden mb-2" style={{ height: 6, background: 'rgba(255,255,255,0.08)' }}>
@@ -65,7 +65,7 @@ export function ProgressionBrevets({ userId }: { userId: string | undefined }) {
                       const ev = evalRegle(r, ctx);
                       return (
                         <span key={r.id} title={r.description ?? undefined}
-                          className="text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1"
+                          className="text-xs font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1"
                           style={ev.ok === true
                             ? { background: 'rgba(16,185,129,0.1)', color: '#34D399', border: '1px solid rgba(16,185,129,0.25)' }
                             : ev.ok === false
@@ -97,27 +97,27 @@ export function ProgressionBrevets({ userId }: { userId: string | undefined }) {
                           {!ep.obligatoire && <span className="font-normal" style={{ color: 'rgba(255,255,255,0.35)' }}> (optionnelle)</span>}
                         </p>
                         {ep.description && statut !== 'validee' && (
-                          <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.35)' }}>{ep.description}</p>
+                          <p className="text-xs leading-snug" style={{ color: 'rgba(255,255,255,0.35)' }}>{ep.description}</p>
                         )}
                         {statut === 'validee' && prog?.valide_at && (
-                          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
                             Validée le {new Date(prog.valide_at).toLocaleDateString('fr-FR')}{prog.note ? ` — « ${prog.note} »` : ''}
                           </p>
                         )}
                         {statut === 'echouee' && (
-                          <p className="text-[10px]" style={{ color: '#FCA5A5' }}>À retenter{prog?.note ? ` — « ${prog.note} »` : ''}</p>
+                          <p className="text-xs" style={{ color: '#FCA5A5' }}>À retenter{prog?.note ? ` — « ${prog.note} »` : ''}</p>
                         )}
                       </div>
-                      {statut === 'pret' && <span className="text-[10px] font-semibold" style={{ color: '#FBBF24' }}>en attente du moniteur</span>}
+                      {statut === 'pret' && <span className="text-xs font-semibold" style={{ color: '#FBBF24' }}>en attente du moniteur</span>}
                       {(statut === 'a_faire' || statut === 'echouee') && (
                         preqOk ? (
                           <button onClick={() => declarerPret(ep.id)} disabled={enCours === ep.id}
-                            className="text-[11px] font-bold px-2.5 rounded-lg text-white"
+                            className="text-xs font-bold px-2.5 rounded-lg text-white"
                             style={{ background: '#2563EB', minHeight: 32, opacity: enCours === ep.id ? 0.6 : 1 }}>
                             {enCours === ep.id ? 'Envoi…' : 'Je suis prêt'}
                           </button>
                         ) : (
-                          <span className="text-[10px] text-right" style={{ color: 'rgba(255,255,255,0.35)', maxWidth: 150 }}>
+                          <span className="text-xs text-right" style={{ color: 'rgba(255,255,255,0.35)', maxWidth: 150 }}>
                             valide d'abord {manque}
                           </span>
                         )
@@ -126,7 +126,7 @@ export function ProgressionBrevets({ userId }: { userId: string | undefined }) {
                           carte est hors écran dès le deuxième brevet — le bouton
                           passait alors pour mort. */}
                       {erreurs[ep.id] && (
-                        <p className="text-[10px] w-full flex items-start gap-1" style={{ color: '#FCA5A5' }}>
+                        <p className="text-xs w-full flex items-start gap-1" style={{ color: '#FCA5A5' }}>
                           <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-px" aria-hidden="true" />
                           {erreurs[ep.id]}
                         </p>
@@ -136,7 +136,7 @@ export function ProgressionBrevets({ userId }: { userId: string | undefined }) {
                 })}
 
                 {!delivre && reste.length > 0 && !pretADelivrer && (
-                  <p className="text-[11px] mt-2" style={{ color: '#FDBA74' }}>
+                  <p className="text-xs mt-2" style={{ color: '#FDBA74' }}>
                     Il te reste : {reste.join(' · ')}.
                   </p>
                 )}
@@ -147,7 +147,7 @@ export function ProgressionBrevets({ userId }: { userId: string | undefined }) {
                     brevet D. */}
                 {!delivre && (
                   <Link to="/academie"
-                    className="text-[11px] font-semibold inline-flex items-center gap-1 mt-2 no-underline"
+                    className="text-xs font-semibold inline-flex items-center gap-1 mt-2 no-underline"
                     style={{ color: '#93C5FD' }}>
                     Réviser la théorie de mon niveau <ChevronRight className="w-3 h-3" aria-hidden />
                   </Link>

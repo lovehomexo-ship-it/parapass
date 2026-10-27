@@ -122,17 +122,17 @@ export function BriefingDuJourBlock({ dzId, dzNom, userId, position = 'haut' }: 
           <div className="flex items-center gap-2">
             <Megaphone className="w-4 h-4" style={{ color: '#F97316' }} />
             <h3 className="text-sm font-bold " style={{ color: 'var(--c-text)' }}>Briefing du jour{dzNom ? ` — ${dzNom}` : ''}</h3>
-            <span className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
+            <span className="text-xs" style={{ color: 'var(--c-dim)' }}>
               Vent {briefing.vent_direction_deg}°{briefing.vent_vitesse_kt != null ? ` · ${briefing.vent_vitesse_kt} kt` : ''}
             </span>
             {stale && (
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(245,158,11,0.15)', color: '#FBBF24', border: '1px solid rgba(245,158,11,0.35)' }}>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(245,158,11,0.15)', color: '#FBBF24', border: '1px solid rgba(245,158,11,0.35)' }}>
                 mis à jour — à relire
               </span>
             )}
           </div>
           {offline && (
-            <span className="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full"
+            <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
               style={{ background: 'rgba(148,163,184,0.15)', color: 'var(--c-dim)', border: '1px solid rgba(148,163,184,0.3)' }}>
               <WifiOff className="w-3 h-3" /> briefing du {dateFr} — hors ligne
             </span>
@@ -161,7 +161,7 @@ export function BriefingDuJourBlock({ dzId, dzNom, userId, position = 'haut' }: 
               <CheckCircle className="w-4 h-4" />
               Acquitté à {formatHeureParis(ackAt)}
               {pending && (
-                <span className="flex items-center gap-1 text-[11px] font-medium" style={{ color: 'var(--c-dim)' }}>
+                <span className="flex items-center gap-1 text-xs font-medium" style={{ color: 'var(--c-dim)' }}>
                   <CloudOff className="w-3 h-3" /> sera synchronisé à la reconnexion
                 </span>
               )}

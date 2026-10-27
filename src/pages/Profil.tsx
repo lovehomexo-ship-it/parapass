@@ -500,10 +500,10 @@ export function ProfilPage() {
                 <input type="file" accept="image/*,.heic,.heif" className="hidden" onChange={handlePhotoSelect} disabled={photoConverting || photoUploading} />
               </label>
               {photoConverting && (
-                <p className="mt-1 text-[11px] text-blue-600 max-w-[6rem] leading-tight">Conversion de la photo…</p>
+                <p className="mt-1 text-xs text-blue-600 max-w-[6rem] leading-tight">Conversion de la photo…</p>
               )}
               {photoError && (
-                <p className="mt-1 text-[11px] text-red-600 max-w-[6rem] leading-tight">{photoError}</p>
+                <p className="mt-1 text-xs text-red-600 max-w-[6rem] leading-tight">{photoError}</p>
               )}
             </div>
 
@@ -698,7 +698,7 @@ export function ProfilPage() {
                 >
                   {icon}
                   <span className="text-xs font-semibold">{label}</span>
-                  <span className="text-[10px] text-gray-400">{desc}</span>
+                  <span className="text-xs text-gray-400">{desc}</span>
                 </button>
               ))}
             </div>

@@ -78,8 +78,8 @@ export function ShortcutTiles({ userId }: { userId: string }) {
         : <Target className="w-5 h-5" style={{ color: '#FCA5A5' }} />,
       label: 'Réflexe du jour',
       badge: reflexeLoading ? null : reflexeDone
-        ? <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--sev-conforme)' }}>Fait</span>
-        : <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(239,68,68,0.12)', color: 'var(--sev-critique)' }}>à faire</span>,
+        ? <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--sev-conforme)' }}>Fait</span>
+        : <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(239,68,68,0.12)', color: 'var(--sev-critique)' }}>à faire</span>,
       streak: streak > 0 ? streak : null,
       bg: reflexeDone ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.07)',
       border: reflexeDone ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(239,68,68,0.25)',
@@ -89,7 +89,7 @@ export function ShortcutTiles({ userId }: { userId: string }) {
       key: 'academie',
       icon: <GraduationCap className="w-5 h-5" style={{ color: '#A78BFA' }} />,
       label: 'Académie',
-      badge: <span className="text-[10px]" style={{ color: 'var(--c-pliage)' }}>Quiz · XP</span>,
+      badge: <span className="text-xs" style={{ color: 'var(--c-pliage)' }}>Quiz · XP</span>,
       streak: null,
       bg: 'rgba(139,92,246,0.07)',
       border: '1px solid rgba(139,92,246,0.2)',
@@ -99,7 +99,7 @@ export function ShortcutTiles({ userId }: { userId: string }) {
       key: 'scanner',
       icon: <ScanLine className="w-5 h-5" style={{ color: 'var(--c-muted)' }} />,
       label: 'Scanner un sac',
-      badge: <span className="text-[10px]" style={{ color: 'var(--c-dim)' }}>QR code</span>,
+      badge: <span className="text-xs" style={{ color: 'var(--c-dim)' }}>QR code</span>,
       streak: null,
       bg: 'var(--c-surface)',
       border: '1px solid var(--c-border-f)',
@@ -118,13 +118,13 @@ export function ShortcutTiles({ userId }: { userId: string }) {
             style={{ background: t.bg, border: t.border, cursor: 'pointer' }}
           >
             <span className="leading-none">{t.icon}</span>
-            <span className="text-[11px] font-semibold leading-tight" style={{ color: 'var(--c-text)' }}>
+            <span className="text-xs font-semibold leading-tight" style={{ color: 'var(--c-text)' }}>
               {t.label}
             </span>
             <div className="flex items-center gap-1 flex-wrap justify-center">
               {t.badge}
               {t.streak !== null && (
-                <span className="flex items-center gap-0.5 text-[10px] font-bold" style={{ color: 'var(--accent-texte)' }}>
+                <span className="flex items-center gap-0.5 text-xs font-bold" style={{ color: 'var(--accent-texte)' }}>
                   <Flame className="w-2.5 h-2.5" />{t.streak}
                 </span>
               )}
@@ -482,7 +482,7 @@ export function DashboardPage() {
     if (saut.statut === 'valide') {
       const nom = saut.valide_par ? saut.valide_par.split(' ').pop() : '';
       return (
-        <span style={{ background: 'rgba(16,185,129,0.12)', color: 'var(--sev-conforme)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 500 }} className="inline-flex items-center gap-1">
+        <span style={{ background: 'rgba(16,185,129,0.12)', color: 'var(--sev-conforme)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 20, padding: '3px 10px', fontSize: 13, fontWeight: 500 }} className="inline-flex items-center gap-1">
           <ShieldCheck className="w-3 h-3" />
           {nom || 'Validé'}
         </span>
@@ -490,28 +490,28 @@ export function DashboardPage() {
     }
     if (saut.statut === 'en_attente') {
       return (
-        <span style={{ background: 'rgba(249,115,22,0.12)', color: 'var(--accent-texte)', border: '1px solid rgba(249,115,22,0.25)', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 500 }} className="inline-flex items-center gap-1">
+        <span style={{ background: 'rgba(249,115,22,0.12)', color: 'var(--accent-texte)', border: '1px solid rgba(249,115,22,0.25)', borderRadius: 20, padding: '3px 10px', fontSize: 13, fontWeight: 500 }} className="inline-flex items-center gap-1">
           En attente
         </span>
       );
     }
     if (saut.statut === 'refuse') {
       return (
-        <span style={{ background: 'rgba(239,68,68,0.12)', color: 'var(--sev-critique)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 500 }} className="inline-flex items-center gap-1">
+        <span style={{ background: 'rgba(239,68,68,0.12)', color: 'var(--sev-critique)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 20, padding: '3px 10px', fontSize: 13, fontWeight: 500 }} className="inline-flex items-center gap-1">
           {STATUT_LABELS[saut.statut] || saut.statut}
         </span>
       );
     }
     if (saut.statut === 'historique') {
       return (
-        <span style={{ background: 'rgba(100,116,139,0.12)', color: 'var(--sev-neutre)', border: '1px solid rgba(100,116,139,0.25)', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 500 }} className="inline-flex items-center gap-1">
+        <span style={{ background: 'rgba(100,116,139,0.12)', color: 'var(--sev-neutre)', border: '1px solid rgba(100,116,139,0.25)', borderRadius: 20, padding: '3px 10px', fontSize: 13, fontWeight: 500 }} className="inline-flex items-center gap-1">
           Historique
         </span>
       );
     }
     if (saut.statut === 'declaration_honneur') {
       return (
-        <span style={{ background: 'rgba(167,139,250,0.12)', color: '#A78BFA', border: '1px solid rgba(167,139,250,0.25)', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 500 }} className="inline-flex items-center gap-1">
+        <span style={{ background: 'rgba(167,139,250,0.12)', color: '#A78BFA', border: '1px solid rgba(167,139,250,0.25)', borderRadius: 20, padding: '3px 10px', fontSize: 13, fontWeight: 500 }} className="inline-flex items-center gap-1">
           <ClipboardList className="w-3 h-3" aria-hidden="true" /> Déclaration
         </span>
       );
@@ -1205,7 +1205,7 @@ function BanniereOCR({ onClic }: { onClic: () => void }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span
-              className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
+              className="text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
               style={{ background: 'rgba(249,115,22,0.2)', color: 'var(--accent-texte)', border: '1px solid rgba(249,115,22,0.35)' }}
             >
               Nouveau
@@ -1219,7 +1219,7 @@ function BanniereOCR({ onClic }: { onClic: () => void }) {
           </p>
           <div className="hidden sm:flex flex-wrap gap-x-3 gap-y-1">
             {points.map((p) => (
-              <span key={p} className="text-[11px] font-medium" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              <span key={p} className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.45)' }}>
                 ✓ {p}
               </span>
             ))}
@@ -1229,7 +1229,7 @@ function BanniereOCR({ onClic }: { onClic: () => void }) {
         {/* Price + CTA */}
         <div className="flex sm:flex-col items-center sm:items-end gap-3 sm:gap-1 flex-shrink-0">
           <div className="text-right">
-            <p className="text-[10px] leading-none mb-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>une seule fois</p>
+            <p className="text-xs leading-none mb-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>une seule fois</p>
             <p className="text-2xl font-black text-white leading-none">4,99€</p>
           </div>
           <div

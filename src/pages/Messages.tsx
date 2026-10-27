@@ -117,9 +117,9 @@ function ChatArea({
                 }}>
                   <p className="text-sm whitespace-pre-wrap break-words">{m.contenu}</p>
                   <div className={`flex items-center gap-1 mt-1 ${isMine ? 'justify-end' : 'justify-start'}`}>
-                    <span className="text-[10px]" style={{ color: isMine ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.4)' }}>{fmt(m.created_at)}</span>
+                    <span className="text-xs" style={{ color: isMine ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.4)' }}>{fmt(m.created_at)}</span>
                     {isMine && (
-                      <span className="text-[10px]" style={{ color: m.lu ? '#60A5FA' : 'rgba(255,255,255,0.3)' }}>
+                      <span className="text-xs" style={{ color: m.lu ? '#60A5FA' : 'rgba(255,255,255,0.3)' }}>
                         {m.lu ? '✓✓' : '✓'}
                       </span>
                     )}
@@ -158,7 +158,7 @@ function ChatArea({
             style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#FFFFFF' }}
             className="w-full px-3.5 py-2.5 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-[#001A4D]/20 resize-none"
           />
-          <span className="absolute bottom-3 right-3 text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>{input.length}/500</span>
+          <span className="absolute bottom-3 right-3 text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>{input.length}/500</span>
         </div>
         <button
           onClick={handleSend}
@@ -222,7 +222,7 @@ function ConversationList({
                       {conv.nomAffiche}
                     </p>
                     {conv.dernier_message_at && (
-                      <span className="text-[10px] flex-shrink-0 ml-2" style={{ color: 'rgba(255,255,255,0.4)' }}>{fmt(conv.dernier_message_at)}</span>
+                      <span className="text-xs flex-shrink-0 ml-2" style={{ color: 'rgba(255,255,255,0.4)' }}>{fmt(conv.dernier_message_at)}</span>
                     )}
                   </div>
                   <div className="flex items-center justify-between mt-0.5">
@@ -230,7 +230,7 @@ function ConversationList({
                       {conv.dernier_message || 'Nouvelle conversation'}
                     </p>
                     {(conv.non_lus ?? 0) > 0 && (
-                      <span className="text-[10px] text-white rounded-full px-1.5 py-0.5 ml-2 flex-shrink-0" style={{ background: '#EF4444' }}>{conv.non_lus}</span>
+                      <span className="text-xs text-white rounded-full px-1.5 py-0.5 ml-2 flex-shrink-0" style={{ background: '#EF4444' }}>{conv.non_lus}</span>
                     )}
                   </div>
                 </div>

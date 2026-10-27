@@ -663,7 +663,7 @@ export function ProgressionPage() {
                           <p className="text-xs font-semibold mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Exercices pratiqués</p>
                           <div className="flex flex-wrap gap-1.5">
                             {topChuteEx.map(([ex, count]) => (
-                              <span key={ex} className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                              <span key={ex} className="text-xs px-2 py-0.5 rounded-full font-medium"
                                 style={{ background: 'rgba(249,115,22,0.15)', color: '#FB923C', border: '1px solid rgba(249,115,22,0.25)' }}>
                                 {ex} ×{count}
                               </span>
@@ -718,7 +718,7 @@ export function ProgressionPage() {
                         <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}>
                           <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>Précision moyenne</p>
                           <p className="text-2xl font-bold text-green-400">{precisionAvg.toFixed(0)} m</p>
-                          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>du cible · objectif &lt; 5 m</p>
+                          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>du cible · objectif &lt; 5 m</p>
                         </div>
                       ) : (
                         <p className="text-xs text-center" style={{ color: 'rgba(255,255,255,0.25)' }}>Pas de données de précision</p>
@@ -729,7 +729,7 @@ export function ProgressionPage() {
                           <p className="text-xs font-semibold mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Exercices sous voile</p>
                           <div className="flex flex-wrap gap-1.5">
                             {topVoileEx.map(([ex, count]) => (
-                              <span key={ex} className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                              <span key={ex} className="text-xs px-2 py-0.5 rounded-full font-medium"
                                 style={{ background: 'rgba(16,185,129,0.15)', color: '#6EE7B7', border: '1px solid rgba(16,185,129,0.25)' }}>
                                 {ex} ×{count}
                               </span>
@@ -860,7 +860,7 @@ export function ProgressionPage() {
                                 <td className="px-4 py-3">
                                   <div className="flex gap-1 flex-wrap">
                                     {exChips.map((ex) => (
-                                      <span key={ex} className="text-[10px] px-1.5 py-0.5 rounded font-medium"
+                                      <span key={ex} className="text-xs px-1.5 py-0.5 rounded font-medium"
                                         style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)' }}>
                                         {ex}
                                       </span>
@@ -870,7 +870,7 @@ export function ProgressionPage() {
                                 <td className="px-4 py-3">
                                   {!prog && (
                                     <button onClick={() => navigate('/dashboard?action=add-jump')}
-                                      className="text-[11px] font-semibold px-2 py-1 rounded-lg whitespace-nowrap"
+                                      className="text-xs font-semibold px-2 py-1 rounded-lg whitespace-nowrap"
                                       style={{ background: 'rgba(249,115,22,0.15)', color: '#FB923C', border: '1px solid rgba(249,115,22,0.2)' }}>
                                       Évaluer →
                                     </button>

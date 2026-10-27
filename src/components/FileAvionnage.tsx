@@ -205,7 +205,7 @@ function FileInner({ centreId, centreNom, userId }: {
             ft²
           </label>
           {voilePerso && surfaceVoile === String(voilePerso.surface) && (
-            <span className="w-full" style={{ fontSize: 12, color: 'var(--c-dim)' }}>
+            <span className="w-full" style={{ fontSize: 13, color: 'var(--c-dim)' }}>
               Votre voile enregistrée ({voilePerso.libelle}) — corrigez si vous en empruntez une autre.
             </span>
           )}
@@ -226,7 +226,7 @@ function FileInner({ centreId, centreNom, userId }: {
       )}
 
       {ma.position === null && (
-        <p className="mt-2" style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+        <p className="mt-2" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
           Se mettre en file ne réserve pas de place : c’est le chef d’avionnage
           qui compose les avions.
         </p>

@@ -146,7 +146,7 @@ export function DeclarationHonneur({ profile, userId, onClose, onConfirmed }: Pr
               style={{ color: etape === s ? '#A78BFA' : 'var(--c-dim)' }}
             >
               <div
-                className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
+                className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                 style={{
                   background: etape === s ? '#A78BFA' : etape > s ? '#10B981' : 'var(--c-hover)',
                   color: etape >= s ? '#fff' : 'var(--c-dim)',
@@ -313,7 +313,7 @@ export function DeclarationHonneur({ profile, userId, onClose, onConfirmed }: Pr
                           {opt.titre}
                         </span>
                         <span
-                          className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                          className="text-xs font-bold px-2 py-0.5 rounded-full"
                           style={{ background: `${opt.badgeColor}20`, color: opt.badgeColor }}
                         >
                           {opt.badge}

@@ -234,3 +234,12 @@ button:not(:disabled):active, [role="button"]:not([aria-disabled="true"]):active
   font-size: 13px;
   line-height: 18px;
 }
+
+/* ── Plancher de lecture de l'espace parachutiste : 13 px ──────────────────
+   Même règle que l'espace DZ : le plus petit texte du CONTENU passe de 12 à
+   13 px. La barre d'onglets (hors de <main>) garde ses libellés courts, et la
+   carte de licence (.pp-carte), dessinée à taille fixe, garde les siens. */
+.parapass-para main .text-xs:not(.pp-carte *) {
+  font-size: 13px;
+  line-height: 18px;
+}

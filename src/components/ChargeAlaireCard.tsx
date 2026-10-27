@@ -31,7 +31,7 @@ export function ChargeAlaireCard({ userId, tailleVoileFt2 }: { userId: string | 
           <span className="text-xs font-bold text-white">Charge alaire</span>
         </div>
         {status !== 'donnees_manquantes' && (
-          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.border}` }}>
+          <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.border}` }}>
             {cfg.label}
           </span>
         )}
@@ -51,7 +51,7 @@ export function ChargeAlaireCard({ userId, tailleVoileFt2 }: { userId: string | 
             <span className="text-2xl font-extrabold text-white leading-none">{chargeAlaire?.toFixed(2)}</span>
             <span className="text-xs mb-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>lb/ft²</span>
             {guideline && (
-              <span className="text-[11px] mb-0.5 ml-auto" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              <span className="text-xs mb-0.5 ml-auto" style={{ color: 'rgba(255,255,255,0.45)' }}>
                 Repère ≤ {Number(guideline.charge_max_recommandee).toFixed(2)} · tranche {trancheLabel} ({sautsCount} sauts)
               </span>
             )}
@@ -91,7 +91,7 @@ export function ChargeAlaireCard({ userId, tailleVoileFt2 }: { userId: string | 
         </a>
       </div>
 
-      <p className="text-[10px] mt-2 leading-relaxed" style={{ color: 'rgba(255,255,255,0.3)' }}>
+      <p className="text-xs mt-2 leading-relaxed" style={{ color: 'rgba(255,255,255,0.3)' }}>
         Formule : poids en livres ÷ surface en pieds carrés. La charge alaire influence la vitesse de vol et d'atterrissage de la voile :
         descendre en taille trop tôt est une cause fréquente d'accident. Repère consultatif — la décision se prend avec votre moniteur.
         Le poids se saisit une seule fois, dans « Mon profil ».

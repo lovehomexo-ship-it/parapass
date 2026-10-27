@@ -218,7 +218,7 @@ function ChipTextField({ value, onChange, chips, placeholder, rows }: {
         onChange={(e) => onChange(e.target.value)}
         rows={rows ?? 2}
         placeholder={placeholder}
-        style={{ ...darkInput, resize: 'none', fontSize: 12 }}
+        style={{ ...darkInput, resize: 'none', fontSize: 13 }}
       />
     </div>
   );
@@ -1358,7 +1358,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                   chips={['PAC', 'Brevet A', 'Brevet B', 'Brevet C', 'Brevet D', 'Solo']} />
                 <input type="text" value={form.programme} onChange={(e) => update('programme', e.target.value)}
                   style={darkInput} placeholder="PAC 3, Brevet B2…" />
-                <p className="mt-1 text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                <p className="mt-1 text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
                   Choisissez le programme, puis complétez le numéro à la main — « PAC 3 », « Brevet B2 ».
                 </p>
               </div>
@@ -1496,7 +1496,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                         key={v}
                         type="button"
                         onClick={() => update('hauteur_ouverture', v)}
-                        className="text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors"
+                        className="text-xs px-2 py-0.5 rounded-full font-medium transition-colors"
                         style={form.hauteur_ouverture === v
                           ? { background: '#F59E0B', color: '#fff', border: '1px solid #F59E0B' }
                           : { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.12)' }}
@@ -1513,7 +1513,7 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                       </p>
                     </div>
                   ) : (
-                    <p className="text-[11px] mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                    <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
                       Minimum réglementaire : {hauteurOuvertureMin.toLocaleString('fr-FR')} m ({reglesBrevet.label})
                     </p>
                   )}
@@ -1601,8 +1601,8 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                   <div className="p-4 space-y-4">
                     <div className="flex items-center gap-2">
                       <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest" style={{ color: '#60A5FA' }}><Wind className="w-3.5 h-3.5" /> Chute libre</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(96,165,250,0.12)', color: 'rgba(96,165,250,0.7)' }}>→ Profil Chute libre</span>
-                      <span className="text-[10px] ml-auto" style={{ color: 'rgba(255,255,255,0.25)' }}>optionnel</span>
+                      <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(96,165,250,0.12)', color: 'rgba(96,165,250,0.7)' }}>→ Profil Chute libre</span>
+                      <span className="text-xs ml-auto" style={{ color: 'rgba(255,255,255,0.25)' }}>optionnel</span>
                     </div>
 
                     {/* TYPE de sortie — ce qui a été FAIT. La notation « Sortie
@@ -1662,8 +1662,8 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                   <div className="p-4 space-y-4">
                     <div className="flex items-center gap-2">
                       <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest" style={{ color: '#34D399' }}><Target className="w-3.5 h-3.5" /> Voile & Atterrissage</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(52,211,153,0.12)', color: 'rgba(52,211,153,0.7)' }}>→ Voile & Atterrissage</span>
-                      <span className="text-[10px] ml-auto" style={{ color: 'rgba(255,255,255,0.25)' }}>optionnel</span>
+                      <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(52,211,153,0.12)', color: 'rgba(52,211,153,0.7)' }}>→ Voile & Atterrissage</span>
+                      <span className="text-xs ml-auto" style={{ color: 'rgba(255,255,255,0.25)' }}>optionnel</span>
                     </div>
 
                     {/* Qualité ouverture voile */}
@@ -1738,8 +1738,8 @@ export function AddSautModal({ open, onClose, onAdded, userBrevet, sautAEditer, 
                   <div className="p-4 space-y-4">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: '#C084FC' }}><Brain className="w-3.5 h-3.5" aria-hidden="true" /> Mental & Régularité</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(192,132,252,0.12)', color: 'rgba(192,132,252,0.7)' }}>→ Mental & Régularité</span>
-                      <span className="text-[10px] ml-auto" style={{ color: 'rgba(255,255,255,0.25)' }}>optionnel</span>
+                      <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(192,132,252,0.12)', color: 'rgba(192,132,252,0.7)' }}>→ Mental & Régularité</span>
+                      <span className="text-xs ml-auto" style={{ color: 'rgba(255,255,255,0.25)' }}>optionnel</span>
                     </div>
 
                     {/* Mental */}

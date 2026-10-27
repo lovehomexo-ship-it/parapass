@@ -61,7 +61,7 @@ export function MaRepriseCard({ userId, niveau, onPlanifierReprise, masquerSiAJo
       )}
       <p className="text-xs leading-relaxed" style={{ color: 'var(--c-text2)' }}>{phrase}</p>
       {status !== 'indetermine' && (
-        <p className="text-[10px] mt-2" style={{ color: 'var(--c-dim)' }}>
+        <p className="text-xs mt-2" style={{ color: 'var(--c-dim)' }}>
           Seuils pour {niveauLabel} : conseillé {rule.seuil_conseille_jours} j · reprise {rule.seuil_obligatoire_jours} j — selon les règles paramétrées{status === 'reprise_obligatoire' ? ' (*)' : ''}.
         </p>
       )}

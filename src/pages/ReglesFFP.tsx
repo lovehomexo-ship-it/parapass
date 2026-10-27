@@ -47,7 +47,7 @@ function RulesTable({ title, icon, rows, userBrevet, valueKey, unit }: {
                   {row.label as string}
                 </p>
                 {isActive && (
-                  <span className="text-[10px] bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-semibold">
+                  <span className="text-xs bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-semibold">
                     Votre niveau
                   </span>
                 )}
@@ -132,7 +132,7 @@ export function ReglesFFPPage() {
           </div>
         </div>
 
-        <p className="text-[11px] text-gray-400 text-center">
+        <p className="text-xs text-gray-400 text-center">
           Source : Carnet de sauts FFP officiel, page 3 — Règlement intérieur de la Fédération Française de Parachutisme
         </p>
       </div>

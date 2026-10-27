@@ -114,7 +114,7 @@ function BadgeCard({
       {/* NEW badge */}
       {isNew && obtained && (
         <div
-          className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider z-20"
+          className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider z-20"
           style={{ background: '#F97316', color: '#fff', whiteSpace: 'nowrap' }}
         >
           NOUVEAU
@@ -171,18 +171,18 @@ function BadgeCard({
 
       {/* Sous-ligne : date obtenue / progression motivante / description */}
       {obtained && badge ? (
-        <div className="text-[10px] mt-1 text-center" style={{ color: cfg.text }}>
+        <div className="text-xs mt-1 text-center" style={{ color: cfg.text }}>
           {new Date(badge.date_obtention).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
         </div>
       ) : hasProgress ? (
         <div className="mt-1 text-center">
-          <p className="text-[11px] font-extrabold" style={{ color: catCfg.color }}>
+          <p className="text-xs font-extrabold" style={{ color: catCfg.color }}>
             {restants} restant{restants > 1 ? 's' : ''}
           </p>
-          <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.3)' }}>{progress!.current}/{progress!.required} · {pct}%</p>
+          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>{progress!.current}/{progress!.required} · {pct}%</p>
         </div>
       ) : (
-        <div className="text-[10px] mt-1 text-center leading-tight" style={{ color: 'rgba(255,255,255,0.3)' }}>
+        <div className="text-xs mt-1 text-center leading-tight" style={{ color: 'rgba(255,255,255,0.3)' }}>
           {def.description}
         </div>
       )}
@@ -190,7 +190,7 @@ function BadgeCard({
       {/* Puce de rareté — visible dans les DEUX états pour lire la rareté d'un coup d'œil */}
       <div className="mt-1.5">
         <span
-          className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full"
+          className="text-xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full"
           style={{
             background: obtained ? cfg.bg : 'rgba(255,255,255,0.04)',
             color: obtained ? cfg.text : 'rgba(255,255,255,0.4)',
@@ -380,7 +380,7 @@ export function BadgesPage() {
                 </div>
               );
             })()}
-            <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: '#FCD34D' }}>
+            <p className="text-xs font-bold uppercase tracking-wider mb-0.5" style={{ color: '#FCD34D' }}>
               Nouveau badge débloqué !
             </p>
             <p className="text-sm font-bold text-white">{newBadge}</p>
@@ -413,7 +413,7 @@ export function BadgesPage() {
                 <h1 className="text-2xl font-bold text-white">Mes Badges</h1>
                 {newBadgeTypes.size > 0 && (
                   <span
-                    className="text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse"
+                    className="text-xs font-bold px-2 py-0.5 rounded-full animate-pulse"
                     style={{ background: '#F97316', color: '#fff' }}
                   >
                     {newBadgeTypes.size} NOUVEAU{newBadgeTypes.size > 1 ? 'X' : ''}
@@ -481,7 +481,7 @@ export function BadgesPage() {
             {(Object.entries(RARETE_CONFIG) as [keyof typeof RARETE_CONFIG, (typeof RARETE_CONFIG)[keyof typeof RARETE_CONFIG]][]).map(([key, cfg]) => (
               <span
                 key={key}
-                className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
+                className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
                 style={{ background: cfg.bg, color: cfg.text, border: `1px solid ${cfg.border}` }}
               >
                 {cfg.label}

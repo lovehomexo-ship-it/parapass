@@ -207,7 +207,7 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
           value={masse} onChange={e => setMasse(e.target.value)}
           placeholder="ex : 82"
           style={timeInputStyle} />
-        <p className="text-[11px] mt-1" style={{ color: 'var(--c-dim)' }}>
+        <p className="text-xs mt-1" style={{ color: 'var(--c-dim)' }}>
           Sert au chargement de l’avion. Retenue pour les prochaines fois.
         </p>
       </div>
