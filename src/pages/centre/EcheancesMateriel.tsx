@@ -35,11 +35,13 @@ interface Echeance {
 }
 
 const PALIER = {
-  depasse: { label: 'Dépassée',        couleur: '#F87171', fond: 'rgba(239,68,68,0.10)',  bord: 'rgba(239,68,68,0.35)' },
-  inconnu: { label: 'Jamais contrôlé', couleur: '#FB923C', fond: 'rgba(249,115,22,0.10)', bord: 'rgba(249,115,22,0.35)' },
-  j30:     { label: 'Sous 30 jours',   couleur: '#FBBF24', fond: 'rgba(251,191,36,0.10)', bord: 'rgba(251,191,36,0.35)' },
-  j60:     { label: 'Sous 60 jours',   couleur: '#60A5FA', fond: 'rgba(96,165,250,0.10)', bord: 'rgba(96,165,250,0.30)' },
-  ok:      { label: 'À jour',          couleur: '#34D399', fond: 'var(--c-surface)',      bord: 'var(--c-border)' },
+  // Couleurs de statut = jetons de thème. Écrites en dur pour le fond sombre,
+  // elles tombaient à 2,3:1 sur le blanc du thème clair (#FB923C, #60A5FA).
+  depasse: { label: 'Dépassée',        couleur: 'var(--sev-critique)', fond: 'rgba(239,68,68,0.10)',  bord: 'rgba(239,68,68,0.35)' },
+  inconnu: { label: 'Jamais contrôlé', couleur: 'var(--accent-texte)', fond: 'rgba(249,115,22,0.10)', bord: 'rgba(249,115,22,0.35)' },
+  j30:     { label: 'Sous 30 jours',   couleur: 'var(--sev-vigilance)', fond: 'rgba(251,191,36,0.10)', bord: 'rgba(251,191,36,0.35)' },
+  j60:     { label: 'Sous 60 jours',   couleur: 'var(--action-texte)', fond: 'rgba(96,165,250,0.10)', bord: 'rgba(96,165,250,0.30)' },
+  ok:      { label: 'À jour',          couleur: 'var(--sev-conforme)', fond: 'var(--c-surface)',      bord: 'var(--c-border)' },
 } as const;
 
 // type_maintenance est stocké en CODE : on le traduit pour l'affichage.
@@ -140,7 +142,7 @@ function EcheancesInner({ centreId }: { centreId: string }) {
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h3 className="text-sm font-bold flex items-center gap-1.5" style={{ color: 'var(--c-text)' }}>
-            <Wrench className="w-4 h-4" style={{ color: '#60A5FA' }} aria-hidden />
+            <Wrench className="w-4 h-4" style={{ color: 'var(--action-texte)' }} aria-hidden />
             Échéances matériel
           </h3>
           <p className="text-xs mt-0.5" style={{ color: 'var(--c-dim)' }}>
@@ -195,7 +197,7 @@ function EcheancesInner({ centreId }: { centreId: string }) {
                       {TYPE_LABEL[l.type] ?? l.type}
                       {l.marque && ` — ${l.marque}`}{l.modele && ` ${l.modele}`}
                     </p>
-                    <p className="text-[11px] mt-0.5" style={{ color: 'var(--c-dim)' }}>
+                    <p className="text-[13px] mt-0.5" style={{ color: 'var(--c-muted)' }}>
                       {l.est_parc_centre ? 'Parc du centre' : l.proprietaire}
                       {l.numero_serie && ` · n° ${l.numero_serie}`}
                     </p>
@@ -213,8 +215,8 @@ function EcheancesInner({ centreId }: { centreId: string }) {
                       </span>
                     )}
                     <button onClick={() => setOperation(l)}
-                      className="flex items-center gap-1 px-2 rounded-lg text-[11px] font-semibold"
-                      style={{ minHeight: 32, color: '#60A5FA', border: '1px solid var(--c-border)' }}>
+                      className="flex items-center gap-1 px-3 rounded-lg text-[13px] font-semibold"
+                      style={{ minHeight: 44, color: 'var(--action-texte)', border: '1px solid var(--c-border)' }}>
                       <CheckCircle2 className="w-3 h-3" aria-hidden /> Opération
                     </button>
                   </div>

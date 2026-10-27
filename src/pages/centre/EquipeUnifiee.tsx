@@ -32,16 +32,21 @@ function etatDate(exp: string | null, actif: boolean, seuilJours: number): Etat 
   return 'valide';
 }
 
+// Les teintes de texte passent par les jetons de sévérité : écrites en dur,
+// elles étaient choisies pour le fond sombre et tombaient à 1,9:1 sur le blanc
+// du thème clair (#34D399). Fonds et filets restent translucides.
 const COULEURS: Record<Etat, { bg: string; fg: string; bd: string }> = {
-  valide: { bg: 'rgba(16,185,129,0.12)', fg: '#34D399', bd: 'rgba(16,185,129,0.35)' },
-  permanent: { bg: 'rgba(16,185,129,0.12)', fg: '#34D399', bd: 'rgba(16,185,129,0.35)' },
-  bientot: { bg: 'rgba(245,158,11,0.12)', fg: '#FCD34D', bd: 'rgba(245,158,11,0.35)' },
-  expire: { bg: 'rgba(239,68,68,0.12)', fg: '#FCA5A5', bd: 'rgba(239,68,68,0.35)' },
-  inactif: { bg: 'rgba(148,163,184,0.1)', fg: '#94A3B8', bd: 'rgba(148,163,184,0.3)' },
+  valide: { bg: 'rgba(16,185,129,0.12)', fg: 'var(--sev-conforme)', bd: 'rgba(16,185,129,0.35)' },
+  permanent: { bg: 'rgba(16,185,129,0.12)', fg: 'var(--sev-conforme)', bd: 'rgba(16,185,129,0.35)' },
+  bientot: { bg: 'rgba(245,158,11,0.12)', fg: 'var(--sev-vigilance)', bd: 'rgba(245,158,11,0.35)' },
+  expire: { bg: 'rgba(239,68,68,0.12)', fg: 'var(--sev-critique)', bd: 'rgba(239,68,68,0.35)' },
+  inactif: { bg: 'rgba(148,163,184,0.1)', fg: 'var(--sev-neutre)', bd: 'rgba(148,163,184,0.3)' },
 };
 
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleDateString('fr-FR') : '');
-const AVATAR_PALETTE = ['#003082', '#10B981', '#F97316', '#EF4444', '#8B5CF6', '#06B6D4'];
+// Initiales blanches sur pastille : chaque teinte tient 4,5:1 avec le blanc,
+// dans les deux thèmes (l'ancienne palette descendait à 2,4:1 sur l'émeraude).
+const AVATAR_PALETTE = ['#003082', '#047857', '#C2410C', '#B91C1C', '#6D28D9', '#0E7490'];
 function avatarColor(s: string) { let h = 0; for (let i = 0; i < s.length; i++) h = s.charCodeAt(i) + ((h << 5) - h); return AVATAR_PALETTE[Math.abs(h) % AVATAR_PALETTE.length]; }
 
 function Avatar({ m }: { m: Profil }) {
@@ -225,12 +230,12 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
       {/* Bandeau qualifs à renouveler (moniteurs + plieurs) */}
       {alertes.length > 0 && (
         <div className="rounded-xl px-4 py-3" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.3)' }}>
-          <p className="text-xs font-bold mb-1.5" style={{ color: '#FCD34D' }}>À renouveler (seuil {seuil} j, paramétrable)</p>
+          <p className="text-xs font-bold mb-1.5" style={{ color: 'var(--sev-vigilance)' }}>À renouveler (seuil {seuil} j, paramétrable)</p>
           <ul className="text-xs space-y-1" style={{ color: 'var(--c-text2)' }}>
             {alertes.map((a, i) => (
               <li key={i} className="leading-snug">
                 <span className="font-medium" style={{ color: 'var(--c-text)' }}>{a.nom}</span> — {a.label}{' '}
-                <span style={{ color: a.etat === 'expire' ? 'var(--sev-critique)' : '#FCD34D' }}>
+                <span style={{ color: a.etat === 'expire' ? 'var(--sev-critique)' : 'var(--sev-vigilance)' }}>
                   {a.etat === 'expire' ? 'expirée' : 'expire'} {a.date ? `le ${fmt(a.date)}` : ''}
                 </span>
               </li>
@@ -244,7 +249,7 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
         {([['tous', 'Tous'], ['moniteurs', 'Moniteurs'], ['plieurs', 'Plieurs'], ['delegues', 'Validation']] as [Filtre, string][]).map(([k, label]) => (
           <button key={k} onClick={() => setFiltre(k)} className="text-xs font-semibold px-3 rounded-full transition" style={chip(filtre === k)}>{label}</button>
         ))}
-        <button onClick={() => setFormOuvert(o => !o)} className="text-xs font-bold px-3 rounded-full text-white inline-flex items-center gap-1 ml-auto" style={{ background: '#F97316', minHeight: 40 }}>
+        <button onClick={() => setFormOuvert(o => !o)} className="text-xs font-bold px-3 rounded-full text-white inline-flex items-center gap-1 ml-auto" style={{ background: 'var(--accent-fond)', minHeight: 40 }}>
           <Plus className="w-3.5 h-3.5" /> Qualification
         </button>
       </div>
@@ -288,16 +293,16 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
                 <div className="flex items-start gap-3">
                   <Avatar m={m} />
                   <div className="min-w-0 flex-1">
-                    <p className="font-bold text-white truncate">{m.prenom} {m.nom}</p>
+                    <p className="font-bold truncate" style={{ color: 'var(--c-text)' }}>{m.prenom} {m.nom}</p>
                     {m.numero_licence && <p className="text-[11px] truncate" style={{ color: 'var(--c-dim)' }}>Licence {m.numero_licence}</p>}
                     <div className="flex flex-wrap gap-1.5 mt-1.5">
-                      {m.role === 'admin_centre' && <RolePill icon={<Shield className="w-3 h-3" />} label="DT" color="#8B5CF6" />}
-                      {estMoniteur && <RolePill icon={<Shield className="w-3 h-3" />} label="Moniteur" color="#2563EB" />}
-                      {m.delegations.length > 0 && <RolePill icon={<CheckSquare className="w-3 h-3" />} label="Validation" color="#10B981" />}
-                      {m.plieur && <RolePill icon={<Package className="w-3 h-3" />} label="Plieur" color="#F97316" />}
+                      {m.role === 'admin_centre' && <RolePill icon={<Shield className="w-3 h-3" />} label="DT" color="var(--c-pliage-fort)" />}
+                      {estMoniteur && <RolePill icon={<Shield className="w-3 h-3" />} label="Moniteur" color="var(--action-texte)" />}
+                      {m.delegations.length > 0 && <RolePill icon={<CheckSquare className="w-3 h-3" />} label="Validation" color="var(--sev-conforme)" />}
+                      {m.plieur && <RolePill icon={<Package className="w-3 h-3" />} label="Plieur" color="var(--accent-texte)" />}
                     </div>
                     {m.nbComptes > 1 && (
-                      <p className="text-[10px] mt-1" style={{ color: '#FCD34D' }}>
+                      <p className="text-[13px] mt-1" style={{ color: 'var(--sev-vigilance)' }}>
                         <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {m.nbComptes} comptes réunis{m.licencesAutres.length > 0 ? ` (aussi ${m.licencesAutres.join(', ')})` : ''} — à fusionner
                       </p>
                     )}
@@ -354,7 +359,7 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
                 {/* Plieur */}
                 {m.plieur && (
                   <div className="mt-3 rounded-xl px-3 py-2 flex flex-wrap items-center gap-2" style={{ background: COULEURS[etatDate(m.plieur.date_expiration, m.plieur.actif, seuil)].bg, border: `1px solid ${COULEURS[etatDate(m.plieur.date_expiration, m.plieur.actif, seuil)].bd}` }}>
-                    <Package className="w-4 h-4 flex-shrink-0" style={{ color: '#F97316' }} />
+                    <Package className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--accent-texte)' }} />
                     <span className="text-xs" style={{ color: 'var(--c-text2)' }}>
                       Plieur habilité{m.plieur.numero_qualif && ` · n°${m.plieur.numero_qualif}`}{m.plieur.date_expiration ? ` · ${etatDate(m.plieur.date_expiration, true, seuil) === 'expire' ? 'expirée' : 'valide →'} ${fmt(m.plieur.date_expiration)}` : ' · permanente'}
                     </span>
@@ -374,7 +379,9 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
 
 function RolePill({ icon, label, color }: { icon: React.ReactNode; label: string; color: string }) {
   return (
-    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: `${color}22`, color, border: `1px solid ${color}55` }}>
+    // `color-mix` plutôt qu'un suffixe hexadécimal (`#10B98122`) : la couleur
+    // est désormais un jeton de thème, et `var(--x)22` n'est pas une couleur.
+    <span className="text-xs font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: `color-mix(in srgb, ${color} 13%, transparent)`, color, border: `1px solid color-mix(in srgb, ${color} 33%, transparent)` }}>
       {icon}{label}
     </span>
   );

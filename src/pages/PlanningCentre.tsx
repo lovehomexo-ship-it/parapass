@@ -152,7 +152,7 @@ function ModalCreneau({
             <p className="text-sm text-gray-500 capitalize">{dateFormatted}</p>
           </div>
           <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-            <X className="w-5 h-5 text-gray-400" />
+            <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
 
@@ -254,7 +254,7 @@ function ModalCreneau({
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Message</label>
-                  <span className="text-xs text-gray-400">{message.length}/280</span>
+                  <span className="text-xs text-gray-500">{message.length}/280</span>
                 </div>
                 <textarea value={message} onChange={e => setMessage(e.target.value.slice(0, 280))}
                   rows={3} placeholder="Conditions météo parfaites prévues ! Venez nombreux"
@@ -387,7 +387,7 @@ function InscritsList({ creneau, onClose }: { creneau: Creneau; onClose: () => v
               <Download className="w-4 h-4 text-gray-500" />
             </button>
             <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-              <X className="w-5 h-5 text-gray-400" />
+              <X className="w-5 h-5 text-gray-500" />
             </button>
           </div>
         </div>
@@ -401,7 +401,7 @@ function InscritsList({ creneau, onClose }: { creneau: Creneau; onClose: () => v
                 style={{ width: `${Math.min(100, (counts.present / creneau.nb_places_total) * 100)}%` }}
               />
             </div>
-            <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
               <span>{counts.present} confirmés · {counts.peut_etre} peut-être · {counts.absent} absents</span>
               <span>{creneau.nb_places_restantes} places restantes</span>
             </div>
@@ -427,7 +427,7 @@ function InscritsList({ creneau, onClose }: { creneau: Creneau; onClose: () => v
           {loading ? (
             <LoaderParaPass taille={56} message={null} />
           ) : filtered.length === 0 ? (
-            <p className="text-center text-sm text-gray-400 py-8">Aucun inscrit dans cette catégorie</p>
+            <p className="text-center text-sm text-gray-500 py-8">Aucun inscrit dans cette catégorie</p>
           ) : (
             filtered.map(i => (
               <div key={i.id} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
@@ -436,7 +436,7 @@ function InscritsList({ creneau, onClose }: { creneau: Creneau; onClose: () => v
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-gray-900">{i.profiles.prenom} {i.profiles.nom}</div>
-                  {i.commentaire && <div className="text-xs text-gray-400 truncate">{i.commentaire}</div>}
+                  {i.commentaire && <div className="text-xs text-gray-500 truncate">{i.commentaire}</div>}
                 </div>
                 <span className="text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0"
                   style={{
@@ -541,7 +541,7 @@ export function PlanningCentre({ centreId }: { centreId: string }) {
             <div key={s.label} className="bg-white rounded-xl p-4 border border-gray-100" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
               <div className="text-2xl font-bold text-gray-900">{s.value}</div>
               <div className="text-xs font-semibold text-gray-700">{s.label}</div>
-              <div className="text-xs text-gray-400">{s.sub}</div>
+              <div className="text-xs text-gray-500">{s.sub}</div>
             </div>
           ))}
         </div>
@@ -585,7 +585,7 @@ export function PlanningCentre({ centreId }: { centreId: string }) {
 
         <div className="grid grid-cols-7 px-3 pt-3 pb-1">
           {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map(d => (
-            <div key={d} className="text-center text-[10px] font-semibold text-gray-400 pb-1">{d}</div>
+            <div key={d} className="text-center text-xs font-semibold text-gray-500 pb-1">{d}</div>
           ))}
         </div>
 
@@ -619,7 +619,7 @@ export function PlanningCentre({ centreId }: { centreId: string }) {
                 {sc ? (
                   <span className="inline-block w-2 h-2 rounded-full" style={{ background: sc.bg }} />
                 ) : isCurrentMonth ? (
-                  <span className="text-[10px] text-gray-300 group-hover:text-blue-300 transition-colors">+</span>
+                  <span className="text-xs text-gray-500 group-hover:text-blue-300 transition-colors">+</span>
                 ) : null}
                 {c && nbInscrits > 0 && (
                   <span className="text-[7px] font-bold leading-none" style={{ color: sc?.text }}>
@@ -635,12 +635,12 @@ export function PlanningCentre({ centreId }: { centreId: string }) {
           {Object.values(STATUT_CONFIG).map(s => (
             <div key={s.label} className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-sm" style={{ background: s.bgLight, border: `1px solid ${s.bg + '50'}` }} />
-              <span className="text-[10px] text-gray-500">{s.label}</span>
+              <span className="text-xs text-gray-500">{s.label}</span>
             </div>
           ))}
           <div className="flex items-center gap-1.5">
-            <Plus className="w-3 h-3 text-gray-300" />
-            <span className="text-[10px] text-gray-400">Cliquer pour créer</span>
+            <Plus className="w-3 h-3 text-gray-500" />
+            <span className="text-xs text-gray-500">Cliquer pour créer</span>
           </div>
         </div>
       </div>
@@ -671,7 +671,7 @@ export function PlanningCentre({ centreId }: { centreId: string }) {
                   </button>
                 )}
                 <button onClick={() => setEditCreneau(c)} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0">
-                  <span className="text-xs text-gray-400">Modifier</span>
+                  <span className="text-xs text-gray-500">Modifier</span>
                 </button>
               </div>
             );

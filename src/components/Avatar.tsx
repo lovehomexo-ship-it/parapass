@@ -56,8 +56,11 @@ export function Avatar({ photo, prenom, nom, taille = 36, className = '' }: {
   const initiales = initialesDe(prenom, nom);
 
   return (
-    <div className={`rounded-full flex items-center justify-center font-bold text-white flex-shrink-0 overflow-hidden ${className}`}
-      style={{ width: taille, height: taille, background: 'var(--c-border)', fontSize: Math.round(taille * 0.38) }}>
+    // Initiales en jetons : le blanc sur `--c-border` disparaissait en thème
+    // clair (fond presque blanc), soit 22 visages muets sur « Présents du jour ».
+    <div className={`rounded-full flex items-center justify-center font-bold flex-shrink-0 overflow-hidden ${className}`}
+      style={{ width: taille, height: taille, background: 'var(--c-hover)', color: 'var(--c-text2)',
+               border: '1px solid var(--c-border)', fontSize: Math.round(taille * 0.38) }}>
       {url
         ? <img src={url} alt="" onError={() => setCasse(true)}
             className="w-full h-full object-cover" />

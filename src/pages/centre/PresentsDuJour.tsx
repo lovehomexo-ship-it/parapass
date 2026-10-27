@@ -131,17 +131,17 @@ function Ligne({ p }: { p: Present }) {
             {p.prenom} {p.nom}
           </span>
           {p.brevet && (
-            <span className="text-[10px] font-bold flex-shrink-0" style={{ color: '#FDBA74' }}>{p.brevet}</span>
+            <span className="text-xs font-bold flex-shrink-0" style={{ color: 'var(--accent-texte)' }}>{p.brevet}</span>
           )}
           {/* L'EXPÉRIENCE EST UNE INFORMATION DE SÉCURITÉ. Un B à 70 sauts et un
               B à 600 ne se briefent pas pareil ; le brevet seul ne le dit pas. */}
           {p.total_sauts > 0 && (
-            <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--c-dim)' }}>
+            <span className="text-xs flex-shrink-0" style={{ color: 'var(--c-dim)' }}>
               {p.total_sauts}&nbsp;sauts
             </span>
           )}
           {p.demo && (
-            <span className="text-[9px] px-1 rounded flex-shrink-0"
+            <span className="text-xs px-1 rounded flex-shrink-0"
               style={{ background: 'var(--c-border)', color: 'var(--c-dim)' }}>démo</span>
           )}
         </div>
@@ -154,15 +154,15 @@ function Ligne({ p }: { p: Present }) {
       <div className="flex items-center gap-1 min-w-0 flex-1 basis-full sm:basis-0">
         {visibles.map(q => (
           <span key={q} title={q}
-            className="text-[10px] px-1.5 rounded-full truncate" style={{
+            className="text-xs px-1.5 rounded-full truncate" style={{
               maxWidth: 150, lineHeight: '18px',
-              background: 'rgba(16,185,129,0.12)', color: '#6EE7B7',
+              background: 'rgba(16,185,129,0.12)', color: 'var(--sev-conforme)',
               border: '1px solid rgba(16,185,129,0.25)',
             }}>{q}</span>
         ))}
         {reste > 0 && (
-          <span title={quals.join(' · ')} className="text-[10px] flex-shrink-0"
-            style={{ color: '#6EE7B7' }}>+{reste}</span>
+          <span title={quals.join(' · ')} className="text-xs flex-shrink-0"
+            style={{ color: 'var(--sev-conforme)' }}>+{reste}</span>
         )}
       </div>
 
@@ -170,22 +170,22 @@ function Ligne({ p }: { p: Present }) {
           qu'il faudra retrouver au soir s'il manque. */}
       <div className="flex items-center gap-1.5 min-w-0 flex-1 sm:flex-none sm:w-[190px]">
         <Package className="w-3 h-3 flex-shrink-0"
-          style={{ color: dz ? '#93C5FD' : 'var(--c-dim)' }} aria-hidden />
+          style={{ color: dz ? 'var(--action-texte)' : 'var(--c-dim)' }} aria-hidden />
         {voile || p.sac_nom ? (
-          <span className="text-[11px] truncate" style={{ color: 'var(--c-text2)' }}>
-            {dz && <span style={{ color: '#93C5FD', fontWeight: 700 }}>DZ&nbsp;</span>}
+          <span className="text-[13px] truncate" style={{ color: 'var(--c-text2)' }}>
+            {dz && <span style={{ color: 'var(--action-texte)', fontWeight: 700 }}>DZ&nbsp;</span>}
             {p.sac_nom ? `${p.sac_nom}${voile ? ` · ${voile}` : ''}` : voile}
           </span>
         ) : (
           // P1 — une absence de matériel se dit, elle ne se devine pas au vide.
-          <span className="text-[11px]" style={{ color: 'var(--sev-vigilance)' }}>non déclaré</span>
+          <span className="text-[13px]" style={{ color: 'var(--sev-vigilance)' }}>non déclaré</span>
         )}
       </div>
 
       {/* CRÉNEAU */}
       <div className="flex items-center gap-1 flex-shrink-0 sm:w-[104px]">
         <Clock className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--c-dim)' }} aria-hidden />
-        <span className="text-[11px] tabular-nums" style={{ color: 'var(--c-muted)' }}>
+        <span className="text-[13px] tabular-nums" style={{ color: 'var(--c-muted)' }}>
           {hhmm(p.heure_debut)}{p.heure_fin ? `–${hhmm(p.heure_fin)}` : ''}
         </span>
       </div>
@@ -193,24 +193,24 @@ function Ligne({ p }: { p: Present }) {
       {/* ACTIVITÉ */}
       <div className="flex items-center gap-1.5 flex-shrink-0 justify-end sm:w-[118px]">
         {p.sauts_du_jour > 0 && (
-          <span className="text-[10px] font-bold px-1.5 rounded-full tabular-nums"
-            style={{ lineHeight: '18px', background: 'rgba(96,165,250,0.15)', color: '#93C5FD' }}>
+          <span className="text-xs font-bold px-1.5 rounded-full tabular-nums"
+            style={{ lineHeight: '18px', background: 'rgba(96,165,250,0.15)', color: 'var(--action-texte)' }}>
             {p.sauts_du_jour} saut{p.sauts_du_jour > 1 ? 's' : ''}
           </span>
         )}
         {p.embarque ? (
-          <span className="text-[10px] font-bold px-1.5 rounded-full inline-flex items-center gap-1"
-            style={{ lineHeight: '18px', background: 'rgba(16,185,129,0.15)', color: '#6EE7B7' }}>
+          <span className="text-xs font-bold px-1.5 rounded-full inline-flex items-center gap-1"
+            style={{ lineHeight: '18px', background: 'rgba(16,185,129,0.15)', color: 'var(--sev-conforme)' }}>
             <Plane className="w-3 h-3" aria-hidden /> embarqué
           </span>
         ) : p.position_file !== null ? (
-          <span className="text-[10px] font-bold px-1.5 rounded-full"
-            style={{ lineHeight: '18px', background: 'rgba(249,115,22,0.15)', color: '#FDBA74' }}>
+          <span className="text-xs font-bold px-1.5 rounded-full"
+            style={{ lineHeight: '18px', background: 'rgba(249,115,22,0.15)', color: 'var(--accent-texte)' }}>
             file&nbsp;#{p.position_file}
           </span>
         ) : null}
         {parti && (
-          <span className="text-[10px] px-1.5 rounded-full"
+          <span className="text-xs px-1.5 rounded-full"
             style={{ lineHeight: '18px', background: 'var(--c-border)', color: 'var(--c-dim)' }}>reparti</span>
         )}
       </div>
@@ -293,7 +293,7 @@ function Inner({ centreId }: { centreId: string }) {
     <div className="space-y-3">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--c-text)' }}>
-          <MapPin className="w-6 h-6" style={{ color: '#F97316' }} aria-hidden /> Présents sur la DZ
+          <MapPin className="w-6 h-6" style={{ color: 'var(--accent-texte)' }} aria-hidden /> Présents sur la DZ
         </h1>
         <p className="text-xs mt-1" style={{ color: 'var(--c-dim)' }}>
           Chaque parachutiste déclare lui-même sa présence. Le centre lit ce registre, il n’y inscrit personne —
@@ -339,13 +339,13 @@ function Inner({ centreId }: { centreId: string }) {
           <Users className="w-4 h-4" style={{ color: 'var(--c-muted)' }} aria-hidden />
           {cpt.presents} sur le terrain
         </span>
-        <Pastille actif={filtre === 'encadrants'} onClick={() => bascule('encadrants')} couleur="#6EE7B7">
+        <Pastille actif={filtre === 'encadrants'} onClick={() => bascule('encadrants')} couleur="var(--sev-conforme)">
           {cpt.encadrants} encadrant{cpt.encadrants > 1 ? 's' : ''}
         </Pastille>
-        <Pastille actif={filtre === 'file'} onClick={() => bascule('file')} couleur="#FDBA74">
+        <Pastille actif={filtre === 'file'} onClick={() => bascule('file')} couleur="var(--accent-texte)">
           {cpt.file} en file ou embarqué{cpt.file > 1 ? 's' : ''}
         </Pastille>
-        <Pastille actif={filtre === 'materiel_dz'} onClick={() => bascule('materiel_dz')} couleur="#93C5FD">
+        <Pastille actif={filtre === 'materiel_dz'} onClick={() => bascule('materiel_dz')} couleur="var(--action-texte)">
           {cpt.materielDz} sac{cpt.materielDz > 1 ? 's' : ''} du centre
         </Pastille>
         {/* Un présent sans matériel déclaré n'est pas une anomalie de saisie :
@@ -376,7 +376,7 @@ function Inner({ centreId }: { centreId: string }) {
           {presents.map(p => <Ligne key={p.user_id} p={p} />)}
           {partis.length > 0 && (
             <>
-              <p className="text-[10px] font-semibold uppercase tracking-wide px-2.5 py-1"
+              <p className="text-xs font-semibold uppercase tracking-wide px-2.5 py-1"
                 style={{ color: 'var(--c-dim)', background: 'var(--c-border)' }}>Repartis</p>
               {partis.map(p => <Ligne key={p.user_id} p={p} />)}
             </>

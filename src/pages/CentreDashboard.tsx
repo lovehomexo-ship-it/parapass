@@ -273,7 +273,7 @@ function SousOnglets<T extends string>({ tabs, active, onChange }: {
           style={{
             minHeight: 44,
             background: active === t.key ? 'var(--c-surface)' : 'transparent',
-            color: active === t.key ? 'white' : 'var(--c-muted)',
+            color: active === t.key ? 'var(--c-text)' : 'var(--c-muted)',
             borderBottom: active === t.key ? '2px solid #2563EB' : '2px solid transparent',
           }}
         >
