@@ -108,22 +108,22 @@ function Carte({ q, onFait }: { q: Question; onFait: () => void }) {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold" style={{ color: 'var(--c-text)' }}>{q.enonce || '(énoncé vide)'}</p>
           <div className="flex items-center gap-2 flex-wrap mt-1.5">
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full"
               style={{ background: 'rgba(96,165,250,0.15)', color: '#93C5FD' }}>
               {q.niveau_brevet_mini ?? 'tous niveaux'}
             </span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full"
+            <span className="text-xs px-2 py-0.5 rounded-full"
               style={{ background: 'var(--c-border)', color: 'var(--c-muted)' }}>
               {LIBELLE_THEME[q.theme] ?? q.theme}
             </span>
             {commune && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full"
+              <span className="text-xs px-2 py-0.5 rounded-full"
                 style={{ background: 'rgba(148,163,184,0.15)', color: 'var(--c-muted)' }}>
                 banque commune — lecture seule
               </span>
             )}
             {q.statut === 'refusee' && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full"
                 style={{ background: 'rgba(239,68,68,0.15)', color: 'var(--sev-critique)' }}>refusée</span>
             )}
           </div>
@@ -150,7 +150,7 @@ function Carte({ q, onFait }: { q: Question; onFait: () => void }) {
                   <button type="button" disabled={commune}
                     onClick={() => setBrouillon(b => ({ ...b, bonne_reponse: p.cle }))}
                     title="Désigner comme bonne réponse"
-                    className="text-[11px] font-bold rounded-full flex-shrink-0 inline-flex items-center justify-center"
+                    className="text-xs font-bold rounded-full flex-shrink-0 inline-flex items-center justify-center"
                     style={{
                       width: 28, height: 28,
                       background: bonne ? 'rgba(16,185,129,0.2)' : 'var(--c-border)',
@@ -178,7 +178,7 @@ function Carte({ q, onFait }: { q: Question; onFait: () => void }) {
             placeholder="Référence (ex. DT n° 49, référentiel brevet B)" style={champ} />
 
           {q.source_officielle && (
-            <p className="text-[11px] flex items-start gap-1.5" style={{ color: 'var(--c-dim)' }}>
+            <p className="text-xs flex items-start gap-1.5" style={{ color: 'var(--c-dim)' }}>
               <BookOpen className="w-3 h-3 flex-shrink-0 mt-px" aria-hidden />
               {q.source_officielle}
             </p>
@@ -204,7 +204,7 @@ function Carte({ q, onFait }: { q: Question; onFait: () => void }) {
           </div>
 
           {erreur && (
-            <p role="alert" className="text-[11px] flex items-start gap-1.5" style={{ color: 'var(--sev-critique)' }}>
+            <p role="alert" className="text-xs flex items-start gap-1.5" style={{ color: 'var(--sev-critique)' }}>
               <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-px" aria-hidden /> {erreur}
             </p>
           )}
@@ -327,7 +327,7 @@ function Inner({ centreId }: { centreId: string }) {
             <div key={p.cle} className="flex items-center gap-2">
               <button type="button" onClick={() => setCreation(c => ({ ...c, bonne_reponse: p.cle }))}
                 title="Désigner comme bonne réponse"
-                className="text-[11px] font-bold rounded-full flex-shrink-0 inline-flex items-center justify-center"
+                className="text-xs font-bold rounded-full flex-shrink-0 inline-flex items-center justify-center"
                 style={{
                   width: 28, height: 28,
                   background: creation.bonne_reponse === p.cle ? 'rgba(16,185,129,0.2)' : 'var(--c-border)',
@@ -358,7 +358,7 @@ function Inner({ centreId }: { centreId: string }) {
               {THEMES_ACADEMIE.map(t => <option key={t.cle} value={t.cle}>{t.libelle}</option>)}
             </select>
           </div>
-          <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
+          <p className="text-xs" style={{ color: 'var(--c-dim)' }}>
             Elle sera créée « en attente de relecture » — y compris celles que vous écrivez vous-même.
           </p>
           <div className="flex gap-2">

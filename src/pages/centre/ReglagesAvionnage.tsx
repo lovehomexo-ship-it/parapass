@@ -255,7 +255,7 @@ function Inner({ centreId, onFermer, onChange }: {
                 <ListOrdered className="w-4 h-4 inline-block mr-1.5 align-[-3px]" aria-hidden />
                 Ordre de sortie automatique
               </h3>
-              <p className="mb-2" style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+              <p className="mb-2" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
                 Le bouton <strong>« Réordonner »</strong> de la planche suit cette
                 liste, du premier sorti au dernier. Un groupe prend le rang de
                 celui de ses membres qui sort le plus tôt, et il sort entier.
@@ -277,7 +277,7 @@ function Inner({ centreId, onFermer, onChange }: {
                     <li key={code} className="flex items-center gap-2 px-2 py-1 rounded-xl"
                       style={{ background: 'var(--n3-fond)', border: '1px solid var(--n3-filet)' }}>
                       <span className="tabular-nums text-right" style={{
-                        width: 22, fontSize: 12, fontWeight: 800, color: 'var(--c-dim)' }}>{i + 1}</span>
+                        width: 22, fontSize: 13, fontWeight: 800, color: 'var(--c-dim)' }}>{i + 1}</span>
                       <span aria-hidden style={{
                         width: 10, height: 10, borderRadius: 3, flexShrink: 0,
                         background: d?.teinte ?? 'var(--n2-bord)' }} />
@@ -286,13 +286,13 @@ function Inner({ centreId, onFermer, onChange }: {
                         color: retiree ? 'var(--c-dim)' : 'var(--c-text)' }}>
                         {d?.libelle ?? code}
                         {retiree && (
-                          <span style={{ fontWeight: 400, fontSize: 11, color: 'var(--c-dim)' }}>
+                          <span style={{ fontWeight: 400, fontSize: 13, color: 'var(--c-dim)' }}>
                             {' · '}retirée, donc jamais rencontrée
                           </span>
                         )}
                       </span>
                       {i === ordre.length - 1 && (
-                        <span style={{ fontSize: 11, color: 'var(--c-muted)' }}>sort en dernier</span>
+                        <span style={{ fontSize: 13, color: 'var(--c-muted)' }}>sort en dernier</span>
                       )}
                       <button type="button" disabled={occupe || i === 0}
                         onClick={() => deplacer(i, -1)}
@@ -320,7 +320,7 @@ function Inner({ centreId, onFermer, onChange }: {
                 <div className="mt-2 px-2 py-2 rounded-xl" style={{
                   borderLeft: `5px solid ${SEVERITE_COULEUR.vigilance}`,
                   background: 'color-mix(in srgb, var(--sev-vigilance) 8%, transparent)' }}>
-                  <p style={{ fontSize: 12, color: 'var(--c-text2)' }}>
+                  <p style={{ fontSize: 13, color: 'var(--c-text2)' }}>
                     Ces disciplines ne figurent pas dans l’ordre : elles
                     sortiraient <strong>après tout le monde</strong>, largueur inclus.
                     Placez-les.
@@ -337,7 +337,7 @@ function Inner({ centreId, onFermer, onChange }: {
                           ecrireOrdre(liste);
                         }}
                         className="px-2 py-1 rounded-lg"
-                        style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text)',
+                        style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text)',
                                  border: `1px solid ${d.teinte ?? 'var(--n2-bord)'}` }}>
                         <Plus className="w-3 h-3 inline-block mr-1 align-[-1px]" aria-hidden />
                         {d.libelle}
@@ -357,7 +357,7 @@ function Inner({ centreId, onFermer, onChange }: {
                     ...ORDRE_CONSEILLE.filter(c => catalogue.some(d => d.code === c)),
                     ...catalogue.map(d => d.code).filter(c => !ORDRE_CONSEILLE.includes(c)),
                   ])}
-                className="mt-2" style={{ ...action('texte'), minHeight: 32, fontSize: 12 }}>
+                className="mt-2" style={{ ...action('texte'), minHeight: 32, fontSize: 13 }}>
                 <RotateCcw className="w-3.5 h-3.5" aria-hidden /> Rétablir l’ordre conseillé
               </button>
             </section>
@@ -365,7 +365,7 @@ function Inner({ centreId, onFermer, onChange }: {
             {/* ── Les disciplines proposées ─────────────────────────────── */}
             <section>
               <h3 style={{ ...enTeteSection, marginBottom: 6 }}>Disciplines proposées</h3>
-              <p className="mb-2" style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+              <p className="mb-2" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
                 Ce que ce centre propose à l’avionnage. Retirer une discipline ne
                 l’efface nulle part : les sauts passés la gardent, et un saut en
                 cours continue de l’afficher.
@@ -399,17 +399,17 @@ function Inner({ centreId, onFermer, onChange }: {
                                  border: '1px solid var(--n2-bord)', borderRadius: 8, cursor: 'pointer' }} />
 
                       {d.radio_attendue && (
-                        <span style={{ fontSize: 11, color: 'var(--c-muted)' }}>radio attendue</span>
+                        <span style={{ fontSize: 13, color: 'var(--c-muted)' }}>radio attendue</span>
                       )}
                       {d.propre && (
-                        <span style={{ fontSize: 11, color: 'var(--c-dim)' }}>propre à votre centre</span>
+                        <span style={{ fontSize: 13, color: 'var(--c-dim)' }}>propre à votre centre</span>
                       )}
 
                       <button type="button" disabled={occupe}
                         onClick={() => basculerDiscipline(d.code, !actif)}
                         aria-pressed={actif}
                         className="ml-auto px-2 py-1 rounded-lg"
-                        style={{ fontSize: 12, fontWeight: 700,
+                        style={{ fontSize: 13, fontWeight: 700,
                           color: actif ? SEVERITE_COULEUR.conforme : 'var(--c-dim)',
                           border: `1px ${actif ? 'solid' : 'dashed'} ${actif ? SEVERITE_COULEUR.conforme : 'var(--n2-bord)'}` }}>
                         {actif ? 'proposée' : 'retirée'}
@@ -422,7 +422,7 @@ function Inner({ centreId, onFermer, onChange }: {
               {/* Créer une discipline que le catalogue commun n'a pas. Elle
                   appartient au centre : les autres ne la voient pas. */}
               <div className="flex items-end gap-2 flex-wrap mt-2">
-                <label style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                <label style={{ fontSize: 13, color: 'var(--c-muted)' }}>
                   Nouvelle discipline
                   <input type="text" value={nouvelleDiscipline}
                     onChange={e => setNouvelleDiscipline(e.target.value)}
@@ -449,7 +449,7 @@ function Inner({ centreId, onFermer, onChange }: {
               <h3 style={{ ...enTeteSection, marginBottom: 6 }}>
                 Parc de voiles du centre
               </h3>
-              <p className="mb-2" style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+              <p className="mb-2" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
                 C’est le <strong>même inventaire</strong> que le module Pliage : une seule
                 liste, deux écrans. Vous n’avez pas besoin du module Pliage pour
                 tenir votre parc — il ne gouverne que le travail de pliage.
@@ -475,13 +475,13 @@ function Inner({ centreId, onFermer, onChange }: {
                           </span>
                         )}
                         {s.numero_serie && (
-                          <span style={{ color: 'var(--c-dim)', fontWeight: 400, fontSize: 11 }}>
+                          <span style={{ color: 'var(--c-dim)', fontWeight: 400, fontSize: 13 }}>
                             {' · n° '}{s.numero_serie}
                           </span>
                         )}
                       </span>
                       <label className="flex items-center gap-1"
-                        style={{ fontSize: 12,
+                        style={{ fontSize: 13,
                                  color: s.taille_voile_ft2 == null ? SEVERITE_COULEUR.vigilance : 'var(--c-muted)' }}>
                         <span className="sr-only">Surface de {s.nom_court ?? 'ce sac'}, en ft²</span>
                         <input type="number" min={50} max={500} step={1}
@@ -492,13 +492,13 @@ function Inner({ centreId, onFermer, onChange }: {
                               ecrireSurface(s.id, e.target.value);
                           }}
                           className="px-1.5 rounded-lg text-right"
-                          style={{ width: 78, minHeight: 30, fontSize: 12, background: 'var(--c-input)',
+                          style={{ width: 78, minHeight: 30, fontSize: 13, background: 'var(--c-input)',
                                    color: 'var(--c-text)',
                                    border: `1px solid ${s.taille_voile_ft2 == null ? SEVERITE_COULEUR.vigilance : 'var(--n2-bord)'}` }} />
                         ft²
                       </label>
                       {s.statut !== 'en_service' && (
-                        <span style={{ fontSize: 11, color: 'var(--c-dim)' }}>{s.statut}</span>
+                        <span style={{ fontSize: 13, color: 'var(--c-dim)' }}>{s.statut}</span>
                       )}
                     </li>
                   ))}
@@ -506,7 +506,7 @@ function Inner({ centreId, onFermer, onChange }: {
               )}
 
               <div className="flex items-end gap-2 flex-wrap mt-2">
-                <label style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                <label style={{ fontSize: 13, color: 'var(--c-muted)' }}>
                   Nouveau sac
                   <input type="text" value={nouveauNom} onChange={e => setNouveauNom(e.target.value)}
                     placeholder="ex : Club 39" disabled={occupe}
@@ -514,7 +514,7 @@ function Inner({ centreId, onFermer, onChange }: {
                     style={{ width: 160, minHeight: 32, fontSize: 13, background: 'var(--c-input)',
                              color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
                 </label>
-                <label style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                <label style={{ fontSize: 13, color: 'var(--c-muted)' }}>
                   Surface (ft²)
                   <input type="number" min={50} max={500} step={1} value={nouvelleSurface}
                     onChange={e => setNouvelleSurface(e.target.value)} disabled={occupe}
@@ -534,7 +534,7 @@ function Inner({ centreId, onFermer, onChange }: {
               <h3 style={{ ...enTeteSection, marginBottom: 6 }}>
                 Surface de voilure minimale — DT 48
               </h3>
-              <p className="mb-2 flex items-start gap-1.5" style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+              <p className="mb-2 flex items-start gap-1.5" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
                 <BookOpen className="w-3.5 h-3.5 flex-shrink-0 mt-px" aria-hidden />
                 <span>
                   {SOURCE_DT48}. Le tableau se lit avec le <strong>poids nu</strong> :
@@ -547,7 +547,7 @@ function Inner({ centreId, onFermer, onChange }: {
                   l’avionnage — deux calculs auraient fini par diverger. */}
               <div className="flex items-end gap-2 flex-wrap px-2 py-2 rounded-xl"
                 style={{ background: 'var(--n3-fond)', border: '1px solid var(--n3-filet)' }}>
-                <label style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                <label style={{ fontSize: 13, color: 'var(--c-muted)' }}>
                   Poids nu (kg)
                   <input type="number" min={30} max={160} step={1} value={poids}
                     onChange={e => setPoids(e.target.value)}
@@ -555,7 +555,7 @@ function Inner({ centreId, onFermer, onChange }: {
                     style={{ width: 90, minHeight: 32, fontSize: 13, background: 'var(--c-input)',
                              color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
                 </label>
-                <label style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                <label style={{ fontSize: 13, color: 'var(--c-muted)' }}>
                   Nombre de sauts
                   <input type="number" min={0} max={20000} step={10} value={sauts}
                     onChange={e => setSauts(e.target.value)}
@@ -578,7 +578,7 @@ function Inner({ centreId, onFermer, onChange }: {
                       </span>
                     )}
                     {(resultat.poids_ecrete || resultat.hors_tableau_sauts) && (
-                      <span className="block" style={{ fontSize: 11.5, color: SEVERITE_COULEUR.vigilance }}>
+                      <span className="block" style={{ fontSize: 13, color: SEVERITE_COULEUR.vigilance }}>
                         {resultat.poids_ecrete && 'Poids hors fourchette 60–110 kg : valeur extrême appliquée, comme le prévoit le texte. '}
                         {resultat.hors_tableau_sauts && 'Au-delà de 1600 sauts le tableau ne publie rien : dernière colonne appliquée — c’est une lecture prudente, pas une règle écrite.'}
                       </span>
@@ -587,7 +587,7 @@ function Inner({ centreId, onFermer, onChange }: {
                 )}
               </div>
 
-              <p className="mt-1.5" style={{ fontSize: 11.5, color: 'var(--c-dim)' }}>
+              <p className="mt-1.5" style={{ fontSize: 13, color: 'var(--c-dim)' }}>
                 Le pare-feu de l’avionnage applique ce même tableau avant
                 l’embarquement : une voile sous le minimum bloque la planche.
                 L’aménagement de −11 % s’accorde par licencié, et ParaPass

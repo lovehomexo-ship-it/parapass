@@ -116,7 +116,7 @@ export function pastille(s: Severite): CSSProperties {
     background: `color-mix(in srgb, ${SEVERITE_COULEUR[s]} 14%, transparent)`,
     padding: '2px 8px',
     borderRadius: 999,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 600,
   };
 }

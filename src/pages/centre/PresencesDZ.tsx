@@ -24,7 +24,7 @@ export function PresencesDZ({ dzId }: { dzId: string }) {
         <h2 className="text-sm font-bold text-white">
           {rows.length === 0 ? 'Présents aujourd\'hui' : `${rows.length} parachutiste${rows.length > 1 ? 's' : ''} présent${rows.length > 1 ? 's' : ''}`}
         </h2>
-        <span className="text-[10px] ml-auto" style={{ color: 'var(--c-dim)' }}>mise à jour en direct</span>
+        <span className="text-xs ml-auto" style={{ color: 'var(--c-dim)' }}>mise à jour en direct</span>
       </div>
 
       {error && (
@@ -52,7 +52,7 @@ export function PresencesDZ({ dzId }: { dzId: string }) {
                 {/* La fin déclarée est indicative : dépassée = signalée, jamais masquée.
                     Seul « Je quitte » ou le retrait DT sort de la liste. */}
                 {hhmm(p.heure_fin) < new Date().toTimeString().substring(0, 5) && (
-                  <span className="text-[10px]" style={{ color: 'var(--c-dim)' }}>(fin déclarée dépassée)</span>
+                  <span className="text-xs" style={{ color: 'var(--c-dim)' }}>(fin déclarée dépassée)</span>
                 )}
               </span>
               <span className="text-xs" style={{ color: 'var(--c-text2)' }}>
@@ -60,7 +60,7 @@ export function PresencesDZ({ dzId }: { dzId: string }) {
                   ? `Location — voile n°${p.voile_location_ref ?? '?'}`
                   : `Voile perso — ${p.voile_perso_nom ?? p.voile_perso_libre ?? 'non précisée'}`}
               </span>
-              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1.5 ml-auto"
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1.5 ml-auto"
                 style={p.briefingAcquitte
                   ? { background: 'rgba(16,185,129,0.12)', color: 'var(--sev-conforme)', border: '1px solid rgba(16,185,129,0.3)' }
                   : { background: 'rgba(249,115,22,0.12)', color: '#FDBA74', border: '1px solid rgba(249,115,22,0.35)' }}>

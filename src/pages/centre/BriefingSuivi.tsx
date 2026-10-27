@@ -92,7 +92,7 @@ export function BriefingSuiviDuJour({ centreId }: { centreId: string }) {
         <p className="text-sm font-bold" style={{ color: 'var(--c-text)' }}>
           {acquittes.length} / {membres.length} licenciés ont pris connaissance
         </p>
-        <span className="text-[11px] ml-auto" style={{ color: 'var(--c-dim)' }}>mise à jour en direct</span>
+        <span className="text-xs ml-auto" style={{ color: 'var(--c-dim)' }}>mise à jour en direct</span>
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
@@ -115,7 +115,7 @@ export function BriefingSuiviDuJour({ centreId }: { centreId: string }) {
           <h3 className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: 'var(--c-dim)' }}>
             <Clock className="w-3.5 h-3.5 inline mr-1" />Pas encore consulté
           </h3>
-          <p className="text-[10px] mb-3" style={{ color: 'var(--c-dim)' }}>À titre informatif — l'appli ne relance personne.</p>
+          <p className="text-xs mb-3" style={{ color: 'var(--c-dim)' }}>À titre informatif — l'appli ne relance personne.</p>
           {nonAcquittes.length === 0 ? (
             <p className="text-xs" style={{ color: 'var(--sev-conforme)' }}>Tout le monde a acquitté <PartyPopper className="w-3 h-3 inline-block align-[-1px]" aria-hidden /></p>
           ) : (
@@ -188,7 +188,7 @@ export function BriefingArchive({ centreId, circuits }: { centreId: string; circ
 
   return (
     <div className="space-y-2">
-      <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
+      <p className="text-xs" style={{ color: 'var(--c-dim)' }}>
         Aucun briefing n'est jamais supprimé : l'archive prouve que l'information a été diffusée, et à qui.
       </p>
       {briefings.map(b => {

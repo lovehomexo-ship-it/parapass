@@ -146,7 +146,7 @@ function OperationnelInner({ centreId }: { centreId: string }) {
           <Plane className="w-4 h-4" style={{ color: 'var(--action-texte)' }} aria-hidden />
           Contenu opérationnel du jour
           {revision > 1 && (
-            <span className="text-[11px] font-semibold px-1.5 rounded-full"
+            <span className="text-xs font-semibold px-1.5 rounded-full"
               style={{ background: 'rgba(251,146,60,0.15)', color: 'var(--accent-texte)' }}>
               révision {revision}
             </span>
@@ -178,7 +178,7 @@ function OperationnelInner({ centreId }: { centreId: string }) {
       <div className="rounded-xl px-3 py-2.5 flex items-start gap-2"
         style={{ background: 'rgba(251,146,60,0.10)', border: '1px solid rgba(251,146,60,0.30)' }}>
         <History className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--accent-texte)' }} aria-hidden />
-        <p className="text-[11px]" style={{ color: 'var(--c-text2)' }}>
+        <p className="text-xs" style={{ color: 'var(--c-text2)' }}>
           Un briefing publié n’est pas modifiable. Enregistrer crée la
           <strong> révision {revision + 1}</strong>.
           {acquittements > 0 && (

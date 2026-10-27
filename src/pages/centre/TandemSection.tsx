@@ -341,13 +341,13 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
                                 <p className="text-sm font-semibold" style={{ color: 'var(--c-text)' }}>
                                   {b.passager_nom || b.offreur_nom}
                                 </p>
-                                <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold" style={{ background: badge.bg, color: badge.color }}>{badge.label}</span>
-                                {b.avec_video && <span className="text-[10px] px-1.5 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(139,92,246,0.12)', color: 'var(--c-pliage-fort)' }}><Video className="w-3 h-3" aria-hidden />Vidéo</span>}
-                                {b.avec_photos && <span className="text-[10px] px-1.5 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(249,115,22,0.12)', color: 'var(--accent-texte)' }}><Camera className="w-3 h-3" aria-hidden />Photos</span>}
+                                <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: badge.bg, color: badge.color }}>{badge.label}</span>
+                                {b.avec_video && <span className="text-xs px-1.5 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(139,92,246,0.12)', color: 'var(--c-pliage-fort)' }}><Video className="w-3 h-3" aria-hidden />Vidéo</span>}
+                                {b.avec_photos && <span className="text-xs px-1.5 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(249,115,22,0.12)', color: 'var(--accent-texte)' }}><Camera className="w-3 h-3" aria-hidden />Photos</span>}
                                 {b.dossier_complete ? (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.1)', color: 'var(--sev-conforme)' }}>✓ Dossier OK</span>
+                                  <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.1)', color: 'var(--sev-conforme)' }}>✓ Dossier OK</span>
                                 ) : (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(245,158,11,0.1)', color: 'var(--sev-vigilance)' }}><AlertTriangle className="w-3 h-3" aria-hidden />Dossier incomplet</span>
+                                  <span className="text-xs px-1.5 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(245,158,11,0.1)', color: 'var(--sev-vigilance)' }}><AlertTriangle className="w-3 h-3" aria-hidden />Dossier incomplet</span>
                                 )}
                               </div>
                               {/* Solde + paiement */}
@@ -355,19 +355,19 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
                                 {b.statut_paiement_solde === 'non_paye' && b.montant_solde > 0 && (
                                   <button
                                     onClick={() => marquerSoldeComptoir(b.id)}
-                                    className="text-[11px] px-2.5 py-1 rounded-lg font-semibold"
+                                    className="text-xs px-2.5 py-1 rounded-lg font-semibold"
                                     style={{ background: 'rgba(249,115,22,0.12)', color: 'var(--accent-texte)', border: '1px solid rgba(249,115,22,0.25)', cursor: 'pointer' }}
                                   >
                                     Encaisser {b.montant_solde} € comptoir
                                   </button>
                                 )}
                                 {b.statut_paiement_solde !== 'non_paye' && (
-                                  <span className="text-[11px]" style={{ color: 'var(--sev-conforme)' }}>✓ Solde réglé</span>
+                                  <span className="text-xs" style={{ color: 'var(--sev-conforme)' }}>✓ Solde réglé</span>
                                 )}
                                 {b.statut !== 'effectue' && b.arrive && (
                                   <button
                                     onClick={() => marquerEffectue(b.id)}
-                                    className="text-[11px] px-2.5 py-1 rounded-lg font-semibold"
+                                    className="text-xs px-2.5 py-1 rounded-lg font-semibold"
                                     style={{ background: 'rgba(96,165,250,0.12)', color: 'var(--action-texte)', border: '1px solid rgba(96,165,250,0.25)', cursor: 'pointer' }}
                                   >
                                     ✓ Marquer effectué
@@ -383,7 +383,7 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
                             <select
                               value={b.moniteur_id ?? ''}
                               onChange={e => affecterMoniteur(b.id, e.target.value)}
-                              style={{ fontSize: 12, padding: '4px 8px', borderRadius: 7, border: '1px solid var(--c-border)', background: 'var(--c-hover)', color: 'var(--c-text)', outline: 'none', cursor: 'pointer' }}
+                              style={{ fontSize: 13, padding: '4px 8px', borderRadius: 7, border: '1px solid var(--c-border)', background: 'var(--c-hover)', color: 'var(--c-text)', outline: 'none', cursor: 'pointer' }}
                             >
                               <option value="">— Moniteur tandem —</option>
                               {licencies.map(l => (
@@ -395,7 +395,7 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
                                 href={`/tandem/preparer/${b.dossier_token}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-[11px] px-2 py-1 rounded-lg"
+                                className="text-xs px-2 py-1 rounded-lg"
                                 style={{ background: 'var(--c-hover)', color: 'var(--c-muted)', textDecoration: 'none' }}
                               >
                                 <ClipboardList className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> Dossier
@@ -471,7 +471,7 @@ function OngletBons({ centreId }: { centreId: string }) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="font-mono text-sm font-bold" style={{ color: 'var(--c-text)' }}>{b.code}</span>
-                      <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold" style={{ background: st.bg, color: st.color }}>{st.label}</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: st.bg, color: st.color }}>{st.label}</span>
                     </div>
                     <p className="text-xs" style={{ color: 'var(--c-muted)' }}>
                       {b.acheteur_nom}{b.beneficiaire_nom ? ` → ${b.beneficiaire_nom}` : ''} · {b.formule.replace('_', '+').replace('montant_libre', 'libre')}
@@ -479,7 +479,7 @@ function OngletBons({ centreId }: { centreId: string }) {
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-sm font-bold" style={{ color: 'var(--c-text)' }}>{b.montant} €</p>
-                    <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>Exp. {new Date(b.validite_jusqu_au).toLocaleDateString('fr-FR')}</p>
+                    <p className="text-xs" style={{ color: 'var(--c-dim)' }}>Exp. {new Date(b.validite_jusqu_au).toLocaleDateString('fr-FR')}</p>
                   </div>
                 </div>
               );

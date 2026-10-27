@@ -146,12 +146,12 @@ export function RechercheLicencie({ centreId, rotations, aptitudes, dejaABord, o
                     <button key={r.id} type="button" disabled={occupe !== null}
                       onClick={() => embarquer(r.id, l.id)}
                       className="disabled:opacity-50"
-                      style={{ ...action('secondaire'), minHeight: 36, fontSize: 12, padding: '0 10px' }}>
+                      style={{ ...action('secondaire'), minHeight: 36, fontSize: 13, padding: '0 10px' }}>
                       <UserPlus className="w-3.5 h-3.5" aria-hidden /> Rot. {r.numero}
                     </button>
                   ))}
                   {dispo.length === 0 && (
-                    <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>aucune planche avec de la place</span>
+                    <span style={{ fontSize: 13, color: 'var(--c-muted)' }}>aucune planche avec de la place</span>
                   )}
                 </div>
               </li>

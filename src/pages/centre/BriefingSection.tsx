@@ -539,7 +539,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
             )}
           </div>
           {tool === 'trace' && (
-            <p className="text-[11px] mb-2" style={{ color: 'var(--c-dim)' }}>
+            <p className="text-xs mb-2" style={{ color: 'var(--c-dim)' }}>
               Chaque tap ajoute un point (du début de circuit vers la zone de posé). Glissez un point pour le déplacer, appui long pour le supprimer.
             </p>
           )}
@@ -694,7 +694,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
               return (
                 <button
                   onClick={() => { setVentDir(dirPrev); setVentVitesse(String(ktPrev)); }}
-                  className="text-[11px] underline underline-offset-2 mt-1"
+                  className="text-xs underline underline-offset-2 mt-1"
                   style={{ color: 'var(--action-texte)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                 >
                   Utiliser le vent prévu : {dirPrev}° · {ktPrev} kt (prévision indicative — à confirmer)
@@ -722,7 +722,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
                     border: `1px solid ${circuitActifId === c.id ? '#2563EB' : 'var(--c-border-f)'}`,
                   }}>
                   {c.nom}
-                  <span className="block text-[10px] font-normal opacity-70">
+                  <span className="block text-xs font-normal opacity-70">
                     {c.sens === 'main_gauche' ? 'main gauche' : 'main droite'} · début {c.altitude_debut_m} m
                     {c.vent_reference_deg !== null && ` · vent de réf. ${c.vent_reference_deg}°`}
                   </span>
@@ -736,7 +736,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
                   circuit choisi n'est pas celui que ce vent appelle, et le DT
                   tranche — c'est lui qui voit le terrain. */}
               {discordanceVent !== null && (
-                <p className="flex items-start gap-1.5 mt-0.5" style={{ fontSize: 12, color: SEVERITE_COULEUR.vigilance }}>
+                <p className="flex items-start gap-1.5 mt-0.5" style={{ fontSize: 13, color: SEVERITE_COULEUR.vigilance }}>
                   <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-px" aria-hidden />
                   <span>
                     Vent du jour {ventDir}° — ce circuit est prévu pour {discordanceVent.reference}°
@@ -748,7 +748,7 @@ export function BriefingSection({ centreId }: { centreId: string }) {
                 </p>
               )}
               {circuits.filter(c => c.actif).length > 1 && (
-                <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
+                <p className="text-xs" style={{ color: 'var(--c-dim)' }}>
                   Un clic affiche le circuit enregistré sur la carte : on publie ce qu’on voit.
                 </p>
               )}
@@ -757,14 +757,14 @@ export function BriefingSection({ centreId }: { centreId: string }) {
 
           {/* Sens d'atterrissage dérivé, lecture seule */}
           <div className="rounded-lg px-3 py-2.5" style={{ background: 'var(--c-border)', border: '1px solid var(--c-border-f)' }}>
-            <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>Sens d'atterrissage (dérivé du tracé, indicatif)</p>
+            <p className="text-xs" style={{ color: 'var(--c-dim)' }}>Sens d'atterrissage (dérivé du tracé, indicatif)</p>
             <p className="text-sm font-bold" style={{ color: 'var(--c-text)' }}>
               {circuitActif && sensAtterrissageDerive(circuitActif.trace) !== null
                 ? `${sensAtterrissageDerive(circuitActif.trace)}°`
                 : '— (tracé incomplet)'}
             </p>
             {editCircuitId === circuitActifId && sensDerive !== null && draftCircuit && (
-              <p className="text-[10px] mt-0.5" style={{ color: 'var(--c-dim)' }}>Brouillon en cours : {sensDerive}°</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--c-dim)' }}>Brouillon en cours : {sensDerive}°</p>
             )}
           </div>
 

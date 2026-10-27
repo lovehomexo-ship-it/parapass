@@ -262,7 +262,7 @@ function Inner({ centreId, centreNom, logoUrl, presents, sauts, enFile, avionnag
             {/* La piste et ses heures. */}
             <div className="absolute left-0 right-0" style={{ top: 44, height: 4, borderRadius: 4, background: 'var(--c-hover)' }} />
             {graduations.map((h, i) => (
-              <span key={h} className={`absolute text-[12px] tabular-nums whitespace-nowrap ${i === 0 ? '' : i === graduations.length - 1 ? '-translate-x-full' : '-translate-x-1/2'}`}
+              <span key={h} className={`absolute text-[13px] tabular-nums whitespace-nowrap ${i === 0 ? '' : i === graduations.length - 1 ? '-translate-x-full' : '-translate-x-1/2'}`}
                 style={{ left: pos(h), top: 94, color: 'var(--c-dim)' }}>{h / 60} h</span>
             ))}
             {/* Ce qui est déjà passé est rempli : on lit l'avancement de la journée. */}
@@ -309,7 +309,7 @@ function Inner({ centreId, centreNom, logoUrl, presents, sauts, enFile, avionnag
                 }
                 finRangee[rang] = x + (court ? COURT : LARGE) / 2;
                 const etiquette = (
-                  <span className="text-[12px] font-bold rounded-full px-2 inline-flex items-center gap-1 whitespace-nowrap"
+                  <span className="text-[13px] font-bold rounded-full px-2 inline-flex items-center gap-1 whitespace-nowrap"
                     style={{ lineHeight: '24px', color: '#fff', background: couleur }}>
                     {!court && <Plane className="w-3 h-3" aria-hidden />} R{r.numero}{!court && cap ? ` · ${p}/${cap}` : ''}
                   </span>

@@ -80,9 +80,9 @@ function DemoJourneeInner({ centreId, centreNom, onDone }: { centreId: string; c
       style={{ background: 'rgba(148,163,184,0.05)', border: '1px dashed var(--c-border-f)' }}>
       <div className="flex items-center gap-1.5">
         <FlaskConical className="w-3.5 h-3.5" style={{ color: 'var(--c-dim)' }} />
-        <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Zone de test — hors production</span>
+        <span className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Zone de test — hors production</span>
       </div>
-      <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
+      <p className="text-xs" style={{ color: 'var(--c-dim)' }}>
         Un seul bouton pour toute la journée : briefing, dossiers, planches d'avionnage, sauts,
         pliages, tandem et messagerie — sur les licenciés de ce centre, les mêmes partout.
         Rejouable tous les jours : la démonstration précédente est retirée avant d'être refaite.
@@ -96,14 +96,14 @@ function DemoJourneeInner({ centreId, centreNom, onDone }: { centreId: string; c
         {/* Le retrait n'est PAS un second bouton d'égale importance : c'est la
             sortie de scène, une fois la démonstration finie. */}
         <button onClick={() => run('clr')} disabled={busy !== null}
-          className="text-[11px] underline disabled:opacity-50"
+          className="text-xs underline disabled:opacity-50"
           style={{ color: 'var(--c-dim)', minHeight: 32 }}>
           {busy === 'clr' ? 'Retrait…' : 'tout retirer'}
         </button>
       </div>
       {dialogue}
-      {info && <p className="text-[11px] font-medium" style={{ color: 'var(--sev-conforme)' }}>{info}</p>}
-      {error && <p role="alert" className="text-[11px] font-medium" style={{ color: 'var(--sev-critique)' }}>{error}</p>}
+      {info && <p className="text-xs font-medium" style={{ color: 'var(--sev-conforme)' }}>{info}</p>}
+      {error && <p role="alert" className="text-xs font-medium" style={{ color: 'var(--sev-critique)' }}>{error}</p>}
     </div>
   );
 }

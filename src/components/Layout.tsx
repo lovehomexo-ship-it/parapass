@@ -204,7 +204,7 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
                       {accent && <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'inherit' }} />}
                       {label}
                       {badge != null && badge > 0 && (
-                        <span className="ml-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                        <span className="ml-0.5 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
                           {badge > 99 ? '99+' : badge}
                         </span>
                       )}
@@ -237,7 +237,7 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
                   >
                     <Bell className="w-5 h-5" />
                     {(unreadCount + alertesCtx.filter((a) => a.urgence === 'critique' && !acquittees.includes(a.id)).length) > 0 && (
-                      <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                      <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
                         {Math.min(9, unreadCount + alertesCtx.filter((a) => a.urgence === 'critique' && !acquittees.includes(a.id)).length) === 9 ? '9+' : unreadCount + alertesCtx.filter((a) => a.urgence === 'critique' && !acquittees.includes(a.id)).length}
                       </span>
                     )}
@@ -276,7 +276,7 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
                         <p className="text-sm font-semibold" style={{ color: 'var(--c-text)' }}>{profile?.prenom} {profile?.nom}</p>
                         <p className="text-xs mt-0.5 capitalize" style={{ color: 'var(--c-muted)' }}>{profile?.role?.replace('_', ' ')}</p>
                         {statutBadge && (
-                          <span className="inline-block mt-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: statutBadge.bg, color: statutBadge.color, border: `1px solid ${statutBadge.border}` }}>
+                          <span className="inline-block mt-1.5 text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: statutBadge.bg, color: statutBadge.color, border: `1px solid ${statutBadge.border}` }}>
                             {statutBadge.label}
                           </span>
                         )}
@@ -314,7 +314,7 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
                     style={{ color: '#F97316' }}
                   >
                     <CheckCircle className="w-5 h-5" />
-                    <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                    <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
                       {sautsEnAttente > 9 ? '9+' : sautsEnAttente}
                     </span>
                   </Link>
@@ -329,7 +329,7 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
                   >
                     <Bell className="w-5 h-5" />
                     {(unreadCount + alertesCtx.filter((a) => a.urgence === 'critique' && !acquittees.includes(a.id)).length) > 0 && (
-                      <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                      <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
                         {Math.min(9, unreadCount + alertesCtx.filter((a) => a.urgence === 'critique' && !acquittees.includes(a.id)).length) === 9 ? '9+' : unreadCount + alertesCtx.filter((a) => a.urgence === 'critique' && !acquittees.includes(a.id)).length}
                       </span>
                     )}
@@ -395,7 +395,7 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
                     {profile?.role?.replace('_', ' ')}
                   </p>
                   {statutBadge && (
-                    <span className="inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: statutBadge.bg, color: statutBadge.color, border: `1px solid ${statutBadge.border}` }}>
+                    <span className="inline-block mt-1 text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: statutBadge.bg, color: statutBadge.color, border: `1px solid ${statutBadge.border}` }}>
                       {statutBadge.label}
                     </span>
                   )}
@@ -538,18 +538,18 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
               <span style={{ position: 'relative', display: 'inline-flex' }}>
                 {a.icon}
                 {a.badge && (
-                  <span className="absolute text-[10px] font-bold px-1 rounded-full"
+                  <span className="absolute text-xs font-bold px-1 rounded-full"
                     style={{ top: -4, left: '100%', marginLeft: -6,
-                             background: '#F97316', color: '#fff', lineHeight: '15px',
-                             minWidth: 15, textAlign: 'center' }}>
+                             background: '#F97316', color: '#fff', lineHeight: '18px',
+                             minWidth: 18, textAlign: 'center' }}>
                     {a.badge}
                   </span>
                 )}
               </span>
-              {/* « Avionnage » tient sur 94 px à 11 px, mais de justesse : on
+              {/* « Avionnage » tient sur 94 px à 12 px, mais de justesse : on
                   interdit le retour à la ligne, qui décalerait la hauteur de
                   cette seule cellule et ferait boiter toute la barre. */}
-              <span className="text-[11px] font-semibold" style={{ whiteSpace: 'nowrap' }}>{a.label}</span>
+              <span className="text-xs font-semibold" style={{ whiteSpace: 'nowrap' }}>{a.label}</span>
             </button>
           ))}
         </nav>
@@ -557,7 +557,7 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
 
       {/* ── Footer ──────────────────────────────────────────────────────────── */}
       <footer style={{ background: 'var(--c-nav)', borderTop: '1px solid var(--c-border-s)', padding: '16px 24px' }}>
-        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 items-center gap-3 text-center" style={{ color: 'var(--c-muted)', fontSize: '11px' }}>
+        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 items-center gap-3 text-center" style={{ color: 'var(--c-muted)', fontSize: '12px' }}>
           <div className="flex items-center justify-center sm:justify-start gap-2">
             <img src="/logo-parapass.webp" alt="ParaPass" className="h-5 w-auto opacity-50" />
             <span>© 2026 ParaPass</span>
@@ -612,7 +612,7 @@ function NavIconBtn({
     >
       {children}
       {badge != null && badge > 0 && (
-        <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+        <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
           {badge > 9 ? '9+' : badge}
         </span>
       )}
@@ -794,7 +794,7 @@ function NotifPanel({
         {/* Alertes critiques */}
         {alertesCritiques.length > 0 && (
           <div className="px-3 pt-3 pb-1 space-y-2">
-            <p className="text-[10px] font-bold uppercase tracking-wider px-1" style={{ color: '#F87171' }}>Alertes critiques</p>
+            <p className="text-xs font-bold uppercase tracking-wider px-1" style={{ color: '#F87171' }}>Alertes critiques</p>
             {alertesCritiques.map((a) => {
               const enriched = enrichirAlerte(a);
               return (
@@ -835,7 +835,7 @@ function NotifPanel({
         ) : notifications.length === 0 ? null : (
           <>
             {alertesCritiques.length > 0 && (
-              <p className="text-[10px] font-bold uppercase tracking-wider px-4 pt-3 pb-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Historique</p>
+              <p className="text-xs font-bold uppercase tracking-wider px-4 pt-3 pb-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Historique</p>
             )}
             {notifications.slice(0, 20).map((notif) => (
               <div

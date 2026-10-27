@@ -793,7 +793,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
           </button>
         ) : (
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>Nouvelle planche sur</span>
+            <span style={{ fontSize: 13, color: 'var(--c-muted)' }}>Nouvelle planche sur</span>
             {aeronefs.map(a => (
               <button key={a.id} type="button" disabled={occupe}
                 onClick={() => nouvellePlanche(a.id)}

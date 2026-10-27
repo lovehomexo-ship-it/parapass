@@ -128,12 +128,12 @@ function CarteSeance({ seance, enc }: { seance: SeanceJour; enc: ReturnType<type
       <div className="flex items-center gap-2 mb-1 flex-wrap">
         <h3 className="text-sm font-bold text-white">{TYPE_SEANCE_LABELS[seance.type_seance]}</h3>
         {complete ? (
-          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1"
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1"
             style={{ background: 'rgba(16,185,129,0.12)', color: 'var(--sev-conforme)', border: '1px solid rgba(16,185,129,0.3)' }}>
             <CheckCircle className="w-3 h-3" /> Encadrement réglementaire
           </span>
         ) : (
-          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1"
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1"
             style={{ background: 'rgba(245,158,11,0.12)', color: '#FCD34D', border: '1px solid rgba(245,158,11,0.35)' }}>
             <AlertTriangle className="w-3 h-3" /> Encadrement incomplet : {manques.length} exigence{manques.length > 1 ? 's' : ''}
           </span>
@@ -239,7 +239,7 @@ function AnnuaireMoniteurs({ centreId, enc }: { centreId: string; enc: ReturnTyp
             {qs.map(q => {
               const expiree = q.date_expiration && new Date(q.date_expiration) < new Date();
               return (
-                <span key={q.id} className="text-[11px] px-2.5 py-1 rounded-full inline-flex items-center gap-1.5"
+                <span key={q.id} className="text-xs px-2.5 py-1 rounded-full inline-flex items-center gap-1.5"
                   style={{
                     background: !q.actif ? 'rgba(148,163,184,0.1)' : expiree ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
                     color: !q.actif ? '#94A3B8' : expiree ? 'var(--sev-critique)' : 'var(--sev-conforme)',

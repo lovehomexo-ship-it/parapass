@@ -192,7 +192,7 @@ function DecisionInner({ centreId }: { centreId: string }) {
           à l'écran. */}
       <h2 style={enTeteSection}>
         Décision du jour
-        <span style={{ fontSize: 12, fontWeight: 500, letterSpacing: 0, textTransform: 'none',
+        <span style={{ fontSize: 13, fontWeight: 500, letterSpacing: 0, textTransform: 'none',
                        color: 'var(--c-muted)', marginLeft: 8 }}>
           l’appli informe, vous décidez
         </span>
@@ -248,12 +248,12 @@ function DecisionInner({ centreId }: { centreId: string }) {
               {/* P3 — un chiffre de vent sans origine ni heure n'est pas
                   décidable. Ces deux lignes ne sont donc jamais optionnelles. */}
               {ventPrevu && (
-                <p className="mt-1.5" style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                <p className="mt-1.5" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
                   Vent {libelleVent(ventPrevu)}
                 </p>
               )}
               {ventBriefing && detailMeteo && (
-                <p style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                <p style={{ fontSize: 13, color: 'var(--c-muted)' }}>
                   Relevé du jour : {libelleVent(ventBriefing)}
                 </p>
               )}

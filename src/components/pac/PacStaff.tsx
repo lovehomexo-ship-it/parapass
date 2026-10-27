@@ -38,15 +38,15 @@ function StaffInner({ centreId }: { centreId: string }) {
                 className="w-full text-left rounded-xl p-3" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-semibold text-sm" style={{ color: 'var(--c-text)' }}>{e.prenom} {e.nom}</span>
-                  <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(37,99,235,0.15)', color: 'var(--action-texte)' }}>{e.niveauCode}</span>
-                  {e.pretPourBrevetA && <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--sev-conforme)' }}>prêt Brevet A</span>}
-                  {stagne && <span className="text-[11px] inline-flex items-center gap-1" style={{ color: 'var(--sev-vigilance)' }}><AlertTriangle className="w-3 h-3" />{e.sautsDepuisValidation} sauts sans validation</span>}
+                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(37,99,235,0.15)', color: 'var(--action-texte)' }}>{e.niveauCode}</span>
+                  {e.pretPourBrevetA && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--sev-conforme)' }}>prêt Brevet A</span>}
+                  {stagne && <span className="text-xs inline-flex items-center gap-1" style={{ color: 'var(--sev-vigilance)' }}><AlertTriangle className="w-3 h-3" />{e.sautsDepuisValidation} sauts sans validation</span>}
                   <span className="text-xs ml-auto" style={{ color: 'var(--c-dim)' }}>dernier saut {fmt(e.dernierSaut)}</span>
                 </div>
                 <div className="mt-2 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--c-border)' }}>
                   <div className="h-full rounded-full" style={{ width: `${pct}%`, background: '#2563EB' }} />
                 </div>
-                <p className="text-[11px] mt-1" style={{ color: 'var(--c-dim)' }}>{e.acquisTotal}/{e.objectifsTotal} objectifs · {e.niveauCourant}</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--c-dim)' }}>{e.acquisTotal}/{e.objectifsTotal} objectifs · {e.niveauCourant}</p>
               </button>
             );
           })}
@@ -87,7 +87,7 @@ function FicheEleve({ userId, nom, centreId, onBack }: { userId: string; nom: st
 
       {/* Rattacher au saut (optionnel) */}
       <div className="rounded-xl p-3" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
-        <label className="text-[11px] font-semibold" style={{ color: 'var(--c-dim)' }}>Rattacher les validations à un saut (optionnel)</label>
+        <label className="text-xs font-semibold" style={{ color: 'var(--c-dim)' }}>Rattacher les validations à un saut (optionnel)</label>
         <select value={sautChoisi} onChange={e => setSautChoisi(e.target.value)} className="w-full rounded-lg px-3 py-2 text-sm mt-1" style={{ color: 'var(--c-text)',  background: 'var(--c-bg)', border: '1px solid var(--c-border)', minHeight: 44 }}>
           <option value="">— Aucun saut —</option>
           {sauts.map(s => <option key={s.id} value={s.id}>{new Date(s.date_saut).toLocaleDateString('fr-FR')} · {s.programme ?? 'PAC'}</option>)}
@@ -125,7 +125,7 @@ function FicheEleve({ userId, nom, centreId, onBack }: { userId: string; nom: st
           </div>
         </div>
       ))}
-      <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>Chaque validation est signée ({profile?.prenom} {profile?.nom}) et horodatée. Aucune validation automatique.</p>
+      <p className="text-xs" style={{ color: 'var(--c-dim)' }}>Chaque validation est signée ({profile?.prenom} {profile?.nom}) et horodatée. Aucune validation automatique.</p>
     </div>
   );
 }

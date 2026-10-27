@@ -49,46 +49,46 @@ function CycleSVG({ printMode = false }: { printMode?: boolean }) {
       {/* LIBRE → PRIS (haut) */}
       <line x1={libre.x + r} y1={libre.y - 18} x2={pris.x - r - 8} y2={pris.y - 18}
         stroke={libre.color} strokeWidth="2" markerEnd="url(#arrow-libre)" />
-      <text x={(libre.x + pris.x) / 2} y={libre.y - 32} textAnchor="middle" fontSize="11" fill={textColor} fontWeight="600">
+      <text x={(libre.x + pris.x) / 2} y={libre.y - 38} textAnchor="middle" fontSize="14" fill={textColor} fontWeight="600">
         Prendre ce sac
       </text>
       <text x={(libre.x + pris.x) / 2} y={libre.y - 48} textAnchor="middle" fontSize="13">
         
       </text>
-      <text x={(libre.x + pris.x) / 2} y={libre.y - 19} textAnchor="middle" fontSize="9" fill={actorColor}>
+      <text x={(libre.x + pris.x) / 2} y={libre.y - 23} textAnchor="middle" fontSize="13" fill={actorColor}>
         parachutiste
       </text>
 
       {/* PRIS → LIBRE (bas) */}
       <line x1={pris.x - r} y1={pris.y + 18} x2={libre.x + r + 8} y2={libre.y + 18}
         stroke={track} strokeWidth="2" markerEnd="url(#arrow-track)" />
-      <text x={(libre.x + pris.x) / 2} y={pris.y + 38} textAnchor="middle" fontSize="10.5" fill={mutedColor}>
+      <text x={(libre.x + pris.x) / 2} y={pris.y + 40} textAnchor="middle" fontSize="13" fill={mutedColor}>
         Rendre le sac / Auto 21h
       </text>
-      <text x={(libre.x + pris.x) / 2} y={pris.y + 52} textAnchor="middle" fontSize="9" fill={actorColor}>
+      <text x={(libre.x + pris.x) / 2} y={pris.y + 57} textAnchor="middle" fontSize="13" fill={actorColor}>
         porteur · staff · auto
       </text>
 
       {/* PRIS → À PLIER (haut) */}
       <line x1={pris.x + r} y1={pris.y - 18} x2={aplier.x - r - 8} y2={aplier.y - 18}
         stroke={aplier.color} strokeWidth="2" markerEnd="url(#arrow-aplier)" />
-      <text x={(pris.x + aplier.x) / 2} y={pris.y - 32} textAnchor="middle" fontSize="11" fill={textColor} fontWeight="600">
+      <text x={(pris.x + aplier.x) / 2} y={pris.y - 38} textAnchor="middle" fontSize="14" fill={textColor} fontWeight="600">
         Marquer "À plier"
       </text>
       <text x={(pris.x + aplier.x) / 2} y={pris.y - 48} textAnchor="middle" fontSize="13">
         
       </text>
-      <text x={(pris.x + aplier.x) / 2} y={pris.y - 19} textAnchor="middle" fontSize="9" fill={actorColor}>
+      <text x={(pris.x + aplier.x) / 2} y={pris.y - 23} textAnchor="middle" fontSize="13" fill={actorColor}>
         porteur (après le saut)
       </text>
 
       {/* À PLIER → PRIS (bas) */}
       <line x1={aplier.x - r} y1={aplier.y + 18} x2={pris.x + r + 8} y2={pris.y + 18}
         stroke={pris.color} strokeWidth="2" markerEnd="url(#arrow-pris)" />
-      <text x={(pris.x + aplier.x) / 2} y={aplier.y + 38} textAnchor="middle" fontSize="11" fill={textColor} fontWeight="600">
+      <text x={(pris.x + aplier.x) / 2} y={aplier.y + 40} textAnchor="middle" fontSize="14" fill={textColor} fontWeight="600">
         ✓ Pliage effectué
       </text>
-      <text x={(pris.x + aplier.x) / 2} y={aplier.y + 52} textAnchor="middle" fontSize="9" fill={actorColor}>
+      <text x={(pris.x + aplier.x) / 2} y={aplier.y + 57} textAnchor="middle" fontSize="13" fill={actorColor}>
         plieur (attribué au porteur, payable)
       </text>
 
@@ -97,7 +97,7 @@ function CycleSVG({ printMode = false }: { printMode?: boolean }) {
         d={`M ${pris.x - 22} ${pris.y - r}
             C ${pris.x - 22} ${pris.y - r - 48}, ${pris.x + 22} ${pris.y - r - 48}, ${pris.x + 22} ${pris.y - r}`}
         stroke={track} strokeWidth="2" fill="none" markerEnd="url(#arrow-track)" />
-      <text x={pris.x} y={pris.y - r - 56} textAnchor="middle" fontSize="10.5" fill={mutedColor}>
+      <text x={pris.x} y={pris.y - r - 56} textAnchor="middle" fontSize="13" fill={mutedColor}>
         Auto-plié (Brevet C/D)
       </text>
       <text x={pris.x} y={pris.y - r - 70} textAnchor="middle" fontSize="13">
@@ -117,24 +117,80 @@ function CycleSVG({ printMode = false }: { printMode?: boolean }) {
 
       {/* ─── Légende états additionnels ───────────────────────────────── */}
       <g transform="translate(24, 296)">
-        <text fontSize="9" fill={mutedColor} fontWeight="600">ÉTATS ADDITIONNELS :</text>
+        <text fontSize="13" fill={mutedColor} fontWeight="600">ÉTATS ADDITIONNELS :</text>
         {/* REPLIAGE SECOURS */}
-        <circle cx="168" cy="-3" r="5" fill="none" stroke="#8B5CF6" strokeWidth="1.5" />
-        <text x="176" y="0" fontSize="9" fill={mutedColor}>Repliage secours</text>
+        <circle cx="186" cy="-4" r="5" fill="none" stroke="#8B5CF6" strokeWidth="1.5" />
+        <text x="196" y="0" fontSize="13" fill={mutedColor}>Repliage secours</text>
         {/* RETIRÉ */}
-        <circle cx="288" cy="-3" r="5" fill="none" stroke="#64748B" strokeWidth="1.5" />
-        <text x="296" y="0" fontSize="9" fill={mutedColor}>Retiré du service</text>
-        <text x="390" y="0" fontSize="9" fill={mutedColor}>— gérés par le staff depuis le Parc de sacs</text>
+        <circle cx="326" cy="-4" r="5" fill="none" stroke="#64748B" strokeWidth="1.5" />
+        <text x="336" y="0" fontSize="13" fill={mutedColor}>Retiré du service</text>
+        <text x="464" y="0" fontSize="13" fill={mutedColor}>— gérés par le staff depuis le Parc de sacs</text>
       </g>
 
       {/* ─── Légende flèches ──────────────────────────────────────────── */}
-      <g transform="translate(24, 318)">
-        <line x1="0" y1="-3" x2="18" y2="-3" stroke={libre.color} strokeWidth="2" markerEnd="url(#arrow-libre)" />
-        <text x="22" y="0" fontSize="9" fill={mutedColor}>Action parachutiste/plieur</text>
-        <line x1="180" y1="-3" x2="198" y2="-3" stroke={track} strokeWidth="2" markerEnd="url(#arrow-track)" />
-        <text x="202" y="0" fontSize="9" fill={mutedColor}>Action staff ou automatique</text>
+      <g transform="translate(24, 324)">
+        <line x1="0" y1="-4" x2="18" y2="-4" stroke={libre.color} strokeWidth="2" markerEnd="url(#arrow-libre)" />
+        <text x="24" y="0" fontSize="13" fill={mutedColor}>Action parachutiste/plieur</text>
+        <line x1="226" y1="-4" x2="244" y2="-4" stroke={track} strokeWidth="2" markerEnd="url(#arrow-track)" />
+        <text x="250" y="0" fontSize="13" fill={mutedColor}>Action staff ou automatique</text>
       </g>
     </svg>
+  );
+}
+
+// ─── Le même cycle, en lignes — pour les écrans étroits ──────────────────────
+//
+// Le schéma est dessiné sur 840 unités. Dans une colonne de 400 px il est
+// réduit de moitié : ses légendes de 12 deviennent 6 px, illisibles. Sous
+// 1 280 px, on dit donc la même chose en texte, à taille normale — les
+// mêmes étapes, les mêmes acteurs, les mêmes couleurs d'état.
+
+const ETATS = {
+  libre:  { label: 'LIBRE',   color: '#34D399' },
+  pris:   { label: 'PRIS',    color: '#60A5FA' },
+  aplier: { label: 'À PLIER', color: '#FB923C' },
+} as const;
+
+function Etat({ e }: { e: keyof typeof ETATS }) {
+  const { label, color } = ETATS[e];
+  return (
+    <span className="inline-block text-xs font-extrabold rounded-full px-2 py-0.5"
+      style={{ color, border: `1.5px solid ${color}`, letterSpacing: '0.5px' }}>{label}</span>
+  );
+}
+
+function CycleListe() {
+  const etapes: { de: keyof typeof ETATS; vers: keyof typeof ETATS; action: string; qui: string }[] = [
+    { de: 'libre',  vers: 'pris',   action: 'Prendre ce sac',            qui: 'parachutiste' },
+    { de: 'pris',   vers: 'aplier', action: 'Marquer « À plier »',       qui: 'porteur, après le saut' },
+    { de: 'aplier', vers: 'pris',   action: '✓ Pliage effectué',         qui: 'plieur — attribué au porteur, payable' },
+    { de: 'pris',   vers: 'libre',  action: 'Rendre le sac / auto 21 h', qui: 'porteur · staff · automatique' },
+    { de: 'pris',   vers: 'pris',   action: 'Auto-plié',                 qui: 'brevet C ou D' },
+  ];
+  return (
+    <ol className="list-none p-0 m-0 space-y-2.5">
+      {etapes.map(t => (
+        <li key={t.action} className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <Etat e={t.de} />
+          <span aria-hidden style={{ color: '#94A3B8' }}>→</span>
+          <Etat e={t.vers} />
+          <span className="text-sm font-semibold" style={{ color: '#E2E8F0' }}>{t.action}</span>
+          <span className="text-xs" style={{ color: '#BAC8D9' }}>· {t.qui}</span>
+        </li>
+      ))}
+      <li className="text-xs pt-1" style={{ color: '#94A3B8' }}>
+        États additionnels — repliage secours, retiré du service — gérés par le staff depuis le Parc de sacs.
+      </li>
+    </ol>
+  );
+}
+
+function Cycle() {
+  return (
+    <>
+      <div className="xl:hidden"><CycleListe /></div>
+      <div className="hidden xl:block"><CycleSVG /></div>
+    </>
   );
 }
 
@@ -151,7 +207,7 @@ function LegendeLignes({ printMode = false }: { printMode?: boolean }) {
     <ul className="mt-4 space-y-1 list-none p-0 m-0">
       {items.map(line => (
         <li key={line} className="flex items-start gap-2 text-xs" style={{ color }}>
-          <span className="mt-0.5 flex-shrink-0 text-[10px]">•</span>
+          <span className="mt-0.5 flex-shrink-0 text-xs">•</span>
           {line}
         </li>
       ))}
@@ -282,7 +338,7 @@ export function CycleHelpModal({ onClose }: { onClose: () => void }) {
           </div>
         </div>
         <div className="px-4 py-5 overflow-x-auto">
-          <CycleSVG />
+          <Cycle />
           <LegendeLignes />
         </div>
       </div>
@@ -344,7 +400,7 @@ export function CycleHelpPanel({ pliageCount }: { pliageCount: number }) {
         <div className="flex items-center gap-2">
           <button
             onClick={e => { e.stopPropagation(); imprimerSchema(); }}
-            className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg font-semibold"
+            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg font-semibold"
             style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)' }}
           >
             <Printer className="w-3 h-3" /> Imprimer
@@ -356,7 +412,7 @@ export function CycleHelpPanel({ pliageCount }: { pliageCount: number }) {
       {!collapsed && (
         <div className="px-4 pb-5 overflow-x-auto">
           <div className="pt-3">
-            <CycleSVG />
+            <Cycle />
             <LegendeLignes />
           </div>
         </div>

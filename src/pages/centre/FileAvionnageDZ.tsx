@@ -61,7 +61,7 @@ export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlace
         <h3 style={{ ...enTeteSection, marginBottom: 0, paddingBottom: 0, borderBottom: 'none' }}>
           <Users className="w-4 h-4 inline-block mr-1.5 align-[-2px]" aria-hidden />
           File d’avionnage
-          <span style={{ fontSize: 12, fontWeight: 500, letterSpacing: 0, textTransform: 'none',
+          <span style={{ fontSize: 13, fontWeight: 500, letterSpacing: 0, textTransform: 'none',
                          color: 'var(--c-muted)', marginLeft: 8 }}>
             {ouvert ? `${file.length} en attente` : 'fermée'}
           </span>
@@ -138,18 +138,18 @@ export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlace
                     </span>
                   </button>
                   {l.commentaire && (
-                    <p style={{ fontSize: 12, color: 'var(--c-text2)' }}>{l.commentaire}</p>
+                    <p style={{ fontSize: 13, color: 'var(--c-text2)' }}>{l.commentaire}</p>
                   )}
                   {/* Se mettre en file sans s'être déclaré présent est un cas
                       réel : la personne est peut-être en train d'arriver. On
                       le signale, on ne l'empêche pas. */}
                   {!l.present && (
-                    <p className="flex items-center gap-1" style={{ fontSize: 12, color: 'var(--sev-vigilance)' }}>
+                    <p className="flex items-center gap-1" style={{ fontSize: 13, color: 'var(--sev-vigilance)' }}>
                       <MapPin className="w-3 h-3" aria-hidden /> pas encore déclaré présent
                     </p>
                   )}
                   {l.motifs_bloquants > 0 && (
-                    <p className="flex items-center gap-1" style={{ fontSize: 12, color: 'var(--sev-critique)' }}>
+                    <p className="flex items-center gap-1" style={{ fontSize: 13, color: 'var(--sev-critique)' }}>
                       <AlertTriangle className="w-3 h-3" aria-hidden />
                       {l.motifs_bloquants} motif{l.motifs_bloquants > 1 ? 's' : ''} bloquant
                       {l.motifs_bloquants > 1 ? 's' : ''} — voir « Sur le terrain »
@@ -189,7 +189,7 @@ export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlace
                         : `Placer sur la rotation ${r.numero}`
                           + (r.places_libres !== null ? ` — ${r.places_libres} place(s) libre(s)` : '')}
                       className="disabled:opacity-40"
-                      style={{ ...action('secondaire'), minHeight: 36, fontSize: 12, padding: '0 10px',
+                      style={{ ...action('secondaire'), minHeight: 36, fontSize: 13, padding: '0 10px',
                                cursor: raison ? 'not-allowed' : undefined }}>
                       <UserPlus className="w-3.5 h-3.5" aria-hidden />
                       Rot. {r.numero}
@@ -202,7 +202,7 @@ export function FileAvionnageDZ({ centreId, rotations, ouvert, onOuvrir, onPlace
                     );
                   })}
                   {rotations.length === 0 && (
-                    <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                    <span style={{ fontSize: 13, color: 'var(--c-muted)' }}>
                       créez un avion
                     </span>
                   )}

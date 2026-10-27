@@ -212,7 +212,7 @@ function PackCard({ mod, active, saving, economie, prixSepares, onToggle }: {
       }}
     >
       {/* Badge */}
-      <div className="absolute -top-3 left-6 px-3 py-1 rounded-full text-[11px] font-bold text-white" style={{ background: '#F97316' }}>
+      <div className="absolute -top-3 left-6 px-3 py-1 rounded-full text-xs font-bold text-white" style={{ background: '#F97316' }}>
         Le plus avantageux
       </div>
 
@@ -262,7 +262,7 @@ function LiveCard({ mod, active, includedInStudio, saving, onToggle }: {
       <div className="flex items-start justify-between gap-2">
         <ModuleIcon id={mod.id} label={mod.nom} className="w-6 h-6" />
         {active && (
-          <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full"
+          <span className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full"
             style={{ background: 'rgba(16,185,129,0.12)', color: 'var(--sev-conforme)', border: '1px solid rgba(16,185,129,0.3)' }}>
             <Check className="w-3 h-3" />
             {includedInStudio ? 'Inclus dans Studio' : 'Activé'}
@@ -279,7 +279,7 @@ function LiveCard({ mod, active, includedInStudio, saving, onToggle }: {
           {/* Dit AVANT l'achat, pas après : un centre abonné Studio doit
               comprendre que celui-ci reste à payer. */}
           {mod.horsStudio && (
-            <span className="block font-normal text-[11px]" style={{ color: '#F97316' }}>
+            <span className="block font-normal text-xs" style={{ color: '#F97316' }}>
               non inclus dans Studio
             </span>
           )}
@@ -312,7 +312,7 @@ function RoadmapCard({ mod, onWaitlist, saving, onJoin }: {
     >
       <div className="flex items-start justify-between gap-2">
         <span className="grayscale"><ModuleIcon id={mod.id} label={mod.nom} className="w-6 h-6" /></span>
-        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+        <span className="text-xs font-bold px-2 py-0.5 rounded-full"
           style={{ background: 'rgba(100,116,139,0.12)', color: '#64748B', border: '1px solid rgba(100,116,139,0.25)' }}>
           Prochainement
         </span>

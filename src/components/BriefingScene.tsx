@@ -21,6 +21,10 @@ export interface BriefingSceneProps {
   pendingPolygon?: Point[];
   /** Mode edit : objet sélectionné (surbrillance) — la suppression se fait via le bouton hors carte. */
   selectedObject?: { kind: 'nofly' | 'obstacle' | 'evolution' | 'sock'; index: number } | null;
+  /** Miniature : le plan seul, sans étiquettes. Réduite à 256 px, la scène
+   *  ramène ses libellés de 13 à 3 px — des taches, pas du texte. Le détail
+   *  (vent, circuit) est dit à côté de la miniature, en taille normale. */
+  vignette?: boolean;
 }
 
 // viewBox par défaut si les dimensions natives de l'image sont inconnues
@@ -29,23 +33,33 @@ const DEFAULT_H = 625;
 const LONG_PRESS_MS = 550;
 
 /** Étiquette avec fond semi-opaque sombre (lisible sur photo satellite). */
-function Etiquette({ x, y, children, fill = '#FDE68A', fontSize = 14, anchor = 'middle' }: {
+function EtiquetteLisible({ x, y, children, fill = '#FDE68A', fontSize: demande = 14, anchor = 'middle', plancher = 0, largeurScene }: {
   x: number; y: number; children: string; fill?: string; fontSize?: number; anchor?: 'start' | 'middle' | 'end';
+  /** Taille minimale en unités du viewBox — voir `plancher` dans la scène. */
+  plancher?: number;
+  /** Largeur du dessin : si fournie, l'étiquette est ramenée à l'intérieur
+   *  plutôt que coupée au bord (un nom de zone posé près d'un bord). */
+  largeurScene?: number;
 }) {
+  const fontSize = Math.max(demande, plancher);
   const w = children.length * fontSize * 0.58 + 14;
-  const bx = anchor === 'start' ? x - 7 : anchor === 'end' ? x - w + 7 : x - w / 2;
+  const bx0 = anchor === 'start' ? x - 7 : anchor === 'end' ? x - w + 7 : x - w / 2;
+  const bx = largeurScene ? Math.min(Math.max(bx0, 4), largeurScene - w - 4) : bx0;
   return (
     <g>
       <rect x={bx} y={y - fontSize - 3} width={w} height={fontSize + 10} rx={5} fill="rgba(2,6,23,0.72)" />
-      <text x={x} y={y} textAnchor={anchor} fill={fill} fontSize={fontSize} fontWeight="700">{children}</text>
+      <text x={x + bx - bx0} y={y} textAnchor={anchor} fill={fill} fontSize={fontSize} fontWeight="700">{children}</text>
     </g>
   );
 }
 
+const EtiquetteMuette = (): null => null;
+
 export function BriefingScene({
   settings, circuit, vent, backgroundUrl, mode,
-  onCanvasTap, onMovePoint, onRemovePoint, pendingPolygon, selectedObject,
+  onCanvasTap, onMovePoint, onRemovePoint, pendingPolygon, selectedObject, vignette = false,
 }: BriefingSceneProps) {
+  const Etiquette = vignette ? EtiquetteMuette : EtiquetteLisible;
   const VB_W = DEFAULT_W;
   const VB_H = settings.image_fond_largeur && settings.image_fond_hauteur
     ? Math.round((DEFAULT_W * settings.image_fond_hauteur) / settings.image_fond_largeur)
@@ -66,6 +80,37 @@ export function BriefingScene({
   }, [backgroundUrl]);
 
   const svgRef = useRef<SVGSVGElement>(null);
+
+  // LES ÉTIQUETTES SUIVENT LA TAILLE AFFICHÉE. La scène est dessinée sur 1 000
+  // unités ; une étiquette de 13 unités fait 13 px sur un écran de 1 000 px,
+  // 11 px dans l'éditeur et 4 px sur un téléphone — là où le parachutiste la
+  // lit. On mesure la largeur réelle et on fixe un plancher de 13 px À L’ÉCRAN,
+  // converti en unités du dessin. Le plan, lui, ne change pas.
+  const [plancher, setPlancher] = useState(0);
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    // La boîte AFFICHÉE, pas `contentRect` : sur un <svg>, Chrome peut y
+    // rendre la boîte du dessin en unités du viewBox (1 000 × 641), ce qui
+    // donne une échelle de 1 et un plancher sans effet.
+    const mesurer = () => {
+      const r = el.getBoundingClientRect();
+      // Le dessin est mis à l'échelle par la plus contrainte des deux
+      // dimensions (le SVG est aussi borné en hauteur).
+      const echelle = Math.min(r.width / VB_W, r.height / VB_H);
+      if (echelle > 0) setPlancher(Math.ceil(13 / echelle));
+    };
+    mesurer();
+    const ro = new ResizeObserver(mesurer);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [VB_W, VB_H]);
+  // Sous ~650 px de large, des étiquettes de 13 px ne tiennent plus toutes sur
+  // le plan : elles se chevauchent et débordent. On garde ce que seul le plan
+  // peut dire (zone de posé, début de circuit, zones interdites, obstacles) et
+  // on retire ce qui est déjà visible autrement — la zone d'évolution par sa
+  // couleur, le vent par sa flèche et par le texte de la carte.
+  const etroit = plancher > 20;
   const pathRef = useRef<SVGPathElement>(null);
   const markerRef = useRef<SVGGElement>(null);
   const rafRef = useRef(0);
@@ -168,9 +213,11 @@ export function BriefingScene({
           <polygon points={pts} fill={styles.fill} stroke={isSelected ? '#FFFFFF' : styles.stroke}
             strokeWidth={isSelected ? 5 : 2.5}
             strokeDasharray={variant === 'nofly' && !isSelected ? '8 4' : undefined} />
-          <Etiquette x={cx} y={cy} fill={styles.text} fontSize={13}>
-            {`${styles.prefix}${z.nom}${extraLabel ?? ''}`}
-          </Etiquette>
+          {!(etroit && variant === 'evolution') && (
+            <Etiquette plancher={plancher} largeurScene={VB_W} x={cx} y={cy} fill={styles.text} fontSize={13}>
+              {`${styles.prefix}${z.nom}${extraLabel ?? ''}`}
+            </Etiquette>
+          )}
         </g>
       );
     })
@@ -231,17 +278,17 @@ export function BriefingScene({
           <rect x="0" y="0" width={VB_W} height={VB_H} fill="#1B2B42">
             <animate attributeName="opacity" values="1;0.6;1" dur="1.6s" repeatCount="indefinite" />
           </rect>
-          <text x={VB_W / 2} y={VB_H / 2} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="16">
+          {!vignette && <text x={VB_W / 2} y={VB_H / 2} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="16">
             Chargement du fond…
-          </text>
+          </text>}
         </g>
       )}
       {(!backgroundUrl || bgState === 'error') && (
         <g pointerEvents="none">
           <rect x="0" y="0" width={VB_W} height={VB_H} fill="#22324a" />
-          <text x={VB_W / 2} y={VB_H - 18} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="14">
+          {!vignette && <text x={VB_W / 2} y={VB_H - 18} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="14">
             {backgroundUrl ? 'fond indisponible — le briefing reste valable' : 'Aucune photo satellite configurée'}
-          </text>
+          </text>}
         </g>
       )}
       <rect x="0" y="0" width={VB_W} height={VB_H} fill="rgba(0,10,30,0.15)" pointerEvents="none" />
@@ -302,7 +349,7 @@ export function BriefingScene({
       {debutLabelPos && circuit && (
         <g pointerEvents="none">
           <circle cx={px(trace[0]).x} cy={px(trace[0]).y} r="7" fill="#FBBF24" stroke="#0F172A" strokeWidth="2" />
-          <Etiquette x={debutLabelPos.x} y={debutLabelPos.y} fontSize={13}>
+          <Etiquette plancher={plancher} largeurScene={VB_W} x={debutLabelPos.x} y={debutLabelPos.y} fontSize={13}>
             {`début de circuit — ${circuit.altitude_debut_m} m`}
           </Etiquette>
         </g>
@@ -314,7 +361,7 @@ export function BriefingScene({
           <circle cx={lz.x} cy={lz.y} r="22" fill="rgba(16,185,129,0.18)" stroke="#10B981" strokeWidth="3" />
           <circle cx={lz.x} cy={lz.y} r="9" fill="rgba(16,185,129,0.35)" stroke="#10B981" strokeWidth="2" />
           <circle cx={lz.x} cy={lz.y} r="2.5" fill="#10B981" />
-          <Etiquette x={lz.x} y={lz.y + 44} fill="#6EE7B7" fontSize={13}>zone de posé</Etiquette>
+          <Etiquette plancher={plancher} largeurScene={VB_W} x={lz.x} y={lz.y + 44} fill="#6EE7B7" fontSize={13}>zone de posé</Etiquette>
         </g>
       )}
 
@@ -339,9 +386,11 @@ export function BriefingScene({
           <circle r="44" fill="rgba(2,6,23,0.65)" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
           <line x1={-blowVec.x * 28} y1={-blowVec.y * 28} x2={blowVec.x * 28} y2={blowVec.y * 28}
             stroke="#38BDF8" strokeWidth="4" markerEnd="url(#windArrowHead)" />
-          <Etiquette x={0} y={66} fill="#7DD3FC" fontSize={14}>
-            {`Vent ${vent.direction_deg}°${vent.vitesse_kt != null ? ` · ${vent.vitesse_kt} kt` : ''}`}
-          </Etiquette>
+          {!etroit && (
+            <Etiquette plancher={plancher} x={0} y={66} fill="#7DD3FC" fontSize={14}>
+              {`Vent ${vent.direction_deg}°${vent.vitesse_kt != null ? ` · ${vent.vitesse_kt} kt` : ''}`}
+            </Etiquette>
+          )}
         </g>
       )}
 
@@ -349,7 +398,7 @@ export function BriefingScene({
       <g transform={`translate(${VB_W - 50}, 60)`} pointerEvents="none">
         <circle r="26" fill="rgba(2,6,23,0.65)" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
         <path d="M 0 -16 L 6 8 L 0 3 L -6 8 Z" fill="#fff" />
-        <text y="22" textAnchor="middle" fill="#fff" fontSize="12" fontWeight="800">N</text>
+        {!vignette && <text y="24" textAnchor="middle" fill="#fff" fontSize={Math.max(12, plancher)} fontWeight="800">N</text>}
       </g>
     </svg>
   );

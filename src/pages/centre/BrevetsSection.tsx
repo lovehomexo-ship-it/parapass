@@ -86,12 +86,12 @@ export function BrevetsSection({ centreId }: { centreId: string }) {
                     {row.epreuve && row.epreuve.quantite_requise > 1 && ` (${row.quantite_faite}/${row.epreuve.quantite_requise})`}
                   </span>
                   {row.declareA && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full"
+                    <span className="text-xs px-1.5 py-0.5 rounded-full"
                       style={{ background: 'rgba(148,163,184,0.12)', color: 'var(--c-muted)' }}>
                       déclarée à {row.declareA}
                     </span>
                   )}
-                  <span className="text-[10px] ml-auto" style={{ color: 'var(--c-dim)' }}>
+                  <span className="text-xs ml-auto" style={{ color: 'var(--c-dim)' }}>
                     prêt depuis le {row.declare_pret_at ? new Date(row.declare_pret_at).toLocaleDateString('fr-FR') : '—'}
                   </span>
                 </div>
@@ -371,7 +371,7 @@ function ReferentielEditor({ referentiel }: { referentiel: ReturnType<typeof use
       {brevetSel && referentiel.reglesDe(brevetSel).length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {referentiel.reglesDe(brevetSel).map(r => (
-            <span key={r.id} className="text-[11px] px-2.5 py-1 rounded-full" title={r.source ?? undefined}
+            <span key={r.id} className="text-xs px-2.5 py-1 rounded-full" title={r.source ?? undefined}
               style={{ background: 'rgba(167,139,250,0.1)', color: '#C4B5FD', border: '1px solid rgba(167,139,250,0.3)' }}>
               {r.description ?? r.type_regle}
             </span>
@@ -386,7 +386,7 @@ function ReferentielEditor({ referentiel }: { referentiel: ReturnType<typeof use
           {eps.map(e => (
             <div key={e.id} className="flex items-center gap-2 flex-wrap rounded-lg px-3 py-2" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
               <span className="text-sm font-semibold text-white">{e.libelle}</span>
-              <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(37,99,235,0.15)', color: '#60A5FA' }}>{TYPE_EPREUVE_LABELS[e.type]}</span>
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(37,99,235,0.15)', color: '#60A5FA' }}>{TYPE_EPREUVE_LABELS[e.type]}</span>
               {e.quantite_requise > 1 && <span className="text-xs" style={{ color: 'var(--c-text2)' }}>× {e.quantite_requise}</span>}
               {!e.obligatoire && <span className="text-xs" style={{ color: 'var(--c-dim)' }}>optionnelle</span>}
               {e.prerequis_epreuve_id && (

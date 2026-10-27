@@ -42,7 +42,7 @@ function SelecteurDz({ dzs, choisie, onChoisir }: {
         const actif = d.centre_id === choisie;
         return (
           <button key={d.centre_id} type="button" onClick={() => onChoisir(d.centre_id)}
-            className="text-[11px] font-semibold px-2.5 rounded-full inline-flex items-center gap-1.5"
+            className="text-xs font-semibold px-2.5 rounded-full inline-flex items-center gap-1.5"
             style={{
               minHeight: 30,
               background: actif ? 'rgba(249,115,22,0.16)' : 'var(--c-surface)',
@@ -167,7 +167,7 @@ function AvionnageInner({ userId }: { userId: string | undefined }) {
         <div className="rounded-xl px-3 py-2 mb-2 flex items-start gap-2"
           style={{ background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.3)' }}>
           <MapPin className="w-4 h-4 flex-shrink-0 mt-px" style={{ color: '#FDBA74' }} aria-hidden />
-          <span className="text-[11px] leading-relaxed" style={{ color: '#FDBA74' }}>
+          <span className="text-xs leading-relaxed" style={{ color: '#FDBA74' }}>
             Déclare ta présence à {dz.centre_nom} pour pouvoir te mettre en file.
           </span>
         </div>

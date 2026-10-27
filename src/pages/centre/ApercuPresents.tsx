@@ -63,7 +63,7 @@ function Inner({ centreId }: { centreId: string }) {
     <Link to="/centre/presents" className="rounded-2xl p-4 block no-underline"
       style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] font-bold uppercase tracking-wider inline-flex items-center gap-1.5"
+        <span className="text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5"
           style={{ color: 'var(--c-dim)', letterSpacing: '1px' }}>
           <MapPin className="w-3.5 h-3.5" style={{ color: 'var(--accent-texte)' }} aria-hidden /> Présents du jour
         </span>
@@ -109,14 +109,14 @@ function Inner({ centreId }: { centreId: string }) {
                   </span>
                 ))}
                 {reste > 0 && (
-                  <span className="text-[11px] font-semibold ml-2" style={{ color: 'var(--c-muted)' }}>
+                  <span className="text-xs font-semibold ml-2" style={{ color: 'var(--c-muted)' }}>
                     +{reste}
                   </span>
                 )}
               </div>
 
               {enVol > 0 && (
-                <p className="text-[11px] mt-2 inline-flex items-center gap-1" style={{ color: 'var(--accent-texte)' }}>
+                <p className="text-xs mt-2 inline-flex items-center gap-1" style={{ color: 'var(--accent-texte)' }}>
                   <Plane className="w-3 h-3" aria-hidden /> {enVol} en file ou embarqué{enVol > 1 ? 's' : ''}
                 </p>
               )}

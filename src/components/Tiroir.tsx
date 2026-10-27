@@ -48,7 +48,7 @@ export function Tiroir({ titre, soustitre, cle, children, defautOuvert = false }
         <span className="flex-1 min-w-0">
           <span className="block text-sm font-bold" style={{ color: 'var(--c-text)' }}>{titre}</span>
           {soustitre && (
-            <span className="block text-[11px]" style={{ color: 'var(--c-muted)' }}>{soustitre}</span>
+            <span className="block text-xs" style={{ color: 'var(--c-muted)' }}>{soustitre}</span>
           )}
         </span>
       </button>

@@ -27,7 +27,7 @@ export function StatCard({ label, value, sub, kind = 'informatif', icon, onClick
     >
       <div className="flex items-center gap-2 mb-1">
         {icon && <span style={{ color: numberColor(kind) }}>{icon}</span>}
-        <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: color.textTertiary }}>{label}</span>
+        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: color.textTertiary }}>{label}</span>
       </div>
       <div className="text-2xl font-extrabold leading-none" style={{ color: numberColor(kind) }}>{value}</div>
       {sub != null && <div className="text-xs mt-1" style={{ color: color.textDim }}>{sub}</div>}

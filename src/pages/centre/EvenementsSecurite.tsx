@@ -367,7 +367,7 @@ function SecuriteInner({ centreId }: { centreId: string }) {
                   <span className="text-xs font-mono" style={{ color: 'var(--c-dim)' }}>
                     {new Date(e.date_jour).toLocaleDateString('fr-FR')}
                   </span>
-                  <span className="text-[11px] font-semibold px-1.5 rounded-full"
+                  <span className="text-xs font-semibold px-1.5 rounded-full"
                     style={{ background: `${g?.[2] ?? '#94A3B8'}22`, color: g?.[2] ?? '#94A3B8' }}>
                     {libelle(GRAVITES, e.gravite)}
                   </span>
@@ -375,15 +375,15 @@ function SecuriteInner({ centreId }: { centreId: string }) {
                     {libelle(CATEGORIES, e.categorie)}
                   </span>
                   {e.phase && (
-                    <span className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
+                    <span className="text-xs" style={{ color: 'var(--c-dim)' }}>
                       · {libelle(PHASES, e.phase)}
                     </span>
                   )}
-                  <span className="text-[11px] ml-auto" style={{ color: 'var(--c-dim)' }}>{e.declarant_nom}</span>
+                  <span className="text-xs ml-auto" style={{ color: 'var(--c-dim)' }}>{e.declarant_nom}</span>
                 </div>
                 <p className="text-sm mt-1 break-words" style={{ color: 'var(--c-text2)' }}>{e.recit}</p>
                 {typeof e.conditions?.vent_kt === 'number' && (
-                  <p className="text-[11px] mt-1" style={{ color: 'var(--c-dim)' }}>
+                  <p className="text-xs mt-1" style={{ color: 'var(--c-dim)' }}>
                     Conditions au moment des faits : vent {String(e.conditions.vent_deg)}° ·{' '}
                     {String(e.conditions.vent_kt)} kt
                   </p>

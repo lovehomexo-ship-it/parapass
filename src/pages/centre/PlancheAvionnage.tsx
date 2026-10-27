@@ -294,7 +294,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
             Avion n°{r.numero}
             {r.demo && (
               <span className="align-middle ml-2 px-1.5 py-0.5 rounded"
-                style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em',
+                style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.08em',
                          color: 'var(--c-dim)', border: '1px dashed var(--c-border-f)' }}>
                 DÉMO
               </span>
@@ -389,7 +389,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
       </div>
 
       {/* ── L'horodatage, complet et visible ──────────────────────────────── */}
-      <div className="mt-2.5 flex items-center gap-3 flex-wrap" style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+      <div className="mt-2.5 flex items-center gap-3 flex-wrap" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
         <label className="flex items-center gap-1.5">
           <Clock className="w-3.5 h-3.5" aria-hidden />
           <span className="sr-only">Décollage prévu — rotation {r.numero}</span>
@@ -397,7 +397,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
             disabled={close || occupe}
             onChange={e => fixerHeure(e.target.value)}
             className="px-2 rounded-lg"
-            style={{ minHeight: 32, fontSize: 12, background: 'var(--c-input)',
+            style={{ minHeight: 32, fontSize: 13, background: 'var(--c-input)',
                      color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
         </label>
         {/* Les heures RÉELLES ne sont pas modifiables : elles sont relevées au
@@ -422,7 +422,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                   onDefinirCarburant(l).then(err => ({ error: err ? { message: err } : null })));
               }}
               className="px-1.5 rounded-lg text-right"
-              style={{ width: 70, minHeight: 32, fontSize: 12, background: 'var(--c-input)',
+              style={{ width: 70, minHeight: 32, fontSize: 13, background: 'var(--c-input)',
                        color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
             L
           </label>
@@ -443,7 +443,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
           style={{ ...rayure(etat.verdict === 'rouge' ? 'critique' : 'vigilance'),
                    background: `color-mix(in srgb, ${SEVERITE_COULEUR[etat.verdict === 'rouge' ? 'critique' : 'vigilance']} 9%, transparent)` }}>
           <p className="flex items-center gap-1.5"
-            style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.06em',
+            style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.06em',
                      textTransform: 'uppercase',
                      color: SEVERITE_COULEUR[etat.verdict === 'rouge' ? 'critique' : 'vigilance'] }}>
             <AlertTriangle className="w-3.5 h-3.5" aria-hidden />
@@ -452,7 +452,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
           <ul className="mt-1">
             {etat.anomalies.map((an: AnomaliePlanche) => (
               <li key={an.code} className="flex items-start gap-1.5"
-                style={{ fontSize: 12.5, color: 'var(--c-text2)' }}>
+                style={{ fontSize: 13, color: 'var(--c-text2)' }}>
                 {/* La gravité se lit à la FORME, pas à la seule couleur. */}
                 <span aria-hidden style={{ fontWeight: 900, lineHeight: '1.45',
                   color: SEVERITE_COULEUR[an.gravite === 'bloquant' ? 'critique' : 'vigilance'] }}>
@@ -466,7 +466,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
       )}
       {!close && etat.anomalies.length === 0 && places.length > 0 && (
         <p className="mt-2.5 flex items-center gap-1.5"
-          style={{ fontSize: 12.5, fontWeight: 700, color: SEVERITE_COULEUR.conforme }}>
+          style={{ fontSize: 13, fontWeight: 700, color: SEVERITE_COULEUR.conforme }}>
           <CheckCircle2 className="w-4 h-4" aria-hidden /> Planche complète — rien à signaler.
         </p>
       )}
@@ -479,14 +479,14 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
           de l'avion dont on ne voyait ni la masse ni le verdict.
           Une fois à bord, il se désigne depuis sa ligne comme tout le monde. */}
       {!close && onDesignerLargueur && !places.some(p => p.parachutiste_id === r.largueur_id) && (
-        <label className="mt-2 flex items-center gap-2 flex-wrap" style={{ fontSize: 12 }}>
+        <label className="mt-2 flex items-center gap-2 flex-wrap" style={{ fontSize: 13 }}>
           <span style={{ color: SEVERITE_COULEUR.vigilance, fontWeight: 700 }}>
             Largueur — à embarquer
           </span>
           <select value="" disabled={occupe}
             onChange={e => { if (e.target.value) onDesignerLargueur(e.target.value); }}
             className="px-2 rounded-lg"
-            style={{ minHeight: 34, fontSize: 12, background: 'var(--c-input)',
+            style={{ minHeight: 34, fontSize: 13, background: 'var(--c-input)',
                      color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }}>
             <option value="">— choisir —</option>
             {(largueurs ?? []).map(l => (
@@ -566,7 +566,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
             )}
             {bloc.libelle && (
               <div className="flex items-center justify-between gap-2 pt-0.5">
-                <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.06em',
+                <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.06em',
                                textTransform: 'uppercase', color: 'var(--c-muted)' }}>
                   {bloc.libelle} · {bloc.places.length} sauteurs
                 </span>
@@ -574,7 +574,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                   <button type="button" disabled={occupe}
                     onClick={() => agir('Dégroupage', () =>
                       onDegrouper(bloc.groupeId!).then(e => ({ error: e ? { message: e } : null })))}
-                    style={{ ...action('texte'), minHeight: 28, fontSize: 11 }}>
+                    style={{ ...action('texte'), minHeight: 28, fontSize: 13 }}>
                     Dégrouper
                   </button>
                 )}
@@ -641,7 +641,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                         .then(err => ({ error: err ? { message: err } : null })))}
                     aria-label={`Ce que fait ${p.nom}`}
                     className="flex-shrink-0 px-1.5 rounded"
-                    style={{ fontSize: 11, fontWeight: 700, minHeight: 28,
+                    style={{ fontSize: 13, fontWeight: 700, minHeight: 28,
 
                              // LA COULEUR DE DISCIPLINE EST CHOISIE POUR UN FOND SOMBRE.
                              // Posée telle quelle en mode jour, « Tandem » tombait à 1,68:1 —
@@ -661,7 +661,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                   </select>
                 ) : (
                   <span className="flex-shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded"
-                    style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '0.04em',
+                    style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.04em',
                              color: `color-mix(in srgb, ${teinteDiscipline(p.type_saut, disciplines)} 55%, var(--c-text))`,
                              border: `1px solid ${teinteDiscipline(p.type_saut, disciplines)}`,
                              background: `color-mix(in srgb, ${teinteDiscipline(p.type_saut, disciplines)} 12%, transparent)` }}>
@@ -680,7 +680,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                       : radioAttendue(p.type_saut, disciplines) ? `${p.nom} est en PAC et n'a pas de radio`
                       : `Noter que ${p.nom} emporte une radio`}
                     className="flex-shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded"
-                    style={{ fontSize: 10.5, fontWeight: 800, cursor: close ? 'default' : 'pointer',
+                    style={{ fontSize: 13, fontWeight: 800, cursor: close ? 'default' : 'pointer',
                       color: p.radio ? SEVERITE_COULEUR.conforme
                         : radioAttendue(p.type_saut, disciplines) ? SEVERITE_COULEUR.vigilance : 'var(--c-dim)',
                       border: `1px ${p.radio ? 'solid' : 'dashed'} ${p.radio ? SEVERITE_COULEUR.conforme
@@ -702,7 +702,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                     <span className="flex-shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded"
                       title={porteur ? `Vidéo — filmée par ${porteur.nom}`
                                      : 'Vidéo vendue — aucun porteur vidéo à bord'}
-                      style={{ fontSize: 10.5, fontWeight: 800,
+                      style={{ fontSize: 13, fontWeight: 800,
                         color: porteur ? teinteDiscipline('video', disciplines) : SEVERITE_COULEUR.vigilance,
                         border: `1px ${porteur ? 'solid' : 'dashed'} ${porteur ? teinteDiscipline('video', disciplines) : SEVERITE_COULEUR.vigilance}` }}>
                       <Video className="w-3 h-3 inline-block align-[-1px]" aria-hidden />
@@ -782,7 +782,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                                     && !!p.parachutiste_id && !close;
                     return (
                       <p key={ligne} className="flex items-start gap-1.5"
-                        style={{ fontSize: 12,
+                        style={{ fontSize: 13,
                                  color: acquitte ? 'var(--c-muted)'
                                                  : SEVERITE_COULEUR[SEV_APTITUDE[p.aptitude]] }}>
                         {acquitte
@@ -796,7 +796,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                               onAcquitter!(p.parachutiste_id!, code)
                                 .then(e => ({ error: e ? { message: e } : null })))}
                             className="flex-shrink-0 px-2 rounded-lg"
-                            style={{ minHeight: 24, fontSize: 11, fontWeight: 700,
+                            style={{ minHeight: 24, fontSize: 13, fontWeight: 700,
                                      color: SEVERITE_COULEUR.conforme,
                                      border: `1px solid ${SEVERITE_COULEUR.conforme}` }}>
                             Acquitter
@@ -812,7 +812,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                   accompagné, et par qui, ne se cache pas sous un volet. */}
               {p.moniteur_nom && !(p.groupe_id && places.some(q =>
                  q.parachutiste_id === p.moniteur_id && q.groupe_id === p.groupe_id)) && (
-                <p className="mt-0.5 ml-7" style={{ fontSize: 12, color: 'var(--c-text2)' }}>
+                <p className="mt-0.5 ml-7" style={{ fontSize: 13, color: 'var(--c-text2)' }}>
                   accompagné par <strong style={{ fontWeight: 600 }}>{p.moniteur_nom}</strong>
                 </p>
               )}
@@ -827,7 +827,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                   )}
 
                   {!close && onDefinirMasse && (
-                    <label className="flex items-center gap-1" style={{ fontSize: 11, color: 'var(--c-muted)' }}>
+                    <label className="flex items-center gap-1" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
                       <span className="sr-only">Masse de {p.nom}, en kilogrammes</span>
                       <input type="number" inputMode="decimal" min={20} max={250} step={0.5}
                         defaultValue={p.masse_kg ?? ''} disabled={occupe} placeholder="— kg"
@@ -839,7 +839,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                             onDefinirMasse(p, kg).then(err => ({ error: err ? { message: err } : null })));
                         }}
                         className="px-1.5 rounded-lg text-right"
-                        style={{ width: 62, minHeight: 30, fontSize: 12, background: 'var(--c-input)',
+                        style={{ width: 62, minHeight: 30, fontSize: 13, background: 'var(--c-input)',
                                  color: 'var(--c-text)',
                                  border: `1px solid ${p.masse_kg == null ? SEVERITE_COULEUR.vigilance : 'var(--n2-bord)'}` }} />
                       kg
@@ -852,7 +852,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                       recopie rien. Une valeur propre ne sert qu'à sortir PLUS
                       BAS — la base refuse plus haut. */}
                   {!close && onDefinirAltitude && (
-                    <label className="flex items-center gap-1" style={{ fontSize: 11, color: 'var(--c-muted)' }}
+                    <label className="flex items-center gap-1" style={{ fontSize: 13, color: 'var(--c-muted)' }}
                       title={r.altitude_largage_m
                         ? `Vide = ${r.altitude_largage_m} m, l'altitude de l'avion. Une valeur propre ne peut être que plus basse.`
                         : 'Altitude de largage propre à cette personne'}>
@@ -869,7 +869,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                             onDefinirAltitude(p.id, m).then(err => ({ error: err ? { message: err } : null })));
                         }}
                         className="px-1.5 rounded-lg text-right"
-                        style={{ width: 66, minHeight: 30, fontSize: 12, background: 'var(--c-input)',
+                        style={{ width: 66, minHeight: 30, fontSize: 13, background: 'var(--c-input)',
                                  color: p.altitude_largage_m == null ? 'var(--c-muted)' : 'var(--c-text)',
                                  border: '1px solid var(--n2-bord)' }} />
                       m
@@ -881,7 +881,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                     && (largueurs ?? []).some(l => l.parachutiste_id === p.parachutiste_id) && (
                     <button type="button" disabled={occupe}
                       onClick={() => onDesignerLargueur(p.parachutiste_id!)}
-                      style={{ ...action('texte'), minHeight: 28, fontSize: 11 }}>
+                      style={{ ...action('texte'), minHeight: 28, fontSize: 13 }}>
                       désigner largueur
                     </button>
                   )}
@@ -894,7 +894,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                       onClick={() => agir('Option vidéo', () =>
                         onBasculerVideo(p.id, !p.video_option).then(e => ({ error: e ? { message: e } : null })))}
                       className="whitespace-nowrap px-1.5 py-0.5 rounded"
-                      style={{ fontSize: 11, fontWeight: 700,
+                      style={{ fontSize: 13, fontWeight: 700,
                         color: p.video_option ? teinteDiscipline('video', disciplines) : 'var(--c-dim)',
                         border: `1px ${p.video_option ? 'solid' : 'dashed'} ${p.video_option ? teinteDiscipline('video', disciplines) : 'var(--n2-bord)'}` }}>
                       <Video className="w-3 h-3 inline-block align-[-1px] mr-1" aria-hidden />
@@ -919,20 +919,20 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                           onAjouterPassager(p, nom, kgTexte === '' ? null : Number(kgTexte.replace(',', '.')))
                             .then(err => ({ error: err ? { message: err } : null })));
                       }}>
-                      <span style={{ fontSize: 11, color: SEVERITE_COULEUR.vigilance, fontWeight: 700 }}>
+                      <span style={{ fontSize: 13, color: SEVERITE_COULEUR.vigilance, fontWeight: 700 }}>
                         Passager à saisir
                       </span>
                       <input name="nom" type="text" placeholder="nom du passager" disabled={occupe}
                         className="px-2 rounded-lg"
-                        style={{ width: 150, minHeight: 30, fontSize: 12, background: 'var(--c-input)',
+                        style={{ width: 150, minHeight: 30, fontSize: 13, background: 'var(--c-input)',
                                  color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
                       <input name="kg" type="number" inputMode="decimal" min={20} max={250} step={0.5}
                         placeholder="kg" disabled={occupe}
                         className="px-1.5 rounded-lg text-right"
-                        style={{ width: 62, minHeight: 30, fontSize: 12, background: 'var(--c-input)',
+                        style={{ width: 62, minHeight: 30, fontSize: 13, background: 'var(--c-input)',
                                  color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
                       <button type="submit" disabled={occupe}
-                        style={{ ...action('secondaire'), minHeight: 30, fontSize: 11 }}>
+                        style={{ ...action('secondaire'), minHeight: 30, fontSize: 13 }}>
                         Ajouter
                       </button>
                     </form>
@@ -952,7 +952,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                       minimum exigé — les deux chiffres se lisent ensemble. */}
                   {!close && !p.passager_nom && onDefinirSurfaceVoile && (
                     <label className="flex items-center gap-1"
-                      style={{ fontSize: 11,
+                      style={{ fontSize: 13,
                                color: p.surface_voile_ft2 == null ? 'var(--c-dim)' : 'var(--c-muted)' }}>
                       <span className="sr-only">Surface de la voile de {p.nom}, en ft²</span>
                       <input type="number" inputMode="numeric" min={50} max={500} step={1}
@@ -966,7 +966,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                             onDefinirSurfaceVoile(p.id, ft2).then(err => ({ error: err ? { message: err } : null })));
                         }}
                         className="px-1.5 rounded-lg text-right"
-                        style={{ width: 72, minHeight: 30, fontSize: 12, background: 'var(--c-input)',
+                        style={{ width: 72, minHeight: 30, fontSize: 13, background: 'var(--c-input)',
                                  color: 'var(--c-text)', border: '1px solid var(--n2-bord)' }} />
                       ft²
                     </label>
@@ -989,7 +989,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                             réserves — ça ne se lit pas au pied d'un avion. */}
                         <span title={`${l.detail}\n\n${SOURCE_DT48}`}
                           className="whitespace-nowrap"
-                          style={{ fontSize: 11,
+                          style={{ fontSize: 13,
                             color: l.bloque ? SEVERITE_COULEUR.critique
                                  : l.inconnu ? 'var(--c-dim)' : 'var(--c-text2)',
                             fontWeight: l.bloque ? 700 : 400 }}>
@@ -1010,7 +1010,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                               onAmenagementDT48(p.parachutiste_id!, !v.amenagement)
                                 .then(e => ({ error: e ? { message: e } : null })))}
                             className="whitespace-nowrap px-1.5 py-0.5 rounded"
-                            style={{ fontSize: 10.5, fontWeight: 800,
+                            style={{ fontSize: 13, fontWeight: 800,
                               color: v.amenagement ? SEVERITE_COULEUR.vigilance : 'var(--action-texte)',
                               border: `1px solid ${v.amenagement ? SEVERITE_COULEUR.vigilance : 'var(--action-texte)'}` }}>
                             {v.amenagement ? 'retirer −11 %' : 'accorder −11 %'}
@@ -1031,7 +1031,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                     return (
                       <span className="whitespace-nowrap"
                         title={brut ?? undefined}
-                        style={{ fontSize: 11, color: brut ? 'var(--c-text2)' : 'var(--c-dim)' }}>
+                        style={{ fontSize: 13, color: brut ? 'var(--c-text2)' : 'var(--c-dim)' }}>
                         <Package className="w-3 h-3 inline-block align-[-1px] mr-1" aria-hidden />
                         {court}
                       </span>
@@ -1040,7 +1040,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
 
                   {/* Vert : on le dit aussi, sinon le volet semble vide. */}
                   {!aDire && p.aptitude === 'vert' && (
-                    <span style={{ fontSize: 11, color: SEVERITE_COULEUR.conforme }}>
+                    <span style={{ fontSize: 13, color: SEVERITE_COULEUR.conforme }}>
                       dossier complet
                     </span>
                   )}
@@ -1053,7 +1053,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
           );})}
 
           {!close && onReordonner && places.length > 1 && (
-            <p className="mt-1.5" style={{ fontSize: 11.5, color: 'var(--c-dim)' }}>
+            <p className="mt-1.5" style={{ fontSize: 13, color: 'var(--c-dim)' }}>
               Glissez une ligne — ou un groupe entier — pour changer l’ordre de sortie.
             </p>
           )}
@@ -1069,16 +1069,16 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                     if (!e) setSelection(new Set());
                     return { error: e ? { message: e } : null };
                   }))}
-                style={{ ...action('secondaire'), minHeight: 34, fontSize: 12 }}>
+                style={{ ...action('secondaire'), minHeight: 34, fontSize: 13 }}>
                 <Users className="w-3.5 h-3.5" aria-hidden />
                 Grouper {selection.size} sélectionné{selection.size > 1 ? 's' : ''}
               </button>
               <button type="button" onClick={() => setSelection(new Set())}
-                style={{ ...action('texte'), minHeight: 34, fontSize: 12 }}>
+                style={{ ...action('texte'), minHeight: 34, fontSize: 13 }}>
                 Annuler
               </button>
               {selection.size < 2 && (
-                <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+                <span style={{ fontSize: 13, color: 'var(--c-muted)' }}>
                   sélectionnez-en au moins deux
                 </span>
               )}
@@ -1133,7 +1133,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
               volé ne s'efface pas, et la base le refuse de toute façon. */}
           {!r.heure_decollage && !close && onSupprimerPlanche && (
             confirmerSuppression ? (
-              <span className="flex items-center gap-1.5" style={{ fontSize: 12 }}>
+              <span className="flex items-center gap-1.5" style={{ fontSize: 13 }}>
                 <span style={{ color: 'var(--c-text2)' }}>
                   Supprimer la planche n°{r.numero}
                   {places.length > 0 && ` et remettre ${places.length} personne${places.length > 1 ? 's' : ''} en file`} ?

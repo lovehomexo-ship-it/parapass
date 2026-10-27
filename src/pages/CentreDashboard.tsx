@@ -188,9 +188,9 @@ function CentreKpiCard({
       onMouseEnter={(e) => { if (onClick) (e.currentTarget as HTMLElement).style.background = 'var(--c-hover)'; }}
       onMouseLeave={(e) => { if (onClick) (e.currentTarget as HTMLElement).style.background = 'var(--c-card)'; }}
     >
-      <p style={{ color: 'var(--c-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8, fontWeight: 500 }}>{label}</p>
+      <p style={{ color: 'var(--c-muted)', fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8, fontWeight: 500 }}>{label}</p>
       <p style={{ color: 'var(--c-text)', fontSize: 28, fontWeight: 700, lineHeight: 1, marginBottom: 6 }}>{value}</p>
-      <p style={{ color: 'var(--c-muted)', fontSize: 12 }}>{sub}</p>
+      <p style={{ color: 'var(--c-muted)', fontSize: 13 }}>{sub}</p>
     </div>
   );
 }
@@ -241,7 +241,7 @@ function AvatarCircle({
   prenom: string;
   size?: 'sm' | 'md' | 'lg';
 }) {
-  const sizeClass = size === 'sm' ? 'w-7 h-7 text-[10px]' : size === 'lg' ? 'w-16 h-16 text-xl' : 'w-10 h-10 text-sm';
+  const sizeClass = size === 'sm' ? 'w-7 h-7 text-xs' : size === 'lg' ? 'w-16 h-16 text-xl' : 'w-10 h-10 text-sm';
   if (url) {
     return <img src={url} alt={`${prenom} ${nom}`} className={`${sizeClass} rounded-full object-cover flex-shrink-0`} />;
   }
@@ -300,7 +300,7 @@ export function SousPartieAVenir({ icone, titre, detail }: { icone: React.ReactN
       </div>
       <p className="font-bold" style={{ color: 'var(--c-text)' }}>{titre}</p>
       <p className="text-sm mt-1 max-w-sm" style={{ color: 'var(--c-dim)' }}>{detail}</p>
-      <span className="mt-4 text-[11px] px-3 py-1 rounded-full font-semibold"
+      <span className="mt-4 text-xs px-3 py-1 rounded-full font-semibold"
         style={{ background: 'rgba(245,158,11,0.12)', color: '#FCD34D', border: '1px solid rgba(245,158,11,0.3)' }}>
         À venir
       </span>
@@ -319,7 +319,7 @@ function TuileEncadrementDZ({ centreId, onGo }: { centreId: string; onGo: (secti
   const manque = compterExigencesNonCouvertes(enc.seances, enc.regles, enc.presents);
   return (
     <button className={tuileRecap} style={tuileRecapStyle} onClick={() => onGo('equipe', 'encadrement')}>
-      <p className="text-[11px] font-bold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Encadrement des séances</p>
+      <p className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Encadrement des séances</p>
       {/* État vide illustré (pas de tiret orphelin) ; ✓ vectoriel quand conforme. */}
       <p className="text-2xl font-extrabold mt-1 flex items-center" style={{ color: enc.seances.length === 0 ? 'var(--c-dim)' : manque === 0 ? 'var(--sev-conforme)' : 'var(--sev-vigilance)', minHeight: 32 }}>
         {enc.seances.length === 0
@@ -352,7 +352,7 @@ function TuileRelancesDZ({ centreId, onGo }: { centreId: string; onGo: (section:
   if (relancesDues === null) return null;
   return (
     <button className={tuileRecap} style={tuileRecapStyle} onClick={() => onGo('messages', 'relances')}>
-      <p className="text-[11px] font-bold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Échéances à relancer</p>
+      <p className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--c-dim)' }}>Échéances à relancer</p>
       <p className="text-2xl font-extrabold mt-1" style={{ color: relancesDues === 0 ? 'var(--sev-conforme)' : 'var(--sev-vigilance)' }}>{relancesDues}</p>
       <p className="text-xs mt-1" style={{ color: 'var(--c-dim)' }}>
         {relancesDues === 0 ? 'Documents à jour selon les paliers.' : 'Licences / certificats arrivant à échéance.'}
@@ -363,7 +363,7 @@ function TuileRelancesDZ({ centreId, onGo }: { centreId: string; onGo: (section:
 
 // Titre de zone du dashboard (Aujourd'hui / À traiter / Pilotage)
 function ZoneTitre({ children }: { children: React.ReactNode }) {
-  return <p className="text-[11px] font-bold uppercase tracking-widest pt-1" style={{ color: 'var(--c-dim)', letterSpacing: '1.5px' }}>{children}</p>;
+  return <p className="text-xs font-bold uppercase tracking-widest pt-1" style={{ color: 'var(--c-dim)', letterSpacing: '1.5px' }}>{children}</p>;
 }
 
 // ─── DashboardHome ─────────────────────────────────────────────────────────────
@@ -520,23 +520,23 @@ function DashboardHome({
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center font-black text-xl text-white/45 flex-shrink-0" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}>{(centre?.nom ?? 'DZ').slice(0, 2).toUpperCase()}</div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-semibold uppercase mb-1 truncate" style={{ color: 'var(--c-muted)', letterSpacing: '1.5px' }}>Centre DZ{centre?.ville ? ` · ${centre.ville}` : ''}</p>
+              <p className="text-xs font-semibold uppercase mb-1 truncate" style={{ color: 'var(--c-muted)', letterSpacing: '1.5px' }}>Centre DZ{centre?.ville ? ` · ${centre.ville}` : ''}</p>
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="min-w-0 break-words" style={{ color: 'var(--c-text)', fontSize: 22, fontWeight: 800, lineHeight: 1.12, letterSpacing: '-0.01em' }}>{centre?.nom ?? 'Mon Centre'}</h1>
                 {/* Statut « Agréé » valorisé en badge distinct */}
                 {isPlanActif(centre) ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold flex-shrink-0"
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold flex-shrink-0"
                     style={{ background: 'rgba(16,185,129,0.16)', color: 'var(--sev-conforme)', border: '1px solid rgba(16,185,129,0.35)' }}>
                     <BadgeCheck className="w-3.5 h-3.5" /> Agréé
                   </span>
                 ) : (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold flex-shrink-0"
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold flex-shrink-0"
                     style={{ background: 'rgba(148,163,184,0.15)', color: 'var(--c-dim)', border: '1px solid var(--c-border-f)' }}>
                     {planLabel(centre?.plan)}
                   </span>
                 )}
               </div>
-              <p className="text-[12px] mt-1 truncate" style={{ color: 'var(--c-muted)' }}>
+              <p className="text-[13px] mt-1 truncate" style={{ color: 'var(--c-muted)' }}>
                 {[centre?.numero_agrement_ffp ? `Code FFP ${centre.numero_agrement_ffp}` : null, centre?.nom_dt ? `DT ${centre.nom_dt}` : null].filter(Boolean).join(' · ')}
               </p>
             </div>
@@ -548,11 +548,11 @@ function DashboardHome({
           <div className="flex gap-2 sm:flex-shrink-0">
             <div className="flex-1 sm:flex-initial rounded-xl px-3.5 py-2 text-center" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}>
               <p style={{ color: '#60A5FA', fontSize: 24, fontWeight: 800, lineHeight: 1 }}>{stats.totalLicencies}</p>
-              <p style={{ color: 'var(--c-muted)', fontSize: 12, marginTop: 2 }}>licenciés</p>
+              <p style={{ color: 'var(--c-muted)', fontSize: 13, marginTop: 2 }}>licenciés</p>
             </div>
             <div className="flex-1 sm:flex-initial rounded-xl px-3.5 py-2 text-center" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}>
               <p style={{ color: 'var(--sev-conforme)', fontSize: 24, fontWeight: 800, lineHeight: 1 }}>{sautsThisMonth}</p>
-              <p style={{ color: 'var(--c-muted)', fontSize: 12, marginTop: 2 }}>sauts / mois</p>
+              <p style={{ color: 'var(--c-muted)', fontSize: 13, marginTop: 2 }}>sauts / mois</p>
             </div>
           </div>
           )}
@@ -715,7 +715,7 @@ function DashboardHome({
         <div style={{ flex: 2, background: 'var(--c-dropdown)', border: '1px solid var(--c-border)', borderRadius: 12, overflow: 'hidden', minWidth: 0 }}>
           <div className="flex items-center justify-between px-5 py-3.5" style={{ borderBottom: '1px solid var(--c-border-s)' }}>
             <h2 style={{ color: 'var(--c-text)', fontSize: 14, fontWeight: 600 }}>Activité récente</h2>
-            <button onClick={() => onNavigate('sauts')} style={{ color: 'var(--accent-texte)', fontSize: 12 }} className="font-medium hover:opacity-70 transition-opacity">
+            <button onClick={() => onNavigate('sauts')} style={{ color: 'var(--accent-texte)', fontSize: 13 }} className="font-medium hover:opacity-70 transition-opacity">
               Voir tout →
             </button>
           </div>
@@ -736,9 +736,9 @@ function DashboardHome({
                     <AvatarCircle url={null} nom={nom} prenom={prenom} size="sm" />
                     <div className="flex-1 min-w-0">
                       <p style={{ color: 'var(--c-text)', fontSize: 13, fontWeight: 500 }}>{prenom} {nom}</p>
-                      <p style={{ color: 'var(--c-muted)', fontSize: 11 }}>{fr(s.date_saut)} · {s.lieu} · {s.hauteur_m}m</p>
+                      <p style={{ color: 'var(--c-muted)', fontSize: 13 }}>{fr(s.date_saut)} · {s.lieu} · {s.hauteur_m}m</p>
                     </div>
-                    <span className="text-[11px] font-medium flex-shrink-0" style={
+                    <span className="text-xs font-medium flex-shrink-0" style={
                       s.statut === 'valide'
                         ? { background: 'rgba(16,185,129,0.12)', color: 'var(--sev-conforme)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 20, padding: '3px 10px' }
                         : s.statut === 'refuse'
@@ -768,7 +768,7 @@ function DashboardHome({
               { label: 'Expirant dans 30j', value: certifExpirant, total: null, color: certifExpirant > 0 ? '#F97316' : 'var(--sev-conforme)' },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
-                <span style={{ color: 'var(--c-text2)', fontSize: 12 }}>{item.label}</span>
+                <span style={{ color: 'var(--c-text2)', fontSize: 13 }}>{item.label}</span>
                 <span style={{ color: item.color, fontSize: 13, fontWeight: 600 }}>
                   {item.value}{item.total !== null ? ` / ${item.total}` : ''}
                 </span>
@@ -779,7 +779,7 @@ function DashboardHome({
           {/* Conformity score */}
           <div style={{ marginTop: 20, paddingTop: 16, borderTop: 'var(--c-border-s)' }}>
             <div className="flex items-center justify-between mb-2">
-              <span style={{ color: 'var(--c-text2)', fontSize: 12 }}>Conformité globale</span>
+              <span style={{ color: 'var(--c-text2)', fontSize: 13 }}>Conformité globale</span>
               <span style={{ color: conformiteColor, fontSize: 14, fontWeight: 700 }}>{conformite}%</span>
             </div>
             <div style={{ height: 6, borderRadius: 3, background: 'var(--c-border)', overflow: 'hidden' }}>
@@ -1588,7 +1588,7 @@ function FeuDossier({ d }: { d?: { verdict: string; bloquants: number; vigilance
   return (
     <span
       className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full"
-      style={{ fontSize: 10.5, fontWeight: 700, background: c.fond, color: c.texte,
+      style={{ fontSize: 13, fontWeight: 700, background: c.fond, color: c.texte,
                border: `1px solid ${c.bord}` }}
       title={(d.motifs ?? 'Aucune anomalie sur pièces.')
              + '\n\nLe briefing, la météo face au brevet et la vérification du matériel'
@@ -1788,7 +1788,7 @@ function SautsSection({ centreId, onNavigate }: { centreId: string | undefined; 
                         soupçonner une erreur. Il est normal : on saute en
                         voyage, et c'est la DZ d'accueil qui atteste. */}
                     {s.visiteur && (
-                      <span className="ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-full align-middle"
+                      <span className="ml-2 text-xs font-semibold px-1.5 py-0.5 rounded-full align-middle"
                         style={{ background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE' }}
                         title="A sauté chez vous sans être licencié de votre centre. C’est vous qui l’avez vu sauter, c’est donc vous qui attestez.">
                         visiteur
@@ -1807,7 +1807,7 @@ function SautsSection({ centreId, onNavigate }: { centreId: string | undefined; 
                     {s.statut === 'refuse' && <span className="text-xs bg-red-100 text-red-600 rounded-full px-2 py-0.5">Refusé</span>}
                     {/* Trace inline (validateur + horodatage) — visible dans la liste (Prompt Q). */}
                     {(s.statut === 'valide' || s.statut === 'refuse') && s.valide_par && (
-                      <div className="text-[11px] text-gray-400 mt-0.5">{s.valide_par}{s.valide_le ? ` · ${formatDateTimeParis(s.valide_le)}` : ''}</div>
+                      <div className="text-xs text-gray-400 mt-0.5">{s.valide_par}{s.valide_le ? ` · ${formatDateTimeParis(s.valide_le)}` : ''}</div>
                     )}
                   </td>
                   {tab === 'attente' && (
@@ -2160,7 +2160,7 @@ function MonCentreSection({ centre, onSaved }: { centre: Centre | null; onSaved:
         <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
           {/* Left — preview */}
           <div className="flex flex-col items-center gap-3">
-            <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--c-dim)' }}>Aperçu cachet DZ</p>
+            <p className="text-xs uppercase tracking-widest font-semibold" style={{ color: 'var(--c-dim)' }}>Aperçu cachet DZ</p>
             <div
               className="w-24 h-24 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
               style={{ background: 'rgba(255,255,255,0.07)', border: '2px solid rgba(249,115,22,0.4)' }}
@@ -2180,7 +2180,7 @@ function MonCentreSection({ centre, onSaved }: { centre: Centre | null; onSaved:
             {logoUrl && !logoPreview && (
               <button
                 onClick={handleDeleteLogo}
-                className="text-[11px] text-red-400 hover:text-red-300 transition flex items-center gap-1"
+                className="text-xs text-red-400 hover:text-red-300 transition flex items-center gap-1"
               >
                 <X className="w-3 h-3" /> Supprimer le logo
               </button>
@@ -2206,7 +2206,7 @@ function MonCentreSection({ centre, onSaved }: { centre: Centre | null; onSaved:
               <p className="text-xs text-center font-medium" style={{ color: 'var(--c-text2)' }}>
                 {uploadingLogo ? 'Upload en cours…' : 'Glisser-déposer ou cliquer'}
               </p>
-              <p className="text-[10px] text-center" style={{ color: 'var(--c-dim)' }}>
+              <p className="text-xs text-center" style={{ color: 'var(--c-dim)' }}>
                 PNG, JPG, SVG, WebP · Max 2 Mo
               </p>
             </div>
@@ -2220,7 +2220,7 @@ function MonCentreSection({ centre, onSaved }: { centre: Centre | null; onSaved:
             />
 
             {logoError && (
-              <div className="flex items-start gap-1.5 text-[11px] text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+              <div className="flex items-start gap-1.5 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
                 <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
                 {logoError}
               </div>
@@ -2242,13 +2242,13 @@ function MonCentreSection({ centre, onSaved }: { centre: Centre | null; onSaved:
             )}
 
             {uploadedLogo && (
-              <div className="flex items-center gap-1.5 text-[12px] font-medium text-green-400 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
+              <div className="flex items-center gap-1.5 text-[13px] font-medium text-green-400 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
                 <CheckCircle className="w-3.5 h-3.5" />
                 Logo mis à jour — appliqué sur tous les carnets
               </div>
             )}
 
-            <div className="rounded-lg px-3 py-2.5 text-[10px] leading-relaxed" style={{ background: 'rgba(255,255,255,0.04)', color: 'var(--c-dim)' }}>
+            <div className="rounded-lg px-3 py-2.5 text-xs leading-relaxed" style={{ background: 'rgba(255,255,255,0.04)', color: 'var(--c-dim)' }}>
               <p className="font-semibold mb-1" style={{ color: 'var(--c-muted)' }}>Conseils</p>
               <p>· Fond transparent (PNG) pour un rendu optimal</p>
               <p>· Logo carré ou circulaire idéalement</p>
@@ -2624,9 +2624,9 @@ function ChatMessages({
               <div className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 ${isMine ? 'bg-[#001A4D] text-white rounded-tl-sm' : 'bg-gray-100 text-gray-900 rounded-tr-sm'}`}>
                 <p className="text-sm whitespace-pre-wrap break-words">{m.contenu}</p>
                 <div className={`flex items-center gap-1 mt-1 ${isMine ? 'justify-start' : 'justify-end'}`}>
-                  <span className={`text-[10px] ${isMine ? 'text-white/50' : 'text-gray-400'}`}>{fmt(m.created_at)}</span>
+                  <span className={`text-xs ${isMine ? 'text-white/50' : 'text-gray-400'}`}>{fmt(m.created_at)}</span>
                   {!isMine && (
-                    <span className={`text-[10px] ${m.lu ? 'text-blue-500' : 'text-gray-300'}`}>
+                    <span className={`text-xs ${m.lu ? 'text-blue-500' : 'text-gray-300'}`}>
                       {m.lu ? '✓✓' : '✓'}
                     </span>
                   )}
@@ -3480,7 +3480,7 @@ export function CentreDashboardPage() {
           )}
           <div className={`min-w-0 flex-1 ${compact ? 'hidden' : ''}`}>
             <p className="font-bold truncate" style={{ color: 'var(--c-text)',  fontSize: 13 }}>{centre.nom}</p>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{
+            <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold" style={{
               background: isActivePlan ? 'rgba(37,99,235,0.2)' : 'rgba(249,115,22,0.2)',
               color: isActivePlan ? '#60A5FA' : '#F97316',
               border: `1px solid ${isActivePlan ? 'rgba(37,99,235,0.3)' : 'rgba(249,115,22,0.3)'}`,
@@ -3511,7 +3511,7 @@ export function CentreDashboardPage() {
               style={{
                 position: 'relative',
                 padding: compact ? '10px 0' : '9px 12px',
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: isActive ? 600 : 400,
                 background: isActive ? 'rgba(249,115,22,0.1)' : 'transparent',
                 color: isActive ? '#F97316' : 'var(--c-muted)',
@@ -3524,7 +3524,7 @@ export function CentreDashboardPage() {
               <Icon className="w-4 h-4 flex-shrink-0" />
               {!compact && <span className="flex-1 truncate">{item.label}</span>}
               {item.badge != null && item.badge > 0 && (
-                <span className="text-[10px] rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-semibold"
+                <span className="text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-semibold"
                   style={{ ...(compact ? { position: 'absolute', top: 2, right: 4, lineHeight: 1 } : {}),
                   background: isMsgBadge ? 'rgba(59,130,246,0.25)' : 'rgba(239,68,68,0.2)',
                   color: isMsgBadge ? '#60A5FA' : 'var(--sev-critique)',
@@ -3543,14 +3543,14 @@ export function CentreDashboardPage() {
           title={compact ? 'Notifications' : undefined}
           aria-label={compact ? 'Notifications' : undefined}
           className={`w-full flex items-center rounded-lg transition ${compact ? 'justify-center' : 'gap-2.5'}`}
-          style={{ position: 'relative', padding: compact ? '10px 0' : '9px 12px', fontSize: 12, color: 'var(--c-dim)' }}
+          style={{ position: 'relative', padding: compact ? '10px 0' : '9px 12px', fontSize: 13, color: 'var(--c-dim)' }}
           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--c-card)'; (e.currentTarget as HTMLElement).style.color = 'var(--c-text)'; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--c-dim)'; }}
         >
           <Bell className="w-4 h-4 flex-shrink-0" />
           {!compact && <span className="flex-1 text-left">Notifications</span>}
           {notifCount > 0 && (
-            <span className="text-[10px] rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-semibold"
+            <span className="text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-semibold"
               style={{ ...(compact ? { position: 'absolute', top: 2, right: 4, lineHeight: 1 } : {}),
                        background: 'rgba(239,68,68,0.2)', color: 'var(--sev-critique)' }}>{notifCount}</span>
           )}
@@ -3560,13 +3560,13 @@ export function CentreDashboardPage() {
         <div className={compact
           ? 'flex flex-col items-center gap-1.5 py-1'
           : 'flex items-center gap-2.5 px-3 py-2'}>
-          <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
+          <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
             title={compact ? `${profile.prenom} ${profile.nom}` : undefined}
             style={{ background: 'var(--c-border)' }}>
             {initials(profile.nom, profile.prenom)}
           </div>
           {!compact && (
-            <p className="text-xs flex-1 truncate" style={{ color: 'var(--c-dim)', fontSize: 11 }}>{profile.prenom} {profile.nom}</p>
+            <p className="text-xs flex-1 truncate" style={{ color: 'var(--c-dim)', fontSize: 13 }}>{profile.prenom} {profile.nom}</p>
           )}
           <button onClick={toggleTheme} className="p-1 rounded-lg transition flex-shrink-0" title={theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
             style={{ color: 'var(--c-dim)' }}
@@ -3613,7 +3613,7 @@ export function CentreDashboardPage() {
           aria-label={navRepliee ? 'Déployer le menu' : 'Réduire le menu aux icônes'}
           aria-expanded={!navRepliee}
           className="flex items-center justify-center gap-2 py-2.5"
-          style={{ borderTop: '1px solid var(--c-border)', color: 'var(--c-muted)', fontSize: 12 }}>
+          style={{ borderTop: '1px solid var(--c-border)', color: 'var(--c-muted)', fontSize: 13 }}>
           {navRepliee ? <ChevronRight className="w-4 h-4" aria-hidden />
                       : <><ChevronLeft className="w-4 h-4" aria-hidden /> Réduire</>}
         </button>
@@ -3659,7 +3659,7 @@ export function CentreDashboardPage() {
             <div className="relative">
               <Bell className="w-5 h-5" style={{ color: 'var(--c-muted)' }} />
               {notifCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center">{notifCount}</span>
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">{notifCount}</span>
             )}
             </div>
           </div>

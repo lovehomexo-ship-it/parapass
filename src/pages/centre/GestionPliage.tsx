@@ -282,7 +282,7 @@ function ModalNouveauSac({
               style={inputStyle}
               autoFocus
             />
-            <p className="text-[11px] mt-1" style={{ color: 'var(--c-dim)' }}>
+            <p className="text-xs mt-1" style={{ color: 'var(--c-dim)' }}>
               Ce nom s'affiche en gros lors du scan
             </p>
           </div>
@@ -452,7 +452,7 @@ function FileDePliage({ centreId }: { centreId: string }) {
                 </p>
               )}
             </div>
-            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full"
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full"
               style={{ background: 'rgba(249,115,22,0.15)', color: 'var(--accent-texte)', border: '1px solid rgba(249,115,22,0.3)' }}>
               À plier
             </span>
@@ -569,7 +569,7 @@ function OngletPliageDuJour({ centreId }: { centreId: string }) {
               >
                 <div className="flex-shrink-0 text-center w-10">
                   <p className="text-xs font-mono font-semibold" style={{ color: 'var(--c-muted)' }}>{heure}</p>
-                  {p.flag_qualif && <span className="text-[10px]" title="Qualification manquante"><AlertTriangle className="w-3 h-3 inline-block" aria-hidden /></span>}
+                  {p.flag_qualif && <span className="text-xs" title="Qualification manquante"><AlertTriangle className="w-3 h-3 inline-block" aria-hidden /></span>}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold truncate" style={{ color: 'var(--c-text)' }}>{voileNom}</p>
@@ -580,19 +580,19 @@ function OngletPliageDuJour({ centreId }: { centreId: string }) {
                 </div>
                 {/* Traçabilité sécurité : origine du pliage, signalée — jamais bloquée */}
                 {estAuto ? (
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
                     style={{ background: 'rgba(167,139,250,0.12)', color: 'var(--c-pliage)', border: '1px solid rgba(167,139,250,0.3)' }}>
                     Auto-pliage
                   </span>
                 ) : !habOk && (
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
                     style={{ background: 'rgba(249,115,22,0.12)', color: '#FDBA74', border: '1px solid rgba(249,115,22,0.35)' }}
                     title="Aucune habilitation active et non expirée dans le référentiel des plieurs">
                     <AlertTriangle className="w-3 h-3 inline-block mr-1 align-[-1px]" aria-hidden /> Plieur non habilité ou habilitation expirée
                   </span>
                 )}
                 <div className="flex-shrink-0 flex flex-col items-end gap-1">
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: badge.bg, color: badge.color }}>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: badge.bg, color: badge.color }}>
                     {badge.label}
                   </span>
                   {p.montant != null && <span className="text-xs" style={{ color: 'var(--c-muted)' }}>{p.montant} €</span>}
@@ -695,7 +695,7 @@ function OngletGestionSacs({ centreId }: { centreId: string }) {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mb-3">
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: sc.bg, color: sc.color }}>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: sc.bg, color: sc.color }}>
                     {sac.statut === 'en_service' ? '● En service' : sac.statut === 'au_repliage_secours' ? 'Repliage secours' : '✕ Retiré'}
                   </span>
                 </div>
@@ -941,7 +941,7 @@ function OngletRelevePlieurs({ centreId }: { centreId: string }) {
         </div>
       ) : (
         <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--c-border)' }}>
-          <div className="grid grid-cols-4 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide"
+          <div className="grid grid-cols-4 px-4 py-2 text-xs font-semibold uppercase tracking-wide"
             style={{ color: 'var(--c-muted)', background: 'var(--c-card)', borderBottom: '1px solid var(--c-border)' }}>
             <span className="col-span-2">Plieur</span>
             <span className="text-center">Pliages</span>
@@ -971,7 +971,7 @@ function OngletRelevePlieurs({ centreId }: { centreId: string }) {
         </div>
       )}
 
-      <p className="mt-4 text-[11px]" style={{ color: 'var(--c-dim)' }}>
+      <p className="mt-4 text-xs" style={{ color: 'var(--c-dim)' }}>
         ℹ️ Le montant à reverser est calculé sur les pliages payés (app ou comptoir). L'app ne verse rien aux plieurs — ce relevé sert à votre gestion interne.
       </p>
     </div>
@@ -1096,7 +1096,7 @@ function OngletParcSacs({ centreId }: { centreId: string }) {
                     <Package className="w-4 h-4 flex-shrink-0" style={{ color: cfg.color }} />
                     <p className="text-sm font-bold truncate" style={{ color: 'var(--c-text)' }}>{nom}</p>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full self-start"
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full self-start"
                     style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
                     {cfg.label}
                   </span>
@@ -1111,7 +1111,7 @@ function OngletParcSacs({ centreId }: { centreId: string }) {
                       type="button"
                       onClick={e => { e.stopPropagation(); libererSac(s); }}
                       disabled={liberating === s.id}
-                      className="text-[10px] px-2 py-0.5 rounded-full mt-0.5 disabled:opacity-50"
+                      className="text-xs px-2 py-0.5 rounded-full mt-0.5 disabled:opacity-50"
                       style={{ background: 'rgba(239,68,68,0.1)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.25)', cursor: 'pointer' }}
                     >
                       {liberating === s.id ? '...' : 'Libérer'}
@@ -1276,7 +1276,7 @@ function OngletHabilitations({ centreId }: { centreId: string }) {
             <div>
               <p className="text-sm font-semibold" style={{ color: 'var(--c-text)' }}>
                 {p.plieur?.prenom} {p.plieur?.nom}
-                {p.numero_qualif && <span className="ml-2 text-[11px] font-mono" style={{ color: 'var(--c-muted)' }}>{p.numero_qualif}</span>}
+                {p.numero_qualif && <span className="ml-2 text-xs font-mono" style={{ color: 'var(--c-muted)' }}>{p.numero_qualif}</span>}
               </p>
               <p className="text-xs mt-0.5" style={{ color: 'var(--c-muted)' }}>
                 Habilité par {p.validateur?.prenom} {p.validateur?.nom} · {new Date(p.date_habilitation).toLocaleDateString('fr-FR')}
@@ -1301,7 +1301,7 @@ function OngletHabilitations({ centreId }: { centreId: string }) {
                 style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
                 <p className="text-xs" style={{ color: 'var(--c-text)' }}>{p.plieur?.prenom} {p.plieur?.nom}</p>
                 <button onClick={() => supabase.from('plieurs_valides').update({ actif: true }).eq('id', p.id).then(load)}
-                  className="text-[11px] px-2 py-0.5 rounded"
+                  className="text-xs px-2 py-0.5 rounded"
                   style={{ background: 'rgba(167,139,250,0.1)', color: 'var(--c-pliage-fort)', border: 'none', cursor: 'pointer' }}>
                   Réactiver
                 </button>

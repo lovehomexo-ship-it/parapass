@@ -33,8 +33,8 @@ function Bloc({ titre, sous, lignes }: { titre: string; sous: string; lignes: Li
   if (lignes.length === 0) return null;
   return (
     <div className="mt-4">
-      <p style={{ fontSize: 12, fontWeight: 800, color: 'var(--c-text)' }}>{titre}</p>
-      <p className="mb-2" style={{ fontSize: 11.5, color: 'var(--c-muted)' }}>{sous}</p>
+      <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--c-text)' }}>{titre}</p>
+      <p className="mb-2" style={{ fontSize: 13, color: 'var(--c-muted)' }}>{sous}</p>
       <ul className="space-y-2">
         {lignes.map(l => {
           const t = TEINTE[l.gravite] ?? TEINTE.vigilance;
@@ -46,7 +46,7 @@ function Bloc({ titre, sous, lignes }: { titre: string; sous: string; lignes: Li
                 {gris
                   ? <HelpCircle className="w-4 h-4 flex-shrink-0 mt-px" style={{ color: t.texte }} aria-hidden />
                   : <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-px" style={{ color: t.texte }} aria-hidden />}
-                <span style={{ fontFamily: 'ui-monospace, monospace', color: 'var(--c-muted)', fontSize: 11 }}>
+                <span style={{ fontFamily: 'ui-monospace, monospace', color: 'var(--c-muted)', fontSize: 13 }}>
                   {l.code}
                 </span>
                 <span className="flex-1">{l.libelle}</span>
@@ -54,13 +54,13 @@ function Bloc({ titre, sous, lignes }: { titre: string; sous: string; lignes: Li
 
               {/* CE QU'ON A CONSTATÉ — la donnée, datée, telle qu'elle est lue. */}
               {l.detail && (
-                <p className="mt-1 ml-6" style={{ fontSize: 12.5, color: 'var(--c-text2)' }}>{l.detail}</p>
+                <p className="mt-1 ml-6" style={{ fontSize: 13, color: 'var(--c-text2)' }}>{l.detail}</p>
               )}
 
               {/* CE QU'IL FAUT FAIRE — c'est ce qui manquait. */}
               {l.remede && (
                 <p className="mt-2 ml-6 flex items-start gap-1.5"
-                  style={{ fontSize: 12.5, color: 'var(--c-text)' }}>
+                  style={{ fontSize: 13, color: 'var(--c-text)' }}>
                   <Wrench className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#6EE7B7' }} aria-hidden />
                   <span>{l.remede}</span>
                 </p>
@@ -72,7 +72,7 @@ function Bloc({ titre, sous, lignes }: { titre: string; sous: string; lignes: Li
                   pas pour une référence qu'on doit pouvoir vérifier. */}
               {l.source_texte && (
                 <p className="mt-1.5 ml-6 flex items-start gap-1.5"
-                  style={{ fontSize: 11.5, color: 'var(--c-muted)', fontStyle: 'italic' }}>
+                  style={{ fontSize: 13, color: 'var(--c-muted)', fontStyle: 'italic' }}>
                   <BookOpen className="w-3 h-3 flex-shrink-0 mt-0.5" aria-hidden />
                   <span>{l.source_texte}</span>
                 </p>
@@ -140,7 +140,7 @@ export function ConformiteDossier({ parachutisteId, centreId }: {
       )}
 
       {acquittees.length > 0 && (
-        <p className="mt-3" style={{ fontSize: 11.5, color: 'var(--c-muted)' }}>
+        <p className="mt-3" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
           {acquittees.length} règle(s) acquittée(s) aujourd’hui par l’encadrement.
         </p>
       )}

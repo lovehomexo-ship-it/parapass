@@ -194,7 +194,7 @@ function GrilleInner({ centreId }: { centreId: string }) {
                 {ouvert && (
                   <div className="px-3 pb-3 pt-0 grid grid-cols-2 gap-x-4 gap-y-1">
                     {v.details.map(d => (
-                      <div key={d.label} className="flex items-baseline justify-between text-[11px] gap-2">
+                      <div key={d.label} className="flex items-baseline justify-between text-xs gap-2">
                         <span style={{ color: 'var(--c-dim)' }}>{d.label}</span>
                         <span style={{ color: FEU_UI[d.feu].couleur, fontWeight: 600 }}>
                           {d.valeur} <span style={{ color: 'var(--c-dim)', fontWeight: 400 }}>({d.seuil})</span>
@@ -218,14 +218,14 @@ function GrilleInner({ centreId }: { centreId: string }) {
             <p className="text-xs font-semibold" style={{ color: 'var(--c-text)' }}>
               Point de largage : {(derive.distanceM / 1000).toFixed(1)} km au {Math.round(derive.capDeg)}° depuis la cible
             </p>
-            <p className="text-[11px] mt-0.5" style={{ color: 'var(--c-dim)' }}>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--c-dim)' }}>
               Estimation à partir du profil de vent, pour un largage à {altLargage} m et un taux de chute de 5 m/s.
               <strong> C’est une aide, pas une consigne.</strong>
             </p>
-            <label className="text-[11px] flex items-center gap-2 mt-1.5" style={{ color: 'var(--c-dim)' }}>
+            <label className="text-xs flex items-center gap-2 mt-1.5" style={{ color: 'var(--c-dim)' }}>
               Altitude de largage
               <select value={altLargage} onChange={e => setAltLargage(Number(e.target.value))}
-                className="rounded-lg px-2 text-[11px]"
+                className="rounded-lg px-2 text-xs"
                 style={{ minHeight: 32, background: 'var(--c-bg)', border: '1px solid var(--c-border)', color: 'var(--c-text)' }}>
                 {[1500, 2200, 3000, 3500, 4000, 4200].map(a => <option key={a} value={a}>{a} m</option>)}
               </select>
@@ -238,7 +238,7 @@ function GrilleInner({ centreId }: { centreId: string }) {
       <div className="pt-1">
         <div className="flex items-center gap-1.5 mb-2">
           <Info className="w-3.5 h-3.5" style={{ color: 'var(--c-dim)' }} aria-hidden />
-          <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
+          <p className="text-xs" style={{ color: 'var(--c-dim)' }}>
             L’application informe ; la décision vous appartient, et elle est consignée.
           </p>
         </div>
@@ -278,7 +278,7 @@ function GrilleInner({ centreId }: { centreId: string }) {
               Décidé par {decision.auteur} · consigné au journal de bord
             </span>
             {historique.length > 1 && (
-              <p className="text-[11px] mt-1.5 pt-1.5" style={{ color: 'var(--c-dim)', borderTop: '1px solid var(--c-border)' }}>
+              <p className="text-xs mt-1.5 pt-1.5" style={{ color: 'var(--c-dim)', borderTop: '1px solid var(--c-border)' }}>
                 Journée : {historique.slice().reverse().map(h =>
                   `${h.heure} ${DECISIONS.find(d => d.cle === h.texte)?.label ?? h.texte}`).join(' → ')}
               </p>

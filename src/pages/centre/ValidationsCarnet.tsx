@@ -299,7 +299,7 @@ function ParaCard({ para, dzId, onDone }: { para: ParaEnAttente; dzId: string; o
           )}
           {/* Pourquoi ce dossier est écarté de l'attestation en lot (P11.3). */}
           {carnet_statut === 'en_attente' && para.anomalie && (
-            <p className="text-[11px] mt-0.5 font-medium" style={{ color: '#FB923C' }}>
+            <p className="text-xs mt-0.5 font-medium" style={{ color: '#FB923C' }}>
               {para.anomalie} — à examiner
             </p>
           )}
@@ -589,7 +589,7 @@ export function ValidationsCarnet({ dzId, onNavigate, onCompteur }: {
             </button>
           </div>
           {aLaMain > 0 && (
-            <p className="text-[11px] mt-3" style={{ color: 'var(--c-dim)' }}>
+            <p className="text-xs mt-3" style={{ color: 'var(--c-dim)' }}>
               Les dossiers portant une anomalie (licence ou certificat médical) sont
               écartés automatiquement : ils restent à examiner un par un.
             </p>

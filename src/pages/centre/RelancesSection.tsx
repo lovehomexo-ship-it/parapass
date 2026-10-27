@@ -253,7 +253,7 @@ export function RelancesSection({ centreId }: { centreId: string }) {
                     <p className="font-semibold text-white text-sm">{qui}</p>
                     <div className="flex flex-wrap gap-1.5 mt-1">
                       {items.map(i => (
-                        <span key={i.type_document + i.echeance_date} className="text-[11px] px-2 py-0.5 rounded-full" style={{
+                        <span key={i.type_document + i.echeance_date} className="text-xs px-2 py-0.5 rounded-full" style={{
                           background: i.jours_restants < 0 ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)',
                           color: i.jours_restants < 0 ? 'var(--sev-critique)' : '#FCD34D',
                         }}>
@@ -264,7 +264,7 @@ export function RelancesSection({ centreId }: { centreId: string }) {
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {toutEnvoye && (
-                      <span className="text-[11px] flex items-center gap-1" style={{ color: lu ? '#86EFAC' : 'var(--c-dim)' }}>
+                      <span className="text-xs flex items-center gap-1" style={{ color: lu ? '#86EFAC' : 'var(--c-dim)' }}>
                         {lu ? <Eye className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                         {lu ? 'Relancé · lu' : 'Relancé · non lu'}
                       </span>

@@ -131,9 +131,9 @@ function AptitudeInner({ centreId, date }: { centreId: string; date?: string }) 
                   <p className="font-bold text-sm break-words" style={{ color: 'var(--c-text)' }}>
                     {l.prenom} {l.nom}
                   </p>
-                  <span className="text-[11px] font-semibold" style={{ color: c.texte }}>{c.mot}</span>
+                  <span className="text-xs font-semibold" style={{ color: c.texte }}>{c.mot}</span>
                 </div>
-                <p className="text-[11px] mt-0.5" style={{ color: 'var(--c-dim)' }}>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--c-dim)' }}>
                   {l.dernier_saut
                     ? `Dernier saut le ${new Date(l.dernier_saut).toLocaleDateString('fr-FR')}`
                     : 'Aucun saut enregistré'}
@@ -152,12 +152,12 @@ function AptitudeInner({ centreId, date }: { centreId: string; date?: string }) 
                           {m.libelle} — {m.detail}
                         </span>
                         {m.levee ? (
-                          <span className="flex items-center gap-1 text-[11px] flex-shrink-0" style={{ color: 'var(--sev-conforme)' }}>
+                          <span className="flex items-center gap-1 text-xs flex-shrink-0" style={{ color: 'var(--sev-conforme)' }}>
                             <Check className="w-3 h-3" aria-hidden /> levée
                           </span>
                         ) : (
                           <button onClick={() => setLevee({ ligne: l, motif: m })}
-                            className="text-[11px] font-semibold underline flex-shrink-0"
+                            className="text-xs font-semibold underline flex-shrink-0"
                             style={{ color: '#60A5FA', minHeight: 32 }}>
                             lever avec motif
                           </button>
@@ -229,7 +229,7 @@ function ModaleLevee({ centreId, ligne, motif, onFerme, onFait }: {
             className="mt-1 w-full rounded-xl px-3 py-2 text-sm"
             style={{ background: 'var(--c-bg)', border: '1px solid var(--c-border)', color: 'var(--c-text)' }} />
         </label>
-        <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
+        <p className="text-xs" style={{ color: 'var(--c-dim)' }}>
           La levée vaut pour <strong>aujourd’hui seulement</strong>. Elle sera enregistrée
           avec votre nom et l’heure.
         </p>

@@ -244,7 +244,7 @@ function RotationsInner({ centreId }: { centreId: string }) {
               <span className="text-lg font-extrabold" style={{ color: 'var(--c-text)' }}>
                 Rotation {r.numero}
               </span>
-              <span className="text-[11px] font-semibold px-2 rounded-full"
+              <span className="text-xs font-semibold px-2 rounded-full"
                 style={{ background: `${s?.[2] ?? '#94A3B8'}22`, color: s?.[2] ?? '#94A3B8' }}>
                 {lib(STATUTS_ROTATION, r.statut)}
               </span>
@@ -253,7 +253,7 @@ function RotationsInner({ centreId }: { centreId: string }) {
                 {' · '}{libelleCapacite(sieges, av?.places ?? null)}
               </span>
               {complet && !close && (
-                <span className="flex items-center gap-1 text-[11px] font-semibold"
+                <span className="flex items-center gap-1 text-xs font-semibold"
                   style={{ color: '#FB923C' }}>
                   <AlertTriangle className="w-3 h-3" aria-hidden /> avion complet
                 </span>
@@ -261,14 +261,14 @@ function RotationsInner({ centreId }: { centreId: string }) {
               <div className="ml-auto flex gap-2">
                 {!close && pl.length > 1 && (
                   <button onClick={() => ordonner(r.id)} disabled={!!action}
-                    className="flex items-center gap-1 px-2.5 rounded-lg text-[11px] font-semibold"
+                    className="flex items-center gap-1 px-2.5 rounded-lg text-xs font-semibold"
                     style={{ minHeight: 36, color: 'var(--c-muted)', border: '1px solid var(--c-border)' }}>
                     <ArrowDownUp className="w-3 h-3" aria-hidden /> Ordre de sortie
                   </button>
                 )}
                 {!close && (
                   <button onClick={() => cloturer(r)} disabled={!!action}
-                    className="flex items-center gap-1 px-2.5 rounded-lg text-[11px] font-bold"
+                    className="flex items-center gap-1 px-2.5 rounded-lg text-xs font-bold"
                     style={{ minHeight: 36, background: '#10B981', color: '#fff' }}>
                     <Lock className="w-3 h-3" aria-hidden /> Clôturer
                   </button>
@@ -277,7 +277,7 @@ function RotationsInner({ centreId }: { centreId: string }) {
             </div>
 
             {close && (
-              <p className="text-[11px]" style={{ color: 'var(--sev-conforme)' }}>
+              <p className="text-xs" style={{ color: 'var(--sev-conforme)' }}>
                 Clôturée — les sauts ont été créés, en attente de validation moniteur.
               </p>
             )}
@@ -304,14 +304,14 @@ function RotationsInner({ centreId }: { centreId: string }) {
                     <span className="text-sm flex-1 min-w-0 truncate" style={{ color: 'var(--c-text)' }}>
                       {p.nom}
                     </span>
-                    <span className="text-[11px] px-1.5 rounded-full flex-shrink-0"
+                    <span className="text-xs px-1.5 rounded-full flex-shrink-0"
                       style={{ background: 'var(--c-hover)', color: 'var(--c-muted)' }}>
                       {lib(TYPES_SAUT, p.type_saut)}
                     </span>
                     {!close && (
                       <>
                         <select value={p.statut} onChange={e => majPlace(p.id, { statut: e.target.value })}
-                          className="text-[11px] rounded-lg px-1.5 flex-shrink-0"
+                          className="text-xs rounded-lg px-1.5 flex-shrink-0"
                           style={{ minHeight: 32, background: 'var(--c-surface)',
                             border: '1px solid var(--c-border)', color: 'var(--c-text)' }}>
                           {STATUTS_PLACE.map(([c, l]) => <option key={c} value={c}>{l}</option>)}
@@ -323,7 +323,7 @@ function RotationsInner({ centreId }: { centreId: string }) {
                       </>
                     )}
                     {p.motif && (
-                      <span className="w-full text-[11px] pl-8"
+                      <span className="w-full text-xs pl-8"
                         style={{ color: p.aptitude === 'rouge' ? APT.rouge : APT.orange }}>
                         {p.motif}
                       </span>
@@ -357,7 +357,7 @@ export function Inscrire({ rotationId, presents, dejaInscrits, onInscrire }: {
 
   if (dispo.length === 0) {
     return (
-      <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
+      <p className="text-xs" style={{ color: 'var(--c-dim)' }}>
         {presents.length === 0
           ? 'Aucune présence enregistrée aujourd’hui : personne à inscrire.'
           : 'Tous les présents sont déjà inscrits sur cette rotation.'}
@@ -546,7 +546,7 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
       {/* ── LA FLOTTE, MODIFIABLE ──────────────────────────────────────── */}
       {deplie && aeronefs.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-[11px]" style={{ color: 'var(--c-muted)' }}>
+          <p className="text-xs" style={{ color: 'var(--c-muted)' }}>
             <strong>Places</strong> = sièges parachutistes — largueur et passager
             tandem compris, <strong>pilote non compris</strong>. C’est ce nombre que
             la planche remplit, et le « 9/10 » qu’elle affiche.
@@ -563,7 +563,7 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
                 {a.immatriculation}
                 {a.type && <span className="font-normal" style={{ color: 'var(--c-muted)' }}>{' · '}{a.type}</span>}
               </span>
-              <label className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--c-muted)' }}>
+              <label className="flex items-center gap-1 text-xs" style={{ color: 'var(--c-muted)' }}>
                 <span className="sr-only">Places parachutistes du {a.immatriculation}, pilote non compris</span>
                 <input type="number" min={1} max={40} step={1} defaultValue={a.places}
                   onBlur={e => {
@@ -574,7 +574,7 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
                   className="rounded-lg px-1.5 text-xs text-right w-14" style={stNum} />
                 places
               </label>
-              <label className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--c-muted)' }}>
+              <label className="flex items-center gap-1 text-xs" style={{ color: 'var(--c-muted)' }}>
                 <span className="sr-only">Plafond de largage du {a.immatriculation}, en mètres</span>
                 <input type="number" min={500} max={8000} step={100} defaultValue={a.altitude_max_m ?? ''}
                   placeholder="—"
@@ -585,7 +585,7 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
                   className="rounded-lg px-1.5 text-xs text-right w-20" style={stNum} />
                 m max
               </label>
-              <label className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--c-muted)' }}>
+              <label className="flex items-center gap-1 text-xs" style={{ color: 'var(--c-muted)' }}>
                 <span className="sr-only">Masse embarquée maximale du {a.immatriculation}, en kg</span>
                 <input type="number" min={100} max={10000} step={10} defaultValue={a.masse_max_kg ?? ''}
                   placeholder="— kg"
@@ -597,7 +597,7 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
                 kg max
               </label>
               {aRetirer?.id === a.id ? (
-                <span className="flex items-center gap-1.5 text-[11px]">
+                <span className="flex items-center gap-1.5 text-xs">
                   <span style={{ color: 'var(--c-text2)' }}>Retirer ?</span>
                   <button onClick={() => retirer(a)} className="px-2 py-1 rounded-lg font-bold"
                     style={{ color: '#fff', background: '#DC2626' }}>Oui</button>
@@ -608,7 +608,7 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
                 <button onClick={() => { setARetirer(a); setMessage(null); }}
                   aria-label={`Retirer ${a.immatriculation} de la flotte`}
                   title={`Retirer ${a.immatriculation} de la flotte`}
-                  className="flex items-center gap-1 px-2 rounded-lg text-[11px] font-semibold"
+                  className="flex items-center gap-1 px-2 rounded-lg text-xs font-semibold"
                   style={{ minHeight: 30, color: '#DC2626', border: '1px solid rgba(220,38,38,0.4)' }}>
                   <Trash2 className="w-3.5 h-3.5" aria-hidden /> Retirer
                 </button>
@@ -616,13 +616,13 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
             </div>
           ))}
           {message && (
-            <p role="status" className="text-[11px] px-2 py-1.5 rounded-lg"
+            <p role="status" className="text-xs px-2 py-1.5 rounded-lg"
               style={{ color: 'var(--c-text2)', background: 'var(--c-bg)',
                        borderLeft: `4px solid ${message.includes('n’a pas pu') ? '#DC2626' : '#10B981'}` }}>
               {message}
             </p>
           )}
-          <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
+          <p className="text-xs" style={{ color: 'var(--c-dim)' }}>
             Ces chiffres se lisent sur la fiche de pesée de l’avion. ParaPass
             n’en invente aucun : une masse maximale non renseignée reste vide,
             et la planche affiche la masse embarquée sans plafond.
@@ -634,12 +634,12 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
       {ouvert && (
         <div className="space-y-2 pt-1">
           <div className="flex gap-2 flex-wrap items-end">
-            <label className="flex-1 min-w-[130px] text-[11px]" style={{ color: 'var(--c-muted)' }}>
+            <label className="flex-1 min-w-[130px] text-xs" style={{ color: 'var(--c-muted)' }}>
               Immatriculation *
               <input value={immat} onChange={e => setImmat(e.target.value)} placeholder="F-HPCJ"
                 className="block w-full rounded-lg px-2 text-xs mt-0.5" style={st} />
             </label>
-            <label className="flex-1 min-w-[140px] text-[11px]" style={{ color: 'var(--c-muted)' }}>
+            <label className="flex-1 min-w-[140px] text-xs" style={{ color: 'var(--c-muted)' }}>
               Type
               <input value={type} onChange={e => choisirType(e.target.value)}
                 list="types-aeronefs" placeholder="ex : Pilatus PC-6"
@@ -648,18 +648,18 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
                 {TYPES_CONNUS.map(t => <option key={t.type} value={t.type}>{t.places} places</option>)}
               </datalist>
             </label>
-            <label className="w-24 text-[11px]" style={{ color: 'var(--c-muted)' }}>
+            <label className="w-24 text-xs" style={{ color: 'var(--c-muted)' }}>
               Places
               <input value={places} onChange={e => setPlaces(e.target.value)}
                 inputMode="numeric" className="block w-full rounded-lg px-2 text-xs mt-0.5" style={st} />
             </label>
-            <label className="w-28 text-[11px]" style={{ color: 'var(--c-muted)' }}>
+            <label className="w-28 text-xs" style={{ color: 'var(--c-muted)' }}>
               Plafond (m)
               <input value={altMax} onChange={e => setAltMax(e.target.value)}
                 inputMode="numeric" className="block w-full rounded-lg px-2 text-xs mt-0.5" style={st} />
             </label>
           </div>
-          <p className="text-[11px]" style={{ color: 'var(--c-muted)' }}>
+          <p className="text-xs" style={{ color: 'var(--c-muted)' }}>
             <strong>Places = sièges parachutistes, pilote non compris.</strong>{' '}
             Choisir un type connu remplit les deux chiffres ; ce sont des
             configurations courantes, à confronter à la fiche de pesée de votre avion.
@@ -678,7 +678,7 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
         </div>
       )}
 
-      {erreur && <p className="text-[11px]" style={{ color: 'var(--sev-critique)' }}>{erreur}</p>}
+      {erreur && <p className="text-xs" style={{ color: 'var(--sev-critique)' }}>{erreur}</p>}
     </div>
   );
 }

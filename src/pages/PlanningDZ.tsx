@@ -228,7 +228,7 @@ function MeteoWidget({ creneau, brevet }: { creneau: Creneau; brevet: string }) 
         </div>
         <div className="flex items-center gap-2">
           {updatedAgo !== null && (
-            <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}>màj il y a {updatedAgo} min</span>
+            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>màj il y a {updatedAgo} min</span>
           )}
           <button onClick={handleRefresh} className="p-1 rounded hover:bg-white/10 transition-colors">
             <RefreshCw className="w-3 h-3 text-white/50" />
@@ -254,11 +254,11 @@ function MeteoWidget({ creneau, brevet }: { creneau: Creneau; brevet: string }) 
         </div>
         {/* Vent */}
         <div className="space-y-1.5">
-          <div className="text-[10px] font-semibold tracking-wider" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          <div className="text-xs font-semibold tracking-wider" style={{ color: 'rgba(255,255,255,0.5)' }}>
             VENT AU SOL
           </div>
           <WindBar ms={meteo.windspeed_10m} />
-          <div className="text-[10px] mt-2 mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>EN ALTITUDE</div>
+          <div className="text-xs mt-2 mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>EN ALTITUDE</div>
           <div className="space-y-1">
             {[
               { label: '1 500m', ms: meteo.windspeed_1500 },
@@ -266,7 +266,7 @@ function MeteoWidget({ creneau, brevet }: { creneau: Creneau; brevet: string }) 
               { label: '5 500m', ms: meteo.windspeed_5500 },
             ].map(w => (
               <div key={w.label} className="flex items-center gap-2">
-                <span className="text-[10px] w-12 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.5)' }}>{w.label}</span>
+                <span className="text-xs w-12 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.5)' }}>{w.label}</span>
                 <WindBar ms={w.ms} max={25} />
               </div>
             ))}
@@ -274,15 +274,15 @@ function MeteoWidget({ creneau, brevet }: { creneau: Creneau; brevet: string }) 
         </div>
         {/* Eval brevet */}
         <div className="rounded-lg px-3 py-2.5" style={{ background: 'rgba(0,0,0,0.2)', border: `1px solid ${conditions.couleur}40` }}>
-          <div className="text-[10px] font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          <div className="text-xs font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
             TON AUTORISATION (brevet {brevet.toUpperCase()})
           </div>
           <div className="space-y-0.5 mb-2">
-            <div className="flex items-center gap-1.5 text-[11px]" style={{ color: meteo.windspeed_10m <= (BREVET_LIMITES[brevet]?.vent ?? 11) ? '#10B981' : '#EF4444' }}>
+            <div className="flex items-center gap-1.5 text-xs" style={{ color: meteo.windspeed_10m <= (BREVET_LIMITES[brevet]?.vent ?? 11) ? '#10B981' : '#EF4444' }}>
               {meteo.windspeed_10m <= (BREVET_LIMITES[brevet]?.vent ?? 11) ? '✓' : '✗'} Vent sol {meteo.windspeed_10m.toFixed(1)} m/s
               {meteo.windspeed_10m <= (BREVET_LIMITES[brevet]?.vent ?? 11) ? ' — OK' : ` — Limite ${BREVET_LIMITES[brevet]?.vent ?? 11} m/s`}
             </div>
-            <div className="flex items-center gap-1.5 text-[11px]" style={{ color: meteo.precipitation_probability <= 30 ? '#10B981' : '#F59E0B' }}>
+            <div className="flex items-center gap-1.5 text-xs" style={{ color: meteo.precipitation_probability <= 30 ? '#10B981' : '#F59E0B' }}>
               {meteo.precipitation_probability <= 30 ? <Check className="w-3 h-3 inline-block align-[-1px]" aria-hidden /> : <AlertTriangle className="w-3 h-3 inline-block align-[-1px]" aria-hidden />} Pluie {meteo.precipitation_probability}%
             </div>
           </div>
@@ -292,7 +292,7 @@ function MeteoWidget({ creneau, brevet }: { creneau: Creneau; brevet: string }) 
               <div className="text-xs font-bold" style={{ color: conditions.couleur }}>
                 CONDITIONS {conditions.statut === 'favorable' ? 'FAVORABLES' : conditions.statut === 'limite' ? 'LIMITES' : 'DÉCONSEILLÉES'}
               </div>
-              <div className="text-[10px]" style={{ color: 'rgba(255,255,255,0.6)' }}>{conditions.message}</div>
+              <div className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>{conditions.message}</div>
             </div>
           </div>
         </div>
@@ -395,7 +395,7 @@ function FicheCreneauModal({
           {/* Message centre */}
           {creneau.message && (
             <div className="rounded-xl px-4 py-3" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <div className="text-[10px] font-semibold tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              <div className="text-xs font-semibold tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
                 <MessageSquare className="w-3 h-3 inline mr-1" />MESSAGE DU CENTRE
               </div>
               <p className="text-sm text-white leading-relaxed">"{creneau.message}"</p>
@@ -405,7 +405,7 @@ function FicheCreneauModal({
           {/* Offre promo */}
           {creneau.offre_promo && (
             <div className="rounded-xl px-4 py-3" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)' }}>
-              <div className="text-[10px] font-semibold tracking-wider mb-1 flex items-center gap-1" style={{ color: '#F59E0B' }}><Gift className="w-3 h-3" aria-hidden /> OFFRE</div>
+              <div className="text-xs font-semibold tracking-wider mb-1 flex items-center gap-1" style={{ color: '#F59E0B' }}><Gift className="w-3 h-3" aria-hidden /> OFFRE</div>
               <p className="text-sm font-medium" style={{ color: '#FCD34D' }}>{creneau.offre_promo}</p>
             </div>
           )}
@@ -758,7 +758,7 @@ export function PlanningDZ() {
             {/* Day headers */}
             <div className="grid grid-cols-7 px-3 pt-3 pb-1">
               {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map(d => (
-                <div key={d} className="text-center text-[10px] font-semibold text-gray-400 pb-1">{d}</div>
+                <div key={d} className="text-center text-xs font-semibold text-gray-400 pb-1">{d}</div>
               ))}
             </div>
 
@@ -787,7 +787,7 @@ export function PlanningDZ() {
               {Object.values(STATUT_CONFIG).map(s => (
                 <div key={s.label} className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded-sm" style={{ background: s.bgLight, border: `1px solid ${s.bg + '50'}` }} />
-                  <span className="text-[10px] text-gray-500">{s.label}</span>
+                  <span className="text-xs text-gray-500">{s.label}</span>
                 </div>
               ))}
             </div>

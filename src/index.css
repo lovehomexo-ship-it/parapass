@@ -223,3 +223,14 @@ button:not(:disabled):active, [role="button"]:not([aria-disabled="true"]):active
 @media (min-width: 1024px) {
   .parapass-centre { --nav-largeur: var(--nav-largeur-desktop, 220px); }
 }
+
+/* ── Plancher de lecture de l'espace DZ : 13 px ────────────────────────────
+   Un DT lit cet écran debout, en plein soleil, souvent à un bras de distance
+   d'une tablette. 12 px (le `text-xs` de Tailwind) y est la taille d'une
+   mention légale. Dans le CONTENU de l'espace centre, le plus petit texte
+   passe donc à 13 px. Le menu latéral et l'espace parachutiste ne bougent
+   pas : leurs largeurs sont calculées au pixel près. */
+.parapass-centre main .text-xs {
+  font-size: 13px;
+  line-height: 18px;
+}

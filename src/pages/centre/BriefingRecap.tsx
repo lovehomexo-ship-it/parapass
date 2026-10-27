@@ -80,6 +80,7 @@ export function BriefingRecapDZ({ centreId, onOuvrir }: { centreId: string; onOu
             vent={{ direction_deg: briefing.vent_direction_deg, vitesse_kt: briefing.vent_vitesse_kt }}
             backgroundUrl={backgroundUrl}
             mode="view"
+            vignette
           />
         </div>
 

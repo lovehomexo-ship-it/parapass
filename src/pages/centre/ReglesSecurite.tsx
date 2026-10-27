@@ -117,7 +117,7 @@ function ReglesInner({ centreId }: { centreId: string }) {
               </span>
               {r.libelle}
             </p>
-            <p className="mt-0.5" style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+            <p className="mt-0.5" style={{ fontSize: 13, color: 'var(--c-muted)' }}>
               v{r.version}
               {r.centre_id ? ' · surcharge du centre' : ' · règle fédérale'}
               {' · portée '}{r.portee}
@@ -127,13 +127,13 @@ function ReglesInner({ centreId }: { centreId: string }) {
             </p>
             {detail && (
               <div className="mt-2 p-3 rounded-xl" style={{ background: 'var(--c-bg)', border: '1px solid var(--n2-bord)' }}>
-                <p className="flex items-center gap-1.5" style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text2)' }}>
+                <p className="flex items-center gap-1.5" style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-text2)' }}>
                   <BookOpen className="w-3.5 h-3.5" aria-hidden /> Texte fondateur
                 </p>
                 {/* C'est ce texte que le système citera quand il refusera. */}
                 <p className="mt-1" style={{ fontSize: 13, color: 'var(--c-text)' }}>{r.source_texte}</p>
                 {r.effet_levee && (
-                  <p className="mt-2" style={{ fontSize: 12, color: 'var(--c-text2)' }}>
+                  <p className="mt-2" style={{ fontSize: 13, color: 'var(--c-text2)' }}>
                     <strong>Effet d’une levée :</strong> {r.effet_levee}
                   </p>
                 )}
@@ -150,7 +150,7 @@ function ReglesInner({ centreId }: { centreId: string }) {
               {detail ? 'masquer la source' : 'voir la source'}
             </button>
             <button type="button" disabled={occupe !== null}
-              style={{ ...action('secondaire'), minHeight: 36, fontSize: 12, padding: '0 10px' }}
+              style={{ ...action('secondaire'), minHeight: 36, fontSize: 13, padding: '0 10px' }}
               onClick={() => basculer(r.code, !active)}>
               {occupe === r.code ? '…' : active ? 'Désactiver ici' : 'Réactiver'}
             </button>
@@ -205,7 +205,7 @@ function ReglesInner({ centreId }: { centreId: string }) {
       <section style={surface(2)}>
         <h3 className="px-3 pt-3" style={{ ...enTeteSection, marginBottom: 0 }}>
           En vigueur
-          <span style={{ fontSize: 12, fontWeight: 500, letterSpacing: 0, textTransform: 'none',
+          <span style={{ fontSize: 13, fontWeight: 500, letterSpacing: 0, textTransform: 'none',
                          color: 'var(--c-muted)', marginLeft: 8 }}>
             {enVigueur.length} règle{enVigueur.length > 1 ? 's' : ''}
             {' · '}{enVigueur.filter(r => r.gravite === 'bloquant').length} bloquante(s)

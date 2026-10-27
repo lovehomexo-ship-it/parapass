@@ -203,7 +203,7 @@ export function EnregistrerOperation({ materielId, libelleMateriel, typeDefaut, 
             className="w-full rounded-xl px-3 text-sm" style={st} />
         </label>
       </div>
-      <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
+      <p className="text-xs" style={{ color: 'var(--c-dim)' }}>
         La prochaine échéance est calculée depuis cette date. L’opération entre au
         journal de bord.
       </p>
@@ -267,7 +267,7 @@ export function ImporterParc({ centreId, onFait, onFermer }: {
   return (
     <Modale titre="Importer un parc" onFermer={onFermer}
       sousTitre="Fichier CSV — colonnes : type, marque, modele, numero_serie">
-      <p className="text-[11px]" style={{ color: 'var(--c-dim)' }}>
+      <p className="text-xs" style={{ color: 'var(--c-dim)' }}>
         Types acceptés : {TYPES.map(([c]) => c).join(', ')}. Les lignes refusées
         sont listées ci-dessous ; les autres sont importées.
       </p>
@@ -279,7 +279,7 @@ export function ImporterParc({ centreId, onFait, onFermer }: {
           onChange={e => { const f = e.target.files?.[0]; if (f) importer(f); }} />
       </label>
       {rapport.length > 0 && (
-        <ul className="text-[11px] space-y-0.5 max-h-40 overflow-y-auto"
+        <ul className="text-xs space-y-0.5 max-h-40 overflow-y-auto"
           style={{ color: 'var(--c-text2)' }}>
           {rapport.map((r, i) => <li key={i}>{r}</li>)}
         </ul>

@@ -557,7 +557,7 @@ export function FinancesSection({ dzId }: { dzId: string }) {
                   <div className="flex items-center gap-3">
                     <span className="text-sm">{TYPE_LABELS[t.type]}</span>
                     <span className="font-medium text-sm" style={{ color: 'var(--c-text)' }}>{t.nom}</span>
-                    {!t.actif && <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(100,116,139,0.15)', color: '#94A3B8' }}>Inactif</span>}
+                    {!t.actif && <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(100,116,139,0.15)', color: '#94A3B8' }}>Inactif</span>}
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="font-bold text-sm" style={{ color: 'var(--c-text)' }}>{euros(t.prix_cents)}</span>
@@ -599,8 +599,8 @@ export function FinancesSection({ dzId }: { dzId: string }) {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-sm" style={{ color: 'var(--c-text)' }}>{p.nom}</span>
-                        {!p.actif && <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(100,116,139,0.15)', color: '#94A3B8' }}>Inactif</span>}
-                        {isExpired && <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(239,68,68,0.15)', color: 'var(--sev-critique)' }}>Expiré</span>}
+                        {!p.actif && <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(100,116,139,0.15)', color: '#94A3B8' }}>Inactif</span>}
+                        {isExpired && <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(239,68,68,0.15)', color: 'var(--sev-critique)' }}>Expiré</span>}
                       </div>
                       <p className="text-xs mt-0.5" style={{ color: 'var(--c-dim)' }}>
                         {p.type === 'pourcentage' ? `${p.valeur}%` : `${euros(Number(p.valeur) * 100)}`} de réduction

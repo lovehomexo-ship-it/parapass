@@ -91,7 +91,7 @@ function SuiviInner({ centreId, listerManquants = true, masquerSiComplet = false
             <CheckCheck className="w-4 h-4" style={{ color: 'var(--action-texte)' }} aria-hidden />
             {libelleAck(ack)}
             {(revision ?? 1) > 1 && (
-              <span className="text-[11px] font-semibold px-1.5 rounded-full"
+              <span className="text-xs font-semibold px-1.5 rounded-full"
                 style={{ background: 'color-mix(in srgb, var(--sev-vigilance) 15%, transparent)', color: 'var(--sev-vigilance)' }}>
                 révision {revision}
               </span>

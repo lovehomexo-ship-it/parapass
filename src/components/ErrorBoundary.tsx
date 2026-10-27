@@ -60,7 +60,7 @@ export class ErrorBoundary extends Component<Props, State> {
             >
               {this.state.purging ? 'Nettoyage…' : 'Vider le cache et recharger'}
             </button>
-            <p className="text-[11px] text-gray-400 mt-3">Recharge une version propre de l'app.</p>
+            <p className="text-xs text-gray-400 mt-3">Recharge une version propre de l'app.</p>
           </div>
         </div>
       );

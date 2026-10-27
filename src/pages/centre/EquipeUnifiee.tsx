@@ -294,7 +294,7 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
                   <Avatar m={m} />
                   <div className="min-w-0 flex-1">
                     <p className="font-bold truncate" style={{ color: 'var(--c-text)' }}>{m.prenom} {m.nom}</p>
-                    {m.numero_licence && <p className="text-[11px] truncate" style={{ color: 'var(--c-dim)' }}>Licence {m.numero_licence}</p>}
+                    {m.numero_licence && <p className="text-xs truncate" style={{ color: 'var(--c-dim)' }}>Licence {m.numero_licence}</p>}
                     <div className="flex flex-wrap gap-1.5 mt-1.5">
                       {m.role === 'admin_centre' && <RolePill icon={<Shield className="w-3 h-3" />} label="DT" color="var(--c-pliage-fort)" />}
                       {estMoniteur && <RolePill icon={<Shield className="w-3 h-3" />} label="Moniteur" color="var(--action-texte)" />}
@@ -312,13 +312,13 @@ function EquipeUnifieeInner({ centreId }: { centreId: string }) {
                 {/* Qualifications (pastilles repliables) */}
                 {m.qualifs.length > 0 && (
                   <div className="mt-3">
-                    <p className="text-[10px] font-bold uppercase tracking-wide mb-1.5" style={{ color: 'var(--c-dim)' }}>Qualifications</p>
+                    <p className="text-xs font-bold uppercase tracking-wide mb-1.5" style={{ color: 'var(--c-dim)' }}>Qualifications</p>
                     <div className="flex flex-wrap gap-1.5">
                       {m.qualifs.map(q => {
                         const e = etatDate(q.date_expiration, q.actif, seuil);
                         const c = COULEURS[e];
                         return (
-                          <span key={q.id} className="text-[11px] px-2.5 py-1 rounded-full inline-flex items-center gap-1.5" style={{ background: c.bg, color: c.fg, border: `1px solid ${c.bd}` }}>
+                          <span key={q.id} className="text-xs px-2.5 py-1 rounded-full inline-flex items-center gap-1.5" style={{ background: c.bg, color: c.fg, border: `1px solid ${c.bd}` }}>
                             <span className="font-semibold">{libelleQualif(q.qualification_code)}</span>
                             {q.numero && <span className="opacity-80">n°{q.numero}</span>}
                             {q.date_expiration
