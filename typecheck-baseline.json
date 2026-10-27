@@ -1,5 +1,5 @@
 {
-  "maximum": 90,
+  "maximum": 86,
   "signatures": [
     "src/components/AddSautModal.tsx|TS2322|Type '{ className: string; style: { color: \"rgba(255,255,255,0.4)\"; }; title: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.",
     "src/components/AddSautModal.tsx|TS2322|Type '{ className: string; style: { color: \"rgba(255,255,255,0.4)\"; }; title: string; }' is not assignable to type 'IntrinsicAttributes & LucideProps'.",
@@ -71,10 +71,6 @@
     "src/pages/SacPage.tsx|TS2322|Type '{ className: string; }' is not assignable to type 'IntrinsicAttributes & ParaPassLogoProps'.",
     "src/pages/SacPage.tsx|TS2339|Property 'sac_id' does not exist on type 'Assignment'.",
     "src/pages/SacPage.tsx|TS2339|Property 'sac_id' does not exist on type 'Assignment'.",
-    "src/pages/Stats.tsx|TS2322|Type '{ className: string; style: { color: string; }; }' is not assignable to type 'IntrinsicAttributes & { className?: string | undefined; }'.",
-    "src/pages/Stats.tsx|TS2322|Type '{ className: string; style: { color: string; }; }' is not assignable to type 'IntrinsicAttributes & { className?: string | undefined; }'.",
-    "src/pages/Stats.tsx|TS2339|Property 'date_saut' does not exist on type 'never'.",
-    "src/pages/Stats.tsx|TS2339|Property 'lieu' does not exist on type 'never'.",
     "src/pages/TandemCertifPage.tsx|TS2322|Type '{ className: string; }' is not assignable to type 'IntrinsicAttributes & ParaPassLogoProps'.",
     "src/pages/TandemPreparerPage.tsx|TS2322|Type '{ className: string; }' is not assignable to type 'IntrinsicAttributes & ParaPassLogoProps'.",
     "src/pages/TandemPreparerPage.tsx|TS2322|Type 'boolean | null' is not assignable to type 'boolean | undefined'.",

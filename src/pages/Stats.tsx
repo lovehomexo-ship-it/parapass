@@ -1,367 +1,316 @@
-import { useMemo } from 'react';
-import {
-  Chart as ChartJS,
-  CategoryScale, LinearScale, PointElement, LineElement,
-  ArcElement, Tooltip, Legend, Filler,
-} from 'chart.js';
-import { Line, Doughnut } from 'react-chartjs-2';
+import { useMemo, useState } from 'react';
+import { ListOrdered, Timer, CalendarDays, ArrowDownUp, TrendingUp, TrendingDown, Minus, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { Layout } from '../components/Layout';
-import { ParachuteDropIcon, AltitudeIcon } from '../components/ParachuteIcon';
+import { usePassport } from '../lib/usePassport';
+import { getRegles } from '../data/reglesFFP';
 import type { Saut } from '../lib/types';
-import { Calendar, Trophy, MapPin, Target, TrendingUp, Wind } from 'lucide-react';
+import { NATURE_SAUT_LABELS, TYPE_BREVET_LABELS } from '../lib/types';
+import { Colonnes, Barres, CarteStats, TuileStat, type Colonne } from '../components/stats/Graphiques';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Tooltip, Legend, Filler);
+// ═══════════════════════════════════════════════════════════════════════════
+// MES STATISTIQUES — ce qui intéresse vraiment un parachutiste.
+//
+// L'ancienne page montrait six tuiles de chiffres bruts, un camembert d'un
+// écran entier (une part dominée par l'ouverture commandée, une autre
+// invisible en thème sombre), une courbe d'altitudes plate et des cartes qui
+// débordaient du téléphone. Elle disait combien, jamais ce que ça veut dire.
+//
+// Celle-ci répond, dans l'ordre, à ce qu'un sauteur se demande :
+//   1. est-ce que je saute plus ou moins qu'avant ?      → la période comparée
+//   2. combien de temps ai-je passé en chute ?            → le temps de chute libre
+//   3. suis-je à jour, mes ouvertures sont-elles saines ? → récence et sécurité
+//   4. quand je saute, où, sur quoi, comment              → activité et répartitions
+//   5. mes records, et le prochain palier                 → ce qu'on aime partager
+// ═══════════════════════════════════════════════════════════════════════════
 
-const JALONS = [10, 25, 50, 100, 200, 300, 500, 1000, 2000, 5000, 10000];
+type Periode = '12m' | 'annee' | 'tout';
+const PERIODES: { cle: Periode; libelle: string }[] = [
+  { cle: '12m', libelle: '12 mois' },
+  { cle: 'annee', libelle: 'Cette saison' },
+  { cle: 'tout', libelle: 'Tout le carnet' },
+];
+const JALONS = [10, 25, 50, 100, 200, 300, 500, 1000, 2000, 3000, 5000, 10000];
+const CATEGORIE_COURT: Record<string, string> = {
+  OC: 'Commandée', OA: 'Automatique', OR30: 'Retardée < 30 s',
+  OR60: 'Retardée < 60 s', OR60plus: 'Retardée > 60 s',
+};
+const nf = new Intl.NumberFormat('fr-FR');
+const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const jour = (iso: string) => new Date(`${iso}T12:00:00`);
+const frJour = (iso: string) => jour(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+const joursEntre = (a: string, b: string) => Math.round((jour(b).getTime() - jour(a).getTime()) / 864e5);
 
-const MONTHS_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+/**
+ * TEMPS DE CHUTE LIBRE, ESTIMÉ depuis la hauteur de largage et d'ouverture :
+ * une douzaine de secondes pour atteindre la vitesse limite (≈ 450 m), puis
+ * ≈ 55 m/s. 4 000 → 1 200 m donne ~55 s, l'ordre de grandeur que connaît tout
+ * sauteur. Sans hauteur d'ouverture, le saut ne compte pas : pas de chiffre
+ * inventé.
+ */
+function chuteLibreSecondes(s: Saut): number | null {
+  if (!s.hauteur_m || !s.hauteur_ouverture || s.hauteur_ouverture >= s.hauteur_m) return null;
+  const d = s.hauteur_m - s.hauteur_ouverture;
+  return d <= 450 ? Math.sqrt((2 * d) / 9.81) * 1.1 : 12 + (d - 450) / 55;
+}
+function duree(sec: number): string {
+  const m = Math.round(sec / 60);
+  if (m < 60) return `${m} min`;
+  return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`;
+}
 
-const CAT_COLORS = ['#001A4D', '#2563eb', '#16a34a', '#d97706', '#dc2626'];
+function Variation({ actuel, precedent, libelle }: { actuel: number; precedent: number | null; libelle: string }) {
+  if (precedent === null) return null;
+  if (precedent === 0) return <span className="text-[13px]" style={{ color: 'var(--c-dim)' }}>{actuel > 0 ? `rien ${libelle}` : '—'}</span>;
+  const pct = Math.round(((actuel - precedent) / precedent) * 100);
+  const Icone = pct > 0 ? TrendingUp : pct < 0 ? TrendingDown : Minus;
+  return (
+    // Deux lignes nettes plutôt qu'un « +33 » et un « % » séparés par le retour à la ligne.
+    <span className="text-[13px]" style={{ color: 'var(--c-text2)' }}>
+      <span className="inline-flex items-center gap-1 font-bold whitespace-nowrap">
+        <Icone className="w-3.5 h-3.5" aria-hidden /> {pct > 0 ? '+' : ''}{pct}&nbsp;%
+      </span>
+      <span className="block" style={{ color: 'var(--c-dim)' }}>{libelle}</span>
+    </span>
+  );
+}
 
-interface StatsPageProps { sauts: Saut[]; }
+function Ligne({ libelle, valeur, detail, alerte }: { libelle: string; valeur: React.ReactNode; detail?: string; alerte?: boolean }) {
+  return (
+    <div className="flex items-start justify-between gap-3 py-2.5" style={{ borderTop: '1px solid var(--c-border-s)' }}>
+      <span className="text-sm" style={{ color: 'var(--c-text2)' }}>{libelle}</span>
+      <span className="text-right">
+        <span className="block text-sm font-bold tabular-nums" style={{ color: alerte ? 'var(--sev-vigilance)' : 'var(--c-text)' }}>{valeur}</span>
+        {detail && <span className="block text-[13px]" style={{ color: 'var(--c-muted)' }}>{detail}</span>}
+      </span>
+    </div>
+  );
+}
 
-export function StatsPage({ sauts }: StatsPageProps) {
-  const { profile } = useAuth();
+export function StatsPage({ sauts }: { sauts: Saut[] }) {
+  const { profile, user } = useAuth();
+  const { brevets } = usePassport(user?.id);
+  const brevet = brevets[0]?.type_brevet ?? null;
+  const [periode, setPeriode] = useState<Periode>(() => {
+    try { return (localStorage.getItem('parapass.mesStats.periode') as Periode) || '12m'; } catch { return '12m'; }
+  });
+  const choisir = (p: Periode) => { setPeriode(p); try { localStorage.setItem('parapass.mesStats.periode', p); } catch { /* mémoire seule */ } };
 
-  const stats = useMemo(() => {
-    if (sauts.length === 0) return null;
-    const now = new Date();
-    const thisYear = now.getFullYear();
+  const st = useMemo(() => {
+    // Les vrais sauts, du plus ancien au plus récent (la soufflerie a ses minutes à part).
+    const tous = sauts.filter(s => !s.is_tunnel && s.statut !== 'declaration_honneur')
+      .sort((a, b) => a.date_saut.localeCompare(b.date_saut));
+    if (tous.length === 0) return null;
+    const auj = new Date();
+    const fin = ymd(auj);
+    let debut: string, precDebut: string | null = null, precFin: string | null = null;
+    if (periode === '12m') {
+      const d = new Date(auj.getFullYear(), auj.getMonth() - 11, 1); debut = ymd(d);
+      precDebut = ymd(new Date(d.getFullYear() - 1, d.getMonth(), 1));
+      precFin = ymd(new Date(d.getFullYear(), d.getMonth(), 0));
+    } else if (periode === 'annee') {
+      debut = `${auj.getFullYear()}-01-01`;
+      precDebut = `${auj.getFullYear() - 1}-01-01`;
+      precFin = ymd(new Date(auj.getFullYear() - 1, auj.getMonth(), auj.getDate()));
+    } else {
+      debut = tous[0].date_saut;
+    }
+    const cur = tous.filter(s => s.date_saut >= debut && s.date_saut <= fin);
+    const prev = precDebut && precFin ? tous.filter(s => s.date_saut >= precDebut! && s.date_saut <= precFin!) : null;
 
-    const sorted = [...sauts].sort((a, b) => a.date_saut.localeCompare(b.date_saut));
+    const secondes = (l: Saut[]) => l.reduce((t, s) => t + (chuteLibreSecondes(s) ?? 0), 0);
+    const avecChute = cur.filter(s => chuteLibreSecondes(s) !== null).length;
+    const jours = new Set(cur.map(s => s.date_saut));
+    const moy = (v: number[]) => v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : null;
+    const largageMoy = moy(cur.map(s => s.hauteur_m).filter(Boolean));
+    const ouvertures = cur.map(s => s.hauteur_ouverture).filter((v): v is number => typeof v === 'number' && v > 0);
+    const ouvertureMoy = moy(ouvertures);
 
-    // Chiffres clés
-    const total = sauts.length;
-    const totalMinutes = 0;
-    const thisYearCount = sauts.filter((s) => new Date(s.date_saut).getFullYear() === thisYear).length;
-    const altitudes = sauts.map((s) => s.hauteur_m).filter(Boolean);
-    const altMoyenne = altitudes.length > 0 ? Math.round(altitudes.reduce((a, b) => a + b, 0) / altitudes.length) : 0;
-    const altMax = altitudes.length > 0 ? Math.max(...altitudes) : 0;
+    // ── Sécurité et récence
+    const dernier = tous[tous.length - 1];
+    let pause = { jours: 0, de: '', a: '' };
+    for (let i = 1; i < cur.length; i++) {
+      const g = joursEntre(cur[i - 1].date_saut, cur[i].date_saut);
+      if (g > pause.jours) pause = { jours: g, de: cur[i - 1].date_saut, a: cur[i].date_saut };
+    }
+    const minimum = getRegles(brevet).hauteurOuvertureMin;
+    const sousMinimum = cur.filter(s => s.hauteur_ouverture && s.hauteur_ouverture < minimum).length;
+    const plusBasse = ouvertures.length ? Math.min(...ouvertures) : null;
 
-    // Ouverture altitudes
-    const ouvertures = sauts.map((s) => s.hauteur_ouverture).filter((v): v is number => typeof v === 'number' && v > 0);
-    const ouvertureMoyenne = ouvertures.length > 0 ? Math.round(ouvertures.reduce((a, b) => a + b, 0) / ouvertures.length) : 0;
-
-    // Altitude de chute libre moyenne (m) = altitude largage - altitude ouverture
-    const sautsAvecDual = sauts.filter((s) => s.hauteur_m > 0 && s.hauteur_ouverture && s.hauteur_ouverture > 0 && s.hauteur_m > s.hauteur_ouverture!);
-    const chuteLibreMoyenne = sautsAvecDual.length > 0
-      ? Math.round(sautsAvecDual.reduce((acc, s) => acc + (s.hauteur_m - s.hauteur_ouverture!), 0) / sautsAvecDual.length)
-      : 0;
-
-    // Dropzone préférée
-    const byLieu = sauts.reduce<Record<string, number>>((acc, s) => { acc[s.lieu] = (acc[s.lieu] ?? 0) + 1; return acc; }, {});
-    const sortedLieux = Object.entries(byLieu).sort((a, b) => b[1] - a[1]);
-    const dropzoneFav = sortedLieux[0]?.[0] ?? '—';
-
-    // Graphique 12 derniers mois
-    const months12: number[] = [];
-    const labels12: string[] = [];
-    const avgLargage12: (number | null)[] = [];
-    const avgOuverture12: (number | null)[] = [];
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      labels12.push(MONTHS_FR[d.getMonth()]);
-      const monthSauts = sauts.filter((s) => {
-        const sd = new Date(s.date_saut);
-        return sd.getFullYear() === d.getFullYear() && sd.getMonth() === d.getMonth();
-      });
-      months12.push(monthSauts.length);
-      const largs = monthSauts.map((s) => s.hauteur_m).filter(Boolean);
-      avgLargage12.push(largs.length > 0 ? Math.round(largs.reduce((a, b) => a + b, 0) / largs.length) : null);
-      const ouv = monthSauts.map((s) => s.hauteur_ouverture).filter((v): v is number => typeof v === 'number' && v > 0);
-      avgOuverture12.push(ouv.length > 0 ? Math.round(ouv.reduce((a, b) => a + b, 0) / ouv.length) : null);
+    // ── Activité : mois (12 mois, saison) ou années (tout le carnet)
+    const serie: Colonne[] = [];
+    if (periode === 'tout') {
+      for (let y = Number(debut.slice(0, 4)); y <= auj.getFullYear(); y++) {
+        const n = cur.filter(s => s.date_saut.startsWith(String(y))).length;
+        serie.push({ cle: String(y), court: `'${String(y).slice(2)}`, long: String(y), valeur: n });
+      }
+    } else {
+      const d0 = jour(debut);
+      for (let d = new Date(d0.getFullYear(), d0.getMonth(), 1); d <= auj; d = new Date(d.getFullYear(), d.getMonth() + 1, 1)) {
+        const cle = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        serie.push({ cle, court: d.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', ''),
+          long: d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
+          valeur: cur.filter(s => s.date_saut.startsWith(cle)).length });
+      }
     }
 
-    // Camembert catégories
-    const cats = ['OA', 'OC', 'OR30', 'OR60', 'OR60plus'];
-    const catCounts = cats.map((c) => sauts.filter((s) => s.categorie === c).length);
-    const catLabels = ['OA', 'OC', 'OR<30"', 'OR<60"', 'OR>60"'];
+    // ── Répartitions
+    const compter = (cle: (s: Saut) => string | null | undefined, n = 6) => {
+      const m = new Map<string, number>();
+      cur.forEach(s => { const k = cle(s); if (k) m.set(k, (m.get(k) ?? 0) + 1); });
+      return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, n).map(([libelle, v]) => ({ libelle, n: v }));
+    };
 
-    // Records
-    const altMaxSaut = sauts.find((s) => s.hauteur_m === altMax);
-    const tempsMax = 0;
-    const tempsMaxSaut = null;
-
-    const byMonth = sauts.reduce<Record<string, number>>((acc, s) => {
-      const key = s.date_saut.substring(0, 7);
-      acc[key] = (acc[key] ?? 0) + 1;
-      return acc;
-    }, {});
-    const bestMonthKey = Object.entries(byMonth).sort((a, b) => b[1] - a[1])[0];
-
-    // Prochain jalons
-    const nextJalon = JALONS.find((j) => j > total) ?? JALONS[JALONS.length - 1];
-    const prevJalon = JALONS.filter((j) => j <= total).pop() ?? 0;
+    // ── Records (tout le carnet)
+    const plusHaut = tous.reduce((b, s) => (s.hauteur_m > b.hauteur_m ? s : b), tous[0]);
+    const parJour = new Map<string, number>(); tous.forEach(s => parJour.set(s.date_saut, (parJour.get(s.date_saut) ?? 0) + 1));
+    const meilleurJour = [...parJour.entries()].sort((a, b) => b[1] - a[1])[0];
+    const parMois = new Map<string, number>(); tous.forEach(s => parMois.set(s.date_saut.slice(0, 7), (parMois.get(s.date_saut.slice(0, 7)) ?? 0) + 1));
+    const meilleurMois = [...parMois.entries()].sort((a, b) => b[1] - a[1])[0];
+    const plusLongue = tous.reduce<{ s: Saut; t: number } | null>((b, s) => {
+      const t = chuteLibreSecondes(s); return t !== null && (!b || t > b.t) ? { s, t } : b;
+    }, null);
+    const premier = tous[0];
+    const annees = Math.floor(joursEntre(premier.date_saut, fin) / 365.25);
+    const palier = JALONS.find(j => j > tous.length) ?? null;
 
     return {
-      total, totalMinutes, thisYearCount, altMoyenne, altMax, dropzoneFav,
-      labels12, months12, avgLargage12, avgOuverture12, catLabels, catCounts,
-      sortedLieux, altMaxSaut, tempsMax, tempsMaxSaut, bestMonthKey,
-      nextJalon, prevJalon, sorted, ouvertureMoyenne, chuteLibreMoyenne, sautsAvecDual,
+      debut, cur, prev, secondes: secondes(cur), secondesPrev: prev ? secondes(prev) : null, avecChute,
+      jours: jours.size, largageMoy, ouvertureMoy, dernier, pause, minimum, sousMinimum, plusBasse, serie,
+      dz: compter(s => s.lieu), avions: compter(s => s.aeronef_immat?.toUpperCase(), 5),
+      natures: compter(s => NATURE_SAUT_LABELS[s.nature_saut] ?? s.nature_saut),
+      categories: compter(s => CATEGORIE_COURT[s.categorie] ?? s.categorie),
+      plusHaut, meilleurJour, meilleurMois, plusLongue, premier, annees, palier, total: tous.length,
+      secondesTotal: secondes(tous),
     };
-  }, [sauts]);
+  }, [sauts, periode, brevet]);
 
   if (!profile) return null;
 
-  if (!stats) {
+  if (!st) {
     return (
       <Layout>
-        <div className="min-h-screen max-w-4xl mx-auto px-4 py-16 text-center" style={{ background: '#001A4D', color: '#FFFFFF' }}>
-          <ParachuteDropIcon className="w-48 h-48 mx-auto mb-4" style={{ color: 'rgba(255,255,255,0.2)' }} />
-          <p style={{ color: 'rgba(255,255,255,0.5)' }}>Aucun saut enregistré pour le moment.</p>
-          <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Commencez à enregistrer vos sauts pour voir vos statistiques.</p>
+        <div className="max-w-xl mx-auto text-center py-16">
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--c-text)' }}>Statistiques</h1>
+          <p className="text-sm mt-2" style={{ color: 'var(--c-muted)' }}>Tes statistiques apparaîtront dès ton premier saut inscrit au carnet.</p>
         </div>
       </Layout>
     );
   }
 
-  const lineData = {
-    labels: stats.labels12,
-    datasets: [{
-      label: 'Sauts / mois',
-      data: stats.months12,
-      borderColor: '#001A4D',
-      backgroundColor: 'rgba(26,39,68,0.08)',
-      borderWidth: 2,
-      tension: 0.4,
-      fill: true,
-      pointBackgroundColor: '#F97316',
-      pointRadius: 4,
-      pointHoverRadius: 6,
-    }],
-  };
-
-  const altLineData = {
-    labels: stats.labels12,
-    datasets: [
-      {
-        label: 'Largage moy. (m)',
-        data: stats.avgLargage12,
-        borderColor: '#2563eb',
-        backgroundColor: 'rgba(37,99,235,0.08)',
-        borderWidth: 2,
-        tension: 0.4,
-        fill: false,
-        pointBackgroundColor: '#2563eb',
-        pointRadius: 4,
-        pointHoverRadius: 6,
-        spanGaps: true,
-      },
-      {
-        label: 'Ouverture moy. (m)',
-        data: stats.avgOuverture12,
-        borderColor: '#16a34a',
-        backgroundColor: 'rgba(22,163,74,0.08)',
-        borderWidth: 2,
-        tension: 0.4,
-        fill: false,
-        pointBackgroundColor: '#16a34a',
-        pointRadius: 4,
-        pointHoverRadius: 6,
-        spanGaps: true,
-      },
-    ],
-  };
-
-  const altLineOptions = {
-    responsive: true,
-    plugins: {
-      legend: { display: true, position: 'bottom' as const, labels: { color: 'rgba(255,255,255,0.5)', font: { size: 11 }, padding: 12 } },
-    },
-    scales: {
-      y: {
-        beginAtZero: false,
-        ticks: { color: 'rgba(255,255,255,0.5)', callback: (v: number | string) => `${v}m` },
-        grid: { color: 'rgba(255,255,255,0.06)' },
-      },
-      x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.5)' } },
-    },
-  };
-
-  const lineOptions = {
-    responsive: true,
-    plugins: { legend: { display: false, labels: { color: 'rgba(255,255,255,0.5)' } } },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: { stepSize: 1, color: 'rgba(255,255,255,0.5)' },
-        grid: { color: 'rgba(255,255,255,0.06)' }
-      },
-      x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.5)' } },
-    },
-  };
-
-  const doughnutData = {
-    labels: stats.catLabels,
-    datasets: [{
-      data: stats.catCounts,
-      backgroundColor: CAT_COLORS,
-      borderWidth: 2,
-      borderColor: '#fff',
-    }],
-  };
-
-  const doughnutOptions = {
-    responsive: true,
-    plugins: {
-      legend: { position: 'bottom' as const, labels: { padding: 12, font: { size: 11 }, color: 'rgba(255,255,255,0.5)' } },
-    },
-    cutout: '60%',
-  };
-
-  const jalonPct = stats.nextJalon > stats.prevJalon
-    ? Math.round(((stats.total - stats.prevJalon) / (stats.nextJalon - stats.prevJalon)) * 100)
-    : 100;
+  const comparaison = periode === '12m' ? 'vs les 12 mois d’avant' : 'vs l’an dernier à date';
+  const jamaisRecent = (() => {
+    const j = joursEntre(st.dernier.date_saut, ymd(new Date()));
+    return j <= 0 ? 'aujourd’hui' : j === 1 ? 'hier' : `il y a ${j} jours`;
+  })();
 
   return (
     <Layout>
-      <div className="min-h-screen max-w-4xl mx-auto px-4 py-6 space-y-6" style={{ background: '#001A4D' }}>
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#FFFFFF' }}>Mes Statistiques</h1>
-          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Vue d'ensemble de votre activité parachutisme</p>
-        </div>
-
-        {/* ─── Chiffres clés ────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {[
-            { label: 'Total sauts', value: stats.total.toString(), icon: <ParachuteDropIcon className="w-10 h-10 text-orange-600" />, bg: 'bg-orange-50' },
-            { label: 'Cette année', value: stats.thisYearCount.toString(), icon: <Calendar className="w-5 h-5 text-green-600" />, bg: 'bg-green-50' },
-            { label: 'Altitude moyenne', value: `${stats.altMoyenne.toLocaleString('fr-FR')} m`, icon: <AltitudeIcon className="w-10 h-10 text-sky-600" />, bg: 'bg-sky-50' },
-            { label: 'Altitude record', value: `${stats.altMax.toLocaleString('fr-FR')} m`, icon: <Trophy className="w-5 h-5 text-amber-600" />, bg: 'bg-amber-50' },
-            { label: 'Dropzone préférée', value: stats.dropzoneFav, icon: <MapPin className="w-5 h-5 text-red-500" />, bg: 'bg-red-50' },
-            ...(stats.chuteLibreMoyenne > 0 ? [{ label: 'Chute libre moy.', value: `${stats.chuteLibreMoyenne.toLocaleString('fr-FR')} m`, icon: <TrendingUp className="w-5 h-5 text-purple-500" />, bg: 'bg-purple-50', subtitle: undefined as string | undefined }] : []),
-            ...(() => {
-              const souffs = sauts.filter((s) => s.source === 'soufflerie');
-              const nbSess = souffs.length;
-              const totalMin = souffs.reduce((acc, s) => acc + ((s as { tunnel_flight_minutes?: number | null }).tunnel_flight_minutes ?? 0), 0);
-              const valStr = totalMin === 0 ? '—' : totalMin < 60 ? `${totalMin} min` : `${Math.floor(totalMin / 60)} h${totalMin % 60 > 0 ? ` ${totalMin % 60}` : ''}`;
-              return nbSess > 0 ? [{ label: 'Soufflerie', value: valStr, icon: <Wind className="w-5 h-5 text-blue-400" />, bg: 'bg-blue-50', subtitle: `${nbSess} session${nbSess > 1 ? 's' : ''}` as string | undefined }] : [];
-            })(),
-          ].map((item) => (
-            <div key={item.label} className="rounded-xl p-4 shadow-sm" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>{item.label}</p>
-                <div className={`w-8 h-8 ${item.bg} rounded-lg flex items-center justify-center`}>{item.icon}</div>
-              </div>
-              <p className="text-xl font-bold leading-tight truncate" style={{ color: '#FFFFFF' }}>{item.value}</p>
-              {'subtitle' in item && item.subtitle && (
-                <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>{item.subtitle}</p>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* ─── Prochain jalon ────────────────────────────────────────────────── */}
-        <div className="bg-[#001A4D] rounded-xl p-5 text-white relative overflow-hidden">
-          <div className="absolute top-0 right-0 opacity-10 pointer-events-none">
-            <ParachuteDropIcon className="w-72 h-72 text-white" />
+      <div className="max-w-3xl mx-auto space-y-4">
+        {/* ── En-tête et période ── */}
+        <div className="flex items-end justify-between gap-3 flex-wrap">
+          <div>
+            <h1 className="text-[28px] font-extrabold leading-tight" style={{ color: 'var(--c-text)' }}>Statistiques</h1>
+            <p className="text-[13px]" style={{ color: 'var(--c-muted)' }}>
+              {periode === 'tout' ? `Depuis ton premier saut, le ${frJour(st.debut)}` : `Depuis le ${frJour(st.debut)}`}
+            </p>
           </div>
+          <div role="group" aria-label="Période" className="inline-flex rounded-xl p-1 gap-1" style={{ background: 'var(--c-hover)' }}>
+            {PERIODES.map(p => {
+              const actif = p.cle === periode;
+              return (
+                <button key={p.cle} type="button" aria-pressed={actif} onClick={() => choisir(p.cle)}
+                  className="px-3 rounded-lg text-sm font-bold whitespace-nowrap"
+                  style={{ minHeight: 38, background: actif ? 'var(--accent-fond)' : 'transparent', color: actif ? '#fff' : 'var(--c-muted)' }}>
+                  {p.libelle}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Les quatre chiffres ── */}
+        <div className="grid grid-cols-2 gap-3">
+          <TuileStat icone={<ListOrdered className="w-4 h-4" />} titre="Sauts" valeur={nf.format(st.cur.length)}>
+            <Variation actuel={st.cur.length} precedent={st.prev ? st.prev.length : null} libelle={comparaison} />
+          </TuileStat>
+          <TuileStat icone={<Timer className="w-4 h-4" />} titre="Chute libre" valeur={duree(st.secondes)}>
+            <span className="text-[13px]" style={{ color: 'var(--c-muted)' }}>
+              estimée sur {st.avecChute} saut{st.avecChute > 1 ? 's' : ''} · {duree(st.secondesTotal)} en tout
+            </span>
+          </TuileStat>
+          <TuileStat icone={<CalendarDays className="w-4 h-4" />} titre="Jours de saut" valeur={nf.format(st.jours)}>
+            <span className="text-[13px]" style={{ color: 'var(--c-muted)' }}>
+              {st.jours ? `${(st.cur.length / st.jours).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} sauts par jour` : '—'}
+            </span>
+          </TuileStat>
+          <TuileStat icone={<ArrowDownUp className="w-4 h-4" />} titre="Largage → ouverture"
+            valeur={st.largageMoy ? `${nf.format(st.largageMoy)}` : '—'} unite={st.largageMoy ? 'm' : undefined}>
+            <span className="text-[13px]" style={{ color: 'var(--c-muted)' }}>
+              {st.ouvertureMoy ? `ouverture moyenne ${nf.format(st.ouvertureMoy)} m` : 'ouverture non renseignée'}
+            </span>
+          </TuileStat>
+        </div>
+
+        {/* ── Récence et sécurité : ce que le DT regardera ── */}
+        <CarteStats titre="Ma régularité et ma sécurité">
           <div className="flex items-center gap-2 mb-1">
-            <Trophy className="w-4 h-4 text-orange-400" />
-            <span className="text-sm font-semibold text-orange-400">Prochain palier</span>
+            {st.sousMinimum === 0
+              ? <><ShieldCheck className="w-5 h-5" style={{ color: 'var(--sev-conforme)' }} aria-hidden /><span className="text-sm font-semibold" style={{ color: 'var(--sev-conforme)' }}>Toutes tes ouvertures respectent le minimum de ton brevet</span></>
+              : <><AlertTriangle className="w-5 h-5" style={{ color: 'var(--sev-vigilance)' }} aria-hidden /><span className="text-sm font-semibold" style={{ color: 'var(--sev-vigilance)' }}>{st.sousMinimum} ouverture{st.sousMinimum > 1 ? 's' : ''} sous le minimum de ton brevet</span></>}
           </div>
-          <p className="text-2xl font-bold mb-3">
-            {stats.total} <span className="text-white/50 text-base">/ {stats.nextJalon} sauts</span>
-          </p>
-          <div className="w-full bg-white/20 rounded-full h-2.5 mb-2">
-            <div className="bg-orange-500 h-2.5 rounded-full transition-all" style={{ width: `${jalonPct}%` }} />
-          </div>
-          <p className="text-sm text-blue-200">
-            Encore <strong className="text-white">{stats.nextJalon - stats.total}</strong> saut{stats.nextJalon - stats.total > 1 ? 's' : ''} pour atteindre {stats.nextJalon} !
-          </p>
+          <Ligne libelle="Dernier saut" valeur={jamaisRecent} detail={`${st.dernier.lieu} · ${frJour(st.dernier.date_saut)}`} />
+          <Ligne libelle="Plus longue pause" valeur={st.pause.jours ? `${st.pause.jours} jours` : '—'}
+            detail={st.pause.jours ? `du ${jour(st.pause.de).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} au ${jour(st.pause.a).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}` : undefined}
+            alerte={st.pause.jours > 90} />
+          <Ligne libelle="Ouverture la plus basse" valeur={st.plusBasse ? `${nf.format(st.plusBasse)} m` : '—'}
+            detail={`minimum ${brevet ? (TYPE_BREVET_LABELS[brevet] ?? `Brevet ${brevet}`) : 'BPA'} : ${nf.format(st.minimum)}\u00a0m`}
+            alerte={st.plusBasse !== null && st.plusBasse < st.minimum} />
+        </CarteStats>
+
+        {/* ── L'activité dans le temps ── */}
+        <CarteStats titre={periode === 'tout' ? 'Sauts par année' : 'Sauts par mois'} aide="Détail au survol">
+          <Colonnes points={st.serie} />
+        </CarteStats>
+
+        {/* ── Où et comment ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CarteStats titre="Drop zones"><Barres total={st.cur.length} lignes={st.dz} /></CarteStats>
+          <CarteStats titre="Avions"><Barres total={st.cur.length} lignes={st.avions} vide="Avion non renseigné." /></CarteStats>
+          <CarteStats titre="Nature des sauts"><Barres total={st.cur.length} lignes={st.natures} /></CarteStats>
+          <CarteStats titre="Type d'ouverture"><Barres total={st.cur.length} lignes={st.categories} /></CarteStats>
         </div>
 
-        {/* ─── Graphiques ───────────────────────────────────────────────────── */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div className="rounded-xl p-5 shadow-sm" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} />
-              <h2 className="text-sm font-semibold" style={{ color: '#FFFFFF' }}>Sauts sur 12 mois</h2>
-            </div>
-            <Line data={lineData} options={lineOptions} />
-          </div>
-          <div className="rounded-xl p-5 shadow-sm" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-            <div className="flex items-center gap-2 mb-4">
-              <Target className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} />
-              <h2 className="text-sm font-semibold" style={{ color: '#FFFFFF' }}>Répartition par catégorie</h2>
-            </div>
-            {stats.catCounts.some((c) => c > 0) ? (
-              <Doughnut data={doughnutData} options={doughnutOptions} />
-            ) : (
-              <p className="text-center text-sm py-8" style={{ color: 'rgba(255,255,255,0.3)' }}>Aucune donnée de catégorie</p>
-            )}
-          </div>
-        </div>
+        {/* ── Records, sur tout le carnet ── */}
+        <CarteStats titre="Mes records" aide="Sur tout le carnet">
+          <Ligne libelle="Ancienneté" valeur={st.annees >= 1 ? `${st.annees} an${st.annees > 1 ? 's' : ''}` : 'moins d’un an'}
+            detail={`premier saut le ${frJour(st.premier.date_saut)}`} />
+          <Ligne libelle="Plus haut largage" valeur={`${nf.format(st.plusHaut.hauteur_m)} m`} detail={`${st.plusHaut.lieu} · ${frJour(st.plusHaut.date_saut)}`} />
+          {st.plusLongue && <Ligne libelle="Plus longue chute libre" valeur={`≈ ${Math.round(st.plusLongue.t)} s`}
+            detail={`${nf.format(st.plusLongue.s.hauteur_m)} → ${nf.format(st.plusLongue.s.hauteur_ouverture ?? 0)} m · ${frJour(st.plusLongue.s.date_saut)}`} />}
+          <Ligne libelle="Meilleure journée" valeur={`${st.meilleurJour[1]} saut${st.meilleurJour[1] > 1 ? 's' : ''}`} detail={frJour(st.meilleurJour[0])} />
+          <Ligne libelle="Meilleur mois" valeur={`${st.meilleurMois[1]} sauts`}
+            detail={jour(`${st.meilleurMois[0]}-15`).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })} />
+        </CarteStats>
 
-        {/* ─── Altitudes largage / ouverture ────────────────────────────────── */}
-        {stats.sautsAvecDual.length > 0 && (
-          <div className="rounded-xl p-5 shadow-sm" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-            <div className="flex items-center gap-2 mb-4">
-              <AltitudeIcon className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} />
-              <h2 className="text-sm font-semibold" style={{ color: '#FFFFFF' }}>Altitudes moyennes (largage vs ouverture)</h2>
+        {/* ── Le prochain palier ── */}
+        {st.palier && (
+          <CarteStats titre="Prochain palier">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-2xl font-extrabold tabular-nums" style={{ color: 'var(--c-text)' }}>
+                {nf.format(st.total)} <span className="text-[15px] font-semibold" style={{ color: 'var(--c-muted)' }}>/ {nf.format(st.palier)} sauts</span>
+              </span>
+              <span className="text-[13px]" style={{ color: 'var(--c-muted)' }}>encore {st.palier - st.total}</span>
             </div>
-            <Line data={altLineData} options={altLineOptions} />
-          </div>
+            <div className="h-2.5 rounded-full mt-2 overflow-hidden" style={{ background: 'var(--c-hover)' }}>
+              <div className="h-full rounded-full" style={{ width: `${(st.total / st.palier) * 100}%`, background: 'var(--accent-texte)' }} />
+            </div>
+          </CarteStats>
         )}
 
-        {/* ─── Carte des dropzones ───────────────────────────────────────────── */}
-        <div className="rounded-xl p-5 shadow-sm" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-          <div className="flex items-center gap-2 mb-4">
-            <MapPin className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} />
-            <h2 className="text-sm font-semibold" style={{ color: '#FFFFFF' }}>Dropzones fréquentées</h2>
-          </div>
-          <div className="space-y-3">
-            {stats.sortedLieux.slice(0, 10).map(([lieu, count]) => (
-              <div key={lieu}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="font-medium truncate" style={{ color: '#FFFFFF' }}>{lieu}</span>
-                  <span className="font-mono ml-2 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.5)' }}>{count} saut{count > 1 ? 's' : ''}</span>
-                </div>
-                <div className="w-full rounded-full h-2" style={{ background: 'rgba(255,255,255,0.08)' }}>
-                  <div
-                    className="h-2 rounded-full"
-                    style={{ width: `${Math.round((count / stats.total) * 100)}%`, background: '#F59E0B' }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ─── Records personnels ────────────────────────────────────────────── */}
-        <div className="rounded-xl p-5 shadow-sm" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-          <div className="flex items-center gap-2 mb-4">
-            <Trophy className="w-4 h-4 text-amber-500" />
-            <h2 className="text-sm font-semibold" style={{ color: '#FFFFFF' }}>Records personnels</h2>
-          </div>
-          <div className="space-y-3">
-            {stats.altMaxSaut && (
-              <div className="flex justify-between text-sm">
-                <span style={{ color: 'rgba(255,255,255,0.5)' }}>Altitude record</span>
-                <span className="font-semibold" style={{ color: '#FFFFFF' }}>
-                  {stats.altMax.toLocaleString('fr-FR')} m — {new Date(stats.altMaxSaut.date_saut).toLocaleDateString('fr-FR')}, {stats.altMaxSaut.lieu}
-                </span>
-              </div>
-            )}
-            {stats.tempsMaxSaut && stats.tempsMax > 0 && (
-              <div className="flex justify-between text-sm">
-                <span style={{ color: 'rgba(255,255,255,0.5)' }}>Chute la plus longue</span>
-                <span className="font-semibold" style={{ color: '#FFFFFF' }}>
-                  {stats.tempsMax} min — {new Date(stats.tempsMaxSaut.date_saut).toLocaleDateString('fr-FR')}, {stats.tempsMaxSaut.lieu}
-                </span>
-              </div>
-            )}
-            {stats.bestMonthKey && (
-              <div className="flex justify-between text-sm">
-                <span style={{ color: 'rgba(255,255,255,0.5)' }}>Meilleur mois</span>
-                <span className="font-semibold" style={{ color: '#FFFFFF' }}>
-                  {stats.bestMonthKey[1]} saut{stats.bestMonthKey[1] > 1 ? 's' : ''} en {MONTHS_FR[parseInt(stats.bestMonthKey[0].split('-')[1]) - 1]} {stats.bestMonthKey[0].split('-')[0]}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
+        <p className="text-[13px] pb-2" style={{ color: 'var(--c-dim)' }}>
+          Chute libre estimée à partir des hauteurs de largage et d'ouverture inscrites (≈ 12 s pour atteindre la vitesse limite, puis 55 m/s). La soufflerie n'est pas comptée.
+        </p>
       </div>
     </Layout>
   );
