@@ -604,7 +604,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                   discipline, sigles, radio, masse, altitude, verdict. Le nom,
                   seul élément élastique, se faisait broyer — « T. » pour
                   Thomas LAURENT. Le détail est donc passé sous un volet. */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap">
                 {!close && onGrouper && (
                   <input type="checkbox" checked={selection.has(p.id)}
                     onChange={() => basculer(p.id)}
@@ -625,7 +625,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
 
                 <button type="button" disabled={!p.parachutiste_id}
                   onClick={() => p.parachutiste_id && onOuvrirFiche?.(p.parachutiste_id)}
-                  className={`flex-1 min-w-0 text-left ${p.parachutiste_id ? 'hover:underline' : ''}`}
+                  className={`flex-1 basis-32 min-w-0 text-left ${p.parachutiste_id ? 'hover:underline' : ''}`}
                   style={{ fontSize: 14, fontWeight: 600, color: 'var(--c-text)', minHeight: 32 }}>
                   <span className="truncate block">
                     {p.passager_nom && (

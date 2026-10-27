@@ -840,7 +840,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
       {/* Sans avion, pas de planche : la saisie est ici, là où le manque se voit. */}
       <FlotteAeronefs centreId={centreId} aeronefs={aeronefs} onFait={charger} />
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(280px,2fr)]">
+      <div className="grid gap-4 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,3fr)_minmax(280px,2fr)]">
         {/* ── Les planches ─────────────────────────────────────────────── */}
         <div className="space-y-3">
           {rotations.length === 0 ? (
