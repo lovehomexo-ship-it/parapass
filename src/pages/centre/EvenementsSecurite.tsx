@@ -209,7 +209,7 @@ function SecuriteInner({ centreId }: { centreId: string }) {
     border: '1px solid var(--c-border)', color: 'var(--c-text)' } as const;
 
   return (
-    <div className="p-6 space-y-4 max-w-3xl">
+    <div className="space-y-4">
       <div className="flex items-start justify-between flex-wrap gap-2">
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--c-text)' }}>

@@ -161,7 +161,7 @@ function ReglesInner({ centreId }: { centreId: string }) {
   };
 
   return (
-    <div className="p-6 space-y-4 max-w-4xl">
+    <div className="space-y-4">
       <div>
         <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--c-text)' }}>
           <ShieldCheck className="w-5 h-5" style={{ color: 'var(--action-texte)' }} aria-hidden />

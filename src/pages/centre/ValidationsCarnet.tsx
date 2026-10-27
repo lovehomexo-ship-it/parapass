@@ -545,7 +545,7 @@ export function ValidationsCarnet({ dzId, onNavigate, onCompteur }: {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-2xl">
+    <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold" style={{ color: 'var(--c-text)' }}>Attestation de carnet</h2>
         <p className="text-sm mt-1" style={{ color: 'var(--c-dim)' }}>

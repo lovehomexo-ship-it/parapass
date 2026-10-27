@@ -3015,13 +3015,34 @@ export function CentreDashboardPage() {
    * un réglage d'affichage qu'il faut refaire chaque matin n'est pas un
    * réglage. Il ne vaut que pour le poste, d'où le localStorage.
    */
-  const [navRepliee, setNavRepliee] = useState(() => {
-    try { return localStorage.getItem('parapass.centre.nav') === 'repliee'; } catch { return false; }
+  //
+  // SOUS 1 280 PX, LE MENU SE REPLIE DE LUI-MÊME. Déployé, il prend 220 px :
+  // sur un portable de 1 280 px ou une tablette en paysage, c'est un sixième de
+  // l'écran pour des libellés qu'on connaît par cœur, et les noms des tableaux
+  // se tronquaient. Le choix explicite du bouton l'emporte toujours : qui
+  // déploie le menu sur son 1 100 px le retrouve déployé.
+  // (Nouvelle clé : l'ancienne valait « deployee » pour quiconque avait cliqué
+  // une fois, ce qui aurait empêché tout repli automatique.)
+  const [choixNav, setChoixNav] = useState<'auto' | 'repliee' | 'deployee'>(() => {
+    try {
+      const v = localStorage.getItem('parapass.centre.nav2');
+      return v === 'repliee' || v === 'deployee' ? v : 'auto';
+    } catch { return 'auto'; }
   });
-  const basculerNav = () => setNavRepliee(v => {
-    try { localStorage.setItem('parapass.centre.nav', v ? 'deployee' : 'repliee'); } catch { /* mode privé */ }
-    return !v;
-  });
+  const [etroit, setEtroit] = useState(() => typeof window !== 'undefined' && window.innerWidth < 1280);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 1279px)');
+    const maj = () => setEtroit(mq.matches);
+    maj();
+    mq.addEventListener('change', maj);
+    return () => mq.removeEventListener('change', maj);
+  }, []);
+  const navRepliee = choixNav === 'repliee' || (choixNav === 'auto' && etroit);
+  const basculerNav = () => {
+    const suivant = navRepliee ? 'deployee' : 'repliee';
+    try { localStorage.setItem('parapass.centre.nav2', suivant); } catch { /* mode privé */ }
+    setChoixNav(suivant);
+  };
   const [loading, setLoading] = useState(true);
   const [notifCount, setNotifCount] = useState(0);
   // « Ce qui attend une décision » : adhésions, attestations de carnet, sauts.
@@ -3515,7 +3536,14 @@ export function CentreDashboardPage() {
           </div>
         </div>
 
-        <div className="p-6">
+        {/* UNE SEULE LARGEUR DE CONTENU. Chaque écran posait la sienne — sans
+            limite, 896, 768 ou 672 px — et certains rajoutaient un second
+            p-6 : d'un onglet à l'autre, le bord gauche sautait de 24 px et la
+            colonne changeait de largeur. Désormais le cadre est ici, une fois :
+            1 280 px au plus, centré dans l'espace laissé par le menu. Les
+            formulaires gardent une largeur de lecture À L'INTÉRIEUR de ce cadre.
+            Le mode kiosque (écran de hangar) garde toute la largeur. */}
+        <div className={`p-6 w-full ${modeKiosque ? '' : 'mx-auto max-w-[1328px]'}`}>
           {/* Fil d'Ariane — situe l'écran et ramène à la Journée en un clic.
               Masqué en mode kiosque (écran de hangar, sans navigation). */}
           {!modeKiosque && (
@@ -3766,7 +3794,7 @@ export function CentreDashboardPage() {
             <Avionnage centreId={centreId} />
           )}
           {activeSection === 'materiel' && centreId && (
-            <div className="p-6 max-w-3xl"><EcheancesMateriel centreId={centreId} /></div>
+            <EcheancesMateriel centreId={centreId} />
           )}
           {activeSection === 'securite' && centreId && (
             <EvenementsSecurite centreId={centreId} />

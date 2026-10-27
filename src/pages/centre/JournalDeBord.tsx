@@ -110,7 +110,7 @@ function JournalInner({ centreId }: { centreId: string }) {
   if (loading) return <LoaderParaPass taille={72} message={null} />;
 
   return (
-    <div className="p-6 space-y-5 max-w-3xl">
+    <div className="space-y-5">
       <div>
         <h2 className="text-xl font-bold" style={{ color: 'var(--c-text)' }}>Journal de bord</h2>
         <p className="text-sm mt-1" style={{ color: 'var(--c-dim)' }}>
