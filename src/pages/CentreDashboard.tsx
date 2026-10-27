@@ -57,6 +57,7 @@ import { Tiroir } from '../components/Tiroir';
 import { SurLeTerrain } from './centre/SurLeTerrain';
 import { ApercuPresents } from './centre/ApercuPresents';
 import { CockpitDuJour } from './centre/CockpitDuJour';
+import { StatistiquesCentre } from './centre/StatistiquesCentre';
 import { VigilanceVoileDZ } from '../components/VigilanceVoileDZ';
 import { BriefingSection } from './centre/BriefingSection';
 import { BrevetsSection } from './centre/BrevetsSection';
@@ -2396,158 +2397,6 @@ function MonCentreSection({ centre, onSaved }: { centre: Centre | null; onSaved:
   );
 }
 
-// ─── StatsSection ──────────────────────────────────────────────────────────────
-
-function StatsSection({ centreId }: { centreId: string | undefined }) {
-  const [monthlyData, setMonthlyData] = useState<Array<{ label: string; count: number }>>([]);
-  const [brevetData, setBrevetData] = useState<Array<{ type: string; count: number }>>([]);
-  const [topParas, setTopParas] = useState<Array<{ nom: string; prenom: string; count: number; photo_profil_url: string | null }>>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!centreId) return;
-    (async () => {
-      setLoading(true);
-      const { data: membresData } = await supabase
-        .from('licencies_centres')
-        .select('parachutiste_id')
-        .eq('centre_id', centreId)
-        .eq('statut', 'actif');
-
-      const ids = (membresData ?? []).map((m: { parachutiste_id: string }) => m.parachutiste_id);
-      if (ids.length === 0) { setLoading(false); return; }
-
-      // Monthly sauts (last 6 months)
-      const months: Array<{ label: string; start: string; end: string }> = [];
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(1);
-        d.setMonth(d.getMonth() - i);
-        const start = d.toISOString().split('T')[0];
-        const end = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
-        months.push({ label: d.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' }), start, end });
-      }
-
-      const monthly = await Promise.all(months.map(async m => {
-        const { count } = await supabase
-          .from('sauts')
-          .select('*', { count: 'exact', head: true })
-          .in('parachutiste_id', ids)
-          .gte('date_saut', m.start)
-          .lte('date_saut', m.end)
-          .eq('statut', 'valide');
-        return { label: m.label, count: count ?? 0 };
-      }));
-      setMonthlyData(monthly);
-
-      // Brevets repartition
-      const { data: brevetsData } = await supabase
-        .from('brevets')
-        .select('parachutiste_id, type_brevet')
-        .in('parachutiste_id', ids);
-      // Dédup par parachutiste_id : un seul brevet (le premier trouvé) par personne
-      const seenParaIds = new Set<string>();
-      const bCounts: Record<string, number> = {};
-      (brevetsData as Array<{ parachutiste_id: string; type_brevet: string }> ?? []).forEach((b) => {
-        if (seenParaIds.has(b.parachutiste_id)) return;
-        seenParaIds.add(b.parachutiste_id);
-        bCounts[b.type_brevet] = (bCounts[b.type_brevet] ?? 0) + 1;
-      });
-      setBrevetData(Object.entries(bCounts).map(([type, count]) => ({ type, count })).sort((a, b) => b.count - a.count).slice(0, 8));
-
-      // Top 5 parachutistes
-      const { data: sautsAll } = await supabase
-        .from('sauts')
-        .select('parachutiste_id')
-        .in('parachutiste_id', ids)
-        .eq('statut', 'valide');
-      const pCounts: Record<string, number> = {};
-      (sautsAll ?? []).forEach((s: { parachutiste_id: string }) => { pCounts[s.parachutiste_id] = (pCounts[s.parachutiste_id] ?? 0) + 1; });
-      const top5Ids = Object.entries(pCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(e => e[0]);
-      if (top5Ids.length > 0) {
-        const { data: topProfiles } = await supabase.from('profiles').select('id, nom, prenom, photo_profil_url').in('id', top5Ids);
-        setTopParas((topProfiles ?? []).map((p: { id: string; nom: string; prenom: string; photo_profil_url: string | null }) => ({
-          nom: p.nom, prenom: p.prenom, photo_profil_url: p.photo_profil_url, count: pCounts[p.id] ?? 0,
-        })).sort((a, b) => b.count - a.count));
-      }
-
-      setLoading(false);
-    })();
-  }, [centreId]);
-
-  const maxMonthly = Math.max(...monthlyData.map(m => m.count), 1);
-  const maxBrevet = Math.max(...brevetData.map(b => b.count), 1);
-
-  if (loading) return <LoaderParaPass taille={72} message={null} />;
-
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold " style={{ color: 'var(--c-text)' }}>Statistiques</h1>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sauts par mois */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-          <h2 className="font-semibold text-gray-900 mb-4">Sauts validés (6 derniers mois)</h2>
-          <div className="space-y-2">
-            {monthlyData.map(m => (
-              <div key={m.label} className="flex items-center gap-3">
-                <span className="text-xs text-gray-500 w-12 shrink-0">{m.label}</span>
-                <div className="flex-1 bg-gray-100 rounded-full h-4 overflow-hidden">
-                  <div
-                    className="h-full bg-[#001A4D] rounded-full transition-all"
-                    style={{ width: `${(m.count / maxMonthly) * 100}%` }}
-                  />
-                </div>
-                <span className="text-xs font-medium text-gray-700 w-8 text-right">{m.count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Répartition brevets */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-          <h2 className="font-semibold text-gray-900 mb-4">Répartition par brevet</h2>
-          <div className="space-y-2">
-            {brevetData.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-6">Aucune donnée</p>
-            ) : brevetData.map(b => (
-              <div key={b.type} className="flex items-center gap-3">
-                <span className="text-xs text-gray-500 w-12 shrink-0">{b.type}</span>
-                <div className="flex-1 bg-gray-100 rounded-full h-4 overflow-hidden">
-                  <div
-                    className="h-full bg-blue-400 rounded-full transition-all"
-                    style={{ width: `${(b.count / maxBrevet) * 100}%` }}
-                  />
-                </div>
-                <span className="text-xs font-medium text-gray-700 w-8 text-right">{b.count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Top 5 */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-        <h2 className="font-semibold text-gray-900 mb-4">Top 5 parachutistes les plus actifs</h2>
-        {topParas.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-6">Aucune donnée</p>
-        ) : (
-          <div className="space-y-3">
-            {topParas.map((p, i) => (
-              <div key={i} className="flex items-center gap-4">
-                <span className="text-lg font-bold w-6 text-center text-gray-500">{i + 1}</span>
-                <AvatarCircle url={p.photo_profil_url} nom={p.nom} prenom={p.prenom} size="sm" />
-                <p className="flex-1 text-sm font-medium text-gray-900">{p.prenom} {p.nom}</p>
-                <span className="text-sm font-bold text-[#001A4D]">{p.count} sauts</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 // ─── LicencieDrawer ────────────────────────────────────────────────────────────
 
 const MESSAGES_RAPIDES = [
@@ -3821,7 +3670,7 @@ export function CentreDashboardPage() {
             <SautsSection centreId={centreId} onNavigate={setActiveSection} />
           )}
           {activeSection === 'stats' && (
-            <StatsSection centreId={centreId} />
+            <StatistiquesCentre centreId={centreId} />
           )}
           {/* Mon équipe = les gens et leur encadrement : sous-onglets */}
           {activeSection === 'equipe' && (
