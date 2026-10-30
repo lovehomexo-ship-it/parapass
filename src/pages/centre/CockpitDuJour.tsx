@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { RappelsAPrevoir } from './RappelsAPrevoir';
 import { Link } from 'react-router-dom';
 import { Users, Plane, Sunset, ListOrdered, ChevronRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -231,6 +232,9 @@ function Inner({ centreId, centreNom, logoUrl, presents, sauts, enFile, avionnag
             titre="Repartis" valeur={Math.max(0, visages.length - presents)} legende="ont quitté le terrain" />
         )}
       </div>
+
+      {/* ── LES RAPPELS DE SÉCURITÉ À PRÉVOIR ── muet s'il n'y en a pas. */}
+      <RappelsAPrevoir centreId={centreId} />
 
       {/* ── LA JOURNÉE EN ROTATIONS ── partagée avec l'écran Avionnage. */}
       {avionnageDisponible && (
