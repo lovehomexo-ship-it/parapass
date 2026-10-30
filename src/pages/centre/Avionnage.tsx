@@ -9,6 +9,7 @@ import { useDialogues } from '../../components/useDialogues';
 import { action, enTeteSection, SEVERITE_COULEUR } from '../../lib/jetons';
 import { brevetPrincipal } from '../../lib/brevets';
 import { suivreCarburant, type CarburantRotation } from '../../lib/masseCentrage';
+import { libelleEquipement } from '../../lib/presence';
 import { siegesOccupes, messageErreur, type Discipline, type VerdictDT48 } from '../../lib/avionnage';
 import { FileAvionnageDZ } from './FileAvionnageDZ';
 import { FriseRotations } from './FriseRotations';
@@ -209,7 +210,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     if (ids.length > 0) {
       const [{ data: pres }, { data: mats }] = await Promise.all([
         supabase.from('dz_presences')
-          .select('user_id, materiel_type, voile_perso_ref, voile_perso_libre, voile_location_ref')
+          .select('*')
           .eq('dz_id', centreId).eq('date_presence', jour).in('user_id', ids),
         supabase.from('materiels')
           .select('parachutiste_id, marque, modele, taille_voile_ft2')
@@ -221,11 +222,13 @@ function AvionnageInner({ centreId }: { centreId: string }) {
           .filter(Boolean).join(' ');
         if (libelle && !parMateriel.has(m.parachutiste_id)) parMateriel.set(m.parachutiste_id, libelle);
       }
-      for (const pr of (pres ?? []) as { user_id: string; materiel_type: string; voile_perso_libre: string | null; voile_location_ref: string | null }[]) {
+      for (const pr of (pres ?? []) as { user_id: string; materiel_type: string; voile_perso_libre: string | null; voile_location_ref: string | null; equipements?: string[] }[]) {
         const detail = pr.materiel_type === 'location'
           ? (pr.voile_location_ref ?? 'voile du centre')
           : (pr.voile_perso_libre ?? parMateriel.get(pr.user_id) ?? 'voile perso');
-        equipements.set(pr.user_id, `${pr.materiel_type === 'location' ? 'location DZ' : 'perso'} · ${detail}`);
+        // Ce qu'il a coché en arrivant (casque, altimètre…) suit sa voile.
+        const avec = (pr.equipements ?? []).map(libelleEquipement).join(', ').toLowerCase();
+        equipements.set(pr.user_id, `${pr.materiel_type === 'location' ? 'location DZ' : 'perso'} · ${detail}${avec ? ` · ${avec}` : ''}`);
       }
       // Pas de déclaration du jour : on retombe sur le matériel enregistré.
       for (const [id, libelle] of parMateriel) {

@@ -218,20 +218,24 @@ export async function flushAckQueue(): Promise<number> {
 /** DZ actives du licencié (id + nom) — depuis licencies_centres, la table de
  *  référence du module briefing et de ses RLS. Un licencié peut appartenir à
  *  plusieurs DZ : le dashboard affiche le briefing de chacune. */
-export function useDzMembre(userId: string | undefined): { id: string; nom: string }[] {
-  const [dzs, setDzs] = useState<{ id: string; nom: string }[]>([]);
+export function useDzMembre(userId: string | undefined): { id: string; nom: string; fond_url?: string | null }[] {
+  const [dzs, setDzs] = useState<{ id: string; nom: string; fond_url?: string | null }[]>([]);
   useEffect(() => {
     if (!userId) return;
     supabase
       .from('licencies_centres')
-      .select('centre_id, centre:centres(nom)')
+      .select('centre_id, centre:centres(*)')
       .eq('parachutiste_id', userId)
       .eq('statut', 'actif')
       .then(({ data, error }) => {
         if (error) { console.error('Chargement DZ du membre échoué :', error); return; }
         const seen = new Set<string>();
         setDzs((data ?? [])
-          .map((r: Record<string, unknown>) => ({ id: r.centre_id as string, nom: (r.centre as { nom?: string } | null)?.nom ?? 'DZ' }))
+          .map((r: Record<string, unknown>) => {
+            const c = r.centre as { nom?: string; fond_url?: string | null } | null;
+            // La photo de la DZ, si elle en a mis une : elle habille l'accueil.
+            return { id: r.centre_id as string, nom: c?.nom ?? 'DZ', fond_url: c?.fond_url ?? null };
+          })
           .filter(d => { if (seen.has(d.id)) return false; seen.add(d.id); return true; }));
       });
   }, [userId]);

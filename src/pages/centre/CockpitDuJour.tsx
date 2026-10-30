@@ -90,8 +90,8 @@ function Tuile({ to, icone, valeur, unite, titre, legende, accent, children }: {
   );
 }
 
-function Inner({ centreId, centreNom, logoUrl, presents, sauts, enFile, avionnageDisponible }: {
-  centreId: string; centreNom: string; logoUrl: string | null;
+function Inner({ centreId, centreNom, logoUrl, fondUrl, presents, sauts, enFile, avionnageDisponible }: {
+  centreId: string; centreNom: string; logoUrl: string | null; fondUrl?: string | null;
   presents: number; sauts: number; enFile: number; avionnageDisponible: boolean;
 }) {
   const [rotations, setRotations] = useState<Rotation[]>([]);
@@ -146,7 +146,17 @@ function Inner({ centreId, centreNom, logoUrl, presents, sauts, enFile, avionnag
   return (
     <section aria-label="Aujourd'hui" className="space-y-3">
       {/* ── BANDEAU « AUJOURD'HUI » ─────────────────────────────────────── */}
-      <div className="flex items-center gap-3 flex-wrap">
+      {/* LA PHOTO DE LA DZ, si le centre en a mis une : le bandeau se pose
+          dessus, sous un voile sombre qui garde le titre lisible quelle que
+          soit la photo. Les jetons de couleur sont redéfinis localement. */}
+      <div className={`flex items-center gap-3 flex-wrap ${fondUrl ? 'relative rounded-2xl overflow-hidden p-4 sm:p-5' : ''}`}
+        style={fondUrl ? {
+          minHeight: 150, alignContent: 'flex-end',
+          background: `linear-gradient(180deg, rgba(11,29,58,0.15) 0%, rgba(11,29,58,0.78) 100%), center / cover no-repeat url("${fondUrl}")`,
+          ['--c-text' as string]: '#fff', ['--c-text2' as string]: '#fff', ['--c-muted' as string]: 'rgba(255,255,255,0.86)',
+          ['--c-card' as string]: 'rgba(11,29,58,0.45)', ['--c-border' as string]: 'rgba(255,255,255,0.3)',
+          ['--sev-vigilance' as string]: '#FDBA74',
+        } : undefined}>
         {logoUrl
           ? <img src={logoUrl} alt="" className="w-11 h-11 rounded-xl object-contain p-1"
               style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }} />
@@ -252,7 +262,7 @@ function Inner({ centreId, centreNom, logoUrl, presents, sauts, enFile, avionnag
 }
 
 export function CockpitDuJour(props: {
-  centreId: string | undefined; centreNom: string; logoUrl: string | null;
+  centreId: string | undefined; centreNom: string; logoUrl: string | null; fondUrl?: string | null;
   presents: number; sauts: number; enFile: number; avionnageDisponible: boolean;
 }) {
   if (!props.centreId) return null;

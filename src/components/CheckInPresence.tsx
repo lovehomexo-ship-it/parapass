@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { MapPin, CheckCircle, LogOut, Pencil, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { useMaPresence, hhmm } from '../lib/presence';
+import { useMaPresence, hhmm, dernierePresence, EQUIPEMENTS, libelleEquipement, type Equipement, type DzPresence } from '../lib/presence';
 import { useBriefingDuJour, useBriefingAck } from '../lib/briefing';
 import type { Materiel } from '../lib/types';
 
@@ -61,6 +61,10 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
   // Masse : lue sur le profil, pas sur la présence — on ne la redemande pas
   // chaque matin. Chaîne vide = « je ne dis pas », et c'est un choix valide.
   const [masse, setMasse] = useState('');
+  // Ce qu'il emporte : coché en un toucher, repris de la dernière fois.
+  const [equipements, setEquipements] = useState<Equipement[]>([]);
+  // La dernière venue : de quoi proposer « comme la dernière fois » en un geste.
+  const [derniere, setDerniere] = useState<DzPresence | null>(null);
 
   // Voiles perso du module matériel — optionnel, jamais bloquant
   useEffect(() => {
@@ -89,6 +93,22 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
       });
   }, [userId]);
 
+  // La dernière venue préremplit tout : matériel, voile, équipement.
+  useEffect(() => {
+    if (!userId || !dzId) return;
+    let annule = false;
+    dernierePresence(userId, dzId).then(d => {
+      if (annule || !d) return;
+      setDerniere(d);
+      setMaterielType(d.materiel_type);
+      if (d.voile_perso_ref) setVoilePersoRef(d.voile_perso_ref);
+      setVoilePersoLibre(d.voile_perso_libre ?? '');
+      setVoileLocation(d.voile_location_ref ?? '');
+      setEquipements((d.equipements ?? []) as Equipement[]);
+    });
+    return () => { annule = true; };
+  }, [userId, dzId]);
+
   // Pré-remplissage à la modification
   useEffect(() => {
     if (!presence || presence.statut !== 'present') return;
@@ -98,6 +118,7 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
     setVoilePersoRef(presence.voile_perso_ref);
     setVoilePersoLibre(presence.voile_perso_libre ?? '');
     setVoileLocation(presence.voile_location_ref ?? '');
+    if (presence.equipements) setEquipements(presence.equipements as Equipement[]);
   }, [presence?.id, presence?.updated_at]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (dzs.length === 0 || !userId) return null;
@@ -125,12 +146,26 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
       // masse reste possible en la remettant à vide APRÈS l'avoir saisie :
       // on écrit null, ce qui est différent de « ne rien dire ».
       masse_kg: masse.trim() === '' ? null : Number(masse.replace(',', '.')),
+      equipements,
     });
     if (ok) {
       setOuvert(false);
       setOkMsg(true);
       setTimeout(() => setOkMsg(false), 3000);
     }
+  };
+
+  /** « Pilot 245 ft² · 82 kg · casque, altimètre » — ce qui partira sur la planche. */
+  const resume = () => {
+    const voile = materielType === 'location'
+      ? `location${voileLocation.trim() ? ` n°${voileLocation.trim()}` : ''}`
+      : (() => {
+          const v = voilesPerso.find(x => x.id === voilePersoRef);
+          return v ? [v.marque, v.modele, v.taille_voile_ft2 ? `${v.taille_voile_ft2} ft²` : null].filter(Boolean).join(' ')
+            : voilePersoLibre.trim() || 'voile perso';
+        })();
+    return [voile, masse.trim() ? `${masse.trim()} kg` : null,
+      equipements.length ? equipements.map(libelleEquipement).join(', ').toLowerCase() : null].filter(Boolean).join(' · ');
   };
 
   // ── Statut « présent » : résumé modifiable / annulable ──
@@ -159,6 +194,29 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
   }
 
   // ── Bouton fermé ──
+  // DÉJÀ VENU : un seul geste. Retour du DT de Rochefort — les solos arrivent
+  // à la dernière minute ; s'ils doivent remplir un formulaire, ils ne le font
+  // pas. Tout est repris de la dernière fois ; on ne l'ouvre que pour changer.
+  if (!ouvert && derniere) {
+    return (
+      <div className="rounded-2xl p-3 mb-3" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border-f)' }}>
+        <button onClick={valider} disabled={saving}
+          className="w-full rounded-xl px-4 flex items-center justify-center gap-2 text-[15px] font-bold text-white disabled:opacity-60"
+          style={{ background: 'var(--action-fond, #2563EB)', minHeight: 52 }}>
+          <MapPin className="w-4 h-4" aria-hidden /> {saving ? 'Enregistrement…' : 'Je suis là — comme la dernière fois'}
+        </button>
+        <p className="text-[13px] mt-2 flex items-center gap-2 flex-wrap" style={{ color: 'var(--c-muted)' }}>
+          <span className="flex-1 min-w-0">{resume()}{dzs.length > 1 ? ` · ${dzNom}` : ''} · jusqu’à {fin.replace(':', ' h ')}</span>
+          <button onClick={() => setOuvert(true)} className="font-semibold px-2 rounded-lg"
+            style={{ color: 'var(--accent-texte)', minHeight: 36 }}>
+            Changer
+          </button>
+        </p>
+        {error && <p className="text-xs mt-1" style={{ color: 'var(--sev-critique)' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}</p>}
+      </div>
+    );
+  }
+
   if (!ouvert) {
     return (
       <button onClick={() => setOuvert(true)}
@@ -240,6 +298,25 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
           <input type="text" placeholder="Modèle + taille (ex : Sabre 3 150)" value={voilePersoLibre}
             onChange={e => setVoilePersoLibre(e.target.value)} style={{ ...inputStyle, marginTop: 8 }} />
         )}
+      </div>
+
+      {/* AVEC MOI — un toucher par objet, repris la fois suivante. Il part
+          tout seul sur la planche : la DZ n'a plus à le demander. */}
+      <div>
+        <span className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--c-muted)' }}>Avec moi</span>
+        <div role="group" aria-label="Équipement emporté" className="flex flex-wrap gap-2">
+          {EQUIPEMENTS.map(([k, lib]) => {
+            const actif = equipements.includes(k);
+            return (
+              <button key={k} type="button" aria-pressed={actif}
+                onClick={() => setEquipements(e => actif ? e.filter(x => x !== k) : [...e, k])}
+                className="px-3 rounded-full text-[13px] font-semibold"
+                style={{ minHeight: 36, background: actif ? 'var(--action-fond)' : 'var(--c-hover)', color: actif ? '#fff' : 'var(--c-text2, var(--c-text))' }}>
+                {actif ? '✓ ' : ''}{lib}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Briefing du jour — intégré, jamais bloquant : l'appli informe */}

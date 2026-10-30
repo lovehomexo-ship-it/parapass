@@ -686,7 +686,17 @@ export function DashboardPage() {
                   bas, météo pour chaque DZ — se lit ici d'un seul tenant. */}
               {briefingDzs.length > 0 && (
                 <section aria-label="À la DZ aujourd'hui" className="space-y-3">
-                  <TitreBloc>{dzDuJour ? `Aujourd’hui à ${dzDuJour.nom}` : 'À la DZ'}</TitreBloc>
+                  {(dzDuJour ?? briefingDzs[0])?.fond_url ? (
+                    // La photo de la DZ, posée par le centre : l'accueil est à son image.
+                    <div className="mt-6 rounded-2xl overflow-hidden flex items-end px-4 py-3"
+                      style={{ minHeight: 112, background: `linear-gradient(180deg, rgba(11,29,58,0.05), rgba(11,29,58,0.75)), center / cover no-repeat url("${(dzDuJour ?? briefingDzs[0]).fond_url}")` }}>
+                      <h2 className="text-[17px] font-extrabold text-white">
+                        {dzDuJour ? `Aujourd’hui à ${dzDuJour.nom}` : briefingDzs[0].nom}
+                      </h2>
+                    </div>
+                  ) : (
+                    <TitreBloc>{dzDuJour ? `Aujourd’hui à ${dzDuJour.nom}` : 'À la DZ'}</TitreBloc>
+                  )}
                   {briefingDzs.map(dz => (
                     <BriefingDuJourBlock key={dz.id} dzId={dz.id} dzNom={dz.nom} userId={user?.id} />
                   ))}

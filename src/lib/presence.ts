@@ -18,9 +18,19 @@ export interface DzPresence {
   voile_perso_libre: string | null;
   voile_location_ref: string | null;
   statut: 'present' | 'parti';
+  /** Ce que le sauteur emporte (casque, altimètre…). Absent tant que la base
+   *  n'a pas la colonne (migration 210). */
+  equipements?: Equipement[];
   checked_in_at: string;
   updated_at: string;
 }
+
+/** Ce qu'on coche en un toucher en se disant présent. */
+export const EQUIPEMENTS = [
+  ['casque', 'Casque'], ['altimetre', 'Altimètre'], ['audible', 'Bip sonore'], ['camera', 'Caméra'],
+] as const;
+export type Equipement = typeof EQUIPEMENTS[number][0];
+export const libelleEquipement = (e: string) => EQUIPEMENTS.find(([k]) => k === e)?.[1] ?? e;
 
 export interface CheckInInput {
   dz_id: string;
@@ -40,6 +50,7 @@ export interface CheckInInput {
    * conformité ne la lit.
    */
   masse_kg?: number | null;
+  equipements?: Equipement[];
 }
 
 const today = () => new Date().toISOString().substring(0, 10);
@@ -68,22 +79,30 @@ export function useMaPresence(dzId: string | undefined, userId: string | undefin
     if (!userId) return false;
     setSaving(true);
     setError(null);
-    const { data: written, error } = await supabase
-      .from('dz_presences')
-      .upsert({
-        dz_id: input.dz_id,
-        user_id: userId,
-        date_presence: today(),
-        heure_debut: input.heure_debut,
-        heure_fin: input.heure_fin,
-        materiel_type: input.materiel_type,
-        voile_perso_ref: input.voile_perso_ref ?? null,
-        voile_perso_libre: input.voile_perso_libre ?? null,
-        voile_location_ref: input.voile_location_ref ?? null,
-        statut: 'present',
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'dz_id,user_id,date_presence' })
-      .select('*');
+    const ligne: Record<string, unknown> = {
+      dz_id: input.dz_id,
+      user_id: userId,
+      date_presence: today(),
+      heure_debut: input.heure_debut,
+      heure_fin: input.heure_fin,
+      materiel_type: input.materiel_type,
+      voile_perso_ref: input.voile_perso_ref ?? null,
+      voile_perso_libre: input.voile_perso_libre ?? null,
+      voile_location_ref: input.voile_location_ref ?? null,
+      statut: 'present',
+      updated_at: new Date().toISOString(),
+    };
+    if (input.equipements) ligne.equipements = input.equipements;
+    const ecrire = (l: Record<string, unknown>) => supabase.from('dz_presences')
+      .upsert(l, { onConflict: 'dz_id,user_id,date_presence' }).select('*');
+    let { data: written, error } = await ecrire(ligne);
+    // Base pas encore à jour (colonne `equipements` absente) : la présence
+    // passe quand même, sans l'équipement. Être présent ne doit jamais échouer
+    // pour un casque.
+    if (error && /equipements/.test(error.message)) {
+      delete ligne.equipements;
+      ({ data: written, error } = await ecrire(ligne));
+    }
     setSaving(false);
     if (error || !written || written.length === 0) {
       console.error('Check-in échoué :', error);
@@ -235,4 +254,16 @@ export function usePresencesDZ(dzId: string | undefined) {
   };
 
   return { rows, loading, retirer, refresh: load };
+}
+
+/**
+ * LA DERNIÈRE PRÉSENCE du sauteur, toutes dates confondues — pour proposer
+ * « comme la dernière fois » en un seul geste.
+ */
+export async function dernierePresence(userId: string, dzId: string): Promise<DzPresence | null> {
+  const { data, error } = await supabase.from('dz_presences').select('*')
+    .eq('user_id', userId).eq('dz_id', dzId).lt('date_presence', today())
+    .order('date_presence', { ascending: false }).limit(1).maybeSingle();
+  if (error) { console.error('Lecture de la dernière présence échouée :', error); return null; }
+  return (data as DzPresence | null) ?? null;
 }

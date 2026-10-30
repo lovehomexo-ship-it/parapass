@@ -23,6 +23,7 @@ import { DecisionDuJour } from '../components/DecisionDuJour';
 import { sautsToCSV } from '../lib/sautsExport';
 import { DemoJourneeDZ } from '../components/DemoJourneeDZ';
 import { DemoQuotidienne } from '../components/DemoQuotidienne';
+import { PhotoFondCentre } from './centre/PhotoFondCentre';
 import { useCurrencyRules, getCurrencyStatus, CURRENCY_STATUS_CONFIG } from '../lib/currency';
 import { useEncadrement, compterExigencesNonCouvertes } from '../lib/encadrement';
 import { MeteoAltitudeDZ } from '../components/MeteoAltitudeCard';
@@ -95,6 +96,8 @@ interface Centre {
   id: string;
   nom: string;
   logo_url: string | null;
+  /** Photo de fond du centre (bandeau de la Journée, accueil des parachutistes). */
+  fond_url?: string | null;
   statut: string;
   plan: string;
   ville: string;
@@ -581,7 +584,7 @@ function DashboardHome({
           {/* LE COCKPIT : l'état du jour en grand, d'abord. Il lit, il ne
               décide rien — mêmes compteurs que la barre d'état. */}
           <CockpitDuJour centreId={centre?.id} centreNom={centre?.nom ?? ''}
-            logoUrl={centre?.logo_url ?? null} presents={presentsDuJour}
+            logoUrl={centre?.logo_url ?? null} fondUrl={centre?.fond_url ?? null} presents={presentsDuJour}
             sauts={stats.sautsAujourdhui} enFile={enAttenteAvionnage}
             avionnageDisponible={avionnageDisponible} />
 
@@ -2259,6 +2262,9 @@ function MonCentreSection({ centre, onSaved }: { centre: Centre | null; onSaved:
           </div>
         </div>
       </div>
+
+      {/* ── Photo de fond ── */}
+      {centre?.id && <PhotoFondCentre centreId={centre.id} fondUrl={centre.fond_url ?? null} onSaved={() => onSaved()} />}
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
         <h2 className="font-semibold text-gray-900">Informations générales</h2>
