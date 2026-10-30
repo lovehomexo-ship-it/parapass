@@ -484,11 +484,6 @@ function LicenceTab({ licences, userId, centresLicencies, onRefresh, saving, set
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img
-            src="/logo-ffp-footer.png"
-            alt="FFP"
-            style={{ height: '20px', width: 'auto', opacity: 0.75 }}
-          />
           <h2 className="text-base font-semibold text-white">Licences</h2>
         </div>
         <button onClick={() => { setShowForm(true); setEditing(null); setForm(emptyLicenceForm); }}
@@ -507,7 +502,7 @@ function LicenceTab({ licences, userId, centresLicencies, onRefresh, saving, set
             </FormRow>
             <FormRow label="Organisme">
               <select className={selectCls} value={form.organisme} onChange={(e) => set({ organisme: e.target.value as LicenceForm['organisme'] })}>
-                <option value="FFP">FFP</option>
+                <option value="FFP">Fédérale</option>
                 <option value="DGAC">DGAC</option>
                 <option value="autre">Autre</option>
               </select>
@@ -611,12 +606,7 @@ function LicenceTab({ licences, userId, centresLicencies, onRefresh, saving, set
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-white">{l.organisme} — {l.numero_licence}</span>
-                <img
-                  src="/logo-ffp-footer.png"
-                  alt="FFP"
-                  style={{ height: '14px', width: 'auto', opacity: 0.6 }}
-                />
+                <span className="font-semibold text-white">{l.organisme === 'FFP' ? 'Licence' : l.organisme} — {l.numero_licence}</span>
               </div>
               {l.nom_club && <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>{l.nom_club}{l.code_club ? ` (${l.code_club})` : ''}</div>}
               {l.date_expiration && (

@@ -8,7 +8,7 @@ import { LoaderParaPass } from '../../components/LoaderParaPass';
 /** Brouillon de relance pré-rédigé (éditable avant envoi — Prompt P). */
 function buildRelanceText(items: { type_document: 'licence' | 'medical'; echeance_date: string; jours_restants: number }[], prenom: string): string {
   const parts = items.map(it => {
-    const doc = it.type_document === 'licence' ? 'votre licence FFP' : 'votre certificat médical';
+    const doc = it.type_document === 'licence' ? 'votre licence' : 'votre certificat médical';
     const d = new Date(it.echeance_date).toLocaleDateString('fr-FR');
     return it.jours_restants < 0 ? `${doc} a expiré le ${d}` : `${doc} arrive à échéance le ${d}`;
   });
@@ -60,7 +60,7 @@ function palierLabel(p: number): string {
 }
 
 function docLabel(t: string): string {
-  return t === 'licence' ? 'Licence FFP' : 'Certificat médical';
+  return t === 'licence' ? 'Licence' : 'Certificat médical';
 }
 
 function parsePaliers(s: string): number[] | null {

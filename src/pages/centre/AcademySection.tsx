@@ -229,7 +229,7 @@ export function DocumentsFFPDZ({ centreId, dtId }: { centreId: string; dtId: str
       numero_licence: prof?.numero_licence ?? '',
       epreuves_validees: epreuvesValidees,
       moniteur_signataire_id: dtId,
-      mention: 'Format de fiche À VALIDER AVEC LA FFP — contenu généré depuis la progression ParaPass, conservation 3 ans.',
+      mention: 'Format de fiche à valider — contenu généré depuis la progression ParaPass, conservation 3 ans.',
     };
 
     const { data, error } = await supabase
@@ -251,8 +251,8 @@ export function DocumentsFFPDZ({ centreId, dtId }: { centreId: string; dtId: str
   return (
     <div className="space-y-5">
       <p className="text-xs" style={{ color: 'var(--c-dim)' }}>
-        Fiches réglementaires FFP (annexe 3, annexe 4…) générées depuis la progression et archivées horodatées —
-        l'obligation de conservation 3 ans, sans papier. Formats exacts <strong>à valider avec la FFP</strong>.
+        Fiches réglementaires (annexe 3, annexe 4…) générées depuis la progression et archivées horodatées —
+        l'obligation de conservation 3 ans, sans papier. Formats exacts <strong>à valider</strong>.
       </p>
 
       {erreur && <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: 'var(--sev-critique)' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {erreur}</div>}

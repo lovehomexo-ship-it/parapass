@@ -139,7 +139,7 @@ export function TandemCertifPage() {
         {/* Footer */}
         <div className="bg-slate-50 px-6 py-4 text-center flex items-center justify-center gap-2 border-t border-slate-100">
           <CheckCircle className="w-4 h-4 text-green-500" />
-          <p className="text-xs text-gray-400">Certifié via ParaPass · Fédération Française de Parachutisme</p>
+          <p className="text-xs text-gray-400">Certifié via ParaPass</p>
         </div>
       </div>
 

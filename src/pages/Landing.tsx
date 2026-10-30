@@ -25,7 +25,7 @@ const DEMO = {
   nom: 'MARTIN',
   prenom: 'Sophie',
   brevet: 'B',
-  licence: 'FFP-2021-08734',
+  licence: '2021-08734',
   sauts: 57,
   dz: 'BigAir Rochefort',
   codeClub: '0916',
@@ -988,7 +988,7 @@ export function LandingPage() {
                 icon: CreditCard,
                 bg: '#EFF6FF',
                 title: 'Créez votre profil',
-                desc: 'Licence FFP, brevets, certificat médical, qualifs : tout au même endroit, en 5 minutes. Fini les documents éparpillés.',
+                desc: 'Licence, brevets, certificat médical, qualifs : tout au même endroit, en 5 minutes. Fini les documents éparpillés.',
               },
               {
                 step: '02',
@@ -1718,7 +1718,7 @@ export function LandingPage() {
             Hébergé en Europe · Données chiffrées et horodatées · Politique de confidentialité
           </div>
           <div className="pt-4 text-center text-xs leading-relaxed" style={{ color: '#475569' }}>
-            ParaPass est un service indépendant. Il n'est, à ce jour, ni affilié à la Fédération Française de Parachutisme, ni certifié par la DGAC. Le carnet numérique complète le carnet de sauts papier sans s'y substituer.
+            ParaPass est un service indépendant. Il n'est, à ce jour, sans affiliation fédérale ni certification DGAC. Le carnet numérique complète le carnet de sauts papier sans s'y substituer.
           </div>
         </div>
       </footer>

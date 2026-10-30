@@ -456,7 +456,7 @@ export function ProfilPage() {
               l'application, qui suit le thème. En bleu marine fixe, il tombait
               à 1:1 sur le fond sombre — invisible. */}
           <h1 className="text-2xl font-bold" style={{ color: 'var(--c-text)' }}>Mon Profil</h1>
-          <p className="text-sm" style={{ color: 'var(--c-muted)' }}>Page de garde — Carnet de sauts numérique FFP</p>
+          <p className="text-sm" style={{ color: 'var(--c-muted)' }}>Page de garde — Carnet de sauts numérique</p>
         </div>
 
         {/* CETTE PAGE EST DESSINÉE EN CLAIR, DE BOUT EN BOUT : `bg-white` et

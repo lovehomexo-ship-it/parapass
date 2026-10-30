@@ -230,7 +230,7 @@ export function InscriptionCentrePage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[13px] font-medium text-[#64748B] mb-1.5">N° FFP <span className="text-red-500">*</span></label>
+                    <label className="block text-[13px] font-medium text-[#64748B] mb-1.5">N° d’affiliation <span className="text-red-500">*</span></label>
                     <input type="text" value={form.numero_agrement_ffp} onChange={(e) => update('numero_agrement_ffp', e.target.value)} required className={inputCls} placeholder="FFP-0916" />
                   </div>
                   <div>

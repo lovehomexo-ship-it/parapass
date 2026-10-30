@@ -149,7 +149,7 @@ function CurrencyRulesSection() {
     <div className="mt-10">
       <h2 className="text-lg font-bold text-white mb-2">Règles de reprise après inactivité</h2>
       <p className="text-sm mb-5" style={{ color: 'rgba(255,255,255,0.5)' }}>
-        Seuils en jours depuis le dernier saut, par niveau. « À VÉRIFIER — directives techniques FFP ».
+        Seuils en jours depuis le dernier saut, par niveau. « À VÉRIFIER — directives techniques ».
       </p>
       {error && (
         <div className="rounded-xl px-4 py-3 mb-4 text-sm" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>

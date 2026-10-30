@@ -125,7 +125,7 @@ export function DeclarationHonneur({ profile, userId, onClose, onConfirmed }: Pr
               <ClipboardList className="w-4 h-4 inline-block mr-1.5 align-[-3px]" aria-hidden /> Déclaration de sauts antérieurs
             </h2>
             <p className="text-xs mt-0.5" style={{ color: 'var(--c-muted)' }}>
-              Conforme à la réglementation FFP — Art. L321-1 Code du sport
+              Art. L321-1 du Code du sport
             </p>
           </div>
           <button
@@ -170,7 +170,7 @@ export function DeclarationHonneur({ profile, userId, onClose, onConfirmed }: Pr
                 className="rounded-xl p-3 text-xs"
                 style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.2)', color: 'var(--c-text2)', lineHeight: 1.6 }}
               >
-                <strong style={{ color: '#A78BFA' }}>ℹ️ Procédure FFP</strong> — Cette déclaration est
+                <strong style={{ color: '#A78BFA' }}>ℹ️ Procédure</strong> — Cette déclaration est
                 identique à celle utilisée pour les carnets perdus ou endommagés. Elle est
                 horodatée et archivée.
               </div>
@@ -407,7 +407,7 @@ export function DeclarationHonneur({ profile, userId, onClose, onConfirmed }: Pr
                   Je soussigné(e) <strong>{profile?.prenom} {profile?.nom}</strong>,
                   certifie sur l'honneur avoir effectué <strong>{nb} sauts</strong> à la date
                   d'aujourd'hui, et m'engage à fournir tout justificatif (carnet papier,
-                  attestation DT) sur demande de la FFP ou de la DGAC. Cette déclaration est
+                  attestation DT) sur demande de la fédération ou de la DGAC. Cette déclaration est
                   archivée et horodatée conformément à la réglementation en vigueur.
                 </p>
               </button>

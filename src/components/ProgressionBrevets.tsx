@@ -24,12 +24,12 @@ export function ProgressionBrevets({ userId }: { userId: string | undefined }) {
         <h2 className="text-sm font-bold text-white">Ma progression brevets</h2>
       </div>
       <p className="text-xs mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>
-        Référentiel FFP 2026 (CA 27-03-2026) saisi comme donnée — à vérifier par votre DT ; la FFP reste seule source de vérité.
+        Référentiel 2026 saisi comme donnée — à vérifier par votre DT, seule référence qui fasse foi.
       </p>
 
       {!renseigne ? (
         <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
-          Référentiel des épreuves en attente de la FFP — rien n'est inventé d'ici là.
+          Référentiel des épreuves en attente — rien n'est inventé d'ici là.
         </p>
       ) : (
         <div className="space-y-4">

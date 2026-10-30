@@ -251,7 +251,7 @@ export function AdminSecretPage() {
 
       {/* Footer */}
       <p className="text-xs mt-10 relative z-10" style={{ color: 'rgba(255,255,255,0.2)' }}>
-        © 2026 ParaPass · Carnet de sauts numérique FFP
+        © 2026 ParaPass · Carnet de sauts numérique
       </p>
     </div>
   );

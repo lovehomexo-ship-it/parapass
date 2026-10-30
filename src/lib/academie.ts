@@ -19,7 +19,7 @@ export const QCM_OFFICIEL_REPLI = 'https://ffp.asso.fr/qcm/';
 
 export const MENTION_ENTRAINEMENT_REPLI =
   'Questions d’entraînement — elles ne remplacent ni la formation ni le QCM '
-  + 'officiel de la FFP. En cas de doute, réfère-toi à ton moniteur.';
+  + 'officiel. En cas de doute, réfère-toi à ton moniteur.';
 
 export interface ParametresAcademie {
   qcmOfficielUrl: string;

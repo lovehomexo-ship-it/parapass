@@ -411,7 +411,7 @@ function EcranPaiementLayout({
       <div className="grid grid-cols-3 gap-2">
         {[
           { icon: Zap, label: 'Analyse IA', sub: 'Claude Vision' },
-          { icon: Shield, label: 'Conforme FFP', sub: 'validé' },
+          { icon: Shield, label: 'Format carnet papier', sub: 'reconnu' },
           { icon: FileImage, label: `${photos.length} page${photos.length > 1 ? 's' : ''}`, sub: `incluse${photos.length > 1 ? 's' : ''}` },
         ].map(({ icon: Icon, label, sub }) => (
           <div key={label} className="rounded-xl p-3 text-center" style={{ background: 'rgba(249,115,22,0.05)', border: '1px solid rgba(249,115,22,0.1)' }}>
@@ -625,7 +625,7 @@ export function ImportOCR({ userId, onClose, onImported }: Props) {
   const stepLabels = ['Photos', 'Aperçu', 'Paiement', 'Import'];
 
   const subtitles: Record<Etape, string> = {
-    upload: photos.length > 0 ? `${photos.length} page${photos.length > 1 ? 's' : ''} sélectionnée${photos.length > 1 ? 's' : ''}` : 'Photographiez votre carnet FFP',
+    upload: photos.length > 0 ? `${photos.length} page${photos.length > 1 ? 's' : ''} sélectionnée${photos.length > 1 ? 's' : ''}` : 'Photographiez votre carnet papier',
     scan: 'Claude Vision analyse vos photos…',
     apercu: `${sauts.length} saut${sauts.length > 1 ? 's' : ''} détecté${sauts.length > 1 ? 's' : ''} — prêt pour le paiement`,
     paiement: 'Paiement sécurisé — 4,99 €',

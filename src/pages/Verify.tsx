@@ -195,7 +195,7 @@ export function VerifyPage() {
 
         {/* ── LICENCE & VALIDITÉ ── */}
         <InfoCard title="Licence & Validité" icon={<ClipboardList className="w-4 h-4" aria-hidden />}>
-          <InfoRow label="N° Licence FFP" value={licNum} mono />
+          <InfoRow label="N° de licence" value={licNum} mono />
           <InfoRow label="Code club" value={d.licence?.code_club || '—'} />
           <InfoRow
             label="Valide jusqu'au"
@@ -390,7 +390,7 @@ function PasseportCard({ profile, licence, brevet, certif, sautsTotal, licNum, s
           <p className="text-white font-bold truncate" style={{ fontSize: '18px' }}>
             {profile?.prenom} {profile?.nom}
           </p>
-          <p className="text-blue-200" style={{ fontSize: '12px' }}>Licence FFP N°{licNum}</p>
+          <p className="text-blue-200" style={{ fontSize: '12px' }}>Licence n° {licNum}</p>
           {licence?.code_club && (
             <p className="text-white/50" style={{ fontSize: '11px' }}>Code club : {licence.code_club}</p>
           )}

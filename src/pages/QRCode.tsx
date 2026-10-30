@@ -121,7 +121,7 @@ export function QRCodePage() {
           <img src="/logo-parapass.webp" alt="ParaPass" className="h-12 w-auto mx-auto mb-3" />
           <div className="text-center mb-4">
             <p className="text-lg font-bold text-[#001A4D]">{profile.prenom} {profile.nom}</p>
-            <p className="text-sm text-gray-500">Licence FFP : {cleanLicence(profile.numero_licence)}</p>
+            <p className="text-sm text-gray-500">Licence : {cleanLicence(profile.numero_licence)}</p>
           </div>
           <div className="flex justify-center">
             <QRCodeSVG value={qrUrl} size={220} level="H" />
@@ -167,7 +167,7 @@ export function QRCodePage() {
 
           <div className="mt-6 pt-4 text-left space-y-2.5" style={{ borderTop: '1px solid var(--c-border)' }}>
             <InfoRow label="Nom" value={`${profile.nom} ${profile.prenom}`} />
-            <InfoRow label="Licence FFP" value={cleanLicence(profile.numero_licence)} />
+            <InfoRow label="Licence" value={cleanLicence(profile.numero_licence)} />
             <InfoRow label="Brevet" value={brevet ? (TYPE_BREVET_LABELS[brevet.type_brevet] || brevet.type_brevet) : 'Non renseigné'} />
             <InfoRow
               label="Certificat médical"

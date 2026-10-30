@@ -605,7 +605,7 @@ describe('libelleDT48 — court sur la ligne, complet en infobulle', () => {
 
 describe('SOURCE_DT48 — la référence est nommée une seule fois', () => {
   it('porte le texte et sa date, pour qu’une infobulle puisse la citer', () => {
-    expect(SOURCE_DT48).toContain('Directive Technique n° 48');
+    expect(SOURCE_DT48).toContain('Directive technique n° 48');
     expect(SOURCE_DT48).toContain('08/02/2024');
     expect(SOURCE_DT48).toContain('24.0113');
   });

@@ -188,7 +188,8 @@ function App() {
                 <Route path="/briefing/tv/:dzId" element={<ProtectedRoute><BriefingTVPage /></ProtectedRoute>} />
                 <Route path="/qr-code" element={<ProtectedRoute roles={['parachutiste', 'moniteur', 'moniteur_delegue']}><QRCodePage /></ProtectedRoute>} />
                 <Route path="/messages" element={<ProtectedRoute><ErrorBoundary><MessagesPage /></ErrorBoundary></ProtectedRoute>} />
-                <Route path="/regles-ffp" element={<ProtectedRoute><ErrorBoundary><ReglesFFPPage /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/regles-securite" element={<ProtectedRoute><ErrorBoundary><ReglesFFPPage /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/regles-ffp" element={<Navigate to="/regles-securite" replace />} />
                 <Route path="/validations" element={<ProtectedRoute roles={['parachutiste', 'moniteur', 'moniteur_delegue']}><ValidationsPage /></ProtectedRoute>} />
                 <Route path="/moniteur" element={<ProtectedRoute roles={['moniteur']}><MoniteurPage /></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AdminPage /></ProtectedRoute>} />

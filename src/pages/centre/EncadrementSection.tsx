@@ -41,7 +41,7 @@ export function EncadrementSection({ centreId, vue }: { centreId: string; vue?: 
           </h1>
         )}
         <p className="text-xs mt-1" style={{ color: 'var(--c-dim)' }}>
-          Présents × qualifications × règles FFP (Manuel 2026 p.26-27, paramétrables). L'outil signale, il n'interdit rien — vous restez seul décideur.
+          Présents × qualifications × règles d’encadrement (Manuel 2026 p.26-27, paramétrables). L'outil signale, il n'interdit rien — vous restez seul décideur.
         </p>
       </div>
 

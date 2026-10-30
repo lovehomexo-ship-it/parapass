@@ -301,7 +301,7 @@ function Inner({ centreId }: { centreId: string }) {
         </p>
         <a href={parametres.qcmOfficielUrl} target="_blank" rel="noopener noreferrer"
           className="text-xs font-bold inline-flex items-center gap-1.5 no-underline" style={{ color: '#60A5FA' }}>
-          QCM officiel de la FFP <ExternalLink className="w-3 h-3 flex-shrink-0" aria-hidden />
+          QCM officiel <ExternalLink className="w-3 h-3 flex-shrink-0" aria-hidden />
         </a>
       </div>
 

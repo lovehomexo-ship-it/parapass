@@ -91,7 +91,7 @@ function VueNiveaux({ niveaux, prog }: { niveaux: PacNiveau[]; prog: Record<stri
           </div>
         );
       })}
-      <p className="text-[10px]" style={{ color: 'var(--c-dim)' }}>* détail à valider avec la FFP. L'appli informe ; le moniteur valide chaque acquis.</p>
+      <p className="text-[10px]" style={{ color: 'var(--c-dim)' }}>* détail à valider avec votre DT. L'appli informe ; le moniteur valide chaque acquis.</p>
     </div>
   );
 }

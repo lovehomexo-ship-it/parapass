@@ -67,7 +67,7 @@ export function BrevetsSection({ centreId }: { centreId: string }) {
 
       {!referentiel.renseigne && onglet !== 'referentiel' && (
         <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(148,163,184,0.08)', border: '1px solid rgba(148,163,184,0.25)', color: '#CBD5E1' }}>
-          Référentiel en attente de la FFP — saisissez le contenu officiel des brevets dans l'onglet « Référentiel » dès qu'il est fourni. Rien n'est inventé d'ici là.
+          Référentiel en attente — saisissez le contenu officiel des brevets dans l'onglet « Référentiel » dès qu'il est fourni. Rien n'est inventé d'ici là.
         </div>
       )}
 
@@ -285,7 +285,7 @@ function ElevesAvancement({ centreId, referentiel, onDelivrer }: {
                   {pret && (
                     <button
                       onClick={() => {
-                        const numero = window.prompt('Numéro officiel FFP (optionnel — À DÉFINIR AVEC LA FFP)') || null;
+                        const numero = window.prompt('Numéro officiel (optionnel)') || null;
                         onDelivrer(userId, b.id, numero).then(load);
                       }}
                       className="font-bold px-2 py-0.5 rounded text-white inline-flex items-center gap-1"
@@ -352,8 +352,8 @@ function ReferentielEditor({ referentiel }: { referentiel: ReturnType<typeof use
   return (
     <div className="space-y-4">
       <p className="text-xs" style={{ color: 'var(--c-dim)' }}>
-        Saisissez ici le contenu officiel des brevets tel que défini par la FFP — épreuves, types, quantités, prérequis.
-        Les valeurs inconnues restent « À DÉFINIR AVEC LA FFP » : n'inventez rien.
+        Saisissez ici le contenu officiel des brevets tel que défini officiellement — épreuves, types, quantités, prérequis.
+        Les valeurs inconnues restent « À DÉFINIR » : n'inventez rien.
       </p>
       {error && <p className="text-xs" style={{ color: 'var(--sev-critique)' }}><AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> {error}</p>}
 
@@ -380,7 +380,7 @@ function ReferentielEditor({ referentiel }: { referentiel: ReturnType<typeof use
       )}
 
       {eps.length === 0 ? (
-        <p className="text-sm py-3" style={{ color: 'var(--sev-vigilance)' }}>Épreuves de ce brevet : À DÉFINIR AVEC LA FFP.</p>
+        <p className="text-sm py-3" style={{ color: 'var(--sev-vigilance)' }}>Épreuves de ce brevet : À DÉFINIR.</p>
       ) : (
         <div className="space-y-1.5">
           {eps.map(e => (
@@ -418,7 +418,7 @@ function ReferentielEditor({ referentiel }: { referentiel: ReturnType<typeof use
             {eps.map(e => <option key={e.id} value={e.id}>Après : {e.libelle}</option>)}
           </select>
         </div>
-        <textarea placeholder="Consigne officielle FFP (description)" rows={2} value={form.description}
+        <textarea placeholder="Consigne officielle (description)" rows={2} value={form.description}
           onChange={e => setForm(f => ({ ...f, description: e.target.value }))} style={inputStyle} />
         <label className="text-xs flex items-center gap-2" style={{ color: 'var(--c-text2)' }}>
           <input type="checkbox" checked={form.obligatoire} onChange={e => setForm(f => ({ ...f, obligatoire: e.target.checked }))} />

@@ -20,7 +20,7 @@ interface CentreTampon {
 
 const DEMO_CONFIG: TamponConfig = {
   nomDZ: "BIG'AIR SKYDIVING",
-  numeroAgrement: 'FFP-DEMO',
+  numeroAgrement: 'DEMO-0000',
   couleurPrimaire: '#F59E0B',
   couleurTexte: '#000000',
   logoUrl: '/big-air-logo-sans-fond.png',
@@ -142,10 +142,10 @@ export function TamponAdminPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1.5">Numéro d'agrément FFP</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">Numéro d'agrément</label>
                 <input className={inputCls} value={config.numeroAgrement}
                   onChange={(e) => setConfig((c) => ({ ...c, numeroAgrement: e.target.value }))}
-                  placeholder="FFP-0916" />
+                  placeholder="0916" />
               </div>
 
               <div>
@@ -258,7 +258,7 @@ export function TamponAdminPage() {
                 <TamponDZ config={DEMO_CONFIG} className="w-28 h-28" stampEffect />
                 <div className="text-xs text-gray-600 space-y-1">
                   <p className="font-semibold text-[#001A4D]">BIG'AIR SKYDIVING</p>
-                  <p className="text-gray-500">Agrément : FFP-DEMO</p>
+                  <p className="text-gray-500">Agrément : DEMO-0000</p>
                   <p className="text-gray-500">Couleurs identité Big'Air</p>
                   <button type="button"
                     onClick={() => setConfig(DEMO_CONFIG)}

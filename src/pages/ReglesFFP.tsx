@@ -76,8 +76,8 @@ export function ReglesFFPPage() {
     <Layout>
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#001A4D]">Règles de sécurité FFP</h1>
-          <p className="text-sm text-gray-500 mt-1">Reproduites depuis la page 3 du carnet de sauts officiel FFP</p>
+          <h1 className="text-2xl font-bold text-[#001A4D]">Règles de sécurité</h1>
+          <p className="text-sm text-gray-500 mt-1">Reprises de la page 3 du carnet de sauts papier</p>
         </div>
 
         {brevetPrincipal && regles && (
@@ -119,7 +119,7 @@ export function ReglesFFPPage() {
           <div className="p-4 space-y-3">
             {[
               { titre: 'Certificat médical', texte: 'Obligatoire en cours de validité avant tout saut. Un certificat expiré interdit la pratique.' },
-              { titre: 'Licence FFP', texte: 'La licence doit être valide et comporter les assurances individuelle et RC.' },
+              { titre: 'Licence', texte: 'La licence doit être valide et comporter les assurances individuelle et RC.' },
               { titre: 'Visite médicale annuelle', texte: 'La visite médicale doit être effectuée chaque année avant la saison.' },
               { titre: 'Équipement homologué', texte: 'Tout équipement doit être homologué DGAC et révisé selon les échéances réglementaires.' },
               { titre: 'Conditions météo', texte: "La pratique est soumise à l'appréciation du DT et aux conditions météorologiques adaptées." },
@@ -133,7 +133,7 @@ export function ReglesFFPPage() {
         </div>
 
         <p className="text-xs text-gray-400 text-center">
-          Source : Carnet de sauts FFP officiel, page 3 — Règlement intérieur de la Fédération Française de Parachutisme
+          Source : carnet de sauts papier, page 3 — règlement intérieur fédéral
         </p>
       </div>
     </Layout>

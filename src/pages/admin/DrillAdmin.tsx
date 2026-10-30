@@ -118,7 +118,7 @@ function ScenarioForm({ initial, onSave, onCancel }: {
             onChange={e => setForm(f => ({ ...f, reference: e.target.value }))}
             className="w-full rounded-lg px-3 py-2 text-sm"
             style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border-f)', color: 'var(--c-text)' }}
-            placeholder="ex: Manuel de formation FFP — Procédures d'urgence" />
+            placeholder="ex: Manuel de formation — Procédures d'urgence" />
         </div>
 
         <div className="grid grid-cols-2 gap-3">

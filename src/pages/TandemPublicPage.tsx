@@ -813,7 +813,7 @@ export function TandemPublicPage() {
 
       {/* Footer */}
       <div className="max-w-3xl mx-auto px-4 py-8 text-center">
-        <p className="text-xs text-gray-400">Réservation sécurisée via <span className="font-semibold">ParaPass</span> · Partenaire numérique des clubs FFP</p>
+        <p className="text-xs text-gray-400">Réservation sécurisée via <span className="font-semibold">ParaPass</span></p>
       </div>
     </div>
   );

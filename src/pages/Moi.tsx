@@ -101,7 +101,7 @@ export function MoiPage() {
               </span>}
           <span className="flex-1 min-w-0">
             <span className="block text-xl font-bold truncate" style={{ color: 'var(--c-text)' }}>{profile.prenom} {profile.nom}</span>
-            <span className="block text-[13px]" style={{ color: 'var(--c-muted)' }}>Profil, licence FFP, coordonnées</span>
+            <span className="block text-[13px]" style={{ color: 'var(--c-muted)' }}>Profil, licence, coordonnées</span>
             {etat && <span className="inline-block mt-1 text-xs font-bold rounded-full px-2" style={{ lineHeight: '22px', color: etat.c, background: `color-mix(in srgb, ${etat.c} 14%, transparent)` }}>{etat.t}</span>}
           </span>
           <ChevronRight className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--c-dim)' }} aria-hidden />
@@ -126,7 +126,7 @@ export function MoiPage() {
           { libelle: 'Réflexe du jour', icone: <Target className="w-4 h-4" />, teinte: '#DC2626', vers: '/reflexe' },
           { libelle: 'Académie', detail: 'Quiz et révisions', icone: <GraduationCap className="w-4 h-4" />, teinte: '#7C3AED', vers: '/academie' },
           { libelle: 'Scanner un sac', detail: 'QR code de pliage', icone: <ScanLine className="w-4 h-4" />, teinte: '#475569', onClick: () => setScanOpen(true) },
-          { libelle: 'Règles FFP', icone: <BookOpen className="w-4 h-4" />, teinte: '#0E7490', vers: '/regles-ffp' },
+          { libelle: 'Règles de sécurité', icone: <BookOpen className="w-4 h-4" />, teinte: '#0E7490', vers: '/regles-securite' },
         ]} />
 
         {/* L'apparence se choisit ici, une fois : elle quitte l'en-tête. */}

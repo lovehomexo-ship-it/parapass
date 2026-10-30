@@ -680,7 +680,7 @@ function DashboardHome({
         <div className="space-y-2">
           {alerteExpires > 0 && (
             <AlertBannerClickable level="red"
-              message={`${alerteExpires} licencié${alerteExpires > 1 ? 's' : ''} avec une licence FFP expirée`}
+              message={`${alerteExpires} licencié${alerteExpires > 1 ? 's' : ''} avec une licence expirée`}
               onView={() => onNavigate('licencies')} />
           )}
           {alerteMedical > 0 && (
@@ -764,7 +764,7 @@ function DashboardHome({
               // Sémantique stricte : vert = conforme/OK · orange = à surveiller · rouge = critique.
               // Les valeurs POSITIVES (valides, médicaux OK) sont vertes — le manque
               // éventuel est déjà signalé par « expirées » (rouge) juste en dessous.
-              { label: 'Licences FFP valides', value: licencesValides, total: totalMembers, color: 'var(--sev-conforme)' },
+              { label: 'Licences valides', value: licencesValides, total: totalMembers, color: 'var(--sev-conforme)' },
               { label: 'Licences expirées', value: licencesExpirees, total: null, color: licencesExpirees > 0 ? '#EF4444' : 'var(--sev-conforme)' },
               { label: 'Certificats médicaux OK', value: certifOk, total: totalMembers, color: 'var(--sev-conforme)' },
               { label: 'Expirant dans 30j', value: certifExpirant, total: null, color: certifExpirant > 0 ? '#F97316' : 'var(--sev-conforme)' },
@@ -2401,7 +2401,7 @@ function MonCentreSection({ centre, onSaved }: { centre: Centre | null; onSaved:
 // ─── LicencieDrawer ────────────────────────────────────────────────────────────
 
 const MESSAGES_RAPIDES = [
-  { label: 'Licence expire', text: 'Bonjour, votre licence FFP expire bientôt. Pensez à la renouveler avant votre prochain saut.' },
+  { label: 'Licence expire', text: 'Bonjour, votre licence expire bientôt. Pensez à la renouveler avant votre prochain saut.' },
   { label: 'Certificat médical', text: 'Bonjour, votre certificat médical est expiré ou arrive à échéance. Un certificat valide est obligatoire pour sauter.' },
   { label: 'Saut validé', text: 'Votre saut a été validé. Bon saut et à bientôt sur la DZ !' },
   { label: 'Stage PAC', text: 'Un stage PAC est disponible prochainement dans notre centre. Êtes-vous intéressé(e) ?' },
@@ -3322,7 +3322,7 @@ export function CentreDashboardPage() {
           </div>
           <h2 className="text-xl font-bold" style={{ color: 'var(--c-text)' }}>Centre en cours de validation</h2>
           <p className="text-sm leading-relaxed" style={{ color: 'var(--c-dim)' }}>
-            Votre centre est en cours de validation. Nous vérifions votre agrément FFP sous 24-48h.
+            Votre centre est en cours de validation. Nous vérifions votre agrément sous 24-48h.
             Vous recevrez une notification dès que votre centre sera approuvé.
           </p>
           <button
@@ -3748,7 +3748,7 @@ export function CentreDashboardPage() {
                   // l'autre bout — ce qui sera servi, et par qui c'est signé.
                   { key: 'questions' as const,
                     label: `Questions à relire${aTraiter.questions > 0 ? ` (${aTraiter.questions})` : ''}` },
-                  { key: 'documents' as const, label: 'Documents officiels FFP' },
+                  { key: 'documents' as const, label: 'Documents officiels' },
                 ]}
                 active={academyTab}
                 onChange={setAcademyTab}

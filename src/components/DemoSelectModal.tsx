@@ -117,7 +117,7 @@ export function DemoSelectModal({ onClose }: Props) {
             </div>
 
             <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
-              Carnet numérique, sauts validés, passeport FFP, badges, statistiques de vol et matériel.
+              Carnet numérique, sauts validés, passeport, badges, statistiques de vol et matériel.
             </p>
 
             <div className="flex flex-wrap gap-1.5">

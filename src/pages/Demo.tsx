@@ -675,7 +675,7 @@ function DemoDashboardInner() {
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 space-y-3">
               <h2 className="text-sm font-semibold text-[#001A4D] uppercase tracking-wider">Licence & Pratique</h2>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">N° Licence FFP</span>
+                <span className="text-gray-500">N° de licence</span>
                 <span className="font-semibold text-[#001A4D]">{profile.numero_licence}</span>
               </div>
               <div className="flex justify-between text-sm">

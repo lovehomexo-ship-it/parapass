@@ -286,7 +286,7 @@ function DemoCentreInner() {
               <div className="space-y-2">
                 <AlertBanner
                   level="red"
-                  message={`${stats.alertesCritiques} licencié(s) avec licence FFP expirée`}
+                  message={`${stats.alertesCritiques} licencié(s) avec licence expirée`}
                   onView={() => openConversion('Licences expirées')}
                 />
                 <AlertBanner
@@ -339,7 +339,7 @@ function DemoCentreInner() {
                   </div>
                   <div className="px-5 py-4 space-y-3">
                     {[
-                      { label: 'Licences FFP valides', value: '20 / 25', color: '#F97316', pct: 80 },
+                      { label: 'Licences valides', value: '20 / 25', color: '#F97316', pct: 80 },
                       { label: 'Licences expirées', value: '5', color: '#EF4444', pct: 20 },
                       { label: 'Certificats médicaux OK', value: '23 / 25', color: '#F97316', pct: 92 },
                       { label: 'Expirant dans 30j', value: '2', color: '#F59E0B', pct: 8 },

@@ -329,7 +329,7 @@ export function CardRecto({ data, id, feu, onFeuClick }: {
   const rectoNumero = licence?.numero_licence || profile.numero_licence;
   // Ligne réglementaire allégée : n° FFP + club/centre. Le brevet est désormais
   // un badge héros ; on ne le répète pas ici (évite le débordement sur 2 lignes).
-  if (rectoNumero) infoParts.push(`FFP–${rectoNumero.replace(/^FFP[-–]/i, '')}`);
+  if (rectoNumero) infoParts.push(`N° ${rectoNumero.replace(/^FFP[-–]/i, '')}`);
   if (licence?.code_club) infoParts.push(`Code Club ${licence.code_club}`);
   if (licence?.nom_club) infoParts.push(licence.nom_club);
   else if (centre) infoParts.push(centre.nom);
@@ -361,7 +361,7 @@ export function CardRecto({ data, id, feu, onFeuClick }: {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src="/logo-parapass.webp" alt="ParaPass" className="h-7 w-auto flex-shrink-0" />
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', color: '#F97316' }}>Licence numérique FFP</div>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', color: '#F97316' }}>Licence numérique</div>
           </div>
           <div className="flex items-center gap-1.5">
             {/* Pastille reprise (récence) — discrète, à côté du statut documents */}
@@ -413,7 +413,6 @@ export function CardRecto({ data, id, feu, onFeuClick }: {
               {profile.nom}
             </div>
             <div style={{ fontSize: 16, fontWeight: 400, color: '#fff', lineHeight: 1.2 }}>{profile.prenom}</div>
-            <div style={{ fontSize: 12, color: '#F97316', marginTop: 1 }}>Fédération Française de Parachutisme</div>
             {(profile.date_naissance || profile.lieu_naissance) && (
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 1 }}>
                 {profile.date_naissance && `Né(e) le ${new Date(profile.date_naissance).toLocaleDateString('fr-FR')}`}
@@ -586,10 +585,7 @@ export function CardVerso({ data, id, isOwner }: { data: PasseportData; id: stri
             <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '0.04em', color: '#fff', lineHeight: 1.1, textTransform: 'uppercase' }}>
               {profile.nom} <span style={{ fontWeight: 400, fontSize: 13, textTransform: 'none', letterSpacing: 0 }}>{profile.prenom}</span>
             </div>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: '#F97316', marginTop: 2 }}>Licence numérique FFP</div>
-            <div style={{ fontSize: 8, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>
-              Fédération Française de Parachutisme
-            </div>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: '#F97316', marginTop: 2 }}>Licence numérique</div>
           </div>
           <img src="/logo-parapass.webp" alt="ParaPass" className="h-6 w-auto flex-shrink-0" style={{ opacity: 0.7 }} />
         </div>
@@ -857,7 +853,7 @@ function ValiditySummary({ data, feuVert }: { data: PasseportData; feuVert?: Der
       <p className="text-xs font-semibold text-[var(--c-muted)] uppercase tracking-wider">Récapitulatif des validités</p>
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <span className="text-sm text-[var(--c-text)]">Licence FFP</span>
+          <span className="text-sm text-[var(--c-text)]">Licence</span>
           <div className="flex items-center gap-2 flex-wrap justify-end">
             {licence?.date_expiration && (
               <span className="text-xs text-[var(--c-muted)] font-mono">{new Date(licence.date_expiration).toLocaleDateString('fr-FR')}</span>

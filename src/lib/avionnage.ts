@@ -479,7 +479,7 @@ export interface VerdictDT48 {
 }
 
 export const SOURCE_DT48 =
-  'FFP — Directive Technique n° 48, CA du 08/02/2024, applicable au 09/02/2024, réf. 24.0113';
+  'Directive technique n° 48, CA du 08/02/2024, applicable au 09/02/2024, réf. 24.0113';
 
 /**
  * Ce que la LIGNE affiche : court. Le détail complet — tranche d'expérience,

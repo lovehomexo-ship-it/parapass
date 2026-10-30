@@ -222,11 +222,6 @@ export function LoginPage() {
               className="flex items-center justify-center gap-2 mt-4 pt-4"
               style={{ borderTop: '0.5px solid rgba(0,0,0,0.08)' }}
             >
-              <img
-                src="/logo-ffp-footer.png"
-                alt="Logo FFP — Fédération Française de Parachutisme"
-                style={{ height: '22px', width: 'auto', filter: 'brightness(0) saturate(100%)', opacity: 0.45 }}
-              />
               <span className="text-xs" style={{ color: '#94A3B8' }}>Carnet de sauts numérique</span>
             </div>
 

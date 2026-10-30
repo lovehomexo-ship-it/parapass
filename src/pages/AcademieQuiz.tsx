@@ -333,7 +333,7 @@ export function AcademieQuizPage() {
         <a href={parametres.qcmOfficielUrl} target="_blank" rel="noopener noreferrer"
           className="text-xs font-semibold inline-flex items-center gap-1.5 no-underline"
           style={{ color: '#93C5FD' }}>
-          Passer le QCM officiel de la FFP <ExternalLink className="w-3 h-3" aria-hidden />
+          Passer le QCM officiel <ExternalLink className="w-3 h-3" aria-hidden />
         </a>
       </div>
 

@@ -45,7 +45,7 @@ function AvatarBadge({ url, initials, px }: { url?: string | null; initials: str
 const TITRES_PAGES: Record<string, string> = {
   '/dashboard': 'Aujourd’hui', '/passeport': 'Passeport', '/stats': 'Statistiques',
   '/progression': 'Progression', '/materiel': 'Matériel', '/badges': 'Badges',
-  '/communaute': 'Communauté', '/validations': 'Validations', '/regles-ffp': 'Règles FFP',
+  '/communaute': 'Communauté', '/validations': 'Validations', '/regles-securite': 'Règles de sécurité',
   '/messages': 'Messages', '/qr-code': 'QR code', '/profil': 'Profil', '/parametres': 'Réglages',
   '/moi': 'Moi',
 };
@@ -83,7 +83,7 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
   // onglets identiques, et un historique illisible.
   useEffect(() => {
     const titre = TITRES_PAGES[location.pathname];
-    document.title = titre ? `${titre} · ParaPass` : 'ParaPass — Carnet de sauts numérique FFP';
+    document.title = titre ? `${titre} · ParaPass` : 'ParaPass — Carnet de sauts numérique';
   }, [location.pathname]);
 
   useEffect(() => {
@@ -186,17 +186,9 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-full flex items-center gap-6">
 
-          {/* Logo + FFP co-branding */}
+          {/* Logo */}
           <Link to="/dashboard" className="no-underline flex items-center gap-3 flex-shrink-0">
             <img src="/logo-parapass.webp" alt="ParaPass" className="h-8 w-auto object-contain" />
-            <span style={{ width: '1px', height: '20px', background: 'var(--c-border-f)', display: 'inline-block', flexShrink: 0 }} />
-            <img
-              src="/logo-ffp-footer.png"
-              alt="Fédération Française de Parachutisme"
-              title="En partenariat avec la Fédération Française de Parachutisme"
-              className="hidden md:block"
-              style={{ height: '20px', width: 'auto', opacity: isDark ? 0.7 : 0.55 }}
-            />
           </Link>
 
           {user && (
@@ -241,7 +233,7 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
               <div className="hidden md:flex items-center gap-1 ml-auto">
                 {(profile?.role === 'parachutiste' || profile?.role === 'moniteur' || profile?.role === 'moniteur_delegue') && (
                   <>
-                    <NavIconBtn to="/regles-ffp" title="Règles FFP"><BookOpen className="w-5 h-5" /></NavIconBtn>
+                    <NavIconBtn to="/regles-securite" title="Règles de sécurité"><BookOpen className="w-5 h-5" /></NavIconBtn>
                     <NavIconBtn to="/messages" title="Messages" badge={msgUnread}><MessageSquare className="w-5 h-5" /></NavIconBtn>
                   </>
                 )}
@@ -476,8 +468,8 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
                       <span className="ml-auto bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">{msgUnread}</span>
                     )}
                   </DrawerExtra>
-                  <DrawerExtra to="/regles-ffp" onClick={() => setDrawerOpen(false)} active={isActive('/regles-ffp')}>
-                    <BookOpen className="w-4 h-4" /> Règles FFP
+                  <DrawerExtra to="/regles-securite" onClick={() => setDrawerOpen(false)} active={isActive('/regles-securite')}>
+                    <BookOpen className="w-4 h-4" /> Règles de sécurité
                   </DrawerExtra>
                 </>
               )}
@@ -574,12 +566,6 @@ export function Layout({ children, noPadding = false }: { children: React.ReactN
           <div className="flex items-center justify-center sm:justify-start gap-2">
             <img src="/logo-parapass.webp" alt="ParaPass" className="h-5 w-auto opacity-50" />
             <span>© 2026 ParaPass</span>
-          </div>
-          <div className="flex items-center justify-center gap-2">
-            <a href="https://ffp.asso.fr" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 no-underline hover:opacity-80 transition-opacity">
-              <img src="/logo-ffp-footer.png" alt="FFP" style={{ height: '28px', width: 'auto', opacity: 0.6 }} />
-            </a>
-            <span className="hidden sm:inline">En partenariat avec la FFP</span>
           </div>
           <div className="flex items-center justify-center sm:justify-end">
             <span>RGPD · Données hébergées en France · v{__APP_VERSION__}</span>

@@ -59,7 +59,7 @@ export function IncidentsTab({
   return (
     <div className="space-y-4">
       <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
-        <p className="text-xs font-semibold text-orange-800 uppercase tracking-wider mb-1">Procédures de secours — page 5 carnet FFP</p>
+        <p className="text-xs font-semibold text-orange-800 uppercase tracking-wider mb-1">Procédures de secours — page 5 du carnet papier</p>
         <p className="text-xs text-orange-700">Tout incident (ouverture secours, mal-fonctionnement…) doit être consigné. Seuls les moniteurs et administrateurs peuvent créer des entrées.</p>
       </div>
 

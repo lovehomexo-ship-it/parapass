@@ -87,7 +87,7 @@ export function CarteWallet({ prenom, nom, photo, brevet, totalSauts, licenceFin
         style={{ background: 'linear-gradient(135deg, #0B2A5B 0%, #123F86 100%)', color: '#fff', minHeight: 156,
                  boxShadow: '0 6px 20px rgba(11,42,91,0.28)', borderTop: '3px solid #F97316' }}>
         <div className="flex items-center justify-between">
-          <span className="text-[13px] font-bold" style={{ color: '#FDBA74' }}>Licence FFP</span>
+          <span className="text-[13px] font-bold" style={{ color: '#FDBA74' }}>Licence</span>
           <span className="text-xs font-extrabold rounded-full px-2" style={{ lineHeight: '22px',
             background: actif ? 'rgba(52,211,153,0.2)' : 'rgba(248,113,113,0.22)', color: actif ? '#6EE7B7' : '#FCA5A5' }}>
             {actif ? 'ACTIVE' : 'À RÉGULARISER'}

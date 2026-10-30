@@ -117,7 +117,7 @@ function addRecapPage(
   // 2 — LICENCE & CLUB
   rowIdx = 0;
   y = sectionHeader(doc, '2 — LICENCE & CLUB', margin, y, cw);
-  y = row(doc, 'N° Licence FFP', profile.numero_licence || '—', margin, y, cw, rowIdx++ % 2 === 0);
+  y = row(doc, 'N° de licence', profile.numero_licence || '—', margin, y, cw, rowIdx++ % 2 === 0);
   if (licence) {
     y = row(doc, 'Type de licence', licence.type_licence ? TYPE_LICENCE_LABELS[licence.type_licence] : '—', margin, y, cw, rowIdx++ % 2 === 0);
     y = row(doc, 'Code club', licence.code_club || '—', margin, y, cw, rowIdx++ % 2 === 0);

@@ -61,7 +61,7 @@ export function ContactsUrgenceTab({
     <div className="space-y-4">
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
         <p className="text-xs font-semibold text-amber-800 uppercase tracking-wider mb-1">Personne à prévenir en cas d'accident</p>
-        <p className="text-xs text-amber-700">Ces informations correspondent à la page 2 de votre carnet de sauts papier FFP.</p>
+        <p className="text-xs text-amber-700">Ces informations correspondent à la page 2 de votre carnet de sauts papier.</p>
       </div>
 
       <div className="flex items-center justify-between">

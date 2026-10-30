@@ -129,7 +129,7 @@ export function VerifyOfflinePage() {
         <p className="font-black text-white leading-none" style={{ fontSize: 'clamp(48px, 18vw, 140px)' }}>{verdictLabel}</p>
         <p className="text-white/90 text-lg font-semibold mt-4">{verdict.motif}</p>
         {payload && <p className="text-white text-2xl font-bold mt-6">{payload.prenom} {payload.nom}</p>}
-        {payload?.lic && <p className="text-white/80 text-base mt-1">Licence FFP : {payload.lic}</p>}
+        {payload?.lic && <p className="text-white/80 text-base mt-1">Licence : {payload.lic}</p>}
         <button onClick={() => setPresentation(false)}
           className="mt-10 px-6 py-3 rounded-xl text-base font-bold bg-white/20 text-white active:bg-white/30">
           Quitter le plein écran
@@ -180,7 +180,7 @@ export function VerifyOfflinePage() {
             <div>
               <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Identité</p>
               <p className="text-lg font-bold text-[#001A4D]">{payload.prenom} {payload.nom}</p>
-              {payload.lic && <p className="text-sm text-gray-500">Licence FFP : {payload.lic}</p>}
+              {payload.lic && <p className="text-sm text-gray-500">Licence : {payload.lic}</p>}
             </div>
 
             <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-3">

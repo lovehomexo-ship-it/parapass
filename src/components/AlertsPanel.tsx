@@ -340,9 +340,9 @@ export function BandeauAlertes({ alertes, acquittees, onAcquitter, statutDocs, l
   const lignesSynthetiques: LigneDoc[] = [];
   if (alertesPourAffichage.length === 0) {
     if (licenceExpiration && isPast(licenceExpiration)) {
-      lignesSynthetiques.push({ id: 'syn-lic', titre: 'Licence FFP expirée', detail: `Expirée depuis ${frDate(licenceExpiration)}. Renouvelez votre licence immédiatement pour sauter légalement.`, urgence: 'critique', lien: '/passeport?onglet=licence', action: 'Renouveler' });
+      lignesSynthetiques.push({ id: 'syn-lic', titre: 'Licence expirée', detail: `Expirée depuis ${frDate(licenceExpiration)}. Renouvelez votre licence immédiatement pour sauter légalement.`, urgence: 'critique', lien: '/passeport?onglet=licence', action: 'Renouveler' });
     } else if (licenceExpiration && isSoon(licenceExpiration)) {
-      lignesSynthetiques.push({ id: 'syn-lic', titre: 'Licence FFP expire bientôt', detail: `Expire le ${new Date(licenceExpiration).toLocaleDateString('fr-FR')}. Anticipez le renouvellement.`, urgence: 'attention', lien: '/passeport?onglet=licence', action: 'Renouveler' });
+      lignesSynthetiques.push({ id: 'syn-lic', titre: 'Licence bientôt expirée', detail: `Expire le ${new Date(licenceExpiration).toLocaleDateString('fr-FR')}. Anticipez le renouvellement.`, urgence: 'attention', lien: '/passeport?onglet=licence', action: 'Renouveler' });
     }
     if (certifExpiration && isPast(certifExpiration)) {
       lignesSynthetiques.push({ id: 'syn-cert', titre: 'Certificat médical expiré', detail: `Expiré depuis ${frDate(certifExpiration)}. Vous ne pouvez pas sauter légalement sans certificat valide.`, urgence: 'critique', lien: '/passeport?onglet=medical', action: 'Mettre à jour' });

@@ -47,7 +47,7 @@ export const MODULES: Module[] = [
   {
     id: 'academy',
     nom: 'Academy',
-    desc: 'Formation : quiz sécurité, progression des brevets, documents FFP.',
+    desc: 'Formation : quiz sécurité, progression des brevets, documents officiels.',
     status: 'live',
     prix: 29.99,
   },
@@ -87,7 +87,7 @@ export const MODULES: Module[] = [
   {
     id: 'securite',
     nom: 'ParaPass Sécurité',
-    desc: 'Déclaration et suivi des incidents, remontée FFP, statistiques sécurité.',
+    desc: 'Déclaration et suivi des incidents, remontée fédérale, statistiques sécurité.',
     status: 'soon',
   },
   {

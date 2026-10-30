@@ -396,7 +396,7 @@ function DemoDashboardInner() {
 
           {/* Right: actions + avatar */}
           <div className="flex items-center gap-2">
-            <button onClick={() => showConversionModal('QR Code FFP')} className="p-2 transition" style={{ color: 'rgba(255,255,255,0.5)' }}
+            <button onClick={() => showConversionModal('QR Code')} className="p-2 transition" style={{ color: 'rgba(255,255,255,0.5)' }}
               onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
               onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}>
               <QrCode className="w-4 h-4" />
@@ -481,7 +481,7 @@ function DemoDashboardInner() {
                 />
                 <KpiCard
                   accent="#10B981"
-                  label="Licence FFP"
+                  label="Licence"
                   value={<span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>déc. 2026</span>}
                   barPct={licenceMonths !== null ? Math.max(0, Math.min(100, (licenceMonths / 12) * 100)) : 50}
                   barColor="#10B981"
@@ -510,7 +510,7 @@ function DemoDashboardInner() {
                 </button>
                 <div className="flex gap-2 mt-2">
                   <button
-                    onClick={() => showConversionModal('Mon QR Code FFP')}
+                    onClick={() => showConversionModal('Mon QR Code')}
                     className="flex items-center justify-center gap-2 border rounded-lg text-sm font-semibold transition-colors flex-1 md:flex-none md:px-4 md:py-2.5"
                     style={{ height: 44, background: 'rgba(255,255,255,0.1)', color: '#fff', borderColor: 'rgba(255,255,255,0.15)' }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.15)')}
@@ -734,8 +734,6 @@ function DemoDashboardInner() {
             <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>© 2026 ParaPass</span>
           </div>
           <div className="flex items-center gap-2">
-            <img src="/logo-ffp-footer.png" alt="FFP" className="h-6 w-auto opacity-60" />
-            <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>En partenariat avec la FFP</span>
           </div>
         </div>
       </footer>

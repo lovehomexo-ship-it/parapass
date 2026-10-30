@@ -103,7 +103,7 @@ export function MaintenancePage() {
 
       {/* Footer */}
       <p className="text-xs relative z-10" style={{ color: 'rgba(255,255,255,0.25)' }}>
-        © 2026 ParaPass · Carnet de sauts numérique FFP
+        © 2026 ParaPass · Carnet de sauts numérique
       </p>
     </div>
   );

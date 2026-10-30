@@ -462,7 +462,7 @@ export function ValidationsCarnet({ dzId, onNavigate, onCompteur }: {
       // définition que l'aptitude du jour et compliance.ts.
       const anomalieDe = (id: string): string | null => {
         const lic = licenceExp.get(id);
-        if (!lic || new Date(lic) < new Date()) return 'Licence FFP expirée ou absente';
+        if (!lic || new Date(lic) < new Date()) return 'Licence expirée ou absente';
         const med = medicalExp.get(id);
         if (!med || new Date(med) < new Date()) return 'Certificat médical expiré ou absent';
         return null;

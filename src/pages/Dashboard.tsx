@@ -625,7 +625,7 @@ export function DashboardPage() {
                   </p>
                   <div className="space-y-3">
                     {[
-                      { step: 1, label: 'Renseigner ma licence FFP', to: '/passeport', done: (licences ?? []).length > 0 },
+                      { step: 1, label: 'Renseigner ma licence', to: '/passeport', done: (licences ?? []).length > 0 },
                       { step: 2, label: 'Rejoindre mon centre de parachutisme', to: '/communaute?tab=centres', done: (centresCount ?? 0) > 0 },
                       { step: 3, label: 'Ajouter mon premier saut', to: null, done: totalSauts > 0 },
                     ].map((item) => (

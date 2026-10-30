@@ -68,7 +68,7 @@ function VigilanceVoileInner({ centreId }: { centreId: string }) {
           ))}
           <p className="text-xs leading-snug pt-1" style={{ color: 'var(--c-dim)' }}>
             Information de vigilance. L'appli signale, vous décidez. Aucune recommandation de voile
-            n'est faite ; les repères sont paramétrables (à valider avec la FFP / DT48).
+            n'est faite ; les repères sont paramétrables (à valider avec votre DT).
           </p>
         </div>
       )}
