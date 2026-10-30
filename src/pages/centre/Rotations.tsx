@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { siegesOccupes, libelleCapacite, phaseRotation } from '../../lib/avionnage';
 import { PastillePhase } from './FriseRotations';
+import { FicheAeronef } from './FicheAeronef';
+import { capacitePlein, type FicheAeronef as FicheAeronefData } from '../../lib/masseCentrage';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // P3 — MANIFEST : rotations, chargements, ordre de sortie.
@@ -40,9 +42,11 @@ interface Rotation {
   statut: string; aeronef_id: string | null; cloturee_le: string | null;
   heure_decollage: string | null; heure_largage: string | null; embarquement_valide_le: string | null;
 }
-export interface Aeronef {
+/** Un avion de la flotte, avec sa fiche (masses, vol, carburant, centrage). */
+export interface Aeronef extends FicheAeronefData {
   id: string; immatriculation: string; places: number;
-  altitude_max_m: number | null; type?: string | null; masse_max_kg?: number | null;
+  altitude_max_m: number | null; type?: string | null;
+  nom?: string | null; couleur?: string | null;
 }
 interface Place {
   id: string; rotation_id: string; parachutiste_id: string | null;
@@ -69,7 +73,7 @@ function RotationsInner({ centreId }: { centreId: string }) {
     const [{ data: rot, error: e1 }, { data: av }, { data: apt }] = await Promise.all([
       supabase.from('rotations').select('*')
         .eq('centre_id', centreId).eq('date_jour', jour).order('numero'),
-      supabase.from('aeronefs').select('id, immatriculation, type, places, altitude_max_m, masse_max_kg')
+      supabase.from('aeronefs').select('*')
         .eq('centre_id', centreId).eq('actif', true).order('immatriculation'),
       supabase.rpc('get_aptitude_du_jour', { p_centre_id: centreId }),
     ]);
@@ -436,14 +440,6 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
     if (connu) { setPlaces(String(connu.places)); setAltMax(String(connu.plafond)); }
   };
 
-  /** Corriger un avion déjà enregistré — ce qui manquait. */
-  const ecrire = async (id: string, patch: Partial<Aeronef>) => {
-    setErreur(null);
-    const { error } = await supabase.from('aeronefs').update(patch).eq('id', id);
-    if (error) { setErreur(error.message); return; }
-    onFait();
-  };
-
   /**
    * RETIRER UN AÉRONEF — ce qui manquait aussi. Une immatriculation saisie de
    * travers restait dans la flotte pour toujours et polluait le choix à chaque
@@ -478,11 +474,11 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
   const valider = async () => {
     if (!immat.trim()) return;
     setEnvoi(true); setErreur(null);
-    const { error } = await supabase.from('aeronefs').insert({
+    const { data: cree, error } = await supabase.from('aeronefs').insert({
       centre_id: centreId, immatriculation: immat.trim().toUpperCase(),
       type: type.trim() || null, places: Number(places) || 4,
       altitude_max_m: Number(altMax) || null,
-    });
+    }).select('*').single();
     setEnvoi(false);
     if (error) {
       console.error('Ajout d\u2019aéronef — échec :', {
@@ -492,11 +488,54 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
       return;
     }
     setImmat(''); setType(''); setOuvert(false); onFait();
+    // L'avion existe : on ouvre sa fiche, c'est là que la planche trouve ses chiffres.
+    if (cree) { setDeplie(true); setFiche(cree as Aeronef); }
   };
 
+  const nf = new Intl.NumberFormat('fr-FR');
+  const plage = (a?: number | null, b?: number | null, u = '') =>
+    a && b ? `${nf.format(a)}–${nf.format(b)} ${u}` : a || b ? `${nf.format((a || b)!)} ${u}` : '—';
+  const [fiche, setFiche] = useState<Aeronef | null>(null);
+
+  /** Ce qui manque pour que la planche calcule la masse, puis le centrage. */
+  const EtatFiche = ({ a }: { a: Aeronef }) => {
+    const masse = a.masse_a_vide_kg != null && a.masse_max_kg != null && a.masse_pilote_kg != null;
+    const centrage = a.corde_mac_m != null && a.distance_reference_m != null && a.bras_vide_m != null
+      && (a.domaine_centrage?.length ?? 0) >= 3 && (a.bras_places_m?.filter(x => x != null).length ?? 0) >= a.places;
+    const carbu = capacitePlein(a) !== null;
+    const ok = masse && centrage && carbu;
+    return (
+      <span className="inline-flex items-center rounded-full px-2.5 text-[13px] font-semibold whitespace-nowrap"
+        style={{ minHeight: 26,
+          background: ok ? 'color-mix(in srgb, var(--sev-conforme, #15803D) 14%, transparent)' : 'var(--c-hover)',
+          color: ok ? 'var(--sev-conforme, #15803D)' : 'var(--c-muted)' }}>
+        {ok ? 'Fiche complète' : !masse ? 'Masses à renseigner' : !centrage ? 'Centrage à renseigner' : 'Carburant à renseigner'}
+      </span>
+    );
+  };
+
+  const ActionsAvion = ({ a }: { a: Aeronef }) => aRetirer?.id === a.id ? (
+    <span className="flex items-center gap-1.5 text-[13px] whitespace-nowrap">
+      <span style={{ color: 'var(--c-text2)' }}>Retirer ?</span>
+      <button onClick={() => retirer(a)} className="px-3 rounded-lg font-bold" style={{ minHeight: 36, color: '#fff', background: '#DC2626' }}>Oui</button>
+      <button onClick={() => setARetirer(null)} className="px-3 rounded-lg" style={{ minHeight: 36, color: 'var(--c-muted)', border: '1px solid var(--c-border)' }}>Non</button>
+    </span>
+  ) : (
+    <span className="flex items-center gap-1.5">
+      <button onClick={() => setFiche(a)} className="px-3 rounded-lg text-[13px] font-bold whitespace-nowrap"
+        style={{ minHeight: 36, color: 'var(--accent-texte)', border: '1px solid var(--c-border)' }}>
+        Fiche
+      </button>
+      <button onClick={() => { setARetirer(a); setMessage(null); }}
+        aria-label={`Retirer ${a.immatriculation} de la flotte`} title={`Retirer ${a.immatriculation} de la flotte`}
+        className="w-9 h-9 flex items-center justify-center rounded-lg"
+        style={{ color: '#DC2626', border: '1px solid rgba(220,38,38,0.4)' }}>
+        <Trash2 className="w-4 h-4" aria-hidden />
+      </button>
+    </span>
+  );
+
   const st = { minHeight: 40, background: 'var(--c-bg)',
-    border: '1px solid var(--c-border)', color: 'var(--c-text)' } as const;
-  const stNum = { minHeight: 32, background: 'var(--c-input, var(--c-bg))',
     border: '1px solid var(--c-border)', color: 'var(--c-text)' } as const;
 
   return (
@@ -519,7 +558,7 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
             <button onClick={() => setDeplie(v => !v)} aria-expanded={deplie}
               className="flex items-center gap-1 px-3 rounded-lg text-xs font-bold"
               style={{ minHeight: 36, color: 'var(--c-text2)', border: '1px solid var(--c-border)' }}>
-              {deplie ? 'Masquer' : 'Modifier / retirer un aéronef'}
+              {deplie ? 'Masquer la flotte' : 'Flotte et fiches'}
             </button>
           )}
           {!ouvert && (
@@ -533,78 +572,64 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
         </div>
       </div>
 
-      {/* ── LA FLOTTE, MODIFIABLE ──────────────────────────────────────── */}
+      {/* ── LA FLOTTE, D'UN COUP D'ŒIL ────────────────────────────────────
+          Un tableau comme ceux des logiciels de manifest : le type, les
+          places, les varios, la consommation et le temps d'un plein. Chaque
+          ligne ouvre sa fiche ; « fiche à compléter » dit ce qui manque pour
+          que la planche calcule la masse et le centrage. */}
       {deplie && aeronefs.length > 0 && (
-        <div className="space-y-1.5">
-          <p className="text-xs" style={{ color: 'var(--c-muted)' }}>
-            <strong>Places</strong> = sièges parachutistes — largueur et passager
-            tandem compris, <strong>pilote non compris</strong>. C’est ce nombre que
-            la planche remplit, et le « 9/10 » qu’elle affiche.
-            <br />
-            <strong>Retirer</strong> supprime l’aéronef s’il n’a jamais servi. S’il
-            figure déjà sur une planche, il quitte les listes mais reste nommé sur
-            les journées passées — ParaPass ne réécrit pas un historique.
-          </p>
-          {aeronefs.map(a => (
-            <div key={a.id} className="flex items-center gap-2 flex-wrap rounded-xl px-2 py-1.5"
-              style={{ background: 'var(--c-bg)', border: '1px solid var(--c-border)' }}>
-              <Plane className="w-3.5 h-3.5 flex-shrink-0" aria-hidden style={{ color: 'var(--c-muted)' }} />
-              <span className="flex-1 min-w-[120px] text-xs font-bold" style={{ color: 'var(--c-text)' }}>
-                {a.immatriculation}
-                {a.type && <span className="font-normal" style={{ color: 'var(--c-muted)' }}>{' · '}{a.type}</span>}
-              </span>
-              <label className="flex items-center gap-1 text-xs" style={{ color: 'var(--c-muted)' }}>
-                <span className="sr-only">Places parachutistes du {a.immatriculation}, pilote non compris</span>
-                <input type="number" min={1} max={40} step={1} defaultValue={a.places}
-                  onBlur={e => {
-                    const n = Number(e.target.value);
-                    if (n >= 1 && n <= 40 && n !== a.places) ecrire(a.id, { places: n });
-                    else e.target.value = String(a.places);
-                  }}
-                  className="rounded-lg px-1.5 text-xs text-right w-14" style={stNum} />
-                places
-              </label>
-              <label className="flex items-center gap-1 text-xs" style={{ color: 'var(--c-muted)' }}>
-                <span className="sr-only">Plafond de largage du {a.immatriculation}, en mètres</span>
-                <input type="number" min={500} max={8000} step={100} defaultValue={a.altitude_max_m ?? ''}
-                  placeholder="—"
-                  onBlur={e => {
-                    const v = e.target.value.trim() === '' ? null : Number(e.target.value);
-                    if (v !== (a.altitude_max_m ?? null)) ecrire(a.id, { altitude_max_m: v });
-                  }}
-                  className="rounded-lg px-1.5 text-xs text-right w-20" style={stNum} />
-                m max
-              </label>
-              <label className="flex items-center gap-1 text-xs" style={{ color: 'var(--c-muted)' }}>
-                <span className="sr-only">Masse embarquée maximale du {a.immatriculation}, en kg</span>
-                <input type="number" min={100} max={10000} step={10} defaultValue={a.masse_max_kg ?? ''}
-                  placeholder="— kg"
-                  onBlur={e => {
-                    const v = e.target.value.trim() === '' ? null : Number(e.target.value);
-                    if (v !== (a.masse_max_kg ?? null)) ecrire(a.id, { masse_max_kg: v });
-                  }}
-                  className="rounded-lg px-1.5 text-xs text-right w-20" style={stNum} />
-                kg max
-              </label>
-              {aRetirer?.id === a.id ? (
-                <span className="flex items-center gap-1.5 text-xs">
-                  <span style={{ color: 'var(--c-text2)' }}>Retirer ?</span>
-                  <button onClick={() => retirer(a)} className="px-2 py-1 rounded-lg font-bold"
-                    style={{ color: '#fff', background: '#DC2626' }}>Oui</button>
-                  <button onClick={() => setARetirer(null)} className="px-2 py-1 rounded-lg"
-                    style={{ color: 'var(--c-muted)', border: '1px solid var(--c-border)' }}>Non</button>
-                </span>
-              ) : (
-                <button onClick={() => { setARetirer(a); setMessage(null); }}
-                  aria-label={`Retirer ${a.immatriculation} de la flotte`}
-                  title={`Retirer ${a.immatriculation} de la flotte`}
-                  className="flex items-center gap-1 px-2 rounded-lg text-xs font-semibold"
-                  style={{ minHeight: 30, color: '#DC2626', border: '1px solid rgba(220,38,38,0.4)' }}>
-                  <Trash2 className="w-3.5 h-3.5" aria-hidden /> Retirer
-                </button>
-              )}
-            </div>
-          ))}
+        <div className="space-y-2">
+          <div className="hidden md:block overflow-x-auto rounded-xl" style={{ border: '1px solid var(--c-border)' }}>
+            <table className="w-full text-[13px]" style={{ color: 'var(--c-text)' }}>
+              <thead>
+                <tr style={{ background: 'var(--c-hover)', color: 'var(--c-muted)' }}>
+                  {['Avion', 'Type', 'Places', 'Montée', 'Descente', 'Conso / rot.', 'Kéro', 'Masse et centrage', ''].map(t => (
+                    <th key={t} scope="col" className="text-left font-semibold px-3 py-2 whitespace-nowrap">{t}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {aeronefs.map(a => (
+                  <tr key={a.id} style={{ borderTop: '1px solid var(--c-border)' }}>
+                    <td className="px-3 py-2">
+                      <span className="flex items-center gap-2 font-bold whitespace-nowrap">
+                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" aria-hidden style={{ background: a.couleur ?? 'var(--c-border)' }} />
+                        {a.immatriculation}
+                      </span>
+                      {a.nom && <span className="block" style={{ color: 'var(--c-muted)' }}>{a.nom}</span>}
+                    </td>
+                    <td className="px-3 py-2">{a.type ?? '—'}</td>
+                    <td className="px-3 py-2 tabular-nums">{a.places}</td>
+                    <td className="px-3 py-2 tabular-nums whitespace-nowrap">{plage(a.vario_montee_min_ftmin, a.vario_montee_max_ftmin, 'ft/min')}</td>
+                    <td className="px-3 py-2 tabular-nums whitespace-nowrap">{a.taux_descente_max_ftmin ? `−${nf.format(a.taux_descente_max_ftmin)} ft/min` : '—'}</td>
+                    <td className="px-3 py-2 tabular-nums whitespace-nowrap">{a.conso_rotation_l ? `${nf.format(a.conso_rotation_l)} L` : '—'}</td>
+                    <td className="px-3 py-2 tabular-nums whitespace-nowrap">{a.temps_kero_min ? `${a.temps_kero_min} min` : '—'}</td>
+                    <td className="px-3 py-2"><EtatFiche a={a} /></td>
+                    <td className="px-3 py-2"><ActionsAvion a={a} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* Au téléphone, une carte par avion. */}
+          <ul className="md:hidden list-none p-0 m-0 space-y-2">
+            {aeronefs.map(a => (
+              <li key={a.id} className="rounded-xl p-3" style={{ background: 'var(--c-bg)', border: '1px solid var(--c-border)' }}>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" aria-hidden style={{ background: a.couleur ?? 'var(--c-border)' }} />
+                  <span className="flex-1 min-w-0 text-[14px] font-bold truncate">
+                    {a.immatriculation}{a.nom && <span className="font-normal" style={{ color: 'var(--c-muted)' }}> · {a.nom}</span>}
+                  </span>
+                </div>
+                <p className="text-[13px] mt-1" style={{ color: 'var(--c-muted)' }}>
+                  {[a.type, `${a.places} places`, a.vario_montee_max_ftmin ? `montée ${plage(a.vario_montee_min_ftmin, a.vario_montee_max_ftmin, 'ft/min')}` : null,
+                    a.conso_rotation_l ? `${nf.format(a.conso_rotation_l)} L/rot.` : null, a.temps_kero_min ? `kéro ${a.temps_kero_min} min` : null]
+                    .filter(Boolean).join(' · ')}
+                </p>
+                <div className="mt-2 flex items-center gap-2 flex-wrap"><EtatFiche a={a} /><span className="flex-1" /><ActionsAvion a={a} /></div>
+              </li>
+            ))}
+          </ul>
           {message && (
             <p role="status" className="text-xs px-2 py-1.5 rounded-lg"
               style={{ color: 'var(--c-text2)', background: 'var(--c-bg)',
@@ -613,9 +638,9 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
             </p>
           )}
           <p className="text-xs" style={{ color: 'var(--c-dim)' }}>
-            Ces chiffres se lisent sur la fiche de pesée de l’avion. ParaPass
-            n’en invente aucun : une masse maximale non renseignée reste vide,
-            et la planche affiche la masse embarquée sans plafond.
+            <strong>Places</strong> = sièges parachutistes, largueur et passager tandem compris, pilote non compris.
+            {' '}<strong>Retirer</strong> supprime un avion qui n’a jamais servi ; s’il figure déjà sur une planche,
+            il quitte les listes mais reste nommé sur les journées passées.
           </p>
         </div>
       )}
@@ -669,6 +694,10 @@ export function FlotteAeronefs({ centreId, aeronefs, onFait }: {
       )}
 
       {erreur && <p className="text-xs" style={{ color: 'var(--sev-critique)' }}>{erreur}</p>}
+      {fiche && (
+        <FicheAeronef aeronef={fiche} onFermer={() => setFiche(null)}
+          onEnregistre={() => { setFiche(null); setMessage(`Fiche de ${fiche.immatriculation} enregistrée.`); onFait(); }} />
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
@@ -8,6 +8,7 @@ import { Plus, Plane, ScanLine, MoonStar, Sunset, Settings2 } from 'lucide-react
 import { useDialogues } from '../../components/useDialogues';
 import { action, enTeteSection, SEVERITE_COULEUR } from '../../lib/jetons';
 import { brevetPrincipal } from '../../lib/brevets';
+import { suivreCarburant, type CarburantRotation } from '../../lib/masseCentrage';
 import { siegesOccupes, messageErreur, type Discipline, type VerdictDT48 } from '../../lib/avionnage';
 import { FileAvionnageDZ } from './FileAvionnageDZ';
 import { FriseRotations } from './FriseRotations';
@@ -43,6 +44,18 @@ function AvionnageInner({ centreId }: { centreId: string }) {
   const [rotations, setRotations] = useState<RotationVue[]>([]);
   const [places, setPlaces] = useState<PlaceVue[]>([]);
   const [aeronefs, setAeronefs] = useState<Aeronef[]>([]);
+  // LE CARBURANT SUR LA JOURNÉE, avion par avion : un relevé saisi fait foi,
+  // sinon on l'estime depuis le tour précédent et la consommation de la fiche.
+  const carburantParRotation = useMemo(() => {
+    const m = new Map<string, CarburantRotation>();
+    for (const av of aeronefs) {
+      const siens = rotations.filter(r => r.aeronef_id === av.id && r.statut !== 'annulee')
+        .sort((a, b) => (a.heure_decollage ?? `~${a.heure_prevue ?? ''}`).localeCompare(b.heure_decollage ?? `~${b.heure_prevue ?? ''}`)
+          || a.numero - b.numero);
+      suivreCarburant(av, siens.map(r => r.carburant_litres)).forEach((c, i) => m.set(siens[i].id, c));
+    }
+    return m;
+  }, [aeronefs, rotations]);
   const [ouvert, setOuvert] = useState(false);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -92,7 +105,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
     const [{ data: rot, error: e1 }, { data: av }, { data: ctr }, { data: opt }, { data: lg }] = await Promise.all([
       supabase.from('rotations').select('*')
         .eq('centre_id', centreId).eq('date_jour', jour).order('numero'),
-      supabase.from('aeronefs').select('id, immatriculation, type, places, altitude_max_m, masse_max_kg')
+      supabase.from('aeronefs').select('*')
         .eq('centre_id', centreId).eq('actif', true).order('immatriculation'),
       supabase.from('centres').select('avionnage_actif, latitude, longitude').eq('id', centreId).maybeSingle(),
       supabase.from('centres_options').select('embarquement_qr').eq('centre_id', centreId).maybeSingle(),
@@ -870,6 +883,7 @@ function AvionnageInner({ centreId }: { centreId: string }) {
                   onValiderEmbarquement={v => validerEmbarquement(r.id, v)}
                   onAmenagementDT48={amenagementDT48} onDefinirSurfaceVoile={definirSurfaceVoile}
                   aeronef={aeronefs.find(a => a.id === r.aeronef_id)} onChange={charger}
+                  carburant={carburantParRotation.get(r.id)}
                   onDeposer={fileId => placer(fileId, r.id)} onOuvrirFiche={ouvrirFiche}
                   largueurs={largueurs}
                   onDesignerLargueur={id => designerLargueur(r.id, id)} />

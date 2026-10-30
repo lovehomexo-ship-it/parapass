@@ -3,6 +3,8 @@ import { MIME_FILE } from './FileAvionnageDZ';
 import { SiglesFonctions } from '../../components/SigleFonction';
 import { supabase } from '../../lib/supabase';
 import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff, AlertTriangle, CheckCircle2, Fuel, Radio, ChevronDown, Package, Video, Scale, Unlock, GripVertical, Trash2 } from 'lucide-react';
+import { bilanMasseCentrage, dureeRotation, type CarburantRotation, type FicheAeronef } from '../../lib/masseCentrage';
+import { DetailBilanMasse } from './BilanMasse';
 import { surface, rayure, pastille, action, SEVERITE_COULEUR, type Severite } from '../../lib/jetons';
 import {
   formaterRetard,
@@ -85,10 +87,11 @@ export interface RotationVue {
    *  doit pas confondre une planche de démo avec la journée réelle. */
   demo?: boolean;
 }
-export interface AeronefVue {
+/** L'avion de la planche, avec sa fiche : masses, vol, carburant, centrage.
+ *  `masse_max_kg` est la MTOW ; null = inconnue, donc aucun plafond affiché. */
+export interface AeronefVue extends FicheAeronef {
   id: string; immatriculation: string; places: number;
-  /** Masse maximale au décollage. null = inconnue, donc aucun plafond affiché. */
-  masse_max_kg?: number | null;
+  nom?: string | null; couleur?: string | null;
 }
 
 // Les quatre verdicts Feu Vert, avec leur forme et leur mot. Le gris dit
@@ -103,7 +106,9 @@ export const LIBELLE_APTITUDE: Record<PlaceVue['aptitude'], string> = {
 const HEURE = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hhmm = (iso: string | null) => iso ? HEURE.format(new Date(iso)).replace(':', ' h ') : null;
 
-export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onDefinirAltitudeAvion, flotte, onDefinirAeronef, onSupprimerPlanche, reglesLevables, onAcquitter, onReordonner, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines, dt48, onValiderEmbarquement, onAmenagementDT48, onDefinirSurfaceVoile }: {
+export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onChange, onDeposer, onOuvrirFiche, largueurs, onDesignerLargueur, onGrouper, onDegrouper, onDefinirMasse, onDefinirAltitude, onDefinirCarburant, onDefinirAltitudeAvion, flotte, onDefinirAeronef, onSupprimerPlanche, reglesLevables, onAcquitter, onReordonner, onBasculerRadio, onAjouterPassager, onBasculerVideo, onChangerDiscipline, disciplines, dt48, onValiderEmbarquement, onAmenagementDT48, onDefinirSurfaceVoile, carburant }: {
+  /** Le carburant de ce tour, suivi sur la journée de l'avion (relevé ou estimé). */
+  carburant?: CarburantRotation;
   rotation: RotationVue;
   places: PlaceVue[];
   aeronef: AeronefVue | undefined;
@@ -163,6 +168,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   dt48?: Map<string, VerdictDT48>;
 }) {
   const [occupe, setOccupe] = useState(false);
+  const [voirBilan, setVoirBilan] = useState(false);
   const [echec, setEchec] = useState<string | null>(null);
   const [survol, setSurvol] = useState(false);
   const [confirmerSuppression, setConfirmerSuppression] = useState(false);
@@ -227,6 +233,13 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   // Deux questions différentes : un avion sans largueur n'a aucun feu rouge à
   // bord et ne part pas.
   const masse = masseEmbarquee(places.map(p => p.masse_kg));
+  // LE VRAI BILAN : l'avion à vide, le pilote, le carburant et les sauteurs
+  // dans l'ordre de la planche (siège n°1 = premier de la planche). Sans fiche
+  // renseignée, la planche retombe sur le seul total des sauteurs.
+  const massesSieges = places.map(p => p.masse_kg);
+  const carburantPris = r.carburant_litres ?? carburant?.litres ?? null;
+  const bilan = aeronef ? bilanMasseCentrage(aeronef, massesSieges, carburantPris) : null;
+  const duree = aeronef ? dureeRotation(aeronef, r.altitude_largage_m) : null;
 
   const etat = verifierPlanche({
     largueurId: r.largueur_id,
@@ -342,7 +355,8 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                 </select>
               </label>
             ) : (
-              <span style={{ fontWeight: 700, color: 'var(--c-text2)' }}>
+              <span className="inline-flex items-center gap-1.5" style={{ fontWeight: 700, color: 'var(--c-text2)' }}>
+                {aeronef?.couleur && <span className="w-2.5 h-2.5 rounded-full" aria-hidden style={{ background: aeronef.couleur }} />}
                 {aeronef?.immatriculation ?? 'aéronef non affecté'}
               </span>
             )}
@@ -389,11 +403,21 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
           {/* Un avion se remplit par la MASSE avant les sièges. Le libellé dit
               ce qu'il ignore : un total sur six masses connues et quatre
               inconnues n'est pas la masse de l'avion, c'est un minimum. */}
-          {libelleMasse(masse, aeronef?.masse_max_kg ?? null) && (
-            <span style={pastille(
-              aeronef?.masse_max_kg && masse.total > aeronef.masse_max_kg ? 'critique'
-                : masse.complet ? 'conforme' : 'neutre')}>
-              {libelleMasse(masse, aeronef?.masse_max_kg ?? null)}
+          {bilan?.decollage ? (
+            // Le bilan complet : la pastille ouvre le détail et le domaine.
+            <button type="button" onClick={() => setVoirBilan(v => !v)} aria-expanded={voirBilan}
+              title="Masse et centrage : détail et domaine"
+              className="inline-flex items-center gap-1"
+              style={{ ...pastille(bilan.severite), cursor: 'pointer', minHeight: 28 }}>
+              <Scale className="w-3.5 h-3.5" aria-hidden />
+              {bilan.resume}
+              <ChevronDown className="w-3.5 h-3.5" aria-hidden style={{ transform: voirBilan ? 'rotate(180deg)' : 'none' }} />
+            </button>
+          ) : libelleMasse(masse, null) && (
+            // Fiche de l'avion incomplète : seul le total des sauteurs est sûr.
+            <span style={pastille('neutre')}
+              title="Masse des sauteurs seulement : renseignez la fiche de l’avion (masse à vide, pilote) pour le bilan de masse et centrage.">
+              sauteurs {libelleMasse(masse, null)}
             </span>
           )}
         </div>
@@ -424,7 +448,10 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
             <input type="number" inputMode="numeric" min={0} max={5000} step={10}
               defaultValue={r.carburant_litres ?? ''}
               disabled={occupe}
-              placeholder="— L"
+              placeholder={carburant?.estime && carburant.litres !== null ? `≈ ${carburant.litres}` : '— L'}
+              title={carburant?.estime && carburant.litres !== null
+                ? `Estimé d’après le tour précédent et la consommation de la fiche${carburant.plein ? ', plein compris' : ''}. Saisissez le relevé réel.`
+                : undefined}
               onBlur={e => {
                 const v = e.target.value.trim();
                 const l = v === '' ? null : Number(v);
@@ -442,7 +469,34 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
         {r.heure_decollage && <span>décollage {hhmm(r.heure_decollage)}</span>}
         {r.heure_largage && <span>largage {hhmm(r.heure_largage)}</span>}
         {r.cloturee_le && <span>clôturée {hhmm(r.cloturee_le)}</span>}
+        {/* LE TEMPS D'UN TOUR, tiré des varios de la fiche. En vol, l'heure de
+            largage attendue ; avant, la durée du tour pour caler le suivant. */}
+        {duree && r.heure_decollage && !r.heure_largage && !close && (
+          <span title={`Montée de ${duree.monteeMin} à ${duree.monteeMax} min à ${r.altitude_largage_m} m, d’après les varios de la fiche.`}>
+            largage attendu vers {hhmm(new Date(new Date(r.heure_decollage).getTime()
+              + ((duree.monteeMin + duree.monteeMax) / 2) * 60000).toISOString())}
+          </span>
+        )}
+        {duree && !r.heure_decollage && !close && (
+          <span title="Montée moyenne et descente, d’après la fiche de l’avion, hors embarquement.">
+            tour ≈ {duree.tour ?? Math.round((duree.monteeMin + duree.monteeMax) / 2)} min
+          </span>
+        )}
+        {carburant && !close && (carburant.sousReserve || carburant.keroApres || (carburant.plein && carburant.estime)) && (
+          <span className="inline-flex items-center gap-1" style={pastille(carburant.sousReserve ? 'critique' : 'vigilance')}>
+            <Fuel className="w-3.5 h-3.5" aria-hidden />
+            {carburant.sousReserve ? 'ce tour entame la réserve'
+              : carburant.plein && carburant.estime ? `plein à faire avant ce tour${aeronef?.temps_kero_min ? ` (${aeronef.temps_kero_min} min)` : ''}`
+              : 'kéro après ce tour'}
+          </span>
+        )}
       </div>
+
+      {voirBilan && bilan && aeronef && (
+        <div className="mt-3 rounded-xl p-3" style={{ background: 'var(--c-bg)', border: '1px solid var(--c-border)' }}>
+          <DetailBilanMasse av={aeronef} bilan={bilan} sieges={massesSieges} />
+        </div>
+      )}
 
       {/* ── VÉRIFICATION DE LA PLANCHE ────────────────────────────────────
           Ce qui empêche CET AVION de partir, en un bloc. Il se lit avant les
