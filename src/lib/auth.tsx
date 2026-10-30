@@ -79,30 +79,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [sautsEnAttente, setSautsEnAttente] = useState(0);
 
   const fetchProfile = async (userId: string, userEmail?: string) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
-
-    if (!data && userEmail) {
-      const { data: created } = await supabase
+    // UNE COUPURE RÉSEAU N'EST PAS UNE DÉCONNEXION. Sur une DZ en 4G faible, la
+    // lecture du profil échoue parfois : on réessaie, et en cas d'échec on
+    // GARDE le profil connu. Avant, l'échec valait « pas de profil » — l'espace
+    // DZ perdait son centre et se vidait, comme si l'on avait été déconnecté —
+    // et l'application tentait même de créer un profil vide.
+    for (let essai = 0; essai < 3; essai++) {
+      const { data, error } = await supabase
         .from('profiles')
-        .insert({
-          id: userId,
-          email: userEmail,
-          nom: '',
-          prenom: '',
-          numero_licence: '',
-          role: 'parachutiste',
-          type_pratiquant: 'amateur',
-          nationalite: 'Française',
-        })
-        .select()
+        .select('*')
+        .eq('id', userId)
         .maybeSingle();
-      setProfile(created as Profile | null);
-    } else {
-      setProfile(data as Profile | null);
+      if (error) {
+        console.warn(`Profil — lecture échouée (essai ${essai + 1}/3) :`, error.message);
+        await new Promise(r => setTimeout(r, 800 * (essai + 1)));
+        continue;
+      }
+      if (!data && userEmail) {
+        // Vraiment absent (premier passage après inscription) : on le crée.
+        const { data: created } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            email: userEmail,
+            nom: '',
+            prenom: '',
+            numero_licence: '',
+            role: 'parachutiste',
+            type_pratiquant: 'amateur',
+            nationalite: 'Française',
+          })
+          .select()
+          .maybeSingle();
+        setProfile(created as Profile | null);
+      } else {
+        setProfile(data as Profile | null);
+      }
+      return;
     }
   };
 
@@ -177,9 +190,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
       setUser(s?.user ?? null);
+      // Le jeton se renouvelle toutes les heures : rien à relire, le profil n'a
+      // pas changé (ses mises à jour arrivent par le temps réel, plus bas).
+      if (event === 'TOKEN_REFRESHED') return;
       if (s?.user) {
         (async () => {
           await fetchProfile(s.user.id, s.user.email);
@@ -308,7 +324,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    // « local » : ce seul appareil. Par défaut, Supabase déconnecte TOUTES les
+    // sessions du compte — se déconnecter du PC de la DZ coupait le téléphone
+    // du DT, et un test sur un compte partagé déconnectait son vrai titulaire.
+    await supabase.auth.signOut({ scope: 'local' });
     setUser(null);
     setProfile(null);
     setSession(null);

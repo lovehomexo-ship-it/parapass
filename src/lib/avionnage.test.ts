@@ -4,7 +4,7 @@ import {
   calculerCall, SEVERITE_CALL, formaterRetard,
   verifierPlanche, type EntreeVerification, blocsDePlanche,
   masseEmbarquee, libelleMasse, radioAttendue, TEINTE_DISCIPLINE,
-  libelleDiscipline, teinteDiscipline, libelleDT48, SOURCE_DT48, LIBELLE_PLACE,
+  libelleDiscipline, teinteDiscipline, libelleDT48, SOURCE_DT48, LIBELLE_PLACE, radioRequise,
 } from './avionnage';
 
 describe('avionnage — messages d’erreur', () => {
@@ -726,5 +726,26 @@ describe('verifierPlanche — l’ordre de sortie se compte en SORTIES', () => {
       m({ rangSortie: 1 }), m({ rangSortie: null }),
     ] });
     expect(e.anomalies.some(a => a.code === 'rangs_manquants')).toBe(true);
+  });
+});
+
+describe('radioRequise — la radio ne ressort que pour qui en a besoin', () => {
+  const p = (type_saut: string, brevet: string | null, extra: object = {}) => ({ type_saut, brevet, ...extra });
+  it('est requise en progression et sans brevet A', () => {
+    expect(radioRequise(p('ecole', 'A'))).toBe(true);        // la discipline l'exige
+    expect(radioRequise(p('accompagne', null))).toBe(true);
+    expect(radioRequise(p('solo', null))).toBe(true);        // brevet inconnu : on ne l'oublie pas
+    expect(radioRequise(p('solo', 'Élève'))).toBe(true);
+  });
+  it('disparaît dès le brevet A', () => {
+    expect(radioRequise(p('solo', 'A'))).toBe(false);
+    expect(radioRequise(p('groupe', 'B'))).toBe(false);
+    expect(radioRequise(p('solo', 'D · VR'))).toBe(false);
+  });
+  it('ne concerne ni le passager ni l’encadrement', () => {
+    expect(radioRequise(p('tandem', null, { passager_nom: 'Jean Martin' }))).toBe(false);
+    expect(radioRequise(p('tandem', null))).toBe(false);
+    expect(radioRequise(p('video', null))).toBe(false);
+    expect(radioRequise(p('solo', null, { brevet_moniteur: 'BPJEPS' }))).toBe(false);
   });
 });

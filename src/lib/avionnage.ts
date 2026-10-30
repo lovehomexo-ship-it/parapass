@@ -902,6 +902,25 @@ export function radioAttendue(typeSaut: string, referentiel?: Discipline[]): boo
   return typeSaut === 'ecole' || typeSaut === 'accompagne';
 }
 
+/**
+ * LA RADIO, POUR CEUX QUI EN ONT BESOIN — et pour eux seuls (retour du DT de
+ * Rochefort : « on a tendance à l'oublier », mais l'afficher sur tous les noms
+ * noie l'information). Elle est requise :
+ *   • en discipline de progression (PAC, école) ;
+ *   • pour un sauteur sans brevet A — brevet inconnu compris : ne pas savoir
+ *     n'autorise pas à l'oublier.
+ * Ni le passager tandem, ni l'encadrement (moniteur, vidéo, largueur) n'en
+ * portent une au titre de cette règle.
+ */
+export function radioRequise(p: {
+  type_saut: string; brevet: string | null; brevet_moniteur?: string | null; passager_nom?: string | null;
+}, referentiel?: Discipline[]): boolean {
+  if (radioAttendue(p.type_saut, referentiel)) return true;
+  if (p.passager_nom) return false;
+  if (['tandem', 'video', 'largueur'].includes(p.type_saut) || p.brevet_moniteur) return false;
+  return !/^[ABCD]\b/i.test((p.brevet ?? '').trim());
+}
+
 /** Le libellé d'une discipline : le référentiel d'abord, le repli ensuite. */
 export function libelleDiscipline(code: string, referentiel?: Discipline[]): string {
   return referentiel?.find(d => d.code === code)?.libelle

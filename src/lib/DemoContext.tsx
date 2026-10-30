@@ -171,7 +171,7 @@ export function DemoBanner({ isCentre = false }: { isCentre?: boolean }) {
 
   const handleExit = async () => {
     const { supabase: sb } = await import('./supabase');
-    await sb.auth.signOut();
+    await sb.auth.signOut({ scope: 'local' });
     exitDemo();
     sessionStorage.removeItem('demo_mode');
     navigate(isCentre ? '/inscription-centre' : '/register');

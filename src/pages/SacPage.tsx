@@ -423,7 +423,7 @@ export function SacPage() {
         </span>
         <button
           onClick={async () => {
-            await import('../lib/supabase').then(m => m.supabase.auth.signOut());
+            await import('../lib/supabase').then(m => m.supabase.auth.signOut({ scope: 'local' }));
             window.location.href = `/login?redirect=${redirectParam}`;
           }}
           className="font-semibold"

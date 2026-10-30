@@ -5,11 +5,13 @@ import { supabase } from '../../lib/supabase';
 import { Plane, Clock, Users, ArrowDownUp, Lock, UserMinus, PlaneTakeoff, AlertTriangle, CheckCircle2, Fuel, Radio, ChevronDown, Package, Video, Scale, Unlock, GripVertical, Trash2 } from 'lucide-react';
 import { bilanMasseCentrage, dureeRotation, type CarburantRotation, type FicheAeronef } from '../../lib/masseCentrage';
 import { DetailBilanMasse } from './BilanMasse';
+import { FichePiloteVue } from './FichePiloteVue';
+import { fichePilote } from '../../lib/fichePilote';
 import { surface, rayure, pastille, action, SEVERITE_COULEUR, type Severite } from '../../lib/jetons';
 import {
   formaterRetard,
   calculerCall, SEVERITE_CALL, siegesOccupes, libelleCapacite, messageErreur,
-  libelleDiscipline, teinteDiscipline, radioAttendue, type Discipline,
+  libelleDiscipline, teinteDiscipline, radioAttendue, radioRequise, type Discipline,
   libelleDT48, type VerdictDT48, SOURCE_DT48, type AnomaliePlanche,
   verifierPlanche, blocsDePlanche, masseEmbarquee, libelleMasse,
   phaseRotation, PHASE_ROTATION,
@@ -72,6 +74,8 @@ export interface PlaceVue {
 }
 export interface RotationVue {
   id: string; numero: number; date_jour: string;
+  /** Le pilote de l'avion, tel que saisi sur la planche. */
+  pilote?: string | null;
   heure_prevue: string | null; heure_decollage: string | null; heure_largage: string | null;
   statut: string; aeronef_id: string | null; altitude_largage_m: number | null;
   cloturee_le: string | null;
@@ -169,6 +173,7 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
 }) {
   const [occupe, setOccupe] = useState(false);
   const [voirBilan, setVoirBilan] = useState(false);
+  const [voirPilote, setVoirPilote] = useState(false);
   const [echec, setEchec] = useState<string | null>(null);
   const [survol, setSurvol] = useState(false);
   const [confirmerSuppression, setConfirmerSuppression] = useState(false);
@@ -240,6 +245,10 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
   const carburantPris = r.carburant_litres ?? carburant?.litres ?? null;
   const bilan = aeronef ? bilanMasseCentrage(aeronef, massesSieges, carburantPris) : null;
   const duree = aeronef ? dureeRotation(aeronef, r.altitude_largage_m) : null;
+  // Qui sort, à quel palier : ce que le pilote doit savoir avant de décoller.
+  const pilote = fichePilote(places.map(p => ({ id: p.id, nom: p.passager_nom ?? p.nom, rang: p.rang_sortie,
+    typeSaut: p.type_saut, altitudeM: p.altitude_largage_m, passager: p.passager_nom !== null })), r.altitude_largage_m);
+  const paliersBas = pilote.paliers.filter(p => !p.principal);
 
   const etat = verifierPlanche({
     largueurId: r.largueur_id,
@@ -420,6 +429,17 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
               sauteurs {libelleMasse(masse, null)}
             </span>
           )}
+          {places.length > 0 && (
+            <button type="button" onClick={() => setVoirPilote(true)}
+              title="Qui sort, dans quel ordre, à quel palier — à remettre au pilote"
+              className="inline-flex items-center gap-1"
+              style={{ ...(paliersBas.length ? pastille('vigilance') : action('texte')), cursor: 'pointer', minHeight: 28 }}>
+              {paliersBas.length
+                ? <><AlertTriangle className="w-3.5 h-3.5" aria-hidden />
+                    {paliersBas.map(p => `palier ${p.altitudeM} m · ${p.sorties.length}`).join(' · ')} — fiche pilote</>
+                : <><Plane className="w-3.5 h-3.5" aria-hidden /> Fiche pilote</>}
+            </button>
+          )}
         </div>
       </div>
 
@@ -492,6 +512,11 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
         )}
       </div>
 
+      {voirPilote && (
+        <FichePiloteVue titre={`Avion n°${r.numero}${aeronef ? ` · ${aeronef.immatriculation}` : ''}`}
+          pilote={r.pilote ?? null} fiche={pilote} bilan={bilan} carburantL={carburantPris}
+          heurePrevue={r.heure_prevue} onFermer={() => setVoirPilote(false)} />
+      )}
       {voirBilan && bilan && aeronef && (
         <div className="mt-3 rounded-xl p-3" style={{ background: 'var(--c-bg)', border: '1px solid var(--c-border)' }}>
           <DetailBilanMasse av={aeronef} bilan={bilan} sieges={massesSieges} />
@@ -734,29 +759,30 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                   </span>
                 )}
 
-                {/* LA RADIO SE VOIT SANS OUVRIR. Plein = elle est la ; tirete
-                    ambre avec un « ! » = la personne est en progression et ne
-                    l'a pas. Le clic la bascule. */}
-                {onBasculerRadio && (
-                  <button type="button" disabled={occupe || close}
-                    onClick={() => agir('Radio', () =>
-                      onBasculerRadio(p.id, !p.radio).then(e => ({ error: e ? { message: e } : null })))}
-                    title={p.radio ? `${p.nom} a une radio`
-                      : radioAttendue(p.type_saut, disciplines) ? `${p.nom} est en PAC et n'a pas de radio`
-                      : `Noter que ${p.nom} emporte une radio`}
-                    className="flex-shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded"
-                    style={{ fontSize: 13, fontWeight: 800, cursor: close ? 'default' : 'pointer',
-                      color: p.radio ? SEVERITE_COULEUR.conforme
-                        : radioAttendue(p.type_saut, disciplines) ? SEVERITE_COULEUR.vigilance : 'var(--c-dim)',
-                      border: `1px ${p.radio ? 'solid' : 'dashed'} ${p.radio ? SEVERITE_COULEUR.conforme
-                        : radioAttendue(p.type_saut, disciplines) ? SEVERITE_COULEUR.vigilance : 'var(--n2-bord)'}` }}>
-                    <Radio className="w-3 h-3 inline-block align-[-1px]" aria-hidden />
-                    <span className="sr-only">
-                      {p.radio ? 'Radio embarquée' : 'Pas de radio'} — {p.nom}
-                    </span>
-                    {radioAttendue(p.type_saut, disciplines) && !p.radio ? ' !' : ''}
-                  </button>
-                )}
+                {/* LA RADIO, SEULEMENT LÀ OÙ ELLE COMPTE. Élève PAC ou sauteur
+                    sans brevet A : elle ressort — pleine et verte si elle est à
+                    bord, AMBRE ET ÉCRITE « Radio à fournir » sinon. Pour les
+                    autres, rien : une radio notée reste visible, discrète. */}
+                {onBasculerRadio && (radioRequise(p, disciplines) || p.radio) && (() => {
+                  const requise = radioRequise(p, disciplines);
+                  const manque = requise && !p.radio;
+                  return (
+                    <button type="button" disabled={occupe || close}
+                      onClick={() => agir('Radio', () =>
+                        onBasculerRadio(p.id, !p.radio).then(e => ({ error: e ? { message: e } : null })))}
+                      title={p.radio ? `${p.nom} a une radio — toucher pour la retirer`
+                        : `${p.nom} doit sauter avec une radio (${radioAttendue(p.type_saut, disciplines) ? 'progression' : 'pas de brevet A'}) — toucher quand elle est remise`}
+                      className="flex-shrink-0 whitespace-nowrap inline-flex items-center gap-1 px-2 rounded-lg"
+                      style={{ minHeight: 28, fontSize: 13, fontWeight: 800, cursor: close ? 'default' : 'pointer',
+                        color: manque ? '#fff' : p.radio && requise ? SEVERITE_COULEUR.conforme : 'var(--c-dim)',
+                        background: manque ? SEVERITE_COULEUR.vigilance : 'transparent',
+                        border: `1px solid ${manque ? SEVERITE_COULEUR.vigilance : p.radio && requise ? SEVERITE_COULEUR.conforme : 'var(--n2-bord)'}` }}>
+                      <Radio className="w-3.5 h-3.5" aria-hidden />
+                      {manque ? 'Radio à fournir' : requise ? 'Radio' : null}
+                      <span className="sr-only">{p.radio ? 'Radio embarquée' : 'Pas de radio'} — {p.nom}</span>
+                    </button>
+                  );
+                })()}
                 {/* L'OPTION VIDÉO. Plein = vendue et quelqu'un filme ; ambre
                     tireté = vendue et personne à bord pour la faire. Le nom du
                     porteur est dans l'infobulle : c'est lui qu'on cherche. */}
@@ -1012,10 +1038,18 @@ export function PlancheAvionnage({ rotation: r, places, aeronef, maintenant, onC
                       règle fédérale. Et quand elle n'est pas calculable, elle
                       NOMME ce qui manque — une case vide se lirait « tout va
                       bien », et ce serait faux. */}
-                  {/* LA VOILE DE CE SAUT. Le sauteur la déclare en se mettant
-                      en file ; le DT la corrige ou la saisit ici, à côté du
-                      minimum exigé — les deux chiffres se lisent ensemble. */}
-                  {!close && !p.passager_nom && onDefinirSurfaceVoile && (
+                  {/* LA VOILE DE CE SAUT. Le sauteur la déclare lui-même, en
+                      se disant présent ou en se mettant en file : la DZ ne la
+                      redemande pas (retour du DT de Rochefort — chaque clic de
+                      trop est un clic qu'on ne fait plus). La surface connue se
+                      lit ; la case n'apparaît que si rien n'a été déclaré. */}
+                  {!p.passager_nom && p.surface_voile_ft2 != null && (
+                    <span className="whitespace-nowrap" style={{ fontSize: 13, color: 'var(--c-muted)' }}
+                      title="Déclarée par le sauteur pour ce saut">
+                      voile {p.surface_voile_ft2} ft²
+                    </span>
+                  )}
+                  {!close && !p.passager_nom && onDefinirSurfaceVoile && p.surface_voile_ft2 == null && !p.equipement && (
                     <label className="flex items-center gap-1"
                       style={{ fontSize: 13,
                                color: p.surface_voile_ft2 == null ? 'var(--c-dim)' : 'var(--c-muted)' }}>
