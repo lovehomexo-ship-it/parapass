@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
+import { sacRendre } from '../lib/pliage';
 import { QrScanner } from '../components/QrScanner';
 import { ParachuteIcon } from '../components/ParachuteIcon';
 import { PlanningDZ } from './PlanningDZ';
@@ -144,6 +145,8 @@ function MonSacDuJour({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(true);
   const [rendering, setRendering] = useState(false);
   const [rendu, setRendu] = useState(false);
+  const [choix, setChoix] = useState(false);
+  const [erreurRendu, setErreurRendu] = useState<string | null>(null);
 
   const load = () => {
     supabase
@@ -167,13 +170,14 @@ function MonSacDuJour({ userId }: { userId: string }) {
     ? { label: 'Au tapis — à plier', color: 'var(--accent-texte)', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.3)' }
     : { label: 'En votre possession', color: '#60A5FA', bg: 'rgba(96,165,250,0.08)', border: 'rgba(96,165,250,0.25)' };
 
-  const rendre = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setRendering(true);
-    await supabase.from('sac_assignments').update({ end_at: new Date().toISOString(), ended_by: 'user' }).eq('id', assignId).is('end_at', null);
-    await supabase.from('sacs_parachute').update({ etat_journee: 'libre' }).eq('id', sac_id);
+  // Un seul geste côté serveur : l'ancienne double écriture laissait le sac
+  // bloqué dans la file de pliage (la seconde était refusée en silence).
+  void assignId;
+  const rendre = async (aPlier: boolean) => {
+    setRendering(true); setErreurRendu(null);
+    const r = await sacRendre(sac_id, aPlier);
     setRendering(false);
+    if (!r.ok) { setErreurRendu(r.erreur ?? 'Le sac n’a pas pu être rendu.'); return; }
     setRendu(true);
   };
 
@@ -192,15 +196,27 @@ function MonSacDuJour({ userId }: { userId: string }) {
         <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--c-muted)' }} />
       </a>
       <div className="px-4 pb-3">
-        <button
-          type="button"
-          onClick={rendre}
-          disabled={rendering}
-          className="w-full py-2 rounded-lg text-xs font-semibold disabled:opacity-50 transition-all"
-          style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--sev-critique)', border: '1px solid rgba(239,68,68,0.25)', cursor: 'pointer' }}
-        >
-          {rendering ? 'Rendu en cours...' : '↩ Rendre le sac'}
-        </button>
+        {choix ? (
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" onClick={() => rendre(false)} disabled={rendering}
+              className="rounded-lg text-[13px] font-semibold disabled:opacity-50"
+              style={{ minHeight: 44, background: 'color-mix(in srgb, var(--sev-conforme) 14%, transparent)', color: 'var(--sev-conforme)' }}>
+              Il est plié
+            </button>
+            <button type="button" onClick={() => rendre(true)} disabled={rendering}
+              className="rounded-lg text-[13px] font-semibold disabled:opacity-50"
+              style={{ minHeight: 44, background: 'rgba(249,115,22,0.14)', color: 'var(--accent-texte)' }}>
+              J’ai sauté : à plier
+            </button>
+          </div>
+        ) : (
+          <button type="button" onClick={() => setChoix(true)} disabled={rendering}
+            className="w-full rounded-lg text-[13px] font-semibold disabled:opacity-50 transition-all"
+            style={{ minHeight: 40, background: 'rgba(239,68,68,0.1)', color: 'var(--sev-critique)', border: '1px solid rgba(239,68,68,0.25)', cursor: 'pointer' }}>
+            ↩ Rendre le sac
+          </button>
+        )}
+        {erreurRendu && <p className="text-[13px] mt-1" style={{ color: 'var(--sev-critique)' }}>{erreurRendu}</p>}
       </div>
     </div>
   );

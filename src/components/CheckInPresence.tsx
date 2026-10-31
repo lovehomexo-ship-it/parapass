@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useMaPresence, hhmm, dernierePresence, EQUIPEMENTS, libelleEquipement, type Equipement, type DzPresence } from '../lib/presence';
 import { useBriefingDuJour, useBriefingAck } from '../lib/briefing';
 import type { Materiel } from '../lib/types';
+import { sacPrendre } from '../lib/pliage';
 
 const inputStyle: React.CSSProperties = {
   background: 'var(--c-hover)', border: '1px solid var(--c-border)',
@@ -63,6 +64,23 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
   const [masse, setMasse] = useState('');
   // Ce qu'il emporte : coché en un toucher, repris de la dernière fois.
   const [equipements, setEquipements] = useState<Equipement[]>([]);
+  // LES SACS DE LA DZ, libres et en service : le sauteur en prend un en se
+  // disant présent. Plus de numéro tapé à la main, et la DZ n'a rien à faire —
+  // le sac lui est attribué, la file de pliage et la DT 48 le connaissent.
+  const [sacsDz, setSacsDz] = useState<{ id: string; nom: string; ft2: number | null }[]>([]);
+  const [sacChoisi, setSacChoisi] = useState<string | null>(null);
+  useEffect(() => {
+    if (!dzId) return;
+    supabase.from('sacs_parachute').select('id, nom_court, marque, modele, taille_voile_ft2')
+      .eq('centre_id', dzId).eq('actif', true).eq('statut', 'en_service').eq('etat_journee', 'libre')
+      .order('nom_court')
+      .then(({ data, error }) => {
+        if (error) { console.error('Chargement des sacs de la DZ échoué :', error); return; }
+        setSacsDz(((data ?? []) as { id: string; nom_court: string | null; marque: string | null; modele: string | null; taille_voile_ft2: number | null }[])
+          .map(x => ({ id: x.id, nom: x.nom_court || [x.marque, x.modele].filter(Boolean).join(' ') || 'Sac', ft2: x.taille_voile_ft2 })));
+      });
+  }, [dzId]);
+
   // La dernière venue : de quoi proposer « comme la dernière fois » en un geste.
   const [derniere, setDerniere] = useState<DzPresence | null>(null);
 
@@ -141,13 +159,21 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
       materiel_type: materielType,
       voile_perso_ref: materielType === 'perso' ? voilePersoRef : null,
       voile_perso_libre: materielType === 'perso' && !voilePersoRef ? (voilePersoLibre.trim() || null) : null,
-      voile_location_ref: materielType === 'location' ? (voileLocation.trim() || null) : null,
+      voile_location_ref: materielType === 'location'
+        ? ((sacChoisi ? sacsDz.find(x => x.id === sacChoisi)?.nom : null) ?? (voileLocation.trim() || null)) : null,
       // Laissé vide = on ne touche pas au profil. Effacer volontairement sa
       // masse reste possible en la remettant à vide APRÈS l'avoir saisie :
       // on écrit null, ce qui est différent de « ne rien dire ».
       masse_kg: masse.trim() === '' ? null : Number(masse.replace(',', '.')),
       equipements,
     });
+    // Le sac choisi est pris APRÈS la présence : le serveur le relie à elle.
+    if (ok && materielType === 'location' && sacChoisi) {
+      const r = await sacPrendre(sacChoisi);
+      if (!r.ok) { setErreurPlage(`Présence enregistrée, mais le sac n’a pas pu être pris : ${r.erreur}`); return; }
+      setSacsDz(l => l.filter(x => x.id !== sacChoisi));
+      setSacChoisi(null);
+    }
     if (ok) {
       setOuvert(false);
       setOkMsg(true);
@@ -290,6 +316,20 @@ export function CheckInPresence({ dzs, userId, openSignal }: { dzs: { id: string
               <option value="libre">Autre voile (saisie libre)</option>
             </select>
           ) : null
+        ) : sacsDz.length > 0 ? (
+          <div role="radiogroup" aria-label="Sac de la DZ" className="flex flex-wrap gap-2">
+            {sacsDz.map(x => {
+              const actif = sacChoisi === x.id;
+              return (
+                <button key={x.id} type="button" role="radio" aria-checked={actif}
+                  onClick={() => setSacChoisi(actif ? null : x.id)}
+                  className="px-3 rounded-full text-[13px] font-semibold"
+                  style={{ minHeight: 40, background: actif ? 'var(--action-fond)' : 'var(--c-hover)', color: actif ? '#fff' : 'var(--c-text2, var(--c-text))' }}>
+                  {actif ? '✓ ' : ''}{x.nom}{x.ft2 ? ` · ${x.ft2} ft²` : ''}
+                </button>
+              );
+            })}
+          </div>
         ) : (
           <input type="text" placeholder="N° de la voile louée (ex : 7)" value={voileLocation}
             onChange={e => setVoileLocation(e.target.value)} style={inputStyle} />

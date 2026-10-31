@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
+import { ymdLocal } from '../../lib/datetime';
 import { QRCodeSVG } from 'qrcode.react';
 import { X, Plus, Printer, Download, ChevronRight, Clock, Package, Backpack, AlertTriangle, Smartphone, Sparkles } from 'lucide-react';
 import { ParachuteGlyph } from '../../design/BadgeIcon';
 import { CycleHelpPanel } from '../../components/CyclePliageSchema';
-import { habilitationValide } from '../../lib/pliage';
+import { pliagesRegler, sacRendre, plieurHabiliter, plieurRetirer, habilitationValide } from '../../lib/pliage';
 import { QrScannerButton } from '../../components/QrScanner';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -472,7 +473,7 @@ function OngletPliageDuJour({ centreId }: { centreId: string }) {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const load = () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = ymdLocal(new Date());
     Promise.all([
       supabase
         .from('pliages')
@@ -494,18 +495,17 @@ function OngletPliageDuJour({ centreId }: { centreId: string }) {
   };
   useEffect(load, [centreId]);
 
-  /** Marquer payé (comptoir) — écriture vérifiée, jamais de succès silencieux. */
-  const marquerPaye = async (id: string) => {
-    setActionError(null);
-    const { data: written, error } = await supabase
-      .from('pliages').update({ statut_paiement: 'paye_comptoir' }).eq('id', id).select('id');
-    if (error || !written || written.length === 0) {
-      console.error('Marquage payé échoué :', error);
-      setActionError(error?.message ?? 'Le paiement n\'a pas pu être enregistré.');
-      return;
-    }
+  /** Régler un ou plusieurs pliages : une fonction serveur, tracée au journal. */
+  const [reglement, setReglement] = useState(false);
+  const regler = async (ids: string[]) => {
+    if (ids.length === 0) return;
+    setActionError(null); setReglement(true);
+    const r = await pliagesRegler(centreId, ids);
+    setReglement(false);
+    if (!r.ok) { setActionError(r.erreur ?? 'Le paiement n\'a pas pu être enregistré.'); return; }
     load();
   };
+  const marquerPaye = (id: string) => regler([id]);
 
   const totalJour = pliages.length;
   const aRegler = pliages.filter(p => p.statut_paiement === 'a_regler').length;
@@ -534,11 +534,24 @@ function OngletPliageDuJour({ centreId }: { centreId: string }) {
         </div>
       )}
 
+      {/* RÉGLER LA JOURNÉE EN UN GESTE — la seule action qui reste à la DZ. */}
+      {aRegler > 0 && (() => {
+        const ids = pliages.filter(p => p.statut_paiement === 'a_regler').map(p => p.id);
+        const total = pliages.filter(p => p.statut_paiement === 'a_regler').reduce((s, p) => s + (p.montant ?? 0), 0);
+        return (
+          <button type="button" onClick={() => regler(ids)} disabled={reglement}
+            className="w-full mb-4 rounded-xl text-[14px] font-bold text-white disabled:opacity-60"
+            style={{ minHeight: 48, background: 'var(--action-fond, #2563EB)' }}>
+            {reglement ? 'Règlement…' : `Régler les ${ids.length} pliage${ids.length > 1 ? 's' : ''} du jour · ${total.toFixed(0)} €`}
+          </button>
+        );
+      })()}
+
       {flagges > 0 && (
         <div className="rounded-xl px-4 py-3 mb-4 flex items-center gap-3" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
           <AlertTriangle className="w-5 h-5" aria-hidden />
           <p className="text-sm" style={{ color: 'var(--sev-vigilance)' }}>
-            {flagges} pliage{flagges > 1 ? 's' : ''} flagué{flagges > 1 ? 's' : ''} — qualification plieur non renseignée
+            {flagges} pliage{flagges > 1 ? 's' : ''} à vérifier — plieur non habilité par la DZ ou plié hors file
           </p>
         </div>
       )}
@@ -997,11 +1010,13 @@ function OngletParcSacs({ centreId }: { centreId: string }) {
 
   const libererSac = async (sac: SacParc) => {
     if (!sac.assignment) return;
-    if (!confirm(`Libérer le sac "${sac.nom_court || [sac.marque, sac.modele].filter(Boolean).join(' ') || 'Sac'}" ? (porteur : ${sac.assignment.porteur?.prenom ?? '?'} ${sac.assignment.porteur?.nom ?? ''})`)) return;
+    // La DZ ignore si le sac a sauté depuis son dernier pliage : il part au
+    // tapis, jamais « libre » — un sac douteux se vérifie, il ne repart pas.
+    if (!confirm(`Reprendre le sac "${sac.nom_court || [sac.marque, sac.modele].filter(Boolean).join(' ') || 'Sac'}" à ${sac.assignment.porteur?.prenom ?? '?'} ${sac.assignment.porteur?.nom ?? ''} ? Il passera au tapis, à plier.`)) return;
     setLiberating(sac.id);
-    await supabase.from('sac_assignments').update({ end_at: new Date().toISOString(), ended_by: 'staff' }).eq('id', sac.assignment.id).is('end_at', null);
-    await supabase.from('sacs_parachute').update({ etat_journee: 'libre' }).eq('id', sac.id);
+    const r = await sacRendre(sac.id, true);
     setLiberating(null);
+    if (!r.ok) { alert(`Le sac n’a pas pu être repris : ${r.erreur}`); return; }
     load();
   };
 
@@ -1179,27 +1194,34 @@ function OngletHabilitations({ centreId }: { centreId: string }) {
       });
   }, [centreId, load]);
 
+  // Habiliter, retirer, réactiver : des fonctions serveur, tracées au journal
+  // de bord. L'ancien upsert échouait à chaque fois (aucune contrainte unique
+  // ne correspondait) et le formulaire se fermait comme si c'était fait.
+  const [erreurHab, setErreurHab] = useState<string | null>(null);
   const habiliter = async () => {
     if (!form.plieur_id || !currentUserId) return;
-    setSaving(true);
-    await supabase.from('plieurs_valides').upsert({
-      centre_id: centreId,
-      plieur_id: form.plieur_id,
-      validateur_id: currentUserId,
-      actif: true,
-      numero_qualif: form.numero_qualif || null,
-      date_expiration: form.date_expiration || null,
-      note: form.note || null,
-    }, { onConflict: 'centre_id,plieur_id' });
+    setSaving(true); setErreurHab(null);
+    const r = await plieurHabiliter(centreId, form.plieur_id,
+      { expiration: form.date_expiration || null, numero: form.numero_qualif || null, note: form.note || null });
     setSaving(false);
+    if (!r.ok) { setErreurHab(r.erreur ?? 'L’habilitation n’a pas pu être enregistrée.'); return; }
     setShowForm(false);
     setForm({ plieur_id: '', numero_qualif: '', date_expiration: '', note: '' });
     load();
   };
 
-  const revoquer = async (id: string) => {
-    if (!confirm('Révoquer l\'habilitation de ce plieur ?')) return;
-    await supabase.from('plieurs_valides').update({ actif: false }).eq('id', id);
+  const revoquer = async (plieurId: string) => {
+    const motif = window.prompt('Retirer l’habilitation de ce plieur. Motif (facultatif, il figurera au journal) :');
+    if (motif === null) return;
+    setErreurHab(null);
+    const r = await plieurRetirer(centreId, plieurId, motif);
+    if (!r.ok) { setErreurHab(r.erreur ?? 'L’habilitation n’a pas pu être retirée.'); return; }
+    load();
+  };
+  const reactiver = async (plieurId: string) => {
+    setErreurHab(null);
+    const r = await plieurHabiliter(centreId, plieurId);
+    if (!r.ok) { setErreurHab(r.erreur ?? 'L’habilitation n’a pas pu être rétablie.'); return; }
     load();
   };
 
@@ -1210,6 +1232,9 @@ function OngletHabilitations({ centreId }: { centreId: string }) {
 
   return (
     <div className="space-y-6">
+      {erreurHab && (
+        <p role="alert" className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(239,68,68,0.12)', color: 'var(--sev-critique)' }}>{erreurHab}</p>
+      )}
       <div className="rounded-xl p-4" style={{ background: 'rgba(167,139,250,0.06)', border: '1px solid rgba(167,139,250,0.2)' }}>
         <p className="text-sm" style={{ color: 'rgba(167,139,250,0.9)' }}>
           <strong>Plieurs habilités DZ</strong> — seuls ces licenciés peuvent valider un pliage <strong>payable</strong>. Les autres peuvent plier mais le pliage est flagué «&nbsp;non habilité&nbsp;» et non payable.
@@ -1283,7 +1308,7 @@ function OngletHabilitations({ centreId }: { centreId: string }) {
                 {p.date_expiration && ` · expire ${new Date(p.date_expiration).toLocaleDateString('fr-FR')}`}
               </p>
             </div>
-            <button onClick={() => revoquer(p.id)}
+            <button onClick={() => revoquer(p.plieur_id)}
               className="text-xs px-3 py-1 rounded-lg"
               style={{ background: 'rgba(239,68,68,0.08)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)', cursor: 'pointer' }}>
               Révoquer
@@ -1300,7 +1325,7 @@ function OngletHabilitations({ centreId }: { centreId: string }) {
               <div key={p.id} className="rounded-lg px-3 py-2 flex items-center justify-between opacity-50"
                 style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
                 <p className="text-xs" style={{ color: 'var(--c-text)' }}>{p.plieur?.prenom} {p.plieur?.nom}</p>
-                <button onClick={() => supabase.from('plieurs_valides').update({ actif: true }).eq('id', p.id).then(load)}
+                <button onClick={() => reactiver(p.plieur_id)}
                   className="text-xs px-2 py-0.5 rounded"
                   style={{ background: 'rgba(167,139,250,0.1)', color: 'var(--c-pliage-fort)', border: 'none', cursor: 'pointer' }}>
                   Réactiver

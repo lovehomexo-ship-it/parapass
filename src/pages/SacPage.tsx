@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { sacPrendre, sacDeposer, sacAnnulerDepot, sacRendre, pliageEnregistrer, pliageAttribuer } from '../lib/pliage';
 import { ParaPassLogo } from '../components/ParaPassLogo';
 import { ChevronDown, AlertTriangle, CheckCircle, ArrowLeft, Backpack, Hand } from 'lucide-react';
 import { ParachuteGlyph } from '../design/BadgeIcon';
@@ -71,15 +72,10 @@ function AttributionPanel({
   const [saving, setSaving] = useState(false);
   const [attributed, setAttributed] = useState<string | null>(defaultNom);
 
-  // Pre-attribute to the porteur if known
-  useEffect(() => {
-    if (defaultLicencieId) {
-      supabase.from('pliages').update({
-        parachutiste_id: defaultLicencieId,
-        statut_paiement: 'a_regler',
-      }).eq('id', pliageId).then(() => {});
-    }
-  }, [pliageId, defaultLicencieId]);
+  // L'attribution au porteur est faite par le serveur au moment du pliage
+  // (pliage_enregistrer) : rien à pré-écrire ici. On ne fait que corriger.
+  void defaultLicencieId;
+  const [erreurAttrib, setErreurAttrib] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -95,13 +91,12 @@ function AttributionPanel({
       });
   }, [open, centreId]);
 
-  const attribuer = async (id: string, nom: string, isAuto: boolean) => {
-    setSaving(true);
-    await supabase.from('pliages').update({
-      parachutiste_id: id,
-      statut_paiement: isAuto ? 'auto_plie' : 'a_regler',
-    }).eq('id', pliageId);
+  const attribuer = async (id: string, nom: string, _isAuto: boolean) => {
+    void _isAuto;
+    setSaving(true); setErreurAttrib(null);
+    const r = await pliageAttribuer(pliageId, id);
     setSaving(false);
+    if (!r.ok) { setErreurAttrib(r.erreur ?? 'Attribution impossible.'); return; }
     setAttributed(nom);
     setOpen(false);
     onDone();
@@ -118,6 +113,7 @@ function AttributionPanel({
           <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Attribution du pliage</p>
           <p className="text-sm font-semibold text-white">
             {attributed ?? 'Non attribué (non payable)'}
+            {erreurAttrib && <span className="block text-xs" style={{ color: '#FCA5A5' }}>{erreurAttrib}</span>}
           </p>
         </div>
         <button type="button" onClick={() => setOpen(o => !o)}
@@ -163,7 +159,6 @@ export function SacPage() {
   const [assignment, setAssignment] = useState<Assignment | null>(null); // attribution active
   const [myAssignment, setMyAssignment] = useState<Assignment | null>(null); // mon sac actuel (autre sac)
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-  const [isQualif, setIsQualif] = useState(false); // brevet C/D/moniteur
   const [lastPliageAt, setLastPliageAt] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -171,6 +166,8 @@ export function SacPage() {
   const [submitting, setSubmitting] = useState(false);
   const [flagQualif, setFlagQualif] = useState(false);
   const [newPliageId, setNewPliageId] = useState<string | null>(null);
+  // À qui le serveur a attribué le pliage (porteur du sac, ou qui l'a déposé).
+  const [destinataire, setDestinataire] = useState<{ id: string; nom: string | null } | null>(null);
   const [confirmRendre, setConfirmRendre] = useState(false);
 
   const loadSac = useCallback(async (sacId: string) => {
@@ -195,9 +192,8 @@ export function SacPage() {
       if (user) {
         const { data: prof } = await supabase.from('profiles').select('id, nom, prenom, role').eq('id', user.id).maybeSingle();
         if (prof) cu = prof as CurrentUser;
-        // Qualification plieur
-        const { data: brevets } = await supabase.from('brevets').select('type_brevet').eq('parachutiste_id', user.id).in('type_brevet', ['C', 'D', 'moniteur', 'moniteur_delegue', 'DT053']);
-        setIsQualif((brevets?.length ?? 0) > 0);
+        // L'habilitation au pliage se lit au registre de la DZ, par le serveur,
+        // au moment du pliage — un brevet C n'est pas une qualification de plieur.
         // Mon attribution active (peut être un autre sac) — hoistée pour view determination
         const { data: myAssignData } = await supabase.from('sac_assignments').select('id, sac_id, licencie_id, start_at, porteur:profiles!sac_assignments_licencie_id_fkey(nom, prenom)').eq('licencie_id', user.id).is('end_at', null).maybeSingle();
         myAssign = myAssignData as Assignment | null;
@@ -250,126 +246,71 @@ export function SacPage() {
 
   async function prendre() {
     if (!sac || !currentUser) return;
-    if (myAssignment && myAssignment.sac_id !== sac.id) {
-      setErreur(`Vous avez déjà le sac "${myAssignment.sac_id.slice(0, 8)}" en cours. Rendez-le d'abord.`);
-      return;
-    }
-    setSubmitting(true);
-    // Insert assignment (unique index rejettera si race condition)
-    const { error: assignErr } = await supabase.from('sac_assignments').insert({
-      sac_id: sac.id,
-      licencie_id: currentUser.id,
-      centre_id: sac.centre_id,
-    });
-    if (assignErr) {
-      if (assignErr.code === '23505') setErreur('Ce sac vient d\'être pris par quelqu\'un d\'autre. Actualisez la page.');
-      else setErreur('Erreur : ' + assignErr.message);
-      setSubmitting(false);
-      return;
-    }
-    await supabase.from('sacs_parachute').update({ etat_journee: 'pris' }).eq('id', sac.id);
+    setSubmitting(true); setErreur(null);
+    // Le serveur vérifie tout (sac en service, déjà pris, sac déjà détenu) et
+    // relie le sac à la présence du jour.
+    const r = await sacPrendre(sac.id);
     setSubmitting(false);
+    if (!r.ok) { setErreur(r.erreur ?? 'Le sac n’a pas pu être pris.'); return; }
     setView('success_prise');
     setSac(s => s ? { ...s, etat_journee: 'pris' } : s);
     setAssignment({ id: '', licencie_id: currentUser.id, start_at: new Date().toISOString(), porteur: { nom: currentUser.nom, prenom: currentUser.prenom } });
   }
 
   async function marquerAPlier() {
-    if (!sac || !assignment) return;
-    setSubmitting(true);
-    const { data: updated, error } = await supabase
-      .from('sacs_parachute')
-      .update({ etat_journee: 'a_plier' })
-      .eq('id', sac.id)
-      .select('id');
+    if (!sac) return;
+    setSubmitting(true); setErreur(null);
+    const r = await sacDeposer(sac.id);
     setSubmitting(false);
-    if (error || !updated || updated.length === 0) {
-      setErreur(error?.message ?? 'Impossible de déposer le sac (droits insuffisants ?). Rechargez la page.');
-      return;
-    }
+    if (!r.ok) { setErreur(r.erreur ?? 'Le sac n’a pas pu être déposé.'); return; }
     setSac(s => s ? { ...s, etat_journee: 'a_plier' } : s);
     setView('success_a_plier');
   }
 
   async function autoPlier() {
-    if (!sac || !currentUser || !assignment) return;
-    setSubmitting(true);
-    const montant = (sac.centre as { tarif_pliage?: number } | null)?.tarif_pliage ?? 7;
-    const qualifie = isQualif;
-    const { data: p } = await supabase.from('pliages').insert({
-      sac_id: sac.id,
-      plieur_id: currentUser.id,
-      centre_id: sac.centre_id,
-      parachutiste_id: currentUser.id,
-      statut_paiement: 'auto_plie',
-      montant,
-      flag_qualif: !qualifie,
-    }).select('id').single();
-    if (!qualifie) setFlagQualif(true);
-    if (p) setNewPliageId(p.id);
-    // Reste PRIS
+    if (!sac || !currentUser) return;
+    setSubmitting(true); setErreur(null);
+    const r = await pliageEnregistrer(sac.id, { auto: true });
     setSubmitting(false);
+    if (!r.ok) { setErreur(r.erreur ?? 'L’auto-pliage n’a pas pu être enregistré.'); return; }
+    setNewPliageId(r.data?.pliage_id ?? null);
     setView('success_auto_plie');
   }
 
-  async function rendreLesSac() {
-    if (!sac || !assignment) return;
-    setSubmitting(true);
-    await supabase.from('sac_assignments').update({ end_at: new Date().toISOString(), ended_by: 'user' }).eq('id', assignment.id).is('end_at', null).eq('sac_id', sac.id);
-    await supabase.from('sacs_parachute').update({ etat_journee: 'libre' }).eq('id', sac.id);
+  /** Rendre : plié (il repart libre) ou après avoir sauté (il part au tapis). */
+  async function rendreLesSac(aPlier: boolean) {
+    if (!sac) return;
+    setSubmitting(true); setErreur(null);
+    const r = await sacRendre(sac.id, aPlier);
     setSubmitting(false);
+    if (!r.ok) { setErreur(r.erreur ?? 'Le sac n’a pas pu être rendu.'); return; }
     setAssignment(null);
+    setSac(s => s ? { ...s, etat_journee: aPlier ? 'a_plier' : 'libre' } : s);
     setView('success_rendu');
   }
 
   async function annulerAPlier() {
     if (!sac) return;
-    setSubmitting(true);
-    await supabase.from('sacs_parachute').update({ etat_journee: 'pris' }).eq('id', sac.id);
+    setSubmitting(true); setErreur(null);
+    const r = await sacAnnulerDepot(sac.id);
     setSubmitting(false);
+    if (!r.ok) { setErreur(r.erreur ?? 'Le sac n’a pas pu être repris.'); return; }
     setSac(s => s ? { ...s, etat_journee: 'pris' } : s);
     setView('pris_moi');
   }
 
+  /** Le plieur touche « plié ». Habilitation, carence, destinataire et montant
+   *  sont décidés par le serveur : l'écran ne peut plus se tromper. */
   async function enregistrerPliage(forceHorsFile = false) {
     if (!sac || !currentUser) return;
-    // Carence
-    if (lastPliageAt) {
-      const age = (Date.now() - lastPliageAt.getTime()) / 60000;
-      if (age < CARENCE_MIN) {
-        setErreur(`Carence : dernier pliage il y a ${Math.round(age)} min (minimum ${CARENCE_MIN} min). Réessayez dans ${Math.round(CARENCE_MIN - age)} min.`);
-        return;
-      }
-    }
-    setSubmitting(true);
-    const montant = (sac.centre as { tarif_pliage?: number } | null)?.tarif_pliage ?? 7;
-    const qualifie = isQualif;
-    // Vérification habilitation DZ
-    const { data: pvRow } = await supabase.from('plieurs_valides')
-      .select('id').eq('centre_id', sac.centre_id).eq('plieur_id', currentUser.id).eq('actif', true)
-      .maybeSingle();
-    const isHabilite = !!pvRow;
-    const { data: p } = await supabase.from('pliages').insert({
-      sac_id: sac.id,
-      plieur_id: currentUser.id,
-      centre_id: sac.centre_id,
-      parachutiste_id: assignment?.licencie_id ?? null,
-      statut_paiement: (assignment?.licencie_id && isHabilite) ? 'a_regler' : 'non_attribue',
-      montant,
-      flag_qualif: !qualifie || !isHabilite || forceHorsFile,
-      note: forceHorsFile ? 'Pliage hors file (bouton "plier quand même")' : !isHabilite ? 'Plieur non habilité DZ' : null,
-    }).select('id').single();
-    if (!qualifie || !isHabilite) setFlagQualif(true);
-    if (p) setNewPliageId(p.id);
-    // Repasse PRIS (le sac sort de la file) — le plieur doit être licencié actif du centre
-    const { error: updateErr } = await supabase.from('sacs_parachute').update({ etat_journee: 'pris' }).eq('id', sac.id).select('id');
-    if (updateErr) {
-      // Non bloquant : le pliage est enregistré, on prévient juste
-      console.warn('Remise en pris bloquée:', updateErr.message);
-    } else {
-      setSac(s => s ? { ...s, etat_journee: 'pris' } : s);
-    }
+    setSubmitting(true); setErreur(null);
+    const r = await pliageEnregistrer(sac.id, { horsFile: forceHorsFile });
     setSubmitting(false);
+    if (!r.ok || !r.data) { setErreur(r.erreur ?? 'Le pliage n’a pas pu être enregistré.'); return; }
+    setFlagQualif(!r.data.habilite);
+    setNewPliageId(r.data.pliage_id);
+    setDestinataire(r.data.destinataire_id ? { id: r.data.destinataire_id, nom: r.data.destinataire } : null);
+    setSac(s => s ? { ...s, etat_journee: assignment ? 'pris' : 'libre' } : s);
     setView('success_pliage');
     setLastPliageAt(new Date());
   }
@@ -535,26 +476,26 @@ export function SacPage() {
       <NomSacBlock sub={assignment ? `Pris à ${heure(assignment.start_at)} (${elapsed(assignment.start_at)})` : undefined} />
       <div className="px-5 pb-10 space-y-3 max-w-xs w-full mx-auto">
         <Btn onClick={marquerAPlier} color="#F97316"><ParachuteGlyph className="w-4 h-4 inline-block mr-1.5 align-[-2px]" aria-hidden />Déposer au tapis (à plier)</Btn>
-        <Btn onClick={autoPlier} color="#A78BFA" secondary>
-          Auto-plié {!isQualif ? <AlertTriangle className="w-3.5 h-3.5 inline-block align-[-2px]" aria-hidden /> : null}
-        </Btn>
-        {!isQualif && (
-          <p className="text-xs text-center" style={{ color: 'rgba(245,158,11,0.8)' }}>
-            <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 align-[-2px]" aria-hidden /> Qualification plieur non renseignée sur votre profil
-          </p>
-        )}
+        <Btn onClick={autoPlier} color="#A78BFA" secondary>Je l’ai plié moi-même</Btn>
         {confirmRendre ? (
           <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)' }}>
-            <p className="text-sm text-center font-semibold text-white">Rendre ce sac ?</p>
+            <p className="text-sm text-center font-semibold text-white">Rendre ce sac : dans quel état ?</p>
             <p className="text-xs text-center" style={{ color: 'rgba(255,255,255,0.5)' }}>
-              Il redeviendra disponible pour vos collègues. Aucun pliage créé.
+              Un sac qui a sauté part au tapis ; un sac encore plié repart pour les autres.
             </p>
-            <div className="flex gap-2">
-              <button type="button" onClick={rendreLesSac} disabled={submitting}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
-                style={{ background: 'rgba(239,68,68,0.7)', border: 'none', cursor: 'pointer' }}>
-                {submitting ? '...' : 'Confirmer'}
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => rendreLesSac(false)} disabled={submitting}
+                className="py-3 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
+                style={{ background: 'rgba(16,185,129,0.7)', border: 'none', cursor: 'pointer', minHeight: 48 }}>
+                {submitting ? '…' : 'Il est plié'}
               </button>
+              <button type="button" onClick={() => rendreLesSac(true)} disabled={submitting}
+                className="py-3 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
+                style={{ background: 'rgba(249,115,22,0.8)', border: 'none', cursor: 'pointer', minHeight: 48 }}>
+                {submitting ? '…' : 'J’ai sauté : à plier'}
+              </button>
+            </div>
+            <div className="flex">
               <button type="button" onClick={() => setConfirmRendre(false)}
                 className="flex-1 py-2.5 rounded-xl text-sm"
                 style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer' }}>
@@ -607,7 +548,7 @@ export function SacPage() {
       <NomSacBlock sub="En attente de pliage" />
       <div className="px-5 pb-10 space-y-3 max-w-xs w-full mx-auto">
         <Btn onClick={autoPlier} color="#A78BFA">
-          <Hand className="w-4 h-4 inline-block mr-1 align-[-2px]" aria-hidden /> Auto-plié {!isQualif ? <AlertTriangle className="w-3.5 h-3.5 inline-block align-[-2px]" aria-hidden /> : null}
+          <Hand className="w-4 h-4 inline-block mr-1 align-[-2px]" aria-hidden /> Je l’ai plié moi-même
         </Btn>
         <Btn onClick={annulerAPlier} secondary>
           ← Reprendre le sac (annuler dépose)
@@ -707,13 +648,7 @@ export function SacPage() {
           <h1 className="text-2xl font-black text-white mb-1">Auto-plié !</h1>
           <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>{nomSac} · Gratuit · Hors circuit paiement</p>
         </div>
-        {flagQualif && (
-          <div className="rounded-xl px-4 py-3 flex items-start gap-2" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)' }}>
-            <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#F59E0B' }} />
-            <p className="text-xs" style={{ color: '#FCD34D' }}>Qualification plieur non renseignée — pliage flagué pour le DT.</p>
-          </div>
-        )}
-        <button onClick={() => navigate(dashboardPath)} className="w-full py-3 rounded-xl text-sm font-semibold"
+                <button onClick={() => navigate(dashboardPath)} className="w-full py-3 rounded-xl text-sm font-semibold"
           style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer' }}>
           ← Retour
         </button>
@@ -735,15 +670,15 @@ export function SacPage() {
         {flagQualif && (
           <div className="rounded-xl px-4 py-3 flex items-start gap-2" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)' }}>
             <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#F59E0B' }} />
-            <p className="text-xs" style={{ color: '#FCD34D' }}>Qualification plieur non renseignée — flagué pour le DT.</p>
+            <p className="text-xs" style={{ color: '#FCD34D' }}>Vous n’êtes pas habilité plieur par cette DZ : le pliage est enregistré et signalé au DT, sans être facturé.</p>
           </div>
         )}
-        {newPliageId && assignment?.licencie_id && (
+        {newPliageId && (
           <AttributionPanel
             pliageId={newPliageId}
             centreId={sac!.centre_id}
-            defaultLicencieId={assignment.licencie_id}
-            defaultNom={assignment.porteur ? `${assignment.porteur.prenom} ${assignment.porteur.nom}` : null}
+            defaultLicencieId={destinataire?.id ?? null}
+            defaultNom={destinataire?.nom ?? null}
             onDone={() => navigate(dashboardPath)}
           />
         )}
