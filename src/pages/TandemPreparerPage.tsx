@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { ParaPassLogo } from '../components/ParaPassLogo';
 import { Check, AlertTriangle, PenTool, CreditCard } from 'lucide-react';
 import { ParachuteGlyph } from '../design/BadgeIcon';
+import { libelleCreneau, type PlageTandem } from '../lib/tandemPlages';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -21,7 +22,7 @@ interface Booking {
   statut: string;
   dossier_complete: boolean;
   centre: { nom: string; ville: string } | null;
-  slot: { date: string; heure: string } | null;
+  slot: { date: string; heure: string; plage?: string | null } | null;
 }
 
 interface Passenger {
@@ -40,6 +41,7 @@ interface Passenger {
 interface TandemConfig {
   poids_min: number;
   poids_max: number;
+  plages?: PlageTandem[] | null;
 }
 
 // ─── Signature Canvas ─────────────────────────────────────────────────────────
@@ -293,7 +295,8 @@ export function TandemPreparerPage() {
   );
 
   const poidsNum = parseInt(poids);
-  const poidsAlerte = config && poidsNum && (poidsNum < config.poids_min || poidsNum > config.poids_max);
+  // Champ vide : parseInt donne NaN, que React affichait tel quel (« NaNNaN »).
+  const poidsAlerte = !!config && Number.isFinite(poidsNum) && (poidsNum < config.poids_min || poidsNum > config.poids_max);
 
   const inp: React.CSSProperties = {
     width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 15,
@@ -321,7 +324,7 @@ export function TandemPreparerPage() {
           <h1 className="text-white font-black text-xl mb-1">Préparez votre saut <ParachuteGlyph className="w-5 h-5 inline-block align-[-2px]" aria-hidden /></h1>
           {booking && (
             <p className="text-white/60 text-sm">
-              {booking.centre?.nom} · {booking.slot ? new Date(booking.slot.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }) : ''} à {booking.slot?.heure.slice(0, 5)}
+              {booking.centre?.nom} · {booking.slot ? new Date(booking.slot.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }) : ''} · {booking.slot ? libelleCreneau(booking.slot, config?.plages) : ''}
             </p>
           )}
         </div>

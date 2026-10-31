@@ -12,6 +12,7 @@ import { suivreCarburant, type CarburantRotation } from '../../lib/masseCentrage
 import { libelleEquipement } from '../../lib/presence';
 import { siegesOccupes, messageErreur, type Discipline, type VerdictDT48 } from '../../lib/avionnage';
 import { FileAvionnageDZ } from './FileAvionnageDZ';
+import { TandemsDuJour } from './TandemsDuJour';
 import { FriseRotations } from './FriseRotations';
 import { FlotteAeronefs, type Aeronef } from './Rotations';
 import { RechercheLicencie } from './RechercheLicencie';
@@ -896,7 +897,14 @@ function AvionnageInner({ centreId }: { centreId: string }) {
         </div>
 
         {/* ── La file ──────────────────────────────────────────────────── */}
-        <div>
+        <div className="space-y-4">
+          {/* Les tandems réservés sur le site de la DZ, à placer par plage. */}
+          <TandemsDuJour centreId={centreId} onPlace={charger}
+            planches={ouvertes.filter(r => !r.embarquement_valide_le && !r.heure_decollage).map(r => {
+              const a = aeronefs.find(x => x.id === r.aeronef_id);
+              const occ = siegesOccupes(places.filter(p => p.rotation_id === r.id));
+              return { id: r.id, numero: r.numero, placesLibres: a ? a.places - occ : null };
+            })} />
           <FileAvionnageDZ centreId={centreId} ouvert={ouvert}
             onOuvrir={basculerOuverture} onPlacer={placer} onOuvrirFiche={ouvrirFiche}
             rechargerRef={rechargerFile}

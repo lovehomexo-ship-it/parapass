@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Plus, X, Check, Cloud, Users, ChevronLeft, ChevronRight, Globe, CalendarDays, Video, Camera, AlertTriangle, ClipboardList, Gift } from 'lucide-react';
+import { Plus, Check, Cloud, Users, ChevronLeft, ChevronRight, Globe, CalendarDays, Video, Camera, AlertTriangle, ClipboardList, Gift } from 'lucide-react';
 import { ParachuteGlyph } from '../../design/BadgeIcon';
+import { ChoixPlages, IntegrationSite, OuvrirCreneaux } from './CreneauxTandem';
+import { PLAGES_DEMI_JOURNEE, libelleCreneau, verifierPlages, type PlageTandem } from '../../lib/tandemPlages';
+import { ymdLocal } from '../../lib/datetime';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -22,6 +25,8 @@ interface TandemConfig {
   description: string | null;
   email_post_saut_actif: boolean;
   email_j7_actif: boolean;
+  /** null = heures précises ; sinon les plages proposées (matin, après-midi…). */
+  plages?: PlageTandem[] | null;
 }
 
 const DEFAULT_CONFIG = (centreId: string): TandemConfig => ({
@@ -40,6 +45,8 @@ const DEFAULT_CONFIG = (centreId: string): TandemConfig => ({
   description: null,
   email_post_saut_actif: true,
   email_j7_actif: true,
+  // Par défaut, des demi-journées : la DZ organise ses avions elle-même.
+  plages: PLAGES_DEMI_JOURNEE,
 });
 
 // ─── Toast simple ─────────────────────────────────────────────────────────────
@@ -66,6 +73,7 @@ interface Slot {
   heure: string;
   capacite: number;
   statut: string;
+  plage?: string | null;
   bookings: Booking[];
 }
 
@@ -109,7 +117,8 @@ type Onglet = 'planning' | 'bons' | 'stats' | 'config';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function isoDate(d: Date) { return d.toISOString().slice(0, 10); }
+// La date LOCALE : en UTC, « aujourd'hui » basculait la veille passé minuit.
+function isoDate(d: Date) { return ymdLocal(d); }
 
 function statutBadge(s: string) {
   const map: Record<string, { label: string; color: string; bg: string }> = {
@@ -133,14 +142,12 @@ function KpiCard({ label, val, color }: { label: string; val: string | number; c
 
 // ─── Onglet Planning ──────────────────────────────────────────────────────────
 
-function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string; centreSlug: string; config?: TandemConfig; licencies: Licencie[] }) {
+function OngletPlanning({ centreId, centreSlug, config, licencies }: { centreId: string; centreSlug: string; config?: TandemConfig; licencies: Licencie[] }) {
   const [slots, setSlots] = useState<Slot[]>([]);
   const [selectedDate, setSelectedDate] = useState(isoDate(new Date()));
   const [loading, setLoading] = useState(true);
   const [showNewSlot, setShowNewSlot] = useState(false);
-  const [newSlotTime, setNewSlotTime] = useState('09:00');
-  const [newSlotCap, setNewSlotCap] = useState(4);
-  const [saving, setSaving] = useState(false);
+  const [ouverts, setOuverts] = useState<string | null>(null);
 
   const fetchSlots = useCallback(async () => {
     setLoading(true);
@@ -148,7 +155,7 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
     const to = isoDate(new Date(Date.now() + 30 * 86400000));
     const { data: slotData } = await supabase
       .from('tandem_slots')
-      .select('id, date, heure, capacite, statut')
+      .select('*')
       .eq('centre_id', centreId)
       .gte('date', from)
       .lte('date', to)
@@ -177,22 +184,9 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
 
   useEffect(() => { fetchSlots(); }, [fetchSlots]);
 
-  const creerSlot = async () => {
-    setSaving(true);
-    await supabase.from('tandem_slots').insert({
-      centre_id: centreId,
-      date: selectedDate,
-      heure: newSlotTime,
-      capacite: newSlotCap,
-      statut: 'ouvert',
-    });
-    setSaving(false);
-    setShowNewSlot(false);
-    fetchSlots();
-  };
-
   const annulerMeteo = async (slotId: string) => {
-    if (!confirm('Annuler météo ce créneau ? Tous les passagers seront notifiés.')) return;
+    // Rien n'envoie encore de message : l'écran ne promet pas ce qu'il ne fait pas.
+    if (!confirm('Annuler ce créneau pour la météo ? Les passagers ne sont pas prévenus automatiquement : appelez-les ou écrivez-leur.')) return;
     await supabase.from('tandem_slots').update({ statut: 'annule_meteo' }).eq('id', slotId);
     fetchSlots();
   };
@@ -242,7 +236,7 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
           className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-white"
           style={{ background: 'var(--accent-fond)' }}
         >
-          <Plus className="w-3.5 h-3.5" /> Nouveau créneau
+          <Plus className="w-3.5 h-3.5" /> Ouvrir des créneaux
         </button>
         <a
           href={`${window.location.origin}/dz/${centreSlug}/tandem`}
@@ -255,28 +249,13 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
         </a>
       </div>
 
-      {/* Form nouveau créneau */}
+      {/* Ouvrir des créneaux : un jour ou toute une saison, en une fois. */}
       {showNewSlot && (
-        <div className="rounded-xl p-4 space-y-3" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold" style={{ color: 'var(--c-text)' }}>Nouveau créneau — {new Date(selectedDate).toLocaleDateString('fr-FR')}</p>
-            <button onClick={() => setShowNewSlot(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-muted)' }}><X className="w-4 h-4" /></button>
-          </div>
-          <div className="flex gap-3 flex-wrap">
-            <div>
-              <label className="block text-xs mb-1" style={{ color: 'var(--c-muted)' }}>Heure</label>
-              <input type="time" value={newSlotTime} onChange={e => setNewSlotTime(e.target.value)} style={inp} />
-            </div>
-            <div>
-              <label className="block text-xs mb-1" style={{ color: 'var(--c-muted)' }}>Capacité</label>
-              <input type="number" min={1} max={20} value={newSlotCap} onChange={e => setNewSlotCap(Number(e.target.value))} style={{ ...inp, width: 80 }} />
-            </div>
-          </div>
-          <button onClick={creerSlot} disabled={saving} className="px-4 py-2 rounded-xl text-sm font-bold text-white disabled:opacity-50" style={{ background: '#F97316' }}>
-            {saving ? 'Création...' : 'Créer le créneau'}
-          </button>
-        </div>
+        <OuvrirCreneaux centreId={centreId} plages={config?.plages ?? null} dateInitiale={selectedDate}
+          onFermer={() => setShowNewSlot(false)}
+          onFait={n => { setShowNewSlot(false); setOuverts(n === 0 ? 'Aucun nouveau créneau : ils étaient déjà ouverts.' : `${n} créneau${n > 1 ? 'x' : ''} ouvert${n > 1 ? 's' : ''}.`); fetchSlots(); }} />
       )}
+      {ouverts && <p role="status" className="text-[13px] font-semibold" style={{ color: 'var(--sev-conforme)' }}>{ouverts}</p>}
 
       {/* Créneaux du jour */}
       {loading ? (
@@ -298,7 +277,7 @@ function OngletPlanning({ centreId, centreSlug, licencies }: { centreId: string;
                 <div className="flex items-center justify-between px-4 py-3" style={{ background: isAnnule ? 'rgba(239,68,68,0.08)' : 'var(--c-card)', borderBottom: '1px solid var(--c-border-s)' }}>
                   <div className="flex items-center gap-3">
                     <span className="text-xl font-black" style={{ color: isAnnule ? '#EF4444' : 'var(--c-text)' }}>
-                      {slot.heure.slice(0, 5)}
+                      {libelleCreneau(slot, config?.plages)}
                     </span>
                     <div className="flex items-center gap-2">
                       <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: isAnnule ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.12)', color: isAnnule ? '#EF4444' : 'var(--sev-conforme)' }}>
@@ -563,7 +542,7 @@ function OngletStats({ centreId }: { centreId: string }) {
 
 // ─── Onglet Config ─────────────────────────────────────────────────────────────
 
-function OngletConfig({ centreId, config: initialConfig, onSaved }: { centreId: string; config: TandemConfig; onSaved: (c: TandemConfig) => void }) {
+function OngletConfig({ centreId, centreSlug, config: initialConfig, onSaved }: { centreId: string; centreSlug: string; config: TandemConfig; onSaved: (c: TandemConfig) => void }) {
   const [form, setForm] = useState(initialConfig);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
@@ -664,9 +643,13 @@ function OngletConfig({ centreId, config: initialConfig, onSaved }: { centreId: 
         </label>
       </div>
 
-      <button onClick={save} disabled={saving} className="w-full py-3.5 rounded-xl font-bold text-white disabled:opacity-50" style={{ background: '#F97316' }}>
+      <ChoixPlages plages={form.plages ?? null} onChange={p => setForm(f => ({ ...f, plages: p }))} />
+
+      <button onClick={save} disabled={saving || (!!form.plages && !!verifierPlages(form.plages))} className="w-full py-3.5 rounded-xl font-bold text-white disabled:opacity-50" style={{ background: '#F97316' }}>
         {saving ? 'Enregistrement...' : 'Enregistrer la configuration'}
       </button>
+
+      <IntegrationSite slug={centreSlug} />
 
       {toast && <Toast msg={toast.msg} ok={toast.ok} />}
     </div>
@@ -782,7 +765,7 @@ export function TandemSection({ centreId }: { centreId: string }) {
       {onglet === 'planning' && config && <OngletPlanning centreId={centreId} centreSlug={centreSlug} config={config} licencies={licencies} />}
       {onglet === 'bons' && <OngletBons centreId={centreId} />}
       {onglet === 'stats' && <OngletStats centreId={centreId} />}
-      {onglet === 'config' && config && <OngletConfig centreId={centreId} config={config} onSaved={setConfig} />}
+      {onglet === 'config' && config && <OngletConfig centreId={centreId} centreSlug={centreSlug} config={config} onSaved={setConfig} />}
     </div>
   );
 }

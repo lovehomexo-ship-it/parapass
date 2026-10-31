@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { libelleCreneau, type PlageTandem } from '../lib/tandemPlages';
+import { ymdLocal } from '../lib/datetime';
 import { supabase } from '../lib/supabase';
 import { ParaPassLogo } from '../components/ParaPassLogo';
 import { ChevronLeft, ChevronRight, Video, Camera, Gift, Check, AlertCircle, Search, Mail, ClipboardList, CreditCard } from 'lucide-react';
@@ -26,6 +28,8 @@ interface TandemConfig {
   poids_max: number;
   politique_meteo: string;
   description: string | null;
+  /** null = heures précises ; sinon matin / après-midi ou plages du centre. */
+  plages?: PlageTandem[] | null;
 }
 
 interface Slot {
@@ -35,6 +39,7 @@ interface Slot {
   capacite: number;
   statut: string;
   booked: number;
+  plage?: string | null;
 }
 
 type Step = 'landing' | 'creneaux' | 'form' | 'options' | 'recap' | 'confirme';
@@ -52,8 +57,9 @@ function addMonths(d: Date, n: number) {
   return r;
 }
 
+// La date LOCALE : en UTC, « aujourd'hui » basculait la veille passé minuit.
 function isoDate(d: Date) {
-  return d.toISOString().slice(0, 10);
+  return ymdLocal(d);
 }
 
 function getDaysInMonth(year: number, month: number) {
@@ -187,6 +193,20 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 export function TandemPublicPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  // INTÉGRÉE AU SITE DE LA DZ (`?integre=1`, dans une iframe) : ni bandeau ni
+  // pied de page — le site de la DZ les porte déjà — et la page annonce sa
+  // hauteur au site, pour qu'aucune barre de défilement ne s'ajoute.
+  const [params] = useSearchParams();
+  const integre = params.get('integre') === '1';
+  useEffect(() => {
+    if (!integre || window.parent === window) return;
+    const annoncer = () => window.parent.postMessage({ parapassHauteur: document.documentElement.scrollHeight }, '*');
+    const ro = new ResizeObserver(annoncer);
+    ro.observe(document.body);
+    annoncer();
+    return () => ro.disconnect();
+  }, [integre]);
+  const [dossierToken, setDossierToken] = useState<string | null>(null);
   const [centre, setCentre] = useState<Centre | null>(null);
   const [config, setConfig] = useState<TandemConfig | null>(null);
   const [slots, setSlots] = useState<Slot[]>([]);
@@ -260,7 +280,7 @@ export function TandemPublicPage() {
       const to = isoDate(addMonths(new Date(), 3));
       const { data: availData } = await supabase
         .from('tandem_slot_availability')
-        .select('slot_id, date, heure, capacite, statut, booked')
+        .select('*')
         .eq('centre_id', centreData.id)
         .gte('date', from)
         .lte('date', to)
@@ -273,6 +293,7 @@ export function TandemPublicPage() {
         capacite: s.capacite,
         statut: s.statut,
         booked: Number(s.booked),
+        plage: (s as { plage?: string | null }).plage ?? null,
       })) as Slot[]);
       setLoading(false);
     })();
@@ -329,11 +350,14 @@ export function TandemPublicPage() {
     setSubmitting(false);
     if (error || !data) {
       console.error('Réservation tandem échouée :', error);
-      setFormErrors({ _global: 'Une erreur est survenue. Réessayez.' });
+      // Les refus du serveur sont écrits pour le passager (« créneau complet »…).
+      const m = error?.message ?? '';
+      setFormErrors({ _global: /complet|plus ouvert|pas ouvertes|requis/i.test(m) ? m : 'Une erreur est survenue. Réessayez.' });
       return;
     }
 
     setBookingId((data as { booking_id: string }).booking_id);
+    setDossierToken((data as { dossier_token?: string }).dossier_token ?? null);
     setStep('confirme');
   }
 
@@ -439,12 +463,18 @@ export function TandemPublicPage() {
           </div>
           <h1 className="text-2xl font-black text-gray-900 mb-2">Réservation confirmée !</h1>
           <p className="text-gray-500 text-sm mb-2">
-            {formatDate(selectedSlot?.date ?? '')} à {selectedSlot?.heure.slice(0, 5)} · {centre?.nom}
+            {formatDate(selectedSlot?.date ?? '')} · {selectedSlot ? libelleCreneau(selectedSlot, config?.plages) : ''} · {centre?.nom}
           </p>
-          <p className="text-gray-400 text-xs mb-6">Un email de confirmation a été envoyé à {form.offreurEmail}</p>
+          <p className="text-gray-400 text-xs mb-6">{centre?.nom} vous contactera à {form.offreurEmail} pour confirmer l’heure de votre saut.</p>
           <div className="rounded-xl bg-blue-50 border border-blue-200 p-4 text-left">
             <p className="text-sm font-semibold text-blue-800 mb-1 flex items-center gap-1.5"><ClipboardList className="w-4 h-4" aria-hidden /> Prochaine étape</p>
-            <p className="text-xs text-blue-700">Vous allez recevoir un lien pour compléter votre dossier passager (poids, contact d'urgence, décharge à signer). À faire avant le jour J !</p>
+            <p className="text-xs text-blue-700">Complétez votre dossier passager (poids, contact d'urgence, décharge à signer) avant le jour J.</p>
+            {dossierToken && (
+              <Link to={`/tandem/preparer/${dossierToken}`} className="mt-3 inline-block rounded-xl px-4 py-2.5 text-sm font-bold text-white no-underline"
+                style={{ background: '#001A4D' }}>
+                Compléter mon dossier maintenant
+              </Link>
+            )}
           </div>
           {solde > 0 && (
             <div className="mt-4 rounded-xl bg-orange-50 border border-orange-200 p-4 text-left">
@@ -465,9 +495,9 @@ export function TandemPublicPage() {
 
   // ── Main layout ──
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Hero */}
-      <div className="bg-[#001A4D] text-white">
+    <div className={integre ? 'bg-transparent' : 'min-h-screen bg-slate-50'}>
+      {/* Hero — absent sur le site de la DZ, qui a déjà le sien. */}
+      <div className={integre ? 'hidden' : 'bg-[#001A4D] text-white'}>
         <div className="max-w-3xl mx-auto px-4 py-8">
           <div className="flex items-center gap-4 mb-6">
             {centre?.logo_url ? (
@@ -553,7 +583,7 @@ export function TandemPublicPage() {
                           }}
                         >
                           <p className="text-xl font-black" style={{ color: isSelected ? 'white' : '#001A4D' }}>
-                            {s.heure.slice(0, 5)}
+                            {libelleCreneau(s, config?.plages)}
                           </p>
                           <p className="text-xs mt-1" style={{ color: isSelected ? 'rgba(255,255,255,0.6)' : '#94A3B8' }}>
                             {dispo} place{dispo > 1 ? 's' : ''} disponible{dispo > 1 ? 's' : ''}
@@ -570,7 +600,7 @@ export function TandemPublicPage() {
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                   <div className="bg-[#001A4D] px-5 py-4">
                     <p className="text-white/60 text-xs">Votre réservation</p>
-                    <p className="text-white font-bold capitalize">{formatDate(selectedSlot.date)} · {selectedSlot.heure.slice(0, 5)}</p>
+                    <p className="text-white font-bold"><span className="capitalize">{formatDate(selectedSlot.date)}</span> · {libelleCreneau(selectedSlot, config?.plages)}</p>
                   </div>
                   <div className="p-5 space-y-5">
                     {/* Personne qui réserve */}
@@ -700,9 +730,12 @@ export function TandemPublicPage() {
                       className="w-full py-4 rounded-2xl font-black text-white text-base transition-all disabled:opacity-50"
                       style={{ background: 'linear-gradient(135deg, #001A4D, #003082)', boxShadow: '0 4px 20px rgba(0,26,77,0.3)' }}
                     >
-                      {submitting ? 'Réservation en cours...' : `Réserver · Acompte ${acompte} €`}
+                      {submitting ? 'Réservation en cours...' : 'Réserver mon saut'}
                     </button>
-                    <p className="text-xs text-gray-400 text-center">Paiement sécurisé · Confirmation immédiate par email</p>
+                    {/* Aucun paiement en ligne n'existe encore : on ne le promet pas. */}
+                    <p className="text-xs text-gray-400 text-center">
+                      Aucun paiement en ligne : {acompte > 0 ? `l’acompte de ${acompte} € et le solde se règlent` : 'le saut se règle'} auprès de la DZ.
+                    </p>
                   </div>
                 </div>
               )}
@@ -812,9 +845,11 @@ export function TandemPublicPage() {
       </div>
 
       {/* Footer */}
-      <div className="max-w-3xl mx-auto px-4 py-8 text-center">
-        <p className="text-xs text-gray-400">Réservation sécurisée via <span className="font-semibold">ParaPass</span></p>
-      </div>
+      {!integre && (
+        <div className="max-w-3xl mx-auto px-4 py-8 text-center">
+          <p className="text-xs text-gray-400">Réservation via <span className="font-semibold">ParaPass</span></p>
+        </div>
+      )}
     </div>
   );
 }
